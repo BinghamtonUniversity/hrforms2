@@ -1,0 +1,26 @@
+[
+    {
+        "SUNY_ID": "51645",
+        "B_NUMBER": "B00073866",
+        "LEGAL_LAST_NAME": "Geiger",
+        "LEGAL_FIRST_NAME": "Scott",
+        "LEGAL_MIDDLE_NAME": "T",
+        "RECENT_CAMPUS_DATE": "17-APR-97",
+        "SALARY_GRADE": "NSSL5",
+        "NEGOTIATING_UNIT": "08",
+        "DERIVED_FAC_TYPE": "N",
+        "CARD_AFFIL": "PR",
+        "TITLE_DESCRIPTION": "Assnt Dir Comptng Sv",
+        "APPOINTMENT_TYPE": "PERM",
+        "APPOINTMENT_EFFECTIVE_DATE": "07-SEP-18",
+        "APPOINTMENT_END_DATE": null,
+        "APPOINTMENT_PERCENT": "100",
+        "CONTINUING_PERMANENCY_DATE": "07-SEP-18",
+        "CAMPUS_TITLE": "Assistant Director of Application Development",
+        "REPORTING_DEPARTMENT_CODE": "851130",
+        "REPORTING_DEPARTMENT_NAME": "3 313 Computing Svcs Admin",
+        "SUPERVISOR_SUNY_ID": "142985",
+        "SUPERVISOR_LAST_NAME": "Hizny",
+        "SUPERVISOR_FIRST_NAME": "Michael"
+    }
+]

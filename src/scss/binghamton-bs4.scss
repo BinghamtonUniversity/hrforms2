@@ -1,0 +1,69 @@
+@import "../../node_modules/bootstrap/scss/functions";
+@import "../../node_modules/bootstrap/scss/variables";
+@import "../../node_modules/bootstrap/scss/mixins";
+
+$enable-responsive-font-sizes: true;
+
+$h3-font-size: $font-size-base * 1.7;
+
+$main:#004333;
+//$nav:rgba($main,.9);
+$accent: #6BC04B;
+$light:#669c8e;
+$white:#fff;
+
+$pct:20%;
+
+$theme-colors: (
+  "main":$main,
+  "nav":$main,
+  "white":$white,
+  "accent":$accent,
+  "light":$light,
+  "primary":scale-color($primary,$lightness:$pct*-1),
+  "danger":scale-color($danger,$lightness:$pct*-1),
+  "warning":scale-color($warning,$lightness:$pct*-1),
+  "success":scale-color($success,$lightness:$pct*-1),
+  "info":scale-color($info,$lightness:$pct*-1)
+);
+
+$table-hover-bg: rgba($main, .15);
+
+$navbar-dark-color:           rgba($white, .75);
+$navbar-dark-hover-color:     rgba($white, .9);
+$navbar-dark-active-color:    $white;
+$navbar-dark-disabled-color:  rgba($white, .4);
+
+$input-placeholder-color: #aaa;
+
+$box-shadow-sm: 0 .125rem .25rem rgba($black, .175);
+$box-shadow: 0 .5rem 1rem rgba($black, .35);
+$box-shadow-lg: 0 1rem 3rem rgba($black, .40);
+
+
+@import "../../node_modules/bootstrap/scss/bootstrap";
+
+/* DataTables Formatting */
+.rdt_Table {
+  border: 2px solid $main;
+  border-radius: 3px
+}
+.rdt_Table .rdt_TableHeadRow {
+  background-color: $main
+}
+.rdt_Table .rdt_TableHeadRow .rdt_TableCol {
+  color: $white;
+  font-size: 1rem
+}
+.rdt_Table .rdt_TableHeadRow .rdt_TableCol_Sortable,
+.rdt_Table .rdt_TableHeadRow .rdt_TableCol_Sortable:hover {
+  color: $white;
+}
+.rdt_Table .rdt_TableBody .rdt_TableRow {
+  font-size: 0.9rem;
+}
+
+/* Override DatePicker to be block */
+.react-datepicker-wrapper {
+  display: block;
+}
