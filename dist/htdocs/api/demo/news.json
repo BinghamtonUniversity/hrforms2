@@ -1,0 +1,24 @@
+[
+    {
+        "NEWS_ID": "1",
+        "NEWS_TITLE": "My Title",
+        "NEWS_START_DATE": "21-JUN-19",
+        "NEWS_END_DATE": null,
+        "NEWS_TEXT": "<p>This is a new news item, just testing</p><p>How about a new line?</p><p>And another?</p>",
+        "CREATED_DATE": "22-JUL-19",
+        "MODIFIED_DATE": "22-JUL-19",
+        "ACTIVE": "1",
+        "ORDERBY": "0"
+    },
+    {
+        "NEWS_ID": "2",
+        "NEWS_TITLE": "Another News Item",
+        "NEWS_START_DATE": "26-JUN-19",
+        "NEWS_END_DATE": null,
+        "NEWS_TEXT": "<p><b><font color=\"#ff0000\">Please pay attention to this</font></b>.&nbsp; Read the following notice: <a href=\"https://my.binghamton.edu\">https://my.binghamton.edu</a>&nbsp;- do not skip this</p><p>more more&nbsp;</p><p>and more</p>",
+        "CREATED_DATE": "22-JUL-19",
+        "MODIFIED_DATE": "27-SEP-19",
+        "ACTIVE": "1",
+        "ORDERBY": "0"
+    }
+]

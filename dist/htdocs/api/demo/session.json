@@ -1,0 +1,19 @@
+{
+    "VERSION": "2.0.0",
+    "REVISION": "DEV",
+    "INSTANCE": "LOCAL",
+    "HOST": "hrforms2.localhost",
+    "DEBUG": true,
+    "CAS_SID": "local",
+    "USER_ID": "geigers",
+    "BNUMBER": "B00073866",
+    "IP_ADDRESS": "::1",
+    "SESSION_ID": "BEFE1CBC09746753E0539406E280A273",
+    "SUNY_ID": "51645",
+    "SPRIDEN_PIDM": "92223",
+    "EMAIL": "geigers@binghamton.edu",
+    "OVR_SUNY_ID": null,
+    "isAdmin": true,
+    "LAST_IP_ADDRESS": "",
+    "LAST_LOGIN_DATE": ""
+}
