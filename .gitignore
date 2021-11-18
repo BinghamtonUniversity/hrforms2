@@ -4,3 +4,4 @@ dist/htdocs/css/
 dist/htdocs/js/
 dist/htdocs/index.php
 package-lock.json
+*OLD.js
