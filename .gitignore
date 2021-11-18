@@ -5,3 +5,5 @@ dist/htdocs/js/
 dist/htdocs/index.php
 package-lock.json
 *OLD.js
+*.code-workspace
+install.sh
