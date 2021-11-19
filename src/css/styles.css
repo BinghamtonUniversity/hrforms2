@@ -120,6 +120,20 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
 /* Jodit editor source view font size fix */
 .editor-container .jodit-source * { font-size: 18px }
 
+.split-account-table tbody tr td:nth-child(1) {
+  width: 80px;
+  text-align: center;
+}
+.split-account-table tbody tr td:nth-child(2) {
+  width: auto;
+}
+.split-account-table tbody tr td:nth-child(3) {
+  width: 40px;
+}
+.split-account-table tbody tr td button {
+  padding: 2px 4px 1px;
+}
+
 @media (max-width:992px) {
   .drag-col-2 {
     display:grid;
