@@ -6,7 +6,8 @@ import { CookiesProvider } from 'react-cookie';
 import {ToastProvider} from "react-toast-notifications";
 import {library} from "@fortawesome/fontawesome-svg-core";
 import {faExclamationCircle,faExclamationTriangle,faSync,faChevronUp,faChevronDown,faBell,faPeopleArrows,
-        faTrash,faTrashRestore,faCircleNotch,faSearch,faCheck,faUser,faUserSlash,faUsers,faUsersSlash} from "@fortawesome/free-solid-svg-icons";
+        faTrash,faTrashRestore,faCircleNotch,faSearch,faCheck,faUser,faUserSlash,faUsers,faUsersSlash,
+        faPlusSquare,faMinusSquare} from "@fortawesome/free-solid-svg-icons";
 
 import "react-datepicker/dist/react-datepicker.css";
 import '../scss/binghamton-bs4.scss';
@@ -27,7 +28,8 @@ const queryClient = new QueryClient({
 });
 
 library.add(faExclamationCircle,faExclamationTriangle,faSync,faChevronUp,faChevronDown,faBell,faPeopleArrows,
-            faTrash,faTrashRestore,faCircleNotch,faSearch,faCheck,faUser,faUserSlash,faUsers,faUsersSlash);
+            faTrash,faTrashRestore,faCircleNotch,faSearch,faCheck,faUser,faUserSlash,faUsers,faUsersSlash,
+            faPlusSquare,faMinusSquare);
 
 ReactDOM.render(
     <HashRouter>
