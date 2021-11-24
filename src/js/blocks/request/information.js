@@ -1,6 +1,6 @@
 import React from "react";
 import { Row, Col, Form } from "react-bootstrap";
-import { Controller, useWatch } from "react-hook-form";
+import { Controller, useFieldArray, useWatch } from "react-hook-form";
 import DatePicker from "react-datepicker";
 
 export default function Information({control,errors,posTypes,reqTypes}) {
@@ -93,4 +93,3 @@ export default function Information({control,errors,posTypes,reqTypes}) {
         </article>
     );
 }
-//<Form.Control as={DatePicker} selected={endDate} minDate={startDate && addDays(startDate,1)} onChange={d=>handleDateChange('end',d)} placeholderText="mm/dd/yyyy" disabled={!startDate}/>
