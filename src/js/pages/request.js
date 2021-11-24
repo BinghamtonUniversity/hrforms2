@@ -12,6 +12,7 @@ const Information = lazy(()=>import("../blocks/request/information"));
 const Position = lazy(()=>import("../blocks/request/position"));
 const Account = lazy(()=>import("../blocks/request/account"));
 const Comments = lazy(()=>import("../blocks/request/comments"));
+const Review = lazy(()=>import("../blocks/request/review"));
 
 export default function Request() {
     const {id} = useParams();
@@ -39,7 +40,13 @@ function RequestForm({id,data}) {
     const [apptTypes,setApptTypes] = useState([]);
 
     const { getListData } = useAppQueries();
-    const { handleSubmit, control, getValues, setValue, formState: { errors } } = useForm({mode:'onBlur',reValidateMode:'onChange'});
+    const { handleSubmit, control, getValues, setValue, trigger, formState: { errors } } = useForm({
+        mode:'onBlur',
+        reValidateMode:'onChange',
+        defaultValues:{
+            SUNYAccounts:[{id:'default-SUNYAccounts',account:'',pct:'100'}]
+        }
+    });
 
     const postypes = getListData('posTypes',{enabled:false});
     const reqtypes = getListData('reqTypes',{enabled:false});
@@ -50,9 +57,23 @@ function RequestForm({id,data}) {
     const watchRequired = useWatch({name:['posType','reqType','effDate'],control:control});
 
     const navigate = e => {
+        if (e.target.dataset.tab == 'review') trigger();
         setTab(e.target.dataset.tab);
     }
-
+    const cancelRequest = () => {
+        setTab('information');
+        console.log('reset form values');
+        const formValues = getValues();
+        for (const key in formValues) {
+            switch (key) {
+                case "SUNYAccounts":
+                    setValue(key,[{account:'',pct:'100'}]);
+                    break;
+                default:
+                    setValue(key,'');
+            }
+        }
+    }
     const saveRequest = data => {
         console.log(data);
     }
@@ -91,6 +112,9 @@ function RequestForm({id,data}) {
                         <Nav.Item>
                             <Nav.Link data-tab="comments" active={(tab=="comments")} onClick={navigate} disabled={lockTabs}>Comments</Nav.Link>
                         </Nav.Item>
+                        <Nav.Item>
+                            <Nav.Link data-tab="review" active={(tab=="review")} onClick={navigate} disabled={lockTabs}>Review</Nav.Link>
+                        </Nav.Item>
                     </Nav>
                 </Card.Header>
                 <Card.Body>
@@ -104,7 +128,7 @@ function RequestForm({id,data}) {
                     }
                 </Card.Body>
                 <Card.Footer className="button-group" style={{display:'flex',justifyContent:'right'}}>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary" onClick={cancelRequest}>Cancel</Button>
                     <Button variant="danger" type="submit" disabled={lockTabs}>Save</Button>
                 </Card.Footer>
             </Card>
@@ -113,7 +137,7 @@ function RequestForm({id,data}) {
 }
 
 function RequestInfoBox({tab,getValues,posTypes,reqTypes}) {
-    if (tab=='information') return null;
+    if (tab=='information'||tab=='review') return null;
     const [effDate,posType,reqType,candidateName] = getValues(['effDate','posType','reqType','candidateName']);
     const reqMap = new Map(reqTypes);
     return (
@@ -139,8 +163,8 @@ function RequestTabRouter({tab,...props}) {
         case "information": return <Information {...props}/>;
         case "position": return <Position {...props}/>;
         case "account": return <Account {...props}/>;
-        case "comments": return <p>{tab} tab</p>;
-        case "review": return <p>{tab} tab</p>;
+        case "comments": return <Comments {...props}/>;
+        case "review": return <Review {...props}/>;
         default: return <NotFound/>
     }
 }

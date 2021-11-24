@@ -18,6 +18,13 @@ export default function Comments({control}) {
                     />
                 </Col>
             </Form.Group>
+            <CommentsHistory/>
         </>
-    )
+    );
+}
+
+function CommentsHistory() {
+    return (
+        <p>comments history...only show if there is an id; no id means new and no history</p>
+    );
 }

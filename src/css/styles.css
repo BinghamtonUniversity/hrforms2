@@ -120,6 +120,10 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
 /* Jodit editor source view font size fix */
 .editor-container .jodit-source * { font-size: 18px }
 
+/* SUNY Account styles */
+#col-SUNYAccount div.rbt {
+  width: 400px;
+}
 .split-account-table tbody tr td:nth-child(1) {
   width: 80px;
   text-align: center;
@@ -128,10 +132,22 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
   width: auto;
 }
 .split-account-table tbody tr td:nth-child(3) {
-  width: 40px;
+  width: 100px;
+}
+.split-account-table tbody tr td:nth-child(3) input {
+  text-align:right;
 }
 .split-account-table tbody tr td button {
   padding: 2px 4px 1px;
+}
+/* hide number input spinner (see: https://www.geeksforgeeks.org/how-to-disable-arrows-from-number-input/) */
+.split-account-table input::-webkit-outer-spin-button,
+.split-account-table input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.split-account-table input[type=number]{
+  -moz-appearance: textfield;
 }
 
 @media (max-width:992px) {
