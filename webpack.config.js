@@ -2,6 +2,7 @@ const path = require("path");
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 
 const dist = "dist/htdocs";
 
@@ -45,8 +46,8 @@ module.exports = (env, argv) => {
     },
 		plugins: [
 			new MiniCssExtractPlugin({
-				filename:'../css/styles.css',
-				chunkFilename:'[chunkhash].css'
+				filename:'../css/styles.min.css',
+				chunkFilename:'../css/[chunkhash].min.css'
 			}),
       new LodashModuleReplacementPlugin({
         'collections':true,
@@ -57,19 +58,22 @@ module.exports = (env, argv) => {
       })
 		],	
 		optimization: {
-            minimize: true,
-            minimizer: [new TerserPlugin({
-                terserOptions: {
-                    ecma: 2017,
-                    warnings: false,
-                    parse: {},
-                    compress: {},
-                    mangle: true
-                }
-            })]
-        },
-        devtool: (argv.mode == 'production') ? '' : 'eval-source-map'
-    };
+      minimize: true,
+      minimizer: [
+        new TerserPlugin({
+          terserOptions: {
+              ecma: 2017,
+              warnings: false,
+              parse: {},
+              compress: {},
+              mangle: true
+          }
+        }),
+        new CssMinimizerPlugin()
+      ]
+    },
+    devtool: (argv.mode == 'production') ? '' : 'eval-source-map'
+  };
 };
 /*  const common = {
     entry:{

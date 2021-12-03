@@ -5,6 +5,7 @@ import { useAppQueries } from "../queries";
 import { Typeahead } from "react-bootstrap-typeahead";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { get } from "lodash";
+import { Loading } from "./components";
 
 export default function SUNYAccount({control,errors}) {
     const [previousSplit,setPreviousSplit] = useState([{account:'',pct:'100'}]);
@@ -28,8 +29,8 @@ export default function SUNYAccount({control,errors}) {
             <Form.Group as={Row}>
                 <Form.Label column md={2}>SUNY Account:</Form.Label>
                 <Col id="col-SUNYAccount">
-                    {accounts.isLoading && <p>Loading...</p>}
-                    {accounts.isError && <p>Error</p>}
+                    {accounts.isLoading && <Loading>Loading SUNY Accounts</Loading>}
+                    {accounts.isError && <Loading isError>Error Loading SUNY Accounts</Loading>}
                     {accounts.data && 
                         <InputGroup>
                             <AccountTypeAhead accounts={accounts.data} index={0} field={{...fields[0],disabled:(fields.length>1)}} update={update}/>

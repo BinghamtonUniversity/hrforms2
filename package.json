@@ -14,7 +14,7 @@
     "build-html": "html-minifier -c conf/html-minifier.conf src/index.php -o dist/htdocs/index.php",
     "clean-js": "rm -f dist/htdocs/js/*",
     "clean-dist": "find dist/htdocs -type f -not -path \"*/api/*\" -delete",
-    "list": "find dist/htdocs -type f -not -path \"*/api/*\" -not -name \"*.LICENSE.txt\" -printf \"%Tb %Td %TH:%TM\\t%s\\t%p\\n\""
+    "list": "find dist/htdocs -type f -not -path \"*/api/*\" -not -name \"*.LICENSE.txt\" -printf \"%Tb %Td %TH:%TM\\t%k\\t%p\\n\""
   },
   "devDependencies": {
     "@babel/cli": "^7.12.17",
@@ -24,6 +24,7 @@
     "babel-loader": "^8.2.2",
     "babel-plugin-lodash": "^3.3.4",
     "css-loader": "^5.0.2",
+    "css-minimizer-webpack-plugin": "^3.2.0",
     "lodash-webpack-plugin": "^0.11.6",
     "mini-css-extract-plugin": "^1.3.8",
     "node-sass": "^6.0.1",

@@ -1,9 +1,9 @@
 import React,{lazy, useEffect, useState} from "react";
-import {useParams} from "react-router-dom";
+import { useParams, useHistory } from "react-router-dom";
 import { Row, Col, Form, Card, Nav, Button, Alert } from "react-bootstrap";
 import { useForm, useWatch } from "react-hook-form";
 import { NotFound } from "../app";
-import { useAppQueries } from "../queries";
+import { useAppQueries, useRequestQueries } from "../queries";
 import { Loading } from "../blocks/components";
 import format from "date-fns/format";
 
@@ -15,55 +15,97 @@ const Comments = lazy(()=>import("../blocks/request/comments"));
 const Review = lazy(()=>import("../blocks/request/review"));
 
 export default function Request() {
-    const {id} = useParams();
-    //if id then fetch data; else new
-    //const request = getRequest(id,{enabled:!!id})
+    const [reqId,setReqId] = useState('');
+    const [reqData,setReqData] = useState({});
+    const [isNew,setIsNew] = useState(false);
+    const [error,setError] = useState('');
+
+    const {id,sunyid,ts} = useParams();
+    const history = useHistory();
+
+    const {getRequest,postRequest} = useRequestQueries((id=='draft')?`${id}-${sunyid}-${ts}`:(id||''));
+    const request = getRequest({enabled:false,select:d => {
+        if (d.hasOwnProperty('effDate') && d.effDate != '') d.effDate = new Date(d.effDate);
+        if (d.hasOwnProperty('tentativeEndDate') && d.tentativeEndDate != '') d.tentativeEndDate = new Date(d.tentativeEndDate);
+        return d;
+    }});
+    const createRequest = postRequest();
+
+    //if id == 'draft' then get the draft
+    //if id then get the PR data
+    //else new
+    useEffect(() => {
+        console.log(id,sunyid,ts);
+        if (!id) {
+            createRequest.mutateAsync().then(d => {
+                setReqData({reqId:d.reqId,SUNYAccounts:[{id:'default-SUNYAccounts',account:'',pct:'100'}]});
+                setReqId(d.reqId);
+                setIsNew(true);
+                history.push(d.reqId.replaceAll('-','/'));
+            }).catch(e => {
+                setError(e?.description||'Unable to create a new Position Request.');
+            });
+        } else {
+            console.log('refetch:',isNew);
+            if (!isNew) {
+                request.refetch().then(d=>{            
+                    console.log(d);
+                    setReqData(d.data);
+                    setReqId(d.data.reqId);
+                });
+            }
+        }
+    },[id]);
     return (
         <section>
             <header>
                 <Row>
                     <Col>
-                        <h2>{!id&&'New '}Position Request</h2>
+                        <h2>{isNew&&'New '}Position Request</h2>
                     </Col>
                 </Row>
             </header>
-            <RequestForm id={id} data={{}}/>
+            {reqId && <RequestForm reqId={reqId} data={reqData} isNew/>}
+            {error && <Loading variant="danger" type="alert" isError>{error}</Loading>}
         </section>
     );
 }
+//{reqId && <RequestForm reqId={reqId} data={} isNew/>}
+function RequestForm({reqId,data,isNew}) {
+    const tabs = [
+        {id:'information',title:'Information'},
+        {id:'position',title:'Position'},
+        {id:'account',title:'Account'},
+        {id:'comments',title:'Comments'},
+        {id:'review',title:'Review'},
+    ];
 
-function RequestForm({id,data}) {
     const [tab,setTab] = useState('information');
-    const [lockTabs,setLockTabs] = useState(!!data);
-    const [reqTypes,setReqTypes] = useState([]);
-    const [payBasisTypes,setPayBasisTypes] = useState([]);
-    const [apptTypes,setApptTypes] = useState([]);
+    const [lockTabs,setLockTabs] = useState(true);
 
     const { getListData } = useAppQueries();
-    const { handleSubmit, control, getValues, setValue, trigger, formState: { errors } } = useForm({
+    const { handleSubmit, control, getValues, setValue, formState: { errors } } = useForm({
         mode:'onBlur',
         reValidateMode:'onChange',
-        defaultValues:{
-            SUNYAccounts:[{id:'default-SUNYAccounts',account:'',pct:'100'}]
-        }
+        defaultValues:data
     });
 
+    const {putRequest,deleteRequest} = useRequestQueries(reqId);
+    const updateReq = putRequest();
     const postypes = getListData('posTypes',{enabled:false});
-    const reqtypes = getListData('reqTypes',{enabled:false});
-    const paybasistypes = getListData('payBasisTypes',{enabled:false});
-    const appttypes = getListData('apptTypes',{enabled:false});
 
-    const watchPosType = useWatch({name:'posType',control:control});
-    const watchRequired = useWatch({name:['posType','reqType','effDate'],control:control});
+    const watchPosType = useWatch({name:'posType.id',control:control});
+    const watchRequired = useWatch({name:['posType.id','reqType.id','effDate'],control:control});
 
     const navigate = e => {
-        if (e.target.dataset.tab == 'review') trigger();
         setTab(e.target.dataset.tab);
+        //need to trigger the save
     }
     const cancelRequest = () => {
         setTab('information');
         console.log('reset form values');
         const formValues = getValues();
+        console.log(formValues);
         for (const key in formValues) {
             switch (key) {
                 case "SUNYAccounts":
@@ -73,9 +115,25 @@ function RequestForm({id,data}) {
                     setValue(key,'');
             }
         }
-    }
-    const saveRequest = data => {
-        console.log(data);
+    }    
+    const saveRequest = (data,e) => {
+        // if button is "next" save data to draft table and go to next tab
+        // if button is "save draft" save data draft table and exit to home
+        // if button is "submit" save data to primary table; and exit to home
+        // allow save draft without using sequence; sep table and uuid? or unixds-sunyid
+        const eventId = e.nativeEvent.submitter.id;
+        if (eventId == 'save_draft' || eventId == 'next') {
+            updateReq.mutateAsync({data:data}).then(d => {
+                console.log(d);
+            });
+        }
+        if (eventId == 'save_draft') {
+            console.log('redirect to home');
+        }
+        if (eventId == 'next') {
+            const nextTabIndex = tabs.findIndex(t=>t.id==tab)+1;
+            setTab(tabs[nextTabIndex].id);
+        }
     }
     useEffect(() => {
         setLockTabs(!watchRequired.every(a=>!!a));
@@ -83,38 +141,23 @@ function RequestForm({id,data}) {
     useEffect(() => {
         if (!watchPosType) return;
         //resetfields:
-        ['reqType','payBasis','reqBudgetTitle','currentGrade','newGrade','expType'].forEach(f=>setValue(f,''));
-        //todo: move to then after refetch?
-        reqtypes.data && setReqTypes(reqtypes.data.filter(r=>postypes.data[watchPosType].reqTypes.includes(r[0])));
-        paybasistypes.data && setPayBasisTypes(paybasistypes.data.filter(p=>postypes.data[watchPosType].payBasisTypes.includes(p[0])));
-        appttypes.data && setApptTypes(appttypes.data.filter(a=>postypes.data[watchPosType].apptTypes.includes(a[0])).sort());
+        ['reqType.id','reqType.title','payBasis.id','payBasis.title','reqBudgetTitle.id','reqBudgetTitle.title',
+        'currentGrade','newGrade','apptStatus.id','apptStatus.title','expType'].forEach(f=>setValue(f,''));
     },[watchPosType]);
     useEffect(()=>{
         postypes.refetch();
-        reqtypes.refetch();
-        paybasistypes.refetch();
-        appttypes.refetch();
-    },[id]);
+        Object.keys(data).forEach(k=>setValue(k,data[k]));
+    },[reqId]);
     return (
         <Form onSubmit={handleSubmit(saveRequest)}>
             <Card>
                 <Card.Header>
                     <Nav variant="tabs">
-                        <Nav.Item>
-                            <Nav.Link data-tab="information" active={(tab=="information")} onClick={navigate}>Information</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link data-tab="position" active={(tab=="position")} onClick={navigate} disabled={lockTabs}>Position</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link data-tab="account" active={(tab=="account")} onClick={navigate} disabled={lockTabs}>Account</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link data-tab="comments" active={(tab=="comments")} onClick={navigate} disabled={lockTabs}>Comments</Nav.Link>
-                        </Nav.Item>
-                        <Nav.Item>
-                            <Nav.Link data-tab="review" active={(tab=="review")} onClick={navigate} disabled={lockTabs}>Review</Nav.Link>
-                        </Nav.Item>
+                        {tabs.map(t=>(
+                            <Nav.Item key={t.id}>
+                                <Nav.Link data-tab={t.id} active={(tab==t.id)} onClick={navigate} disabled={t.id!='information'&&lockTabs}>{t.title}</Nav.Link>
+                            </Nav.Item>
+                        ))}
                     </Nav>
                 </Card.Header>
                 <Card.Body>
@@ -122,35 +165,36 @@ function RequestForm({id,data}) {
                     {postypes.isError && <Loading type="alert" isError>Error Loading Request Data</Loading>}
                     {postypes.data &&
                         <>
-                            <RequestInfoBox tab={tab} getValues={getValues} posTypes={postypes.data} reqTypes={reqTypes}/>
-                            <RequestTabRouter tab={tab} control={control} errors={errors} getValues={getValues} setValue={setValue} posTypes={postypes.data} reqTypes={reqTypes} payBasisTypes={payBasisTypes} apptTypes={apptTypes}/>
+                            <RequestInfoBox tab={tab} getValues={getValues}/>
+                            <RequestTabRouter tab={tab} control={control} errors={errors} getValues={getValues} setValue={setValue} posTypes={postypes.data}/>
                         </>
                     }
                 </Card.Body>
                 <Card.Footer className="button-group" style={{display:'flex',justifyContent:'right'}}>
                     <Button variant="secondary" onClick={cancelRequest}>Cancel</Button>
-                    <Button variant="danger" type="submit" disabled={lockTabs}>Save</Button>
+                    <Button id="save_draft" type="submit" variant="warning" disabled={lockTabs}>Save Draft</Button>
+                    {tab != 'review' && <Button id="next" type="submit" variant="primary" disabled={lockTabs}>Next</Button>}
+                    {tab == 'review' && <Button id="submit" type="submit" variant="danger" disabled={lockTabs}>Submit</Button>}
                 </Card.Footer>
             </Card>
         </Form>
     );
 }
 
-function RequestInfoBox({tab,getValues,posTypes,reqTypes}) {
+function RequestInfoBox({tab,getValues}) {
     if (tab=='information'||tab=='review') return null;
-    const [effDate,posType,reqType,candidateName] = getValues(['effDate','posType','reqType','candidateName']);
-    const reqMap = new Map(reqTypes);
+    const [reqId,effDate,posType,reqType,candidateName] = getValues(['reqId','effDate','posType','reqType','candidateName']);
     return (
         <Alert variant="secondary">
             <Row as="dl" className="mb-0">
                 <Col as="dt" sm={2} className="mb-0">Request ID:</Col>
-                <Col as="dd" sm={4} className="mb-0">[id]</Col>
+                <Col as="dd" sm={4} className="mb-0">{reqId}</Col>
                 <Col as="dt" sm={2} className="mb-0">Effective Date:</Col>
                 <Col as="dd" sm={4} className="mb-0">{format(effDate,'M/d/yyyy')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Position Type:</Col>
-                <Col as="dd" sm={4} className="mb-0">{posType} - {posTypes[posType].title}</Col>
+                <Col as="dd" sm={4} className="mb-0">{posType.id} - {posType.title}</Col>
                 <Col as="dt" sm={2} className="mb-0">Request Type:</Col>
-                <Col as="dd" sm={4} className="mb-0">{reqType} - {reqMap.get(reqType)}</Col>
+                <Col as="dd" sm={4} className="mb-0">{reqType.id} - {reqType.title}</Col>
                 <Col as="dt" sm={2} className="mb-0">Candidate Name:</Col>
                 <Col as="dd" sm={4} className="mb-0">{candidateName}</Col>
             </Row>

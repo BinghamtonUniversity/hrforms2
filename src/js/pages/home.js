@@ -51,7 +51,7 @@ function DashBoardCards({SUNY_ID}) {
                     <Card.Header className="bg-main text-white"><Link className="text-white" to="/request/list">Requests</Link></Card.Header>
                     <ListGroup variant="flush">
                         <Link to="/request/" component={DashBoardListComponent}><span className="font-italic">New Request</span></Link>
-                        {requests.has('draft') && <Link className="d-flex justify-content-between" to="/request/list/draft" component={DashBoardListComponent}><span>Drafts</span>{requests.get('draft')}</Link>}
+                        {requests.has('draft') && <Link className="d-flex justify-content-between" to="/request/list/drafts" component={DashBoardListComponent}><span>Drafts</span>{requests.get('draft')}</Link>}
                         {requests.has('approval') && <Link className="d-flex justify-content-between" to="/request/list/approvals" component={DashBoardListComponent}><span>Approvals</span>{requests.get('approval')}</Link>}
                         {requests.has('final') && <Link className="d-flex justify-content-between" to="/request/list/final" component={DashBoardListComponent}><span>Final Approvals</span>{requests.get('final')}</Link>}
                     </ListGroup>

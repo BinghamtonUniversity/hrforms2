@@ -18,10 +18,10 @@ $CONFIG = array(
 	(0)=>array(					// defaults used when hostname is not matched ** DO NOT DELETE OR MOVE **
 		"INSTANCE" => null,		// name of the application instance
 		"HOST" => null,			// hostname, used to search for defined constants
-		"CAS_HOST" => null,   // hostname of CAS server to authenticate against
-		"DATE_FMT" => null,		// database string date format converted to moment syntax (see: https://momentjs.com/docs/#/displaying/)
+		"CAS_HOST" => null,		// hostname of CAS server to authenticate against
+		"DATE_FMT" => null,		// database string date format converted to moment syntax (see: https://date-fns.org/docs/format)
 		"DEBUG" => false,		// when true will output additional information in the JavaScript console.
-		"TPL_CACHE" => true,	// when true will cache templates rather than reloading on each call.
+		"MAX_DRAFTS" => 10		// sets the maximum number of open drafts a user may have.  Attempts to create additional will result in error.
 	),
 	(1)=>array(
 		"INSTANCE" => "LOCAL",
@@ -29,7 +29,7 @@ $CONFIG = array(
 		"CAS_HOST" => null,
 		"DATE_FMT" => "DD-MMM-YY",
 		"DEBUG" => true,
-		"TPL_CACHE" => false,
+		"MAX_DRAFTS" => 20,
 	),
 	(2)=>array(
 		"INSTANCE" => "DEV",
@@ -37,7 +37,7 @@ $CONFIG = array(
 		"CAS_HOST" => null,
 		"DATE_FMT" => "DD-MMM-YY",
 		"DEBUG" => true,
-		"TPL_CACHE" => false,
+		"MAX_DRAFTS" => 3,
 	),
 	(3)=>array(
 		"INSTANCE" => "TEST",
@@ -45,7 +45,7 @@ $CONFIG = array(
 		"CAS_HOST" => null,
 		"DATE_FMT" => "DD-MMM-YY",
 		"DEBUG" => true,
-		"TPL_CACHE" => true,
+		"MAX_DRAFTS" => 3,
 	),
 	(4)=>array(
 		"INSTANCE" => "PROD",
@@ -53,7 +53,7 @@ $CONFIG = array(
 		"CAS_HOST" => null,
 		"DATE_FMT" => "DD-MMM-YY",
 		"DEBUG" => false,
-		"TPL_CACHE" => true,
+		"MAX_DRAFTS" => 3,
 	)
 );
 

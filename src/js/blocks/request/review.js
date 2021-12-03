@@ -21,9 +21,8 @@ export default function Review(props) {
     );
 }
 
-function ReviewInformation({posTypes,reqTypes,getValues}) {
+function ReviewInformation({getValues}) {
     const [posType,reqType,effDate,candidateName,bNumber] = getValues(['posType','reqType','effDate','candidateName','bNumber']);
-    const reqMap = new Map(reqTypes);
     return (
         <article className="mb-4">
             <header>
@@ -39,9 +38,9 @@ function ReviewInformation({posTypes,reqTypes,getValues}) {
                 <Col as="dt" sm={2} className="mb-0">Effective Date:</Col>
                 <Col as="dd" sm={4} className="mb-0">{format(effDate,'M/d/yyyy')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Position Type:</Col>
-                <Col as="dd" sm={4} className="mb-0">{posType} - {posTypes[posType].title}</Col>
+                <Col as="dd" sm={4} className="mb-0">{posType.id} - {posType.title}</Col>
                 <Col as="dt" sm={2} className="mb-0">Request Type:</Col>
-                <Col as="dd" sm={4} className="mb-0">{reqType} - {reqMap.get(reqType)}</Col>
+                <Col as="dd" sm={4} className="mb-0">{reqType.id} - {reqType.title} </Col>
                 <Col as="dt" sm={2} className="mb-0">Candidate Name:</Col>
                 <Col as="dd" sm={4} className="mb-0">{candidateName}</Col>
                 <Col as="dt" sm={2} className="mb-0">B-Number:</Col>
@@ -61,6 +60,10 @@ function ReviewPosition({getValues}) {
                     </Col>
                 </Row>
             </header>
+            <Row as="dl" className="mb-0">
+                <Col as="dt" sm={2} className="mb-0">Line Number:</Col>
+                <Col as="dd" sm={4} className="mb-0">[line #]</Col>
+            </Row>
         </article>
     );
 }
