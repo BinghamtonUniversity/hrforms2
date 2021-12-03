@@ -99,6 +99,7 @@ function AppContent({SUNY_ID}) {
                         <Route exact path="/" component={Home}/>
                         <Route exact path="/request/list" component={RequestList}/>
                         <Route path="/request/list/:part" component={RequestList}/>
+                        <Route path="/request/:id/:sunyid/:ts" component={Request}/>
                         <Route path="/request/:id" component={Request}/>
                         <Route path="/request" component={Request}/>
                         <Route path="/form/:id" component={HRForm}/>

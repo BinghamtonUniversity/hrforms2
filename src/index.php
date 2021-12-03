@@ -30,7 +30,8 @@
 		<link href='//fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css' />
 
         <!-- CSS -->
-        <link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/reset.min.css">
+        <link rel="stylesheet" href="/css/styles.min.css">
     </head>
     <body>
         <div id="root"></div>

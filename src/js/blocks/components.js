@@ -15,13 +15,13 @@ const LoadingOLD = React.memo(function LoadingOLD({className='',title,error,type
     }
 });
 */
-const Loading = React.memo(function Loading({children,className,isError,variant,type}){
+const Loading = React.memo(function Loading({children,className='',isError,error,variant,type}){
     const icon = (isError)?<FontAwesomeIcon icon="exclamation-triangle"/>:<FontAwesomeIcon icon="sync" spin/>;
     const cl = (isError)?`text-danger ${className}`:className;
     if (type == 'alert') {
         return <Alert variant={variant||'dark'} className={`text-center ${cl}`}>{icon} {children}</Alert>
     } else {
-        return <span className={cl}>{icon} {children}</span>
+        return <span className={cl}>{icon} {children} {error && <small>({error?.name && <>{error?.name} - </>}{error?.message})</small>}</span>
     }
 });
 export {Loading}

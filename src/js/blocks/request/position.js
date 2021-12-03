@@ -1,22 +1,41 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useAppQueries } from "../../queries";
 import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import { Controller, useWatch } from "react-hook-form";
 import DatePicker from "react-datepicker";
 
-export default function Position({control,errors,getValues,setValue,posTypes,payBasisTypes,apptTypes}) {
+export default function Position({control,errors,getValues,setValue,posTypes}) {
     const [oldLineNum,setOldLineNum] = useState('');
 
-    const posType = useWatch({name:'posType',control:control})||'';
+    const posType = useWatch({name:'posType.id',control:control})||'';
     const isNewLine = useWatch({name:'newLine',control:control});
     const isMultiLine = useWatch({name:'multiLines',control:control});
     const watchFTE = useWatch({name:'fte',control:control})||100;
 
     const { getListData } = useAppQueries();
-    const titles = getListData(posTypes[posType]?.budgetTitlesList,{enabled:false});
+    const paybasistypes = getListData('payBasisTypes',{cacheTime:600000,staleTime:600000,
+        select:d=>d.filter(p=>posTypes[posType].payBasisTypes.includes(p[0]))});
+    const titles = getListData(posTypes[posType]?.budgetTitlesList,{cacheTime:600000,staleTime:600000});
+    const appttypes = getListData('apptTypes',{cacheTime:600000,staleTime:600000,
+        select:d=>d.filter(a=>posTypes[posType].apptTypes.includes(a[0])).sort()});
 
     const handleFTERangeChange = e => {
         setValue('fte',e.target.value);
+    }
+    const handlePayBasisChange = (field,e) => {
+        field.onChange(e);
+        const pb = paybasistypes.data.find(a=>a[0]==e.target.value);
+        setValue('payBasis.title',(pb)?pb[1]:'');
+    }
+    const handleReqBudgetTitleChange = (field,e) => {
+        field.onChange(e);
+        const t = titles.data.find(a=>a[0]==e.target.value);
+        setValue('reqBudgetTitle.title',(t)?t[1]:'');
+    }
+    const handleApptStatusChange = (field,e) => {
+        field.onChange(e);
+        const a = appttypes.data.find(a=>a[0]==e.target.value);
+        setValue('apptStatus.title',(a)?a[1]:'');
     }
 
     useEffect(() => {
@@ -28,9 +47,9 @@ export default function Position({control,errors,getValues,setValue,posTypes,pay
             setValue('lineNumber',oldLineNum);
         }
     },[isNewLine]);
-    useEffect(() => {
+    /*useEffect(() => {
         titles.refetch();
-    },[posType]);
+    },[posType]);*/
     return (
         <article>
             <header>
@@ -90,8 +109,8 @@ export default function Position({control,errors,getValues,setValue,posTypes,pay
                             rules={{min:{value:2,message:'Must be at least 2 lines'}}}
                             render={({field}) => <Form.Control {...field} type="number" min={2} isInvalid={errors.numLines}/>}
                         />
+                        <Form.Control.Feedback type="invalid">{errors.numLines?.message}</Form.Control.Feedback>
                     </Col>
-                    <Form.Control.Feedback type="invalid">{errors.numLines?.message}</Form.Control.Feedback>
                 </Form.Group>
             </aside>
             }
@@ -101,17 +120,43 @@ export default function Position({control,errors,getValues,setValue,posTypes,pay
                     <Controller
                         name="minSalary"
                         defaultValue=""
+                        rules={{
+                            validate: v => {
+                                if (v == '') return true;
+                                const min = parseFloat(v)
+                                if (min<=0) return 'Must be greater than zero';
+                                const max = getValues('maxSalary');
+                                if (max == '') return true;
+                                if (min > parseFloat(max)) return 'Must be less than maxSalary';
+                                return true;
+                            },
+                            deps:['maxSalary']
+                        }}
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="text"/>}
+                        render={({field}) => <Form.Control {...field} type="number" isInvalid={errors.minSalary}/>}
                     />
+                    <Form.Control.Feedback type="invalid">{errors.minSalary?.message}</Form.Control.Feedback>
                 </Col>
                 <Col xs="auto">
                     <Controller
                         name="maxSalary"
                         defaultValue=""
+                        rules={{
+                            validate: v => {
+                                if (v == '') return true;
+                                const max = parseFloat(v)
+                                if (max<=0) return 'Must be greater than zero';
+                                const min = getValues('minSalary');
+                                if (min == '') return true;
+                                if (max < parseFloat(min)) return 'Must be greater than minSalary';
+                                return true;
+                            },
+                            deps:['minSalary']
+                        }}
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="text"/>}
+                        render={({field}) => <Form.Control {...field} type="number" isInvalid={errors.maxSalary}/>}
                     />
+                    <Form.Control.Feedback type="invalid">{errors.maxSalary?.message}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
@@ -134,13 +179,13 @@ export default function Position({control,errors,getValues,setValue,posTypes,pay
                 <Form.Label column md={2}>Pay Basis:</Form.Label>
                 <Col xs="auto">
                     <Controller
-                        name="payBasis"
+                        name="payBasis.id"
                         defaultValue=""
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} as="select">
+                            <Form.Control {...field} as="select" onChange={e=>handlePayBasisChange(field,e)}>
                                 <option></option>
-                                {payBasisTypes.map(p=><option key={p[0]} value={p[0]}>{p[0]} - {p[1]}</option>)}
+                                {paybasistypes.data && paybasistypes.data.map(p=><option key={p[0]} value={p[0]}>{p[0]} - {p[1]}</option>)}
                             </Form.Control>
                         )}
                     />
@@ -188,10 +233,10 @@ export default function Position({control,errors,getValues,setValue,posTypes,pay
                 <Form.Label column md={2}>Requested Budget Title:</Form.Label>
                 <Col xs="auto">
                     <Controller
-                        name="reqBudgetTitle"
+                        name="reqBudgetTitle.id"
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} as="select">
+                            <Form.Control {...field} as="select" onChange={e=>handleReqBudgetTitleChange(field,e)}>
                                 <option></option>
                                 {titles.data && titles.data.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
                             </Form.Control>
@@ -203,12 +248,12 @@ export default function Position({control,errors,getValues,setValue,posTypes,pay
                 <Form.Label column md={2}>Appointment Status:</Form.Label>
                 <Col xs="auto">
                     <Controller
-                        name="apptStatus"
+                        name="apptStatus.id"
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} as="select">
+                            <Form.Control {...field} as="select" onChange={e=>handleApptStatusChange(field,e)}>
                                 <option></option>
-                                {apptTypes.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
+                                {appttypes.data && appttypes.data.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
                             </Form.Control>
                         )}
                     />

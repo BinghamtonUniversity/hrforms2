@@ -9,6 +9,7 @@ define("E_NO_SESSION",481);
 define("E_FORBIDDEN",403);
 define("E_METHOD_NOT_ALLOWED",405);
 define("E_NOT_FOUND",404);
+define("E_TOO_MANY_DRAFTS",4291);
 define("E_TEST",999);
 
 Class HRForms2 {
@@ -92,6 +93,11 @@ Class HRForms2 {
 			$errTitle = "Method Not Allowed";
 			$errMsg = "Method (".$this->method.") not allowed.";
 			break;
+		case E_TOO_MANY_DRAFTS:
+			$errStatus = 429;
+			$errTitle = "Too Many Requests";
+			$errMsg = "User has too many open drafts.";
+			break;	
 		case E_NO_SESSION:
 			$errStatus = 481;
 			$errTitle = "No Session";
@@ -105,6 +111,7 @@ Class HRForms2 {
 		$errMsg = (isset($errObj['errMsg'])) ? $errObj['errMsg'] : $errMsg;
 		$errCode = (isset($errObj['errCode'])) ? $errStatus . "::" . $errObj['errCode'] : $errStatus;
 		header($_SERVER["SERVER_PROTOCOL"]." $errStatus $errTitle");
+		header("X-Error-Description: " . $errMsg);
 		//header("X-Response-Code: $errStatus");
 		//header("X-Error-Message: " . (is_array($errMsg)) ? implode(',',$errMsg) : $errMsg);
 		$this->toJSON(array("status"=>$errStatus,"title"=>$errTitle,"error"=>$errMsg,"errcode"=>$errCode));
@@ -193,4 +200,8 @@ Class HRForms2 {
 		}
 	}
 
+	protected function newRequest() {
+		$this->sessionData['NEW_REQUEST'] = '1234';
+		return true;
+	}
 }

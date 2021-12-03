@@ -21,10 +21,15 @@ function q(u,m,b) {
         let opts = {Accept:'application/json',headers:{ContentType:'application/json'},method:m||'GET'};
         if (['POST','PUT','PATCH'].includes(m)) opts.body = bd && JSON.stringify(bd);
         return new Promise((res,rej) => {
+            //TODO: check window.sessionStorage; combine with cookie to handle expiration.
             Promise.race([
                 fetch(`/api/api.php/${u}`,opts).then(r=>(!r.ok)?rej({name:r.status,message:r.statusText,description:r.headers.get('X-Error-Description')}):r.json()),
                 new Promise((resolve,reject)=>setTimeout(reject,requestTimeout,{staus:408,name:'408',message:'Request Timeout'}))
-            ]).then(j=>res(j)).catch(e=>rej(e));
+            ]).then(j=>{
+                //TODO: if storable; sessionStorage.setItem('key','value') <-- value needs to be stringified json.
+                //see: https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage
+                res(j);
+            }).catch(e=>rej(e));
         });
     }
 }
@@ -67,6 +72,7 @@ export function useAppQueries() {
         const options = args[0]?.options||args[1]||{};
         return useQuery(['list',LIST_ID],q(`lists/${LIST_ID}`),options);
     }
+    //TODO: need to handle caching better; useQuery will still query on re-mount (i.e. tab changes)
     const getListData = (...args) => {
         const LIST_ID = args[0]?.LIST_ID||args[0];
         const options = args[0]?.options||args[1]||{};
@@ -92,6 +98,23 @@ export function useAppQueries() {
         });
     }
     return {getSession,getSettings,getTerms,getNews,getLists,getList,getListData,getBudgetTitles,putNews,patchNews};
+}
+
+/** REQUEST QUERIES */
+export function useRequestQueries(REQUEST_ID) {
+    const getRequest = (...args) => {
+        const options = args[0]?.options||args[0]||{};
+        return useQuery(['requests',REQUEST_ID],q(`requests/${REQUEST_ID.replaceAll('-','/')}`),options);
+    }
+    const postRequest = () => useMutation(d=>q('requests/','POST',d)());
+    const putRequest = () => useMutation(d=>q(`requests/${REQUEST_ID.replaceAll('-','/')}`,'PUT',d)());
+    const deleteRequest = () => useMutation(d=>q(`requests/${REQUEST_ID.replaceAll('-','/')}`,'DELETE',d)());
+
+    const getRequestList = (...args) => {
+        const options = args[0]?.options||args[0]||{};
+        return useQuery(['requestlist',REQUEST_ID],q('requestlist'),options);
+    }
+    return {getRequest,postRequest,putRequest,deleteRequest,getRequestList};
 }
 
 /** USER QUERIES */

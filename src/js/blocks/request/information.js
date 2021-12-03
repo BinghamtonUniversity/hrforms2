@@ -1,10 +1,27 @@
 import React from "react";
 import { Row, Col, Form } from "react-bootstrap";
-import { Controller, useFieldArray, useWatch } from "react-hook-form";
+import { Controller, useWatch } from "react-hook-form";
 import DatePicker from "react-datepicker";
+import { useAppQueries } from "../../queries";
 
-export default function Information({control,errors,posTypes,reqTypes}) {
-    const watchReqType = useWatch({name:'reqType',control:control});
+export default function Information({control,errors,posTypes,setValue}) {
+    const watchPosType = useWatch({name:'posType.id',control:control});
+    const watchReqType = useWatch({name:'reqType.id',control:control});
+    
+    const { getListData } = useAppQueries();
+    const reqtypes = getListData('reqTypes',{cacheTime:600000,staleTime:600000,
+        select:d=>d.filter(r=>posTypes[watchPosType]?.reqTypes.includes(r[0]))
+    });
+
+    const handlePosTypeChange = (field,e) => {
+        field.onChange(e);
+        setValue('posType.title',posTypes[e.target.value].title);
+    }
+    const handleReqTypeChange = (field,e) => {
+        field.onChange(e);
+        const rt = reqtypes.data.find(a=>a[0]==e.target.value);
+        setValue('reqType.title',(rt)?rt[1]:'');
+    }
     return (
         <article>
             <header>
@@ -16,11 +33,11 @@ export default function Information({control,errors,posTypes,reqTypes}) {
                 <Form.Label column md={2}>Position Type*:</Form.Label>
                 <Col xs="auto">
                     <Controller
-                        name="posType"
+                        name="posType.id"
                         defaultValue=""
                         control={control}
                         rules={{required:{value:true,message:'You must select a Position Type'}}}
-                        render={({field})=>Object.keys(posTypes).map(k=><Form.Check key={k} {...field} inline type="radio" label={posTypes[k].title} value={k} checked={k==field.value}/>) }
+                        render={({field})=>Object.keys(posTypes).map(k=><Form.Check key={k} {...field} inline type="radio" label={posTypes[k].title} value={k} checked={k==field.value} onChange={e=>handlePosTypeChange(field,e)}/>) }
                     />
                 </Col>
             </Form.Group>
@@ -28,14 +45,14 @@ export default function Information({control,errors,posTypes,reqTypes}) {
                 <Form.Label column md={2}>Request Type*:</Form.Label>
                 <Col sm={9} md={6} lg={5} xl={4}>
                     <Controller
-                        name="reqType"
+                        name="reqType.id"
                         defaultValue=""
                         control={control}
                         rules={{required:{value:true,message:'Request Type is required'}}}
                         render={({field}) => (
-                            <Form.Control {...field} as="select" isInvalid={errors.reqType}>
+                            <Form.Control {...field} as="select" onChange={e=>handleReqTypeChange(field,e)} isInvalid={errors.reqType}>
                                 <option></option>
-                                {reqTypes.map(r=><option key={r[0]} value={r[0]}>{r[0]} - {r[1]}</option>)}
+                                {reqtypes.data && reqtypes.data.map(r=><option key={r[0]} value={r[0]}>{r[0]} - {r[1]}</option>)}
                             </Form.Control>
                         )}
                     />
