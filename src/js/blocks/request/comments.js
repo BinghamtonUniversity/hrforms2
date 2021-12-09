@@ -1,18 +1,17 @@
 import React from "react";
 import { Row, Col, Form } from "react-bootstrap";
-import { Controller } from "react-hook-form";
+import { Controller, useForm, useFormContext } from "react-hook-form";
 
-export default function Comments({control}) {
+export default function Comments() {
+    const {control} = useFormContext();
     return (
         <>
-            <Row>
-                <Col><h3>Comments</h3></Col>
-            </Row>
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Comment:</Form.Label>
                 <Col md={9}>
                     <Controller
                         name="comment"
+                        defaultValue=""
                         control={control}
                         render={({field}) => <Form.Control {...field} as="textarea" placeholder="Enter a brief comment" rows={5}/>}
                     />

@@ -27,7 +27,8 @@ GlobalContext.displayName = 'GlobalContext';
 
 export function getAuthInfo() { return useContext(AuthContext); }
 export function currentUser() { return useContext(UserContext); }
-export function getGlobal() { return useContext(GlobalContext); }
+export function getGlobal() { return useContext(GlobalContext); } //should this be getGlobalContext.  Do we need it? This is nav terms right now, cosolidate with NavContext
+export function getNavContext() { return useContext(NavContext); } // do we need this?  can't we import useContext from react and import NavContext from app?
 
 /* QUERIES */
 //const {getSession,getUser,deleteSession} = useAppQueries();

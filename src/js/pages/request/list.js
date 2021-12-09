@@ -35,7 +35,7 @@ function DraftList() {
                     return (
                         <tr key={l.UNIX_TS}>
                             <td><Link to={lnk}>{lnk}</Link></td>
-                            <td>{JSON.parse(l.POSTYPE).id}</td>
+                            <td>{JSON.parse(l.POSTYPE)?.id}</td>
                             <td>reqType</td>
                             <td>{format(new Date(l.EFFDATE),'M/d/yyyy')}</td>
                             <td>{l.CANDIDATENAME}</td>

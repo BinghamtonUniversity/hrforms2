@@ -112,7 +112,7 @@ export function useRequestQueries(REQUEST_ID) {
 
     const getRequestList = (...args) => {
         const options = args[0]?.options||args[0]||{};
-        return useQuery(['requestlist',REQUEST_ID],q('requestlist'),options);
+        return useQuery('requestlist',q('requestlist'),options);
     }
     return {getRequest,postRequest,putRequest,deleteRequest,getRequestList};
 }
