@@ -1,10 +1,11 @@
 import React from "react";
 import { Row, Col, Form } from "react-bootstrap";
-import { Controller, useWatch } from "react-hook-form";
+import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import { useAppQueries } from "../../queries";
 
-export default function Information({control,errors,posTypes,setValue}) {
+export default function Information({posTypes}) {
+    const {control,setValue,formState:{errors}} = useFormContext();
     const watchPosType = useWatch({name:'posType.id',control:control});
     const watchReqType = useWatch({name:'reqType.id',control:control});
     
@@ -23,12 +24,7 @@ export default function Information({control,errors,posTypes,setValue}) {
         setValue('reqType.title',(rt)?rt[1]:'');
     }
     return (
-        <article>
-            <header>
-                <Row>
-                    <Col><h3>Information</h3></Col>
-                </Row>
-            </header>
+        <>
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Position Type*:</Form.Label>
                 <Col xs="auto">
@@ -107,6 +103,6 @@ export default function Information({control,errors,posTypes,setValue}) {
                     </Col>
                 </Form.Group>
             }
-        </article>
+        </>
     );
 }

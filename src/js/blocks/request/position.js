@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useAppQueries } from "../../queries";
 import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
-import { Controller, useWatch } from "react-hook-form";
+import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
 
-export default function Position({control,errors,getValues,setValue,posTypes}) {
-    const [oldLineNum,setOldLineNum] = useState('');
+export default function Position({posTypes}) {
+    const {control,getValues,setValue,formState:{errors}} = useFormContext();
+    const [oldLineNum,setOldLineNum] = useState(getValues('lineNumber'));
 
     const posType = useWatch({name:'posType.id',control:control})||'';
     const isNewLine = useWatch({name:'newLine',control:control});
@@ -47,16 +48,8 @@ export default function Position({control,errors,getValues,setValue,posTypes}) {
             setValue('lineNumber',oldLineNum);
         }
     },[isNewLine]);
-    /*useEffect(() => {
-        titles.refetch();
-    },[posType]);*/
     return (
-        <article>
-            <header>
-                <Row>
-                    <Col><h3>Position</h3></Col>
-                </Row>
-            </header>
+        <>
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Line Number:</Form.Label>
                 <Col xs="auto">
@@ -198,6 +191,7 @@ export default function Position({control,errors,getValues,setValue,posTypes}) {
                     <Col xs="auto">
                         <Controller
                             name="currentGrade"
+                            defaultValue=""
                             control={control}
                             render={({field}) => (
                                 <InputGroup>
@@ -215,6 +209,7 @@ export default function Position({control,errors,getValues,setValue,posTypes}) {
                     <Col xs="auto">
                         <Controller
                             name="newGrade"
+                            defaultValue=""
                             control={control}
                             render={({field}) => (
                                 <InputGroup>
@@ -234,6 +229,7 @@ export default function Position({control,errors,getValues,setValue,posTypes}) {
                 <Col xs="auto">
                     <Controller
                         name="reqBudgetTitle.id"
+                        defaultValue=""
                         control={control}
                         render={({field}) => (
                             <Form.Control {...field} as="select" onChange={e=>handleReqBudgetTitleChange(field,e)}>
@@ -249,6 +245,7 @@ export default function Position({control,errors,getValues,setValue,posTypes}) {
                 <Col xs="auto">
                     <Controller
                         name="apptStatus.id"
+                        defaultValue=""
                         control={control}
                         render={({field}) => (
                             <Form.Control {...field} as="select" onChange={e=>handleApptStatusChange(field,e)}>
@@ -298,6 +295,6 @@ export default function Position({control,errors,getValues,setValue,posTypes}) {
                     />
                 </Col>
             </Form.Group>
-        </article>
+        </>
     );
 }

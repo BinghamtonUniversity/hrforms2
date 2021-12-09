@@ -1,23 +1,19 @@
 import React from "react";
 import { Row, Col, Form } from "react-bootstrap";
-import { Controller, useWatch } from "react-hook-form";
+import { Controller, useWatch, useFormContext } from "react-hook-form";
 import { useAppQueries } from "../../queries";
 import { Loading } from "../components";
 import SUNYAccount from "../sunyaccount";
 
-export default function Account({control,errors}) {
+export default function Account() {
+    const {control,formState:{errors}} = useFormContext();
     const posType = useWatch({name:'posType',control:control});
 
     const {getListData} = useAppQueries();
     const orgs = getListData('deptOrgs');
 
     return (
-        <article>
-            <header>
-                <Row>
-                    <Col><h3>Account</h3></Col>
-                </Row>
-            </header>
+        <>
             {(posType=='F') && 
                 <Form.Group as={Row}>
                     <Form.Label column md={2}>Expenditure Type:</Form.Label>
@@ -59,7 +55,7 @@ export default function Account({control,errors}) {
                 </Col>
             </Form.Group>
             <SUNYAccount control={control} errors={errors}/>
-        </article>
+        </>
     );
 }
 

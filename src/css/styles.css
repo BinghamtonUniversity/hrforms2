@@ -21,6 +21,22 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
 .font-size-95 { font-size: 95% }
 .font-size-90 { font-size: 90% }
 
+/* spin animation class for iconify icons */
+.spin {
+  animation-name: spin;
+  animation-duration: 2000ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+@keyframes spin {
+  from {
+    transform:rotate(0deg);
+  }
+  to {
+    transform:rotate(360deg);
+  }
+}
+
 /* hover effect on nav-links */
 .navbar-dark .navbar-nav .nav-link:hover, 
 .navbar-dark .navbar-nav .nav-link:focus { color: #fff }
@@ -59,7 +75,16 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
   opacity:0.9;
 }
 
-.button-group button { margin-right: 0.5rem; }
+.button-group button { 
+  margin-right: 0.5rem;
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.6rem;
+}
+button svg.iconify { 
+  display: inline; 
+  font-size: 22px;
+}
 
 .droplist {
   height: 50vh;
@@ -162,4 +187,13 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
                           "dlh2"
                           "dl2";
   }    
+}
+
+@media (max-width: 639px) {
+  .button-group button {
+      display: flex;
+      align-items: center;
+      flex-direction:column;
+      justify-content: center
+  }
 }

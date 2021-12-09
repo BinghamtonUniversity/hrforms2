@@ -24,7 +24,7 @@ class Requests extends HRForms2 {
 	 * validate called from init()
 	 */
 	function validate() {
-		// Validation...
+		if ($this->method == 'DELETE' && $this->req[1] != $this->sessionData['SUNY_ID']) $this->raiseError(E_FORBIDDEN);
 	}
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -57,19 +57,22 @@ class Requests extends HRForms2 {
             $this->raiseError(E_TOO_MANY_DRAFTS);
             return;
         }
-
-        $now = time();
-        $id = 'draft-' . $this->sessionData['SUNY_ID'] . '-' . $now;
-        $qry = "insert into HRFORMS2_REQUESTS_DRAFTS values(:suny_id, :unix_ts, EMPTY_CLOB())";
+        list($mode,$suny_id,$unix_ts) = explode("-",$this->POSTvars['reqId']);
+        if ($suny_id != $this->sessionData['SUNY_ID']) {
+            //TODO: also check if isAdmin
+            $this->raiseError(E_NOT_AUTHORIZED);
+            return;
+        }
+        $qry = "insert into HRFORMS2_REQUESTS_DRAFTS values(:suny_id, :unix_ts, EMPTY_CLOB()) returning DATA into :data";
         $stmt = oci_parse($this->db,$qry);
         $clob = oci_new_descriptor($this->db, OCI_D_LOB);
-        oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
-        oci_bind_by_name($stmt, ":unix_ts", $now);
+        oci_bind_by_name($stmt, ":suny_id", $suny_id);
+        oci_bind_by_name($stmt, ":unix_ts", $unix_ts);
         oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
         oci_execute($stmt,OCI_DEFAULT);
         $clob->save(json_encode($this->POSTvars['data']));
         oci_commit($this->db);
-        $this->toJSON(array("reqId"=>$id));
+        $this->done();
     }
 
     function PUT() {
@@ -92,6 +95,12 @@ class Requests extends HRForms2 {
     }
 
     function DELETE() {
+        $qry = "delete from HRFORMS2_REQUESTS_DRAFTS where SUNY_ID = :suny_id and UNIX_TS = :unix_ts";
+        $stmt = oci_parse($this->db,$qry);
+        oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
+        oci_bind_by_name($stmt, ":unix_ts", $this->req[2]);
+        oci_execute($stmt,OCI_DEFAULT);
+        oci_commit($this->db);
         $this->done();
     }
 }
