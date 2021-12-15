@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Row, Col, Form } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import { useAppQueries } from "../../queries";
@@ -11,10 +11,9 @@ export default function Account() {
 
     const {getListData} = useAppQueries();
     const orgs = getListData('deptOrgs');
-
     return (
         <>
-            {(posType=='F') && 
+            {(posType?.id=='F') && 
                 <Form.Group as={Row}>
                     <Form.Label column md={2}>Expenditure Type:</Form.Label>
                     <Col xs="auto">

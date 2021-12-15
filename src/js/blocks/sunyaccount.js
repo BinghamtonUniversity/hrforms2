@@ -83,7 +83,7 @@ function AccountSplits({control,accounts,setPreviousSplit,errors}) {
                                 <Button variant="danger" size="sm" onClick={()=>remove(index)}><FontAwesomeIcon icon="minus-square"/></Button>
                             </td>
                             <td>
-                                <AccountTypeAhead accounts={accounts} index={index} field={field} update={update}/>
+                                {accounts && <AccountTypeAhead accounts={accounts} index={index} field={field} update={update}/>}
                             </td>
                             <td className="text-right">
                                 <Controller
