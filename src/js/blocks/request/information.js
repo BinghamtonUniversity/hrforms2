@@ -52,7 +52,7 @@ export default function Information({posTypes}) {
                             </Form.Control>
                         )}
                     />
-                    <Form.Control.Feedback type="invalid">{errors.reqType?.message}</Form.Control.Feedback>
+                    <Form.Control.Feedback type="invalid">{errors.reqType?.id?.message}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
@@ -90,7 +90,7 @@ export default function Information({posTypes}) {
                     />
                 </Col>
             </Form.Group>
-            {(watchReqType!='EX' && watchReqType!='FS') &&
+            {(watchReqType?.id!='EX' && watchReqType?.id!='FS') &&
                 <Form.Group as={Row}>
                     <Form.Label column md={2}>Brief Job Description:</Form.Label>
                     <Col md={9}>

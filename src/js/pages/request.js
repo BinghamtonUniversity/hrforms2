@@ -1,6 +1,6 @@
 import React,{lazy, useEffect, useState} from "react";
 import { useParams, useHistory, Prompt } from "react-router-dom";
-import { Row, Col, Form, Card, Nav, Button, Alert, Modal } from "react-bootstrap";
+import { Container, Row, Col, Form, Tabs, Tab, Card, Nav, Button, Alert, Modal } from "react-bootstrap";
 import { useForm, useWatch, FormProvider, useFormContext } from "react-hook-form";
 import { getAuthInfo, NotFound } from "../app";
 import { useAppQueries, useRequestQueries } from "../queries";
@@ -8,7 +8,8 @@ import { useQueryClient } from "react-query";
 import { useToasts } from "react-toast-notifications";
 import { Loading } from "../blocks/components";
 import format from "date-fns/format";
-import { Icon, InlineIcon } from '@iconify/react';
+import get from "lodash/get";
+import { Icon } from '@iconify/react';
 
 
 /* TABS */
@@ -35,15 +36,13 @@ export default function Request() {
         return d;
     }});
     useEffect(() => {
+        console.debug('ID Changed:',id);
         if (!id) {
-            const id = 'draft-'+SUNY_ID+'-'+format(new Date(),'t');
             setIsNew(true);
-            setReqId(id);
-            setReqData({reqId:id,SUNYAccounts:[{id:'default-SUNYAccounts',account:'',pct:'100'}]});
+            setReqData({reqId:'',SUNYAccounts:[{id:'default-SUNYAccounts',account:'',pct:'100'}]});
         } else {
             if (!isNew) {
                 request.refetch().then(d=>{            
-                    console.log(d);
                     setReqData(d.data);
                     setReqId(d.data.reqId);
                 });
@@ -59,7 +58,7 @@ export default function Request() {
                     </Col>
                 </Row>
             </header>
-            {reqData && <RequestForm reqId={reqId} data={reqData} setIsBlocking={setIsBlocking} isNew={isNew}/>}
+            {reqData && <RequestForm reqId={reqId} setReqId={setReqId} data={reqData} setIsBlocking={setIsBlocking} isNew={isNew}/>}
             {error && <Loading variant="danger" type="alert" isError>{error}</Loading>}
             {reqData && <BlockNav when={isBlocking} isNew={isNew}/>}
         </section>
@@ -107,7 +106,7 @@ function BlockNav({when,isNew}) {
     )
 }
 
-function RequestForm({reqId,data,setIsBlocking,isNew}) {
+function RequestForm({reqId,setReqId,data,setIsBlocking,isNew}) {
     const tabs = [
         {id:'information',title:'Information'},
         {id:'position',title:'Position'},
@@ -117,11 +116,9 @@ function RequestForm({reqId,data,setIsBlocking,isNew}) {
     ];
 
     const requiredFields = [
-        {id:'posType.id',title:'Position Type'},
-        {id:'reqType.id',title:'Request Type'},
-        {id:'effDate',title:'Effective Date'},
-        {id:'orgName',title:'Org Name'},
-        {id:'comment',title:'Comment'}
+        {id:'posType.id',label:'Position Type'},
+        {id:'reqType.id',label:'Request Type'},
+        {id:'effDate',label:'Effective Date'}
     ];
 
     const resetFields = [
@@ -183,11 +180,11 @@ function RequestForm({reqId,data,setIsBlocking,isNew}) {
         "comment": ""
     };
 
-    const [tab,setTab] = useState('information');
+    const [activeTab,setActiveTab] = useState('information');
     const [lockTabs,setLockTabs] = useState(true);
     const [isSaved,setIsSaved] = useState(!isNew);
+    const [isSaving,setIsSaving] = useState(false);
     const [showDeleteModal,setShowDeleteModal] = useState(false);
-    const [missingFields,setMissingFields] = useState([]);
 
     const history = useHistory();
     const queryclient = useQueryClient();
@@ -195,7 +192,7 @@ function RequestForm({reqId,data,setIsBlocking,isNew}) {
     const { getListData } = useAppQueries();
     const {addToast,removeToast} = useToasts();
     const methods = useForm({
-        mode:'onBlur',
+        mode:'onChange',
         reValidateMode:'onChange',
         defaultValues:Object.assign({},defaultVals,data)
     });
@@ -209,21 +206,25 @@ function RequestForm({reqId,data,setIsBlocking,isNew}) {
     const watchPosType = useWatch({name:'posType.id',control:methods.control});
     const watchRequiredFields = useWatch({name:requiredFields.map(fld=>fld.id),control:methods.control});
 
-    const navigate = e => {
-        methods.handleSubmit(handleSave)();
-        if (e.target.dataset.tab) {
-            methods.trigger('orgName',{shouldFocus:true});
+    const navigate = tab => {
+        const newTab = (tab == '_next')?tabs[tabs.findIndex(t=>t.id==activeTab)+1].id:tab;
+        if (newTab == 'review') {
+            console.log('trigger');
+            methods.trigger().then(()=>{
+                setActiveTab(newTab);
+                handleSave();
+            });
+        } else {
+            setActiveTab(newTab);
+            handleSave();
         }
-        setTab(e.target.dataset.tab);
     }
-    const handleCancel = () => {
-        //TODO: need modal confirm
-        setTab('information');
+    const handleUndo = () => {
         methods.reset(Object.assign({},defaultVals,data));
     }
     const handleDelete = () => {
         deleteReq.mutateAsync().then(()=>{
-            addToast(<><h5>Saving</h5><p>Deleting Position Request...</p></>,{appearance:'info',autoDismiss:false},id=>{
+            addToast(<><h5>Delete</h5><p>Deleting Position Request...</p></>,{appearance:'info',autoDismiss:false},id=>{
                 Promise.all([
                     queryclient.refetchQueries('requestlist'),
                     queryclient.refetchQueries(['counts'])
@@ -233,117 +234,99 @@ function RequestForm({reqId,data,setIsBlocking,isNew}) {
                     history.goBack();
                 }).catch(e => {
                     removeToast(id);
-                    addToast(<><h5>Error!</h5><p>Failed to delete Position Request. {e?.message}.</p></>,{appearance:'error',autoDismissTimeout:20000});
+                    addToast(<><h5>Error!</h5><p>Failed to delete Position Request. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
                 });
             });
         });
     }
-    const handleSave = (data,e) => {
-        const eventId = (e)?e.nativeEvent.submitter.id:'tab';
-        console.log(eventId,data,e);
-        if ((eventId == 'save_draft' || eventId == 'next' || eventId == 'tab') && methods.formState.isDirty) {
-            console.log(isNew,isSaved);
+    const handleSave = e => {
+        const eventId = (e)?e.target.id:'tab';
+        const data = methods.getValues();
+        console.log('handleSave:',eventId,data,e);
+        if (methods.formState.isDirty) {
+            setIsSaving(true);
             if (isNew && !isSaved) {
-                //TODO: silent save?  remove toasts?
-                addToast(<><h5>Saving</h5><p>Saving Position Request...</p></>,{appearance:'info',autoDismiss:false},id=>{
-                    createReq.mutateAsync({reqId:reqId,data:data}).then(() => {
-                        addToast(<><h5>Success!</h5><p>Position Request saved successfully...</p></>,{appearance:'success'});
-                        setIsSaved(true);
-                        history.replace(reqId.replaceAll('-','/'));
-                        queryclient.refetchQueries('requestlist'); //update request list
-                        queryclient.refetchQueries(['counts']); //update counts
-                    }).catch(e => {
-                        addToast(<><h5>Error!</h5><p>Failed to save Position Request. {e?.message}.</p></>,{appearance:'error',autoDismissTimeout:20000});
-                    }).finally(() => {
-                        removeToast(id);
-                    });
+                createReq.mutateAsync({data:data}).then(d => {
+                    data.reqId = d.reqId;
+                    setIsSaved(true);
+                    setReqId(d.reqId);
+                    history.replace(d.reqId.replaceAll('-','/'));
+                    methods.reset(data);
+                    queryclient.refetchQueries('requestlist'); //update request list
+                    queryclient.refetchQueries(['counts']); //update counts
+                }).catch(e => {
+                    console.error(e);
+                    addToast(<><h5>Error!</h5><p>Failed to save Position Request. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
+                }).finally(() => {
+                    setIsSaving(false);
                 });
             } else {
-                addToast(<><h5>Saving</h5><p>Saving Position Request...</p></>,{appearance:'info',autoDismiss:false},id=>{
-                    updateReq.mutateAsync({data:data}).then(() => {
-                        addToast(<><h5>Success!</h5><p>Position Request saved successfully...</p></>,{appearance:'success'});        
-                    }).catch(e => {
-                        addToast(<><h5>Error!</h5><p>Failed to save Position Request. {e?.message}.</p></>,{appearance:'error',autoDismissTimeout:20000});
-                    }).finally(() => {
-                        removeToast(id);
-                    });
+                updateReq.mutateAsync({data:data}).then(() => {
+                    if (eventId == 'save_draft') history.push('/');
+                }).catch(e => {
+                    console.error(e);
+                    addToast(<><h5>Error!</h5><p>Failed to save Position Request. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
+                }).finally(() => {
+                    setIsSaving(false);
                 });
             }
-            methods.reset(data,{keepDirty:false});
-        }
-        if (eventId == 'save_draft') {
-            console.log('redirect to home');
-            history.push('/');
-            //but only after save? -- yes need to wait on redirect to happen after save.  Can we make save a promise?
-        }
-        if (eventId == 'next') {
-            const nextTabIndex = tabs.findIndex(t=>t.id==tab)+1;
-            setTab(tabs[nextTabIndex].id);
         }
     }
+    const handleSubmit = (data,e) => {
+        console.log('submit:',data,e);
+        createReq.mutateAsync({data:data}).then(() => {
+            console.log('done');
+        });
+    }
+    const handleError = (errors,e) => {
+        console.log('error:',errors,e);
+    }
+
     useEffect(() => {
-        console.log('setting isDirty:',methods.formState.isDirty,isSaved);
-        //but only if saved.
+        console.log('setting is blocking:',methods.formState.isDirty,isSaved);
+        //but only if saved?
         setIsBlocking(methods.formState.isDirty);
     },[methods.formState.isDirty]);
     useEffect(() => {
-        console.log(watchRequiredFields);
-        setLockTabs(!watchRequiredFields.filter((v,i)=>i<3).every(el=>!!el));
-        setMissingFields(watchRequiredFields.map((v,i) => (v == '') && i ).filter(el=>!!el));
+        setLockTabs(!watchRequiredFields.every(el=>!!el));
     },[watchRequiredFields]);
     useEffect(() => {
-        if (!watchPosType) return;
-        //resetfields:
+        if (!watchPosType||!methods.formState.isDirty) return;
+        console.debug('Position Type Change.  Resetting Fields');
         resetFields.forEach(f=>methods.setValue(f,''));
     },[watchPosType]);
     useEffect(()=>{
-        console.log(reqId);
-        //setIsBlocking(isNew);
         postypes.refetch();
-        //data && Object.keys(data).forEach(k=>methods.setValue(k,data[k]));
         methods.reset(Object.assign({},defaultVals,data));
-        methods.register('orgName',{required:'Org Name is required'});
-        methods.register('comment',{required:'Comment is required'});
     },[reqId]);
     return (
         <FormProvider {...methods}>
-            <Form onSubmit={methods.handleSubmit(handleSave)}>
-                <Card>
-                    <Card.Header>
-                        <Nav variant="tabs">
-                            {tabs.map(t=>(
-                                <Nav.Item key={t.id}>
-                                    <Nav.Link data-tab={t.id} active={(tab==t.id)} onClick={navigate} disabled={t.id!='information'&&lockTabs}>{t.title}</Nav.Link>
-                                </Nav.Item>
-                            ))}
-                        </Nav>
-                    </Card.Header>
-                    <Card.Body>
-                        {(postypes.isLoading || postypes.isIdle) && <Loading type="alert">Loading Request Data...</Loading>}
-                        {postypes.isError && <Loading type="alert" isError>Error Loading Request Data</Loading>}
-                        {postypes.data &&
-                            <>
-                                {(tab!='information'&&tab!='review') && <RequestInfoBox/>}
-                                <article>
-                                    <header>
-                                        <h3>{tabs.find(t=>t.id==tab)?.title}</h3>
-                                    </header>
-                                    {tab=='review' && <ReviewAlert missingFields={missingFields}/>}
-                                    <RequestTabRouter tab={tab} posTypes={postypes.data}/>
-                                </article>
-                            </>
-                        }
-                    </Card.Body>
-                    <Card.Footer className="button-group" style={{display:'flex',justifyContent:'right'}}>
-                        <Button variant="secondary" onClick={handleCancel}><Icon icon="mdi:close-thick"/>Cancel</Button>
-                        {!isNew && <Button variant="danger" onClick={()=>setShowDeleteModal(true)}><Icon icon="mdi:delete"/>Delete</Button>}
-                        <Button id="save_draft" type="submit" variant="warning" disabled={lockTabs}><Icon icon="mdi:content-save-move"/>Save Draft</Button>
-                        {tab != 'review' && <Button id="next" type="submit" variant="primary" disabled={lockTabs}><Icon icon="mdi:arrow-right-thick"/>Next</Button>}
-                        {tab == 'review' && <Button id="submit" type="submit" variant="primary" disabled={lockTabs||missingFields.length!=0}><Icon icon="mdi:content-save-check"/>Submit</Button>}
-                    </Card.Footer>
-                </Card>
-                <DeleteRequestModal showDeleteModal={showDeleteModal} setShowDeleteModal={setShowDeleteModal} handleDelete={handleDelete}/>
+            <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
+                <Tabs activeKey={activeTab} onSelect={navigate} id="position-request-tabs">
+                    {tabs.map(t=>(
+                        <Tab key={t.id} eventKey={t.id} title={t.title} disabled={t.id!='information'&&lockTabs}>
+                            <Container as="article" className="mt-3" fluid>
+                                <Row as="header">
+                                    <Col as="h3">{t.title}</Col>
+                                </Row>
+                                {(t.id!='information'&&t.id!='review')&& <RequestInfoBox/>}
+                                {postypes.data && <RequestTabRouter tab={t.id} posTypes={postypes.data}/>}
+                                <Row as="footer">
+                                    <Col className="button-group" style={{display:'flex',justifyContent:'right'}}>
+                                        {isSaving && <Button variant="" disabled><Icon icon="mdi:loading" className="spin"/> Saving...</Button>}
+                                        {methods.formState.isDirty && <Button variant="secondary" onClick={handleUndo} disabled={isSaving}><Icon icon="mdi:undo"/>Undo</Button>}
+                                        {!isNew && <Button variant="danger" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}><Icon icon="mdi:delete"/>Delete</Button>}
+                                        <Button id="save_draft" onClick={handleSave} variant="warning" disabled={lockTabs||isSaving}><Icon icon="mdi:content-save-move"/>Save &amp; Exit</Button>
+                                        {activeTab != 'review' && <Button id="next" onClick={()=>navigate('_next')} variant="primary" disabled={lockTabs||isSaving}><Icon icon="mdi:arrow-right-thick"/>Next</Button>}
+                                        {activeTab == 'review' && <Button id="submit" type="submit" variant="primary" disabled={!!Object.keys(methods.formState.errors).length||isSaving}><Icon icon="mdi:content-save-check"/>Submit</Button>}
+                                    </Col>
+                                </Row>
+                            </Container>
+                        </Tab>
+                    ))}
+                </Tabs>
             </Form>
+            <DeleteRequestModal showDeleteModal={showDeleteModal} setShowDeleteModal={setShowDeleteModal} handleDelete={handleDelete}/>
         </FormProvider>
     );
 }
@@ -376,7 +359,7 @@ function RequestInfoBox() {
                 <Col as="dt" sm={2} className="mb-0">Request ID:</Col>
                 <Col as="dd" sm={4} className="mb-0">{reqId}</Col>
                 <Col as="dt" sm={2} className="mb-0">Effective Date:</Col>
-                <Col as="dd" sm={4} className="mb-0">{format(effDate,'M/d/yyyy')}</Col>
+                <Col as="dd" sm={4} className="mb-0">{effDate && format(effDate,'M/d/yyyy')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Position Type:</Col>
                 <Col as="dd" sm={4} className="mb-0">{posType.id} - {posType.title}</Col>
                 <Col as="dt" sm={2} className="mb-0">Request Type:</Col>
@@ -385,22 +368,6 @@ function RequestInfoBox() {
                 <Col as="dd" sm={4} className="mb-0">{candidateName}</Col>
             </Row>
         </Alert>
-    );
-}
-
-function ReviewAlert({missingFields}) {
-    return (
-        <>
-        {(missingFields.length)?
-            <Alert variant="danger">
-                You are missing required information in <strong>field 1</strong>, <strong>field 2</strong>, and <strong>field 3</strong>
-            </Alert>
-        :
-            <Alert variant="warning">
-                Review the information below for accuracy and correctness. When you are satisfied everything is correct you may click the submit button at the bottom.
-            </Alert>
-        }
-        </>
     );
 }
 

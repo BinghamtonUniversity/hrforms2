@@ -14,11 +14,11 @@ export default function Position({posTypes}) {
     const watchFTE = useWatch({name:'fte',control:control})||100;
 
     const { getListData } = useAppQueries();
-    const paybasistypes = getListData('payBasisTypes',{cacheTime:600000,staleTime:600000,
-        select:d=>d.filter(p=>posTypes[posType].payBasisTypes.includes(p[0]))});
-    const titles = getListData(posTypes[posType]?.budgetTitlesList,{cacheTime:600000,staleTime:600000});
-    const appttypes = getListData('apptTypes',{cacheTime:600000,staleTime:600000,
-        select:d=>d.filter(a=>posTypes[posType].apptTypes.includes(a[0])).sort()});
+    const paybasistypes = getListData('payBasisTypes',{enabled:!!posType,cacheTime:600000,staleTime:600000,
+        select:d=>d.filter(p=>posTypes[posType]?.payBasisTypes.includes(p[0]))});
+    const titles = getListData(posTypes[posType]?.budgetTitlesList,{enabled:!!posType,cacheTime:600000,staleTime:600000});
+    const appttypes = getListData('apptTypes',{enabled:!!posType,cacheTime:600000,staleTime:600000,
+        select:d=>d.filter(a=>posTypes[posType]?.apptTypes.includes(a[0])).sort()});
 
     const handleFTERangeChange = e => {
         setValue('fte',e.target.value);
@@ -99,7 +99,7 @@ export default function Position({posTypes}) {
                             name="numLines"
                             defaultValue=""
                             control={control}
-                            rules={{min:{value:2,message:'Must be at least 2 lines'}}}
+                            rules={{min:{value:2,message:'Number of Lines must be at least 2'}}}
                             render={({field}) => <Form.Control {...field} type="number" min={2} isInvalid={errors.numLines}/>}
                         />
                         <Form.Control.Feedback type="invalid">{errors.numLines?.message}</Form.Control.Feedback>
@@ -117,10 +117,10 @@ export default function Position({posTypes}) {
                             validate: v => {
                                 if (v == '') return true;
                                 const min = parseFloat(v)
-                                if (min<=0) return 'Must be greater than zero';
+                                if (min<=0) return 'minSalary must be greater than zero';
                                 const max = getValues('maxSalary');
                                 if (max == '') return true;
-                                if (min > parseFloat(max)) return 'Must be less than maxSalary';
+                                if (min > parseFloat(max)) return 'minSalary must be less than maxSalary';
                                 return true;
                             },
                             deps:['maxSalary']
@@ -138,10 +138,10 @@ export default function Position({posTypes}) {
                             validate: v => {
                                 if (v == '') return true;
                                 const max = parseFloat(v)
-                                if (max<=0) return 'Must be greater than zero';
+                                if (max<=0) return 'maxSalary must be greater than zero';
                                 const min = getValues('minSalary');
                                 if (min == '') return true;
-                                if (max < parseFloat(min)) return 'Must be greater than minSalary';
+                                if (max < parseFloat(min)) return 'maxSalary must be greater than minSalary';
                                 return true;
                             },
                             deps:['minSalary']
@@ -262,7 +262,7 @@ export default function Position({posTypes}) {
                     <Controller
                         name="apptDuration"
                         defaultValue=""
-                        rules={{min:{value:1,message:'Appointment Duration must be at least 1'}}}
+                        rules={{min:{value:1,message:'Appointment Duration must greater than zero'}}}
                         control={control}
                         render={({field}) => <Form.Control {...field} type="number" min={1} isInvalid={errors.apptDuration}/>}
                     />
