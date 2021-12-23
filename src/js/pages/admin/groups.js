@@ -1,71 +1,60 @@
-import React, { useEffect, useCallback, useMemo, useReducer, useRef, useState } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef, useReducer } from "react";
 import { useQueryClient } from "react-query";
-import { useAdminQueries, useUserQueries } from "../../queries";
-import { differenceWith, find, isEqual, pick, sortBy, orderBy, startsWith } from "lodash";
-import { Alert, Button, Col, Container, Form, Modal, Row, Tab, Tabs } from "react-bootstrap";
-import DataTable from 'react-data-table-component';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import DatePicker from "react-datepicker";
-import { addDays, subDays, differenceInDays, format } from "date-fns";
+import { useAdminQueries, useAppQueries } from "../../queries";
+import useGroupQueries from "../../queries/groups";
 import { Loading } from "../../blocks/components";
+import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert } from "react-bootstrap";
+import { Icon } from "@iconify/react";
+import { orderBy, startsWith, sortBy, difference, differenceWith, isEqual } from "lodash";
+import DataTable from 'react-data-table-component';
+import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
+import DatePicker from "react-datepicker";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { useHotkeys } from "react-hotkeys-hook";
+import { format } from "date-fns";
 import { useToasts } from "react-toast-notifications";
+import { useHotkeys } from "react-hotkeys-hook";
 
 export default function AdminGroups() {
     const [newGroup,setNewGroup] = useState(false);
-    const [selectedGroup,setSelectedGroup] = useState('');
-
-    const {getGroups,getUsers} = useAdminQueries();
-    const groups = getGroups({enabled: (!selectedGroup&&!newGroup)});
-    const users = getUsers({select:data=>sortBy(data.filter(u=>(u.active&&!!u.SUNY_ID)),['sortName'])});
-
-    useHotkeys('alt+n',e=>{
-        e.preventDefault();
-        setNewGroup(true);
-    });
-
-    const closeModal = () => {
-        setNewGroup(false);
-        setSelectedGroup('');
-    }
+    const {getGroups} = useGroupQueries();
+    const groups = getGroups();
 
     return (
-        <>
+        <React.StrictMode>
             <Row>
-                <Col><h2>Admin: Groups <Button variant="success" onClick={()=>setNewGroup(true)}>Add New</Button></h2></Col>
+                <Col><h2>Admin: Groups <Button variant="success" onClick={()=>setNewGroup(true)}><Icon icon="mdi:account-multiple-plus"/>Add New</Button></h2></Col>
             </Row>
             <Row>
                 <Col>
                     {groups.isLoading && <Loading type="alert">Loading Groups...</Loading>}
-                    {groups.isError && <Loading type="alert" isError>Error Groups: <small>{groups.error?.name} {groups.error?.messsage}</small></Loading>}
-                    {groups.isSuccess && <GroupsTable groups={groups.data} setSelectedGroup={setSelectedGroup}/>}
-                    {(selectedGroup || newGroup) && groups.isSuccess && <AddEditGroup GROUP_ID={selectedGroup} newGroup={newGroup} closeModal={closeModal} users={users.data}/>}
+                    {groups.isError && <Loading type="alert" isError>Error Groups: <small>{groups.error?.name} {groups.error?.description}</small></Loading>}
+                    {groups.isSuccess && <GroupsTable groups={groups.data} newGroup={newGroup} setNewGroup={setNewGroup}/>}
                 </Col>
             </Row>
-        </>
+        </React.StrictMode>
     );
 }
 
-const GroupsTable = React.memo(({groups,setSelectedGroup}) => {
-    const [sortField,setsortField] = useState('GROUP_NAME');
-    const [sortDir,setSortDir] = useState('asc');
+function GroupsTable({groups,newGroup,setNewGroup}) {
     const [filterText,setFilterText] = useState('');
     const [statusFilter,setStatusFilter] = useState('all');
+    const [sortField,setsortField] = useState('GROUP_NAME');
+    const [sortDir,setSortDir] = useState('asc');
     const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
     const [rows,setRows] = useState([]);
-    const [toggleGroup,setToggleGroup] = useState(undefined);
+    const [selectedRow,setSelectedRow] = useState({});
+    const [toggleGroup,setToggleGroup] = useState({});
+    const [deleteGroup,setDeleteGroup] = useState({});
+
     const searchRef = useRef();
 
     useHotkeys('ctrl+f',e=>{
         e.preventDefault();
-        searchRef.current.focus();
+        searchRef.current.focus()
     });
 
-    const handleRowClick = useCallback(row=>{
-        setSelectedGroup(row.GROUP_ID);
-    },[]);
-
+    const handleRowClick = useCallback(row=>setSelectedRow(row));
+    
     const handleSort = useCallback((...args) => {
         if (!args[0].sortable) return false;
         const sortKey = columns[(args[0].id-1)].sortField;
@@ -73,18 +62,6 @@ const GroupsTable = React.memo(({groups,setSelectedGroup}) => {
         setSortDir(args[1]);
         setRows(orderBy(groups,[sortKey],[args[1]]));
     },[]);
-
-    const filteredRows = rows.filter(row => {
-        if (row.active && statusFilter == 'inactive') return false;
-        if (!row.active && statusFilter == 'active') return false;
-        return startsWith(row.GROUP_NAME.toLowerCase(),filterText.toLowerCase());
-    });
-
-    const toggle = useMemo(() => {
-        if (!toggleGroup) return null;
-        toggleGroup.END_DATE = (!toggleGroup.END_DATE)?format(new Date(),'dd-MMM-yy'):'';
-        return <ToggleGroup group={toggleGroup} setToggleGroup={setToggleGroup}/>;
-    },[toggleGroup]);
 
     const filterComponent = useMemo(() => {
         const statusChange = e => {
@@ -119,19 +96,26 @@ const GroupsTable = React.memo(({groups,setSelectedGroup}) => {
         );
     },[filterText,statusFilter]);
 
+    const filteredRows = rows.filter(row => {
+        if (row.active && statusFilter == 'inactive') return false;
+        if (!row.active && statusFilter == 'active') return false;
+        return startsWith(row.GROUP_NAME.toLowerCase(),filterText.toLowerCase());
+    });
+
     const columns = useMemo(() => [
         {name:'Actions',cell:row=>{
             return (
                 <div className="button-group">
-                    {row.active && <Button variant="danger" size="sm" title="Deactivate Group" onClick={()=>setToggleGroup(row)}><FontAwesomeIcon icon="users-slash"/></Button>}
-                    {!row.active && <Button variant="success" size="sm" title="Restore Group" onClick={()=>setToggleGroup(row)}><FontAwesomeIcon icon="users"/></Button>}
+                    {row.active && <Button variant="warning" className="no-label" size="sm" title="Deactivate Group" onClick={()=>setToggleGroup(row)}><Icon icon="mdi:account-multiple-remove"/></Button>}
+                    {!row.active && <Button variant="success" className="no-label" size="sm" title="Restore Group" onClick={()=>setToggleGroup(row)}><Icon icon="mdi:account-multiple" /></Button>}
+                    <Button variant="danger" className="no-label" size="sm" title="Delete Group" onClick={()=>setDeleteGroup(row)}><Icon icon="mdi:delete"/></Button>
                 </div>
             );
         },ignoreRowClick:true},
         {name:'Group Name',selector:row=>row.GROUP_NAME,sortable:true,sortField:'GROUP_NAME'},
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
         {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
-    ],[]);
+    ],[groups]);
     useEffect(()=>{
         setRows(orderBy(groups,[sortField],[sortDir]));
     },[groups]);
@@ -153,320 +137,373 @@ const GroupsTable = React.memo(({groups,setSelectedGroup}) => {
                 onSort={handleSort}
                 sortServer
             />
-            {toggleGroup && toggle}
+            {(selectedRow?.GROUP_ID||newGroup) && <AddEditGroupForm {...selectedRow} setSelectedRow={setSelectedRow} newGroup={newGroup} setNewGroup={setNewGroup}/>}
+            {toggleGroup?.GROUP_ID && <ToggleGroup group={toggleGroup} setToggleGroup={setToggleGroup}/>}
+            {deleteGroup?.GROUP_ID && <DeleteGroup group={deleteGroup} setDeleteGroup={setDeleteGroup}/>}
         </>
     );
-});
-
-function ToggleGroup({group,setToggleGroup}) {
-    return (
-        <p>toggle groups</p>
-    );
-};
-
-const groupInfoReducer = (state,args)=>Object.assign({},state,args);
-
-const userListReducer = (state,args) => {
-    let available = [...state.available];
-    let assigned = [...state.assigned];
-    switch(args[0]) {
-        case "init":
-            available = args[1];
-            assigned = args[2];
-            state.original = args[2];
-            break;
-        case "add":
-            assigned.splice(args[2],0,available[args[1]]);
-            break;
-        case "del":
-            const grp = assigned.splice(args[1],1)[0];
-            available.splice(args[2],0,grp);
-            break;
-        default:
-            return state;
-        
-    }        
-    const assignedUIDs = assigned.map(u=>u.SUNY_ID);
-    const usrs = available.filter(u=>!assignedUIDs.includes(u.SUNY_ID));
-    state.available = usrs.map((u,i)=>{u.idx=i;return u;});
-    state.assigned = assigned.map((u,i)=>{u.idx=i;return u});
-    return state;
 }
 
-function AddEditGroup({GROUP_ID,newGroup,closeModal,users}) {
-    const defaultStatus = {state:'',message:'',icon:'',spin:false,cancel:true,save:!newGroup};
-
+function ToggleGroup({group,setToggleGroup}) {
+    const {addToast,removeToast} = useToasts();
+    const {patchGroup} = useGroupQueries(group.GROUP_ID);
     const queryclient = useQueryClient();
-    const { getGroupUsers,putGroup,postGroup } = useAdminQueries();
-    const { addToast } = useToasts();
-    const updateGroup = putGroup(GROUP_ID);
-    const createGroup = postGroup();
-    const groupusers = getGroupUsers(GROUP_ID,{
-        enabled: false,
-        select:data=>sortBy(data.filter(u=>u.active),['sortName']),
-        onSuccess:d=>setUserLists(['init',users,d])
-    });
+    const update = patchGroup();
+    useEffect(() => {
+        const newEndDate = (group.END_DATE)?'':format(new Date(),'dd-MMM-yy');
+        addToast(<><h5>Updating</h5><p>Updating group...</p></>,{appearance:'info',autoDismiss:false},id=>{
+            update.mutateAsync({END_DATE:newEndDate}).then(() => {
+                queryclient.refetchQueries(['groups'],{exact:true,throwOnError:true}).then(() => {
+                    removeToast(id);
+                    addToast(<><h5>Success!</h5><p>Group updated successfully.</p></>,{appearance:'success'});
+                });
+            }).catch(e => {
+                removeToast(id);
+                addToast(<><h5>Error!</h5><p>Failed to update group. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
+            }).finally(() => {
+                setToggleGroup({});
+            });
+        });
+    },[group]);
+    return null;
+}
 
-    const group = find(queryclient.getQueryData('groups'),['GROUP_ID',GROUP_ID])||{GROUP_ID:'',GROUP_NAME:'',startDate:new Date(),endDate:'',origGroupName:''};
-    const [groupInfo,setGroupInfo] = useReducer(groupInfoReducer,
-        pick(group,['GROUP_ID','GROUP_NAME','startDate','endDate']));
-    const [userLists,setUserLists] = useReducer(userListReducer,{assigned:[],available:[]});
+function DeleteGroup({group,setDeleteGroup}) {
+    const [show,setShow] = useState(true);
+    const queryclient = useQueryClient();
+    const {addToast,removeToast} = useToasts();
+    const {deleteGroup} = useGroupQueries(group.GROUP_ID);
+    const deletegroup = deleteGroup();
+    const handleDelete = () => {
+        setShow(false);
+        addToast(<><h5>Deleting</h5><p>Deleting group...</p></>,{appearance:'info',autoDismiss:false},id=>{
+            deletegroup.mutateAsync().then(() => {
+                queryclient.refetchQueries(['groups'],{exact:true,throwOnError:true}).then(() => {
+                    removeToast(id);
+                    addToast(<><h5>Success!</h5><p>Group deleted successfully.</p></>,{appearance:'success'});
+                });
+            }).catch(e => {
+                removeToast(id);
+                addToast(<><h5>Error!</h5><p>Failed to delete group. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
+            }).finally(() => {
+                setDeleteGroup({});
+            });
+        });
+    }
+    useEffect(()=>setShow(true),[group]);
+    return (
+        <Modal show={show} onHide={()=>setDeleteGroup({})} backdrop="static">
+            <Modal.Header closeButton>
+                <Modal.Title><Icon className="iconify-inline" icon="mdi:alert"/>Delete Group?</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <p>Are you sure?</p>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={()=>setDeleteGroup({})}>Cancel</Button>
+                <Button variant="danger" onClick={handleDelete}>Delete</Button>
+            </Modal.Footer>
+        </Modal>
+    )
+}
 
+function AddEditGroupForm(props) {
+    const defaultVals = {groupId:'',groupName:'',startDate:new Date(),endDate:'',assignedUsers:[],availableUsers:[],assignedDepts:[],availableDepts:[]};
+    const tabs = [
+        {id:'info',title:'Info'},
+        {id:'users',title:'Users'},
+        {id:'depts',title:'Departments'}
+    ];
+    const defaultStatus = {state:'',message:'',icon:'',spin:false,cancel:true,save:true};
+
+    const [activeTab,setActiveTab] = useState('info');
     const [status,setStatus] = useReducer((state,args) => {
         let presets = {};
         switch(args.state) {
-            case "error": presets = {icon:'exclamation-triangle',spin:false,save:false,cancel:true}; break;
-            case "saving": presets = {message:'Saving...',icon:'circle-notch',spin:true,cancel:false,save:false}; break;
+            case "error": presets = {icon:'mdi:alert',spin:false,save:false,cancel:true}; break;
+            case "saving": presets = {message:'Saving...',icon:'mdi:loading',spin:true,cancel:false,save:false}; break;
             case "loading": presets = {message:'Loading...',icon:null,spin:false,save:false}; break;
             case "clear": presets = defaultStatus; break;
         }
         return Object.assign({},state,presets,args);
     },defaultStatus);
 
-    const saveGroup = () => {
-        if (!groupInfo.startDate) {
-            // should never get here, but just in case
-            setStatus({state:'error',message:'Group must have a Start Date'});
-            return false;
-        }
-        if (!groupInfo.GROUP_NAME) {
-            // should never get here, but just in case
-            setStatus({state:'error',message:'Group must have a Name'});
-            return false;
-        }
-        const startDateChg = differenceInDays(groupInfo.startDate,group.startDate||new Date(0));
-        let endDateChg = 0;
-        if (groupInfo.endDate!=null&&group.endDate!=null) {
-            endDateChg = differenceInDays(groupInfo.endDate,group.endDate);
-        } else {
-            endDateChg = (groupInfo.endDate==null&&group.endDate==null)?0:1;
-        }
-        //check users
-        const addUsers = differenceWith(userLists.assigned,userLists.original,isEqual).map(u=>u.SUNY_ID);
-        const delUsers = differenceWith(userLists.original,userLists.assigned,isEqual).map(u=>u.SUNY_ID);
-        if (!startDateChg && !endDateChg && !addUsers.length && !delUsers.length && groupInfo.origGroupName == groupInfo.GROUP_NAME) {
+    const {addToast} = useToasts();
+
+    const methods = useForm({
+        mode:'onChange',
+        reValidateMode:'onChange',
+        defaultValues:Object.assign({},defaultVals,{
+            groupId: props.GROUP_ID||'',
+            groupName: props.GROUP_NAME||'',
+            startDate: props.startDate||new Date(),
+            endDate: props.endDate||''
+        })
+    });
+    const groupName = methods.watch('groupName');
+
+    const queryclient = useQueryClient();    
+    const {getGroupUsers,postGroup,putGroup,getAvailableGroupDepts,getGroupDepts} = useGroupQueries(props.GROUP_ID);
+    const {getUsers} = useAdminQueries();
+    const users = getUsers({enabled:false,select:data=>sortBy(data.filter(u=>(u.active&&!!u.SUNY_ID)),['sortName'])});
+    const depts = getAvailableGroupDepts({enabled:false});
+    const groupusers = getGroupUsers({enabled:false,select:data=>sortBy(data,['sortName'])});
+    const groupdepts = getGroupDepts({enabled:false});
+    const updateGroup = putGroup();
+    const createGroup = postGroup();
+
+    const navigate = tab => {
+        setActiveTab(tab);
+    }
+    const closeModal = () => {
+        if (status.state == 'saving') return false;
+        props.setSelectedRow({});
+        props.setNewGroup(false);
+    }
+
+    const handleSave = data => {
+        if (!Object.keys(methods.formState.dirtyFields).length) {
+            addToast(<><h5>No Change</h5><p>No changes to group data.</p></>,{appearance:'info'});
             closeModal();
-            return;
-        }
-        // now convert the start and end dates to string
-        const data = {
-            GROUP_ID:groupInfo.GROUP_ID,
-            GROUP_NAME:groupInfo.GROUP_NAME,
-            START_DATE:format(groupInfo.startDate,'dd-MMM-yyyy'),
-            END_DATE:(!groupInfo.endDate)?'':format(groupInfo.endDate,'dd-MMM-yyyy'),
-            ADD_USERS:addUsers,
-            DEL_USERS:delUsers
+            return true;
         }
         setStatus({state:'saving'});
-        if (newGroup) {
-            createGroup.mutateAsync(data).then(() => {
-                addToast(<><h5>Success!</h5><p>Group created successfully.</p></>,{appearance:'success'});
-                //.then?
-                queryclient.refetchQueries('groups',{exact:true,throwOnError:true});
-                setStatus({state:'clear'});
-                closeModal();
+        if (props?.GROUP_ID) {
+            const origIds = groupusers.data.map(u=>u.SUNY_ID);
+            const newIds = data.assignedUsers.map(u=>u.SUNY_ID);
+            const addUsers = difference(newIds,origIds);
+            const delUsers = difference(origIds,newIds);
+            const addDepts = differenceWith(data.assignedDepts,groupdepts.data,isEqual);
+            const delDepts = differenceWith(groupdepts.data,data.assignedDepts,isEqual);
+            //Could be separate mutations encapped in Promise.all?
+            updateGroup.mutateAsync({
+                GROUP_NAME:data.groupName,
+                START_DATE:format(data.startDate,'dd-MMM-yyyy'),
+                END_DATE:(data.endDate)?format(data.endDate,'dd-MMM-yyyy'):'',
+                ADD_USERS:addUsers,
+                DEL_USERS:delUsers,
+                ADD_DEPTS:addDepts,
+                DEL_DEPTS:delDepts
+            }).then(d=>{
+                Promise.all([
+                    queryclient.refetchQueries('groups',{exact:true,throwOnError:true}),
+                    queryclient.refetchQueries(['groupusers',props.GROUP_ID],{exact:true,throwOnError:true})
+                ]).then(() => {
+                    setStatus({state:'clear'});
+                    addToast(<><h5>Success!</h5><p>Group saved successfully</p></>,{appearance:'success'});
+                    closeModal();
+                });
             }).catch(e => {
-                setStatus({
-                    state:'error',
-                    message:e.description || `${e.name}: ${e.message}`
-                });    
+                console.error(e);
+                setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
             });
         } else {
-            updateGroup.mutateAsync(data).then(() => {
-                addToast(<><h5>Success!</h5><p>Group updated successfully.</p></>,{appearance:'success'});
-                //Promise.all?
-                queryclient.refetchQueries('groups',{exact:true,throwOnError:true});
-                queryclient.refetchQueries(['groupusers',GROUP_ID],{exact:true,throwOnError:true});
-                setStatus({state:'clear'});
-                closeModal();
+            const addUsers = data.assignedUsers.map(u=>u.SUNY_ID);
+            createGroup.mutateAsync({
+                GROUP_NAME:data.groupName,
+                START_DATE:format(data.startDate,'dd-MMM-yyyy'),
+                END_DATE:(data.endDate)?format(data.endDate,'dd-MMM-yyyy'):'',
+                ADD_USERS:addUsers,
+                DEL_USERS:[]
+            }).then(d=>{
+                queryclient.refetchQueries('groups',{exact:true,throwOnError:true}).then(() => {
+                    setStatus({state:'clear'});
+                    addToast(<><h5>Success!</h5><p>Group created successfully</p></>,{appearance:'success'});
+                    closeModal();
+                });
             }).catch(e => {
-                setStatus({
-                    state:'error',
-                    message:e.description || `${e.name}: ${e.message}`
-                });    
+                console.error(e);
+                setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
             });
         }
     }
-    useEffect(() => {
-        setGroupInfo({origGroupName:groupInfo.GROUP_NAME});
-        groupusers.refetch();
-    },[GROUP_ID]);
-    useEffect(()=>{
-        newGroup && setUserLists(['init',users,[]]);
-    },[newGroup]);
+    const handleError = error => {
+        console.log(error);
+    }
 
+    useEffect(() => {
+        //get departments; use Promise.all()
+        Promise.all([
+            users.refetch(),
+            depts.refetch()
+        ]).then(([{data:usersData},{data:deptData}]) => {
+            //const [{data:usersData},{data:deptData}] = r;
+            if (props.newGroup) {
+                methods.reset(Object.assign({},defaultVals,{
+                    availableUsers:usersData,
+                    availableDepts:deptData
+                }));
+            } else {
+                Promise.all([
+                    groupusers.refetch(),
+                    groupdepts.refetch()
+                ]).then(([{data:groupuserData},{data:groupdeptData}]) => {
+                    const assignedIds = groupuserData.map(u=>u.SUNY_ID);
+                    const filtered = usersData.filter(u=>!assignedIds.includes(u.SUNY_ID));
+                    methods.reset({
+                        groupId: props.GROUP_ID,
+                        groupName: props.GROUP_NAME,
+                        startDate: props.startDate,
+                        endDate: props.endDate,
+                        assignedUsers:groupuserData,
+                        availableUsers:filtered,
+                        assignedDepts:groupdeptData,
+                        availableDepts:deptData
+                    });    
+                });
+            }
+        });
+    },[props.GROUP_ID,props.newGroup]);
     return (
         <Modal show={true} onHide={closeModal} backdrop="static" size="lg">
-            <Modal.Header closeButton>
-                <Modal.Title>{newGroup && `New `}Group</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
-                <AddEditGroupTabs groupInfo={groupInfo} setGroupInfo={setGroupInfo} userLists={userLists} setUserLists={setUserLists} setStatus={setStatus} newGroup={newGroup}/>
-            </Modal.Body>
-            <Modal.Footer>
-                {status.state != 'error' && <p>{status.message}</p>}
-                <Button variant="secondary" onClick={closeModal} disabled={!status.cancel}>Cancel</Button>
-                <Button variant="danger" onClick={saveGroup} disabled={!status.save}>{status.icon && <FontAwesomeIcon icon={status.icon} spin={status.spin}/>} Save</Button>
-            </Modal.Footer>
+            <FormProvider {...methods}>
+                <Form onSubmit={methods.handleSubmit(handleSave,handleError)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>{props.newGroup && `New `}Group: {groupName}</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
+                        {(props.newGroup && (users.isIdle || users.isLoading))||
+                        (!props.newGroup && (groupusers.isIdle || groupusers.isLoading))&&
+                            <Loading type="alert">Loading Group Data</Loading>
+                        }
+                        {users.isError && <Loading type="alert" isError>Failed to load users <small>{users.error?.description}</small></Loading>}
+                        {groupusers.isError && <Loading type="alert" isError>Failed to load group users <small>{groupusers.error?.description}</small></Loading> }
+                        {(groupusers.data||props.newGroup) &&
+                            <Tabs activeKey={activeTab} onSelect={navigate} id="admin-groups-tabs">
+                                {tabs.map(t=>(
+                                    <Tab key={t.id} eventKey={t.id} title={t.title}>
+                                        <Container className="mt-3" fluid>
+                                            <TabRouter tab={t.id}/>
+                                        </Container>
+                                    </Tab>
+                                ))}
+                            </Tabs>
+                        }
+                    </Modal.Body>
+                    <Modal.Footer>
+                        {status.state != 'error' && <p>{status.message}</p>}
+                        <Button variant="secondary" onClick={closeModal}  disabled={!status.cancel}>Cancel</Button>
+                        <Button variant="danger" type="submit"disabled={!status.save||!methods.formState.isValid}>{status.icon && <Icon icon={status.icon} className={status.spin?'spin':''}/>}Save</Button>
+                    </Modal.Footer>
+                </Form>
+            </FormProvider>
         </Modal>
     );
 }
 
-function AddEditGroupTabs({groupInfo,setGroupInfo,setStatus,newGroup,userLists,setUserLists}) {
-    const [tab,setTab] = useState('info');
-    return (    
-        <Form>
-            <Tabs id="group-tabs" activeKey={tab} onSelect={t=>setTab(t)}>
-                <Tab eventKey="info" title="Info">
-                    <Container className="p-2">
-                        <GroupInfo groupInfo={groupInfo} setGroupInfo={setGroupInfo} newGroup={newGroup} setStatus={setStatus}/>
-                    </Container>
-                </Tab>
-                <Tab eventKey="users" title="Users">
-                    <Container className="p-2">
-                        <GroupUsers userLists={userLists} setUserLists={setUserLists}/>
-                    </Container>
-                </Tab>
-            </Tabs>
-        </Form>
-    );
+function TabRouter({tab}) {
+    switch(tab) {
+        case "info": return <GroupInfo/>;
+        case "users": return <GroupUsers/>;
+        case "depts": return <GroupDepts/>;
+        default: return <p>{tab}</p>;
+    }
 }
 
-function GroupInfo({groupInfo,setGroupInfo,newGroup,setStatus}) {
-    const [groupName,setGroupName] = useState(groupInfo.GROUP_NAME);
-    const [startDate,setStartDate] = useState(groupInfo.startDate);
-    const [endDate,setEndDate] = useState(groupInfo.endDate);
-    const ref = useRef();
+function GroupInfo() {
+    const groupNameRef = useRef();
+    const { control, getValues, formState: { errors } } = useFormContext();
     const queryclient = useQueryClient();
-    const formValidation = (...args) => {
-        const gName = (args[0]=='groupName')?args[1]:groupName;
-        const sDate = (args[0]=='startDate')?args[1]:startDate;
-        if (!gName) {
-            setStatus({state:'error',message:'Group name cannot be empty',save:false});
-            return false;
-        }
-        if (!sDate) {
-            setStatus({state:'error',message:'Start Date cannot be empty',save:false});
-            return false;
-        }
-        setStatus({state:'clear',save:true});
-        return true;
-    }
-    const handleNameChange = e => {
-        const val = e.target.value;
-        setGroupName(val);
-        formValidation('groupName',val);
-    }
-    const handleNameBlur = () => {
-        if (!formValidation()) return false;
-        if (groupName != groupInfo.origGroupName) {
-            if(find(queryclient.getQueryData('groups'),{GROUP_NAME:groupName})) {
-                setStatus({state:'error',save:false,message:'Group Name already exists.'});
-                return false;
-            }
-        }
-        setGroupInfo({GROUP_NAME:groupName});
-    }
-    const handleDateChange = (...args) => {
-        switch(args[0]) {
-            case "start":
-                setStartDate(args[1]);
-                setGroupInfo({startDate:args[1]});
-                formValidation('startDate',args[1]);
-                break;
-            case "end":
-                setEndDate(args[1]);
-                setGroupInfo({endDate:args[1]});
-                break;
-        }
-    }
-    useEffect(()=>ref.current.focus(),[]);
+    const groupsData = queryclient.getQueryData('groups');
+    const groupId = getValues('groupId');
+    useEffect(()=>groupNameRef.current.focus(),[]);
     return (
         <>
             <Form.Row>
                 <Form.Group as={Col} controlId="group_id">
                     <Form.Label>Group ID</Form.Label>
-                    <Form.Control type="text" value={groupInfo.GROUP_ID} disabled/>
+                    <Controller
+                        name="groupId"
+                        control={control}
+                        render={({field}) => <Form.Control {...field} type="text" disabled/>}
+                    />
                 </Form.Group>
             </Form.Row>
             <Form.Row>
-                <Form.Group as={Col} controlId="group_name">
-                    <Form.Label>Group Name</Form.Label>
-                    <Form.Control ref={ref} placeholder="Group Name" value={groupName} onChange={handleNameChange} onBlur={handleNameBlur}/>
+                <Form.Group as={Col}>
+                    <Form.Label>Group Name:</Form.Label>
+                    <Controller
+                        name="groupName"
+                        rules={{validate:{
+                            required:v=>!!v || 'Group Name is required',
+                            unique:v => {
+                                const gid = groupsData.find(g=>g.GROUP_NAME==v)?.GROUP_ID 
+                                if (gid && gid != groupId) return `Group Name must be unique. [${v}] is already in use.`;
+                            }
+                        }}}
+                        control={control}
+                        render={({field}) => <Form.Control {...field} ref={groupNameRef} type="text" placeholder="Enter Group Name" isInvalid={errors.groupName}/>}
+                    />
+                    <Form.Control.Feedback type="invalid">{errors.groupName?.message}</Form.Control.Feedback>
                 </Form.Group>
             </Form.Row>
             <Form.Row>
                 <Form.Group as={Col} controlId="start_date">
                     <Form.Label>Start Date</Form.Label>
-                    <Form.Control as={DatePicker} selected={startDate} maxDate={endDate && subDays(endDate,1)} onChange={d=>handleDateChange('start',d)} placeholderText="mm/dd/yyyy"/>
+                    <Controller
+                        name="startDate"
+                        control={control}
+                        rules={{required:{value:true,message:'Start Date is required'}}}
+                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.startDate}/>}
+                    />
+                    <Form.Control.Feedback type="invalid">{errors.startDate?.message}</Form.Control.Feedback>                    
                 </Form.Group>
                 <Form.Group as={Col} controlId="end_date">
                     <Form.Label>End Date</Form.Label>
-                    <Form.Control as={DatePicker} selected={endDate} minDate={startDate && addDays(startDate,1)} onChange={d=>handleDateChange('end',d)} placeholderText="mm/dd/yyyy" disabled={!startDate}/>
+                    <Controller
+                        name="endDate"
+                        control={control}
+                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value}/>}
+                    />
                 </Form.Group>
             </Form.Row>
         </>
     );
 }
 
-function GroupUsers({userLists,setUserLists}) {
+function GroupUsers() {
     return (
         <div className="drag-col-2">
-            <div className="dlh1">Unassigned Groups</div>
-            <div className="dlh2">Assigned Groups</div>
-            <GroupUsersList userLists={userLists} setUserLists={setUserLists}/>
+            <div className="dlh1">Unassigned Users</div>
+            <div className="dlh2">Assigned Users</div>
+            <GroupUsersList/>
         </div>
     );
 }
 
-function GroupUsersList({userLists,setUserLists}) {
-    const [value,setValue] = useState(0);//used to force rerender on dblClick
+function GroupUsersList() {
+    const { control } = useFormContext();
+    const { insert:insertAssignedUsers, remove:removeAssignedUsers } = useFieldArray({control:control,name:'assignedUsers'});
+    const { insert:insertAvailableUsers, remove:removeAvailableUsers } = useFieldArray({control:control,name:'availableUsers'});
+    const assignedusers = useWatch({name:'assignedUsers',control:control});
+    const availableusers = useWatch({name:'availableUsers',control:control});
+
     const onDragEnd = ({source,destination}) => {
-        if (!source || !destination) return; //something happened - we need both
-        if (source.droppableId == destination.droppableId) return;
-        setUserLists([(destination.droppableId == 'assigned')?'add':'del',source.index,destination.index]);
+        if (source.droppableId == destination.droppableId) return false; //no reordering
+        if (source.droppableId == 'available') {
+            insertAssignedUsers(destination.index,availableusers[source.index]);
+            removeAvailableUsers(source.index);
+        }
+        if (source.droppableId == 'assigned') {
+            insertAvailableUsers(destination.index,assignedusers[source.index]);
+            removeAssignedUsers(source.index);
+        }
     }
     const handleDblClick = useCallback(e => {
-        const {userlist,idx} = e.target.dataset;
+        const {list,idx} = e.target.dataset;
         onDragEnd({
-            source:{droppableId:userlist,index:idx},
-            destination:{droppableId:(userlist=='available'?'assigned':'available'),index:0}
+            source:{droppableId:list,index:parseInt(idx,10)},
+            destination:{droppableId:(list=='available'?'assigned':'available'),index:0}
         });
-        setValue(value=>value+1);
-    },[]);
-    return (
+    },[availableusers,assignedusers]);
+    return(
         <DragDropContext onDragEnd={onDragEnd}>
             <Droppable droppableId="available">
                 {(provided, snapshot) => ( 
                     <div ref={provided.innerRef} className={`droplist dl1 ${snapshot.isDraggingOver?'over':''}`}>
-                        {userLists.available.map(u => {
-                            return (
-                                <Draggable key={u.SUNY_ID} draggableId={u.SUNY_ID} index={u.idx}>
-                                    {(provided,snapshot) => (
-                                        <div 
-                                            ref={provided.innerRef} 
-                                            {...provided.draggableProps} 
-                                            {...provided.dragHandleProps}
-                                            className={snapshot.isDragging?'dragging':''}
-                                            onDoubleClick={handleDblClick}
-                                            data-userlist="available" data-idx={u.idx}
-                                        >
-                                            {u.sortName}
-                                        </div>
-                                    )}
-                                </Draggable>
-                            );
-                        })}
-                        {provided.placeholder}
-                    </div>
-                )}
-            </Droppable>
-            <Droppable droppableId="assigned">
-                {(provided, snapshot) => ( 
-                    <div ref={provided.innerRef} className={`droplist dl2 ${snapshot.isDraggingOver?'over':''}`}>
-                        {userLists.assigned.map(u => (
-                            <Draggable key={u.SUNY_ID} draggableId={u.SUNY_ID} index={u.idx}>
+                        {availableusers.map((u,i) => (
+                            <Draggable key={u.SUNY_ID} draggableId={u.SUNY_ID} index={i}>
                                 {(provided,snapshot) => (
                                     <div
                                         ref={provided.innerRef} 
@@ -474,9 +511,119 @@ function GroupUsersList({userLists,setUserLists}) {
                                         {...provided.dragHandleProps}
                                         className={snapshot.isDragging?'dragging':''}
                                         onDoubleClick={handleDblClick}
-                                        data-userlist="assigned" data-idx={u.idx}
+                                        data-list="available" data-idx={i}
                                     >
                                         {u.sortName}
+                                    </div>
+                                )}
+                            </Draggable>
+                        ))}
+                        {provided.placeholder}
+                    </div>
+                )}
+            </Droppable>
+            <Droppable droppableId="assigned">
+                {(provided, snapshot) => ( 
+                    <div ref={provided.innerRef} className={`droplist dl2 ${snapshot.isDraggingOver?'over':''}`}>
+                        {assignedusers.map((u,i) => (
+                            <Draggable key={u.SUNY_ID} draggableId={u.SUNY_ID} index={i}>
+                                {(provided,snapshot) => (
+                                    <div
+                                        ref={provided.innerRef} 
+                                        {...provided.draggableProps} 
+                                        {...provided.dragHandleProps}
+                                        className={snapshot.isDragging?'dragging':''}
+                                        onDoubleClick={handleDblClick}
+                                        data-list="assigned" data-idx={i}
+                                    >
+                                        {u.sortName}
+                                    </div>
+                                )}
+                            </Draggable>
+                        ))}
+                        {provided.placeholder}
+                    </div>
+                )}
+            </Droppable>
+        </DragDropContext>
+    );
+}
+
+function GroupDepts() {
+    return (
+        <div className="drag-col-2">
+            <div className="dlh1">Unassigned Depts</div>
+            <div className="dlh2">Assigned Depts</div>
+            <GroupDeptsList/>
+        </div>
+    );
+}
+
+function GroupDeptsList() {
+    const { control } = useFormContext();
+    const { insert:insertAssignedDepts, remove:removeAssignedDepts } = useFieldArray({control:control,name:'assignedDepts'});
+    const { insert:insertAvailableDepts, remove:removeAvailableDepts } = useFieldArray({control:control,name:'availableDepts'});
+    const assigneddepts = useWatch({name:'assignedDepts',control:control});
+    const availabledepts = useWatch({name:'availableDepts',control:control});
+
+    const onDragEnd = ({source,destination}) => {
+        if (source.droppableId == destination.droppableId) return false; //no reordering
+        if (source.droppableId == 'available') {
+            insertAssignedDepts(destination.index,availabledepts[source.index]);
+            removeAvailableDepts(source.index);
+        }
+        if (source.droppableId == 'assigned') {
+            insertAvailableDepts(destination.index,assigneddepts[source.index]);
+            removeAssignedDepts(source.index);
+        }
+    }
+    const handleDblClick = useCallback(e => {
+        const {list,idx} = e.target.dataset;
+        onDragEnd({
+            source:{droppableId:list,index:parseInt(idx,10)},
+            destination:{droppableId:(list=='available'?'assigned':'available'),index:0}
+        });
+    },[availabledepts,assigneddepts]);
+    return(
+        <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="available">
+                {(provided, snapshot) => ( 
+                    <div ref={provided.innerRef} className={`droplist dl1 ${snapshot.isDraggingOver?'over':''}`}>
+                        {availabledepts.map((d,i) => (
+                            <Draggable key={d.DEPARTMENT_CODE} draggableId={d.DEPARTMENT_CODE} index={i}>
+                                {(provided,snapshot) => (
+                                    <div
+                                        ref={provided.innerRef} 
+                                        {...provided.draggableProps} 
+                                        {...provided.dragHandleProps}
+                                        className={snapshot.isDragging?'dragging':''}
+                                        onDoubleClick={handleDblClick}
+                                        data-list="available" data-idx={i}
+                                    >
+                                        {d.DEPARTMENT_DESC}
+                                    </div>
+                                )}
+                            </Draggable>
+                        ))}
+                        {provided.placeholder}
+                    </div>
+                )}
+            </Droppable>
+            <Droppable droppableId="assigned">
+                {(provided, snapshot) => ( 
+                    <div ref={provided.innerRef} className={`droplist dl2 ${snapshot.isDraggingOver?'over':''}`}>
+                        {assigneddepts.map((d,i) => (
+                            <Draggable key={d.DEPARTMENT_CODE} draggableId={d.DEPARTMENT_CODE} index={i}>
+                                {(provided,snapshot) => (
+                                    <div
+                                        ref={provided.innerRef} 
+                                        {...provided.draggableProps} 
+                                        {...provided.dragHandleProps}
+                                        className={snapshot.isDragging?'dragging':''}
+                                        onDoubleClick={handleDblClick}
+                                        data-list="assigned" data-idx={i}
+                                    >
+                                        {d.DEPARTMENT_DESC}
                                     </div>
                                 )}
                             </Draggable>

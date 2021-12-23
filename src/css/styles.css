@@ -74,18 +74,37 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
   right: 2rem;
   opacity:0.9;
 }
-
+.button-group {
+  display:flex;
+  gap:0.3rem;
+}
+.button-group-right {
+  justify-content: right;
+}
 .button-group button { 
-  margin-right: 0.5rem;
-  display: flex;
-  gap: 0.3rem;
+  display: inline;
   padding: 0.6rem;
+}
+button.no-label {
+  padding: 0.25rem;
 }
 button svg.iconify { 
   display: inline; 
   font-size: 22px;
+  margin-right:0.3rem;
+  vertical-align: top;
 }
-
+svg.iconify-inline {
+  display:inline;
+  position:relative;
+  top:-3px;
+  margin-right:3px;
+}
+button.no-label svg.iconify {
+  display: inline; 
+  font-size: 28px;
+  margin-right: 0;
+}
 .droplist {
   height: 50vh;
   overflow-y:scroll;

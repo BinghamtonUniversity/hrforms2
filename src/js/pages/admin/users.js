@@ -11,6 +11,7 @@ import { Loading } from "../../blocks/components";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { useHotkeys } from "react-hotkeys-hook";
 import { useToasts } from "react-toast-notifications";
+import { Icon } from "@iconify/react";
 
 export default function AdminUsers() {
     const [newUser,setNewUser] = useState(false);
@@ -33,7 +34,7 @@ export default function AdminUsers() {
     return (
         <>
             <Row>
-                <Col><h2>Admin: Users <Button variant="success" onClick={()=>setNewUser(true)}>Add New</Button></h2></Col>
+                <Col><h2>Admin: Users <Button variant="success" onClick={()=>setNewUser(true)}><Icon icon="mdi:account-plus"/>Add New</Button></h2></Col>
             </Row>
             <Row>
                 <Col>
@@ -130,10 +131,10 @@ const UsersTable = React.memo(({users,setSelectedUser}) => {
         {name:'Actions',cell:row=>{
             return (
                 <div className="button-group">
-                    {row.SUNY_ID && <Button variant="primary" size="sm" title="Impersonate User" onClick={()=>doImpersonate(row.USER_SUNY_ID)} disabled={!row.active}><FontAwesomeIcon icon="people-arrows" title="Impersonate"/></Button>}
-                    {(row.SUNY_ID && row.active) && <Button variant="danger" size="sm" title="Deactivate User" onClick={()=>setToggleUser(row)}><FontAwesomeIcon icon="user-slash"/></Button>}
-                    {(row.SUNY_ID && !row.active) && <Button variant="success" size="sm" title="Restore User" onClick={()=>setToggleUser(row)}><FontAwesomeIcon icon="user"/></Button>}
-                    {!row.SUNY_ID && <Button variant="danger" size="sm"><FontAwesomeIcon icon="trash" title="Delete User"/></Button>}
+                    {row.SUNY_ID && <Button variant="primary" className="no-label" size="sm" title="Impersonate User" onClick={()=>doImpersonate(row.USER_SUNY_ID)} disabled={!row.active}><Icon icon="mdi:account-switch"/></Button>}
+                    {(row.SUNY_ID && row.active) && <Button variant="danger" className="no-label" size="sm" title="Deactivate User" onClick={()=>setToggleUser(row)}><Icon icon="mdi:account-remove"/></Button>}
+                    {(row.SUNY_ID && !row.active) && <Button variant="success" className="no-label" size="sm" title="Restore User" onClick={()=>setToggleUser(row)}><Icon icon="mdi:account"/></Button>}
+                    {!row.SUNY_ID && <Button variant="danger" className="no-label" size="sm" title="Delete User"><Icon icon="mdi:delete"/></Button>}
                 </div>
             );
         },ignoreRowClick:true},
