@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef, useReducer } from "react";
 import { useQueryClient } from "react-query";
-import { useAdminQueries, useAppQueries } from "../../queries";
+import { useAdminQueries } from "../../queries";
 import useGroupQueries from "../../queries/groups";
 import { Loading } from "../../blocks/components";
 import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert } from "react-bootstrap";
