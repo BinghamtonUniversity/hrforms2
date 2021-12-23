@@ -15,7 +15,7 @@ function f(d) {
 }
 
 /* BASE PROMISE */
-function q(u,m,b) {
+export default function q(u,m,b) {
     return d => {
         const bd = d || b;
         let opts = {Accept:'application/json',headers:{ContentType:'application/json'},method:m||'GET'};
@@ -190,55 +190,6 @@ export function useAdminQueries() {
     }
     const postUser = () => useMutation(d=>q('user','POST',d)());
 
-    const getGroups = (...args) => {
-        const options = args[0]?.options||args[0]||{};
-        if (typeof options != 'object') return useQuery('stubGET',f());
-        if(options.select) options.select2 = options.select;
-        options.select = data => {
-            if (!data) return;
-            data.forEach(d=>{
-                d.startDate = parse(d.START_DATE,'dd-MMM-yy',new Date())
-                d.startDateFmt = format(d.startDate,'P');
-                d.startDateUnix = format(d.startDate,'t');
-                d.endDate = d.END_DATE && parse(d.END_DATE,'dd-MMM-yy',new Date())
-                d.endDateFmt = d.END_DATE && format(d.endDate,'P');
-                d.endDateUnix = d.END_DATE && format(d.endDate,'t');
-                d.active = !(d.END_DATE&&d.endDateUnix<Date.now());
-            });
-            return (options.select2)?options.select2(data):data;
-        }
-        return useQuery('groups',q('groups'),options);
-    }
-    const postGroup = () => useMutation(d=>q('groups','POST',d)());
-    const putGroup = (...args) => {
-        const GROUP_ID = args[0]?.GROUP_ID||args[0];
-        if (!GROUP_ID) return useQuery('stubPUT',f());
-        return useMutation(d=>q(`groups/${GROUP_ID}`,'PUT',d)());
-    }
-    /* may not need this? */
-    const putUserGroups = (...args) => {
-        const SUNY_ID = args[0]?.SUNY_ID||args[0];
-        if (!SUNY_ID) return useQuery('stubPUT',f());
-        return useMutation(d=>q(`usergroups/${SUNY_ID}`,'PUT',d)());
-    }
-    const getGroupUsers = (...args) => {
-        const GROUP_ID = args[0]?.GROUP_ID||args[0];
-        if (!GROUP_ID) return useQuery('stubGET',f());
-        const options = args[0]?.options||args[1]||{};
-        if (typeof options != 'object') return useQuery('stubGET',f());
-        if(options.select) options.select2 = options.select;
-        options.select = data => {
-            if (!data) return;
-            data.forEach(d=>{
-                d.sortName = `${d.LEGAL_LAST_NAME}, ${d.LEGAL_FIRST_NAME}`;
-                d.email = d.EMAIL_ADDRESS_WORK && d.EMAIL_ADDRESS_WORK.toLowerCase();
-                d.endDateUnix = d.END_DATE && format(parse(d.END_DATE,'dd-MMM-yy',new Date()),'t');
-                d.active = !(d.END_DATE&&d.endDateUnix<Date.now());
-            });
-            return (options.select2)?options.select2(data):data;
-        };
-        return useQuery(['groupusers',GROUP_ID],q(`groupusers/${GROUP_ID}`),options);
-    }
     const postList = () => useMutation(d=>q('lists','POST',d)());
     const putList = (...args) => {
         const LIST_ID = args[0]?.LIST_ID||args[0];
@@ -248,6 +199,6 @@ export function useAdminQueries() {
         const LIST_ID = args[0]?.LIST_ID||args[0];
         return useMutation(d=>q(`lists/${LIST_ID}`,'DELETE',d)());
     }
-    return {putSettings,getUsers,getUser,putUser,postUser,getGroups,postGroup,putGroup,putUserGroups,getGroupUsers,
+    return {putSettings,getUsers,getUser,putUser,postUser,
         postList,putList,deleteList};
 }

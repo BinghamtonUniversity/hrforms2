@@ -312,7 +312,7 @@ function RequestForm({reqId,setReqId,data,setIsBlocking,isNew}) {
                                 {(t.id!='information'&&t.id!='review')&& <RequestInfoBox/>}
                                 {postypes.data && <RequestTabRouter tab={t.id} posTypes={postypes.data}/>}
                                 <Row as="footer">
-                                    <Col className="button-group" style={{display:'flex',justifyContent:'right'}}>
+                                    <Col className="button-group button-group-right">
                                         {isSaving && <Button variant="" disabled><Icon icon="mdi:loading" className="spin"/> Saving...</Button>}
                                         {methods.formState.isDirty && <Button variant="secondary" onClick={handleUndo} disabled={isSaving}><Icon icon="mdi:undo"/>Undo</Button>}
                                         {!isNew && <Button variant="danger" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}><Icon icon="mdi:delete"/>Delete</Button>}

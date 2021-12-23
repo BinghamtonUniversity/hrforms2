@@ -5,6 +5,8 @@ import {getAuthInfo,NotFound} from "../app";
 const AdminNews = lazy(()=>import("./admin/news"));
 const AdminUsers = lazy(()=>import("./admin/users"));
 const AdminGroups = lazy(()=>import("./admin/groups"));
+const AdminGroups2 = lazy(()=>import("./admin/groups2"));
+const AdminDepartments = lazy(()=>import("./admin/departments"));
 const AdminLists = lazy(()=>import("./admin/lists"));
 const AdminSettings = lazy(()=>import("./admin/settings"));
 
@@ -17,6 +19,8 @@ export default function AdminPages() {
         case "users": return <AdminUsers/>;
         case "journal": return <p>Journal</p>;
         case "groups": return <AdminGroups/>;
+        case "groupsOLD": return <AdminGroups2/>;
+        case "departments": return <AdminDepartments/>;
         case "lists": return <AdminLists/>;
         case "settings": return <AdminSettings/>;
         default:

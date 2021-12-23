@@ -9,11 +9,11 @@ NB: HTTP Codes: https://tools.ietf.org/html/rfc7231#section-6
 NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 */
 
-class GroupUsers extends HRForms2 {
+class GroupDepts extends HRForms2 {
 	private $_arr = array();
 
 	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+		$this->allowedMethods = "GET,POST,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
 		$this->reqAuth = true; //default: true - NB: See note above
 		$this->retJSON = $rjson;
 		$this->req = $req;
@@ -24,49 +24,47 @@ class GroupUsers extends HRForms2 {
 	 * validate called from init()
 	 */
 	function validate() {
-        if (!isset($this->req[0])) $this->raiseError(400);
-		if ($this->method=='PUT' && !$this->sessionData['isAdmin']) $this->raiseError(403);
-    }
+		if (!$this->sessionData['isAdmin']) $this->raiseError(403);
+	}
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		$qry = "select u.*, " . $this->BASE_PERSEMP_FIELDS . " from buhr.buhr_persemp_mv@banner.cc.binghamton.edu p
-        join (select suny_id as ug_suny_id, group_id from hrforms2_user_groups) ug on (p.suny_id = ug.ug_suny_id and ug.group_id = :group_id)
-        join (select suny_id as user_suny_id, start_date, end_date from hrforms2_users) u on (p.suny_id = u.user_suny_id)";
+        $qry = "select * from hrforms2_group_departments";
+        if (isset($this->req[0])) $qry .= " where group_id = :group_id";
 		$stmt = oci_parse($this->db,$qry);
-		oci_bind_by_name($stmt,":group_id", $this->req[0]);
+        if (isset($this->req[0])) oci_bind_by_name($stmt, ":group_id", $this->req[0]);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
-			$this->_arr[] = $row;
+            $this->_arr[] = $row;
 		}
 		oci_free_statement($stmt);
 		$this->returnData = $this->_arr;
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
-
-	function PUT() {
-		foreach ($this->POSTvars['DEL_USERS'] as $user) {
-			$qry = "delete from hrforms2_user_groups where suny_id = :suny_id and group_id = :group_id";
+    function POST() {
+        foreach ($this->POSTvars['DEL_DEPTS'] as $dept) {
+			$qry = "delete from hrforms2_group_departments where department_code = :department_code and group_id = :group_id";
 			$stmt = oci_parse($this->db,$qry);
-			oci_bind_by_name($stmt,":suny_id", $user);
+			oci_bind_by_name($stmt,":department_code", $dept['DEPARTMENT_CODE']);
 			oci_bind_by_name($stmt,":group_id", $this->req[0]);
 			$r = oci_execute($stmt);
             if (!$r) $this->raiseError();
 			oci_free_statement($stmt);
-		}
-		foreach ($this->POSTvars['ADD_USERS'] as $user) {
-			$qry = "insert into hrforms2_user_groups values(:suny_id,:group_id)";
+        }
+        foreach ($this->POSTvars['ADD_DEPTS'] as $dept) {
+            $qry = "insert into hrforms2_group_departments values(:department_code,:group_id,:department_desc)";
 			$stmt = oci_parse($this->db,$qry);
-			oci_bind_by_name($stmt,":suny_id", $user);
+			oci_bind_by_name($stmt,":department_code", $dept['DEPARTMENT_CODE']);
 			oci_bind_by_name($stmt,":group_id", $this->req[0]);
+			oci_bind_by_name($stmt,":department_desc", $dept['DEPARTMENT_DESC']);
 			$r = oci_execute($stmt);
             if (!$r) $this->raiseError();
 			oci_free_statement($stmt);
-		}
+        }
 		oci_commit($this->db);
-	}
-	function POST() {
-		$this->PUT();
-	}
+    }
+    function PUT() {
+        $this->POST();
+    }
 }

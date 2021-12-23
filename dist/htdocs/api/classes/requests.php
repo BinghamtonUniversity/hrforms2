@@ -34,7 +34,8 @@ class Requests extends HRForms2 {
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":suny_id",$this->req[1]);
             oci_bind_by_name($stmt,":unix_ts",$this->req[2]);
-            oci_execute($stmt);
+            $r = oci_execute($stmt);
+			if (!$r) $this->raiseError();
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
             $this->_arr['DATA'] = (is_object($row['DATA'])) ? $row['DATA']->load() : "";
             oci_free_statement($stmt);
@@ -50,7 +51,8 @@ class Requests extends HRForms2 {
             $qry = "select count(*) from HRFORMS2_REQUESTS_DRAFTS where SUNY_ID = :suny_id";
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
-            oci_execute($stmt);
+            $r = oci_execute($stmt);
+			if (!$r) $this->raiseError();
             $row = oci_fetch_array($stmt,OCI_ARRAY+OCI_RETURN_NULLS);
             oci_free_statement($stmt);
             if ($row[0] > MAX_DRAFTS) {
@@ -67,7 +69,8 @@ class Requests extends HRForms2 {
             oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
             oci_bind_by_name($stmt, ":unix_ts", $unix_ts);
             oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
-            oci_execute($stmt,OCI_DEFAULT);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
             $clob->save(json_encode($this->POSTvars['data']));
             oci_commit($this->db);
             $this->toJSON($this->POSTvars['data']);
@@ -79,7 +82,8 @@ class Requests extends HRForms2 {
             oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
             oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
             oci_bind_by_name($stmt, ":request_id", $request_id, -1, OCI_B_INT);
-            oci_execute($stmt,OCI_DEFAULT);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
             $clob->save(json_encode($this->POSTvars['data']));
             oci_commit($this->db);
 
@@ -137,7 +141,8 @@ class Requests extends HRForms2 {
             oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
             oci_bind_by_name($stmt, ":unix_ts", $this->req[2]);
             oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
-            oci_execute($stmt,OCI_DEFAULT);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
             $clob->save(json_encode($this->POSTvars['data']));
             oci_commit($this->db);
             $this->done();
@@ -152,7 +157,8 @@ class Requests extends HRForms2 {
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
             oci_bind_by_name($stmt, ":unix_ts", $this->req[2]);
-            oci_execute($stmt,OCI_DEFAULT);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
             oci_commit($this->db);
             $this->done();
         } else {
