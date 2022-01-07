@@ -1,35 +1,25 @@
-import React, { useEffect, useCallback, useMemo, useReducer, useRef, useState } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef, useReducer } from "react";
 import { useQueryClient } from "react-query";
-import { useAdminQueries, useUserQueries } from "../../queries";
-import { differenceWith, find, isEqual, pick, sortBy, orderBy } from "lodash";
-import { Alert, Button, Col, Container, Form, InputGroup, Modal, Row, Tab, Tabs } from "react-bootstrap";
-import DataTable from 'react-data-table-component';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import DatePicker from "react-datepicker";
-import { addDays, subDays, differenceInDays, format } from "date-fns";
-import { Loading } from "../../blocks/components";
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { useHotkeys } from "react-hotkeys-hook";
-import { useToasts } from "react-toast-notifications";
+import useUserQueries from "../../queries/users";
+import useGroupQueries from "../../queries/groups";
+import { Loading, ModalConfirm } from "../../blocks/components";
+import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert, InputGroup } from "react-bootstrap";
 import { Icon } from "@iconify/react";
+import { orderBy, startsWith, sortBy, difference, differenceWith, isEqual, capitalize } from "lodash";
+import DataTable from 'react-data-table-component';
+import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
+import DatePicker from "react-datepicker";
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { format } from "date-fns";
+import { useToasts } from "react-toast-notifications";
+import { useHotkeys } from "react-hotkeys-hook";
+
+const defaultVals = {SUNYID:'',firstName:'',lastName:'',email:'',startDate:new Date(),endDate:'',assignedGroups:[],availableGroups:[]};
 
 export default function AdminUsers() {
     const [newUser,setNewUser] = useState(false);
-    const [selectedUser,setSelectedUser] = useState('');
-
-    const {getUsers,getGroups} = useAdminQueries();
-    const users = getUsers({enabled:(!selectedUser&&!newUser)});
-    const groups = getGroups({select:data=>sortBy(data.filter(g=>g.active),['GROUP_NAME'])});
-
-    useHotkeys('alt+n',e=>{
-        e.preventDefault();
-        setNewUser(true);
-    });
-
-    const closeModal = () => {
-        setNewUser(false);
-        setSelectedUser('');
-    }
+    const {getUsers} = useUserQueries();
+    const users = getUsers();
 
     return (
         <>
@@ -39,34 +29,35 @@ export default function AdminUsers() {
             <Row>
                 <Col>
                     {users.isLoading && <Loading type="alert">Loading Users...</Loading>}
-                    {users.isError && <Loading type="alert" isError>Error Users: <small>{users.error?.name} {users.error?.messsage}</small></Loading>}
-                    {users.isSuccess && <UsersTable users={users.data} setSelectedUser={setSelectedUser}/>}
-                    {(selectedUser || newUser) && groups.isSuccess && <AddEditUser SUNY_ID={selectedUser} newUser={newUser} closeModal={closeModal} groups={groups.data}/>}
+                    {users.isError && <Loading type="alert" isError>Error Users: <small>{users.error?.name} {users.error?.description}</small></Loading>}
+                    {users.isSuccess && <UsersTable users={users.data} newUser={newUser} setNewUser={setNewUser}/>}
                 </Col>
             </Row>
         </>
     );
 }
 
-const UsersTable = React.memo(({users,setSelectedUser}) => {
-    const [sortField,setsortField] = useState('sortName');
-    const [sortDir,setSortDir] = useState('asc');
+function UsersTable({users,newUser,setNewUser}) {
     const [filterText,setFilterText] = useState('');
     const [statusFilter,setStatusFilter] = useState('all');
+    const [sortField,setsortField] = useState('sortName');
+    const [sortDir,setSortDir] = useState('asc');
     const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
     const [rows,setRows] = useState([]);
-    const [toggleUser,setToggleUser] = useState(undefined);
+    const [selectedRow,setSelectedRow] = useState({});
+    const [impersonateUser,setImpersonateUser] = useState({});
+    const [toggleUser,setToggleUser] = useState({});
+    const [deleteUser,setDeleteUser] = useState({});
+
     const searchRef = useRef();
 
     useHotkeys('ctrl+f',e=>{
         e.preventDefault();
-        searchRef.current.focus();
+        searchRef.current.focus()
     });
 
-    const handleRowClick = useCallback(row=>{
-        setSelectedUser(row.SUNY_ID);
-    },[]);
-
+    const handleRowClick = useCallback(row=>setSelectedRow(row));
+    
     const handleSort = useCallback((...args) => {
         if (!args[0].sortable) return false;
         const sortKey = columns[(args[0].id-1)].sortField;
@@ -74,25 +65,6 @@ const UsersTable = React.memo(({users,setSelectedUser}) => {
         setSortDir(args[1]);
         setRows(orderBy(users,[sortKey],[args[1]]));
     },[]);
-
-    const filteredRows = rows.filter(row => {
-        if (row.active && statusFilter == 'inactive') return false;
-        if (!row.active && statusFilter == 'active') return false;
-        const fName = row.LEGAL_FIRST_NAME && row.LEGAL_FIRST_NAME.toLowerCase();
-        const lName = row.LEGAL_LAST_NAME && row.LEGAL_LAST_NAME.toLowerCase();
-        const filterFields = `${row.USER_SUNY_ID} ${fName} ${lName} ${row.email} ${row.startDateFmt} ${row.endDateFmt}`
-        return filterFields.includes(filterText.toLowerCase());    
-    });
-
-    const toggle = useMemo(() => {
-        if (!toggleUser) return null;
-        toggleUser.END_DATE = (!toggleUser.END_DATE)?format(new Date(),'dd-MMM-yy'):'';
-        return <ToggleUser user={toggleUser} setToggleUser={setToggleUser}/>;
-    },[toggleUser]);
-
-    const doImpersonate = SUNY_ID => {
-        console.log('do impersonate...',SUNY_ID);
-    }
 
     const filterComponent = useMemo(() => {
         const statusChange = e => {
@@ -127,14 +99,23 @@ const UsersTable = React.memo(({users,setSelectedUser}) => {
         );
     },[filterText,statusFilter]);
 
+    const filteredRows = rows.filter(row => {
+        if (row.active && statusFilter == 'inactive') return false;
+        if (!row.active && statusFilter == 'active') return false;
+        const fName = row.LEGAL_FIRST_NAME && row.LEGAL_FIRST_NAME.toLowerCase();
+        const lName = row.LEGAL_LAST_NAME && row.LEGAL_LAST_NAME.toLowerCase();
+        const filterFields = `${row.USER_SUNY_ID} ${fName} ${lName} ${row.email} ${row.startDateFmt} ${row.endDateFmt}`
+        return filterFields.includes(filterText.toLowerCase());    
+    });
+
     const columns = useMemo(() => [
         {name:'Actions',cell:row=>{
             return (
                 <div className="button-group">
-                    {row.SUNY_ID && <Button variant="primary" className="no-label" size="sm" title="Impersonate User" onClick={()=>doImpersonate(row.USER_SUNY_ID)} disabled={!row.active}><Icon icon="mdi:account-switch"/></Button>}
-                    {(row.SUNY_ID && row.active) && <Button variant="danger" className="no-label" size="sm" title="Deactivate User" onClick={()=>setToggleUser(row)}><Icon icon="mdi:account-remove"/></Button>}
-                    {(row.SUNY_ID && !row.active) && <Button variant="success" className="no-label" size="sm" title="Restore User" onClick={()=>setToggleUser(row)}><Icon icon="mdi:account"/></Button>}
-                    {!row.SUNY_ID && <Button variant="danger" className="no-label" size="sm" title="Delete User"><Icon icon="mdi:delete"/></Button>}
+                    {row.SUNY_ID && <Button variant="primary" className="no-label" size="sm" title="Impersonate User" onClick={()=>setImpersonateUser(row)} disabled={!row.active}><Icon icon="mdi:account-switch"/></Button>}
+                    {row.active && <Button variant="warning" className="no-label" size="sm" title="Deactivate User" onClick={()=>setToggleUser(row)}><Icon icon="mdi:account-remove"/></Button>}
+                    {!row.active && <Button variant="success" className="no-label" size="sm" title="Restore User" onClick={()=>setToggleUser(row)}><Icon icon="mdi:account" /></Button>}
+                    <Button variant="danger" className="no-label" size="sm" title="Delete User" onClick={()=>setDeleteUser(row)}><Icon icon="mdi:delete"/></Button>
                 </div>
             );
         },ignoreRowClick:true},
@@ -143,7 +124,12 @@ const UsersTable = React.memo(({users,setSelectedUser}) => {
         {name:'Email',selector:row=>row.email,sortable:true,sortField:'email'},
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
         {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
-    ],[]);
+    ],[users]);
+
+    const paginationComponentOptions = {
+        selectAllRowsItem: true
+    };
+
     useEffect(()=>{
         setRows(orderBy(users,[sortField],[sortDir]));
     },[users]);
@@ -157,234 +143,328 @@ const UsersTable = React.memo(({users,setSelectedUser}) => {
                 responsive
                 subHeader
                 subHeaderComponent={filterComponent} 
-                paginationResetDefaultPage={resetPaginationToggle}   
+                paginationRowsPerPageOptions={[10,20,30,40,50,100]}
+                paginationResetDefaultPage={resetPaginationToggle}
+                paginationComponentOptions={paginationComponentOptions}
                 pointerOnHover
                 highlightOnHover
                 onRowClicked={handleRowClick}
-                defaultSortFieldId={3}
+                defaultSortFieldId={2}
                 onSort={handleSort}
                 sortServer
             />
-            {toggleUser && toggle}
+            {(selectedRow?.SUNY_ID||newUser) && <AddEditUserForm {...selectedRow} setSelectedRow={setSelectedRow} newUser={newUser} setNewUser={setNewUser}/>}
+            {impersonateUser?.SUNY_ID && <ImpersonateUser user={impersonateUser} setImpersonateUser={setImpersonateUser}/>}
+            {toggleUser?.SUNY_ID && <ToggleUser user={toggleUser} setToggleUser={setToggleUser}/>}
+            {deleteUser?.SUNY_ID && <DeleteUser user={deleteUser} setDeleteUser={setDeleteUser}/>}
         </>
     );
-});
+}
+
+function ImpersonateUser({user,setImpersonateUser}) {
+    const [show,setShow] = useState(true);
+    const {addToast,removeToast} = useToasts();
+
+    const buttons = {
+        close: {
+            title: 'Cancel',
+            callback: () => {
+                setShow(false);
+                setImpersonateUser({});
+            }
+        },
+        confirm:{
+            title: 'Impersonate',
+            callback: () => {
+                setShow(false);
+                setImpersonateUser({});
+            }
+        }
+    }
+
+    return (
+        <ModalConfirm show={show} icon="mdi:account-question" title="Impersonate User?" buttons={buttons}>
+            <p>Are you sure you want to impersonate {user.fullName} ({user.SUNY_ID})?</p>
+        </ModalConfirm>
+    );
+}
 
 function ToggleUser({user,setToggleUser}) {
-    const queryclient = useQueryClient();
     const {addToast,removeToast} = useToasts();
-    const {putUser} = useAdminQueries();
-    const updateUser = putUser(user.SUNY_ID);
+    const {patchUser} = useUserQueries(user.SUNY_ID);
+    const queryclient = useQueryClient();
+    const update = patchUser();
     useEffect(() => {
-        addToast(<><h5>Updating</h5><p>Updating user...</p></>,{appearance:'info',autoDismiss:false},id=>{
-            updateUser.mutateAsync({
-                SUNY_ID:user.SUNY_ID,
-                START_DATE:user.START_DATE,
-                END_DATE:user.END_DATE
-            }).then(d => {
-                setToggleUser(undefined);
+        const newEndDate = (user.END_DATE)?'':format(new Date(),'dd-MMM-yy');
+        const words = (user.END_DATE)?['activate','activating','activated']:['deactivate','deactivating','deactivated'];
+        addToast(<><h5>{capitalize(words[1])}</h5><p>{capitalize(words[1])} user...</p></>,{appearance:'info',autoDismiss:false},id=>{
+            update.mutateAsync({END_DATE:newEndDate}).then(() => {
                 queryclient.refetchQueries(['users'],{exact:true,throwOnError:true}).then(() => {
                     removeToast(id);
-                    addToast(<><h5>Success!</h5><p>User updated successfully.</p></>,{appearance:'success'});    
+                    addToast(<><h5>Success!</h5><p>User {words[2]} successfully.</p></>,{appearance:'success'});
                 });
+            }).catch(e => {
+                removeToast(id);
+                addToast(<><h5>Error!</h5><p>Failed to {words[0]} user. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
+            }).finally(() => {
+                setToggleUser({});
             });
         });
-    },[]);
+    },[user]);
     return null;
 }
 
-function ImpersonateUser({SUNY_ID}) {
-    //do shit
-    return null;
-}
-
-const userInfoReducer = (state,args)=>Object.assign({},state,args);
-
-const groupListReducer = (state,args) => {
-    let available = [...state.available];
-    let assigned = [...state.assigned];
-    switch(args[0]) {
-        case "init":
-            available = args[1];
-            assigned = args[2];
-            state.original = args[2];
-            break;
-        case "add":
-            assigned.splice(args[2],0,available[args[1]]);
-            break;
-        case "del":
-            const grp = assigned.splice(args[1],1)[0];
-            available.splice(args[2],0,grp);
-            break;
-        default:
-            return state;
-        
-    }        
-    const assignedGIDs = assigned.map(g=>g.GROUP_ID);
-    const grps = available.filter(g=>!assignedGIDs.includes(g.GROUP_ID));
-    state.available = grps.map((g,i)=>{g.idx=i;return g;});
-    state.assigned = assigned.map((g,i)=>{g.idx=i;return g});
-    return state;
-}
-
-function AddEditUser({SUNY_ID,newUser,closeModal,groups}) {
-    const defaultStatus = {state:'',message:'',icon:'',spin:false,cancel:true,save:!newUser};
-
+function DeleteUser({user,setDeleteUser}) {
+    const [show,setShow] = useState(true);
+    const {addToast,removeToast} = useToasts();
     const queryclient = useQueryClient();
-    const {getUserGroups} = useUserQueries(SUNY_ID);
-    const {putUser,postUser} = useAdminQueries();
-    const { addToast } = useToasts();
-    const updateUser = putUser(SUNY_ID);
-    const createUser = postUser();
-    const usergroups = getUserGroups({
-        enabled: false,
-        select:data=>sortBy(data.filter(g=>g.active),['GROUP_NAME']),
-        onSuccess:d=>setGroupLists(['init',groups,d])
-    });
+    const {deleteUser} = useUserQueries(user.SUNY_ID);
 
-    const user = find(queryclient.getQueryData('users'),['SUNY_ID',SUNY_ID])||{SUNY_ID:'',LEGAL_FIRST_NAME:'',LEGAL_LAST_NAME:'',email:'',startDate:new Date(),endDate:''};
-    const [userInfo,setUserInfo] = useReducer(userInfoReducer,
-        pick(user,['SUNY_ID','LEGAL_FIRST_NAME','LEGAL_LAST_NAME','email','startDate','endDate']));
-    const [groupLists,setGroupLists] = useReducer(groupListReducer,{assigned:[],available:[]});
+    const buttons = {
+        close: {
+            title: 'Cancel',
+            callback: () => {
+                setShow(false);
+                setDeleteUser({});
+            }
+        },
+        confirm:{
+            title: 'Delete',
+            variant: 'danger',
+            callback: () => {
+                deleteUser.mutateAsync().then(() => {
+                    setShow(false);
+                    setDeleteUser({});    
+                }).catch(e => {
+                    
+                    console.error(e);
+                });
+            }
+        }
+    }
+
+    return (
+        <ModalConfirm show={show} icon="mdi:account-alert" title="Delete User?" buttons={buttons}>
+            <p>Are you sure you want to <strong>delete</strong> {user.fullName} ({user.SUNY_ID})?  This cannot be undone.</p>
+        </ModalConfirm>
+    );
+}
+
+function AddEditUserForm(props) {
+    const tabs = [
+        {id:'info',title:'Info'},
+        {id:'groups',title:'Groups'},
+    ];
+    const defaultStatus = {state:'',message:'',icon:'',spin:false,cancel:true,save:true};
+
+    const [activeTab,setActiveTab] = useState('info');
     const [status,setStatus] = useReducer((state,args) => {
         let presets = {};
         switch(args.state) {
-            case "error": presets = {icon:'exclamation-triangle',spin:false,save:false,cancel:true}; break;
-            case "saving": presets = {message:'Saving...',icon:'circle-notch',spin:true,cancel:false,save:false}; break;
+            case "error": presets = {icon:'mdi:alert',spin:false,save:false,cancel:true}; break;
+            case "saving": presets = {message:'Saving...',icon:'mdi:loading',spin:true,cancel:false,save:false}; break;
             case "loading": presets = {message:'Loading...',icon:null,spin:false,save:false}; break;
             case "clear": presets = defaultStatus; break;
         }
         return Object.assign({},state,presets,args);
     },defaultStatus);
 
-    const saveUser = () => {
-        if (!userInfo.startDate) {
-            // should never get here, but just in case
-            setStatus({state:'error',message:'User must have a Start Date'});
-            return false;
-        }
-        const startDateChg = differenceInDays(userInfo.startDate,user.startDate||new Date(0));
-        let endDateChg = 0;
-        if (userInfo.endDate!=null&&user.endDate!=null) {
-            endDateChg = differenceInDays(userInfo.endDate,user.endDate);
-        } else {
-            endDateChg = (userInfo.endDate==null&&user.endDate==null)?0:1;
-        }
-        //check groups
-        const addGroups = differenceWith(groupLists.assigned,groupLists.original,isEqual).map(g=>g.GROUP_ID);
-        const delGroups = differenceWith(groupLists.original,groupLists.assigned,isEqual).map(g=>g.GROUP_ID);
-        if (!startDateChg && !endDateChg && !addGroups.length && !delGroups.length) {
+    const {addToast} = useToasts();
+
+    const methods = useForm({
+        mode:'onChange',
+        reValidateMode:'onChange',
+        defaultValues:Object.assign({},defaultVals,{
+            SUNYID: props.SUNY_ID||'',
+            firstName:props.LEGAL_FIRST_NAME||'',
+            lastName:props.LEGAL_LAST_NAME||'',
+            email:props.email||'',
+            startDate: props.startDate||new Date(),
+            endDate: props.endDate||''
+        })
+    });
+    const [firstName,lastName] = methods.watch(['firstName','lastName']);
+
+    const queryclient = useQueryClient();
+    const {getUserGroups,postUser,putUser} = useUserQueries(props.SUNY_ID);
+    const {getGroups} = useGroupQueries();
+    const groups = getGroups({enabled:false,select:data=>sortBy(data.filter(g=>g.active),['GROUP_NAME'])});
+    const usergroups = getUserGroups({enabled:false,select:data=>sortBy(data.filter(g=>g.active),['GROUP_NAME'])});
+    const updateuser = putUser();
+
+    const navigate = tab => {
+        setActiveTab(tab);
+    }
+    const closeModal = () => {
+        if (status.state == 'saving') return false;
+        props.setSelectedRow({});
+        props.setNewUser(false);
+    }
+    
+    const handleSave = data => {
+        if (!Object.keys(methods.formState.dirtyFields).length) {
+            addToast(<><h5>No Change</h5><p>No changes to user data.</p></>,{appearance:'info'});
             closeModal();
-            return;
+            return true;
         }
-        // now convert the start and end dates to string
-        const data = {
-            SUNY_ID:userInfo.SUNY_ID,
-            START_DATE:format(userInfo.startDate,'dd-MMM-yyyy'),
-            END_DATE:(!userInfo.endDate)?'':format(userInfo.endDate,'dd-MMM-yyyy'),
+        const origIds = (usergroups.data)?usergroups.data.map(g=>g.GROUP_ID):[];
+        const newIds = data.assignedGroups.map(g=>g.GROUP_ID);
+        const addGroups = difference(newIds,origIds);
+        const delGroups = difference(origIds,newIds);
+        const reqData = {
+            SUNY_ID:data.SUNYID,
+            START_DATE:format(data.startDate,'dd-MMM-yyyy'),
+            END_DATE:(data.endDate)?format(data.endDate,'dd-MMM-yyyy'):'',
             ADD_GROUPS:addGroups,
             DEL_GROUPS:delGroups
         }
         setStatus({state:'saving'});
-        if (newUser) {
-            createUser.mutateAsync(data).then(() => {
-                addToast(<><h5>Success!</h5><p>User created successfully.</p></>,{appearance:'success'});
-                queryclient.refetchQueries('users',{exact:true,throwOnError:true});
-                setStatus({state:'clear'});
-                closeModal();
+        if (!props.newGroup) {
+            updateuser.mutateAsync(reqData).then(()=>{
+                Promise.all([
+                    queryclient.refetchQueries('users',{exact:true,throwOnError:true}),
+                    queryclient.refetchQueries(['usergroups',props.SUNY_ID],{exact:true,throwOnError:true})
+                ]).then(() => {
+                    setStatus({state:'clear'});
+                    addToast(<><h5>Success!</h5><p>User saved successfully</p></>,{appearance:'success'});
+                    closeModal();
+                });
             }).catch(e => {
-                setStatus({
-                    state:'error',
-                    message:e.description || `${e.name}: ${e.message}`
-                });    
+                console.error(e);
+                setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
             });
         } else {
-            updateUser.mutateAsync(data).then(() => {
-                addToast(<><h5>Success!</h5><p>User updated successfully.</p></>,{appearance:'success'});
-                queryclient.refetchQueries(['usergroups',SUNY_ID],{exact:true,throwOnError:true});
-                setStatus({state:'clear'});
-                closeModal();
-            }).catch(e => {
-                setStatus({
-                    state:'error',
-                    message:e.description || `${e.name}: ${e.message}`
-                });    
-            });
+            console.log('create');
         }
+        console.log(data);
     }
-    useEffect(()=>usergroups.refetch(),[SUNY_ID]);
-    useEffect(()=>{
-        newUser && setGroupLists(['init',groups,[]]);
-    },[newUser]);
+
+    const handleError = error => {
+        console.log(error);
+    }
+
+    useEffect(() => {
+        groups.refetch().then(({data:groupsData}) => {
+            if (props.newUser) {
+                methods.reset(Object.assign({},defaultVals,{
+                    availableGroups:groupsData
+                }));
+            } else {
+                usergroups.refetch().then(({data:usergroupData}) => {
+                    const assignedIds = usergroupData.map(g=>g.GROUP_ID);
+                    const filtered = groupsData.filter(g=>!assignedIds.includes(g.GROUP_ID));
+                    methods.reset({
+                        SUNYID:props.SUNY_ID,
+                        firstName:props.LEGAL_FIRST_NAME,
+                        lastName:props.LEGAL_LAST_NAME,
+                        email:props.email,
+                        startDate: props.startDate,
+                        endDate: props.endDate,
+                        assignedGroups:usergroupData,
+                        availableGroups:filtered
+                    });    
+                });
+            }
+        })
+    },[props.SUNY_ID,props.newUser]);
     return (
         <Modal show={true} onHide={closeModal} backdrop="static" size="lg">
-            <Modal.Header closeButton>
-                <Modal.Title>{newUser && `New `}User</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
-                {(usergroups.isLoading||usergroups.isIdle)&&<Loading type="alert">Loading User Information...</Loading>}
-                {usergroups.isError&&<Loading type="alert" isError>Error loading user information: <small>{usergroups.error?.status} - {usergroups.error?.name}</small></Loading>}
-                {usergroups.data && <AddEditUserTabs userInfo={userInfo} setUserInfo={setUserInfo} groupLists={groupLists} setGroupLists={setGroupLists} setStatus={setStatus} newUser={newUser}/>}
-            </Modal.Body>
-            <Modal.Footer>
-                {status.state != 'error' && <p>{status.message}</p>}
-                <Button variant="secondary" onClick={closeModal} disabled={!status.cancel}>Cancel</Button>
-                <Button variant="danger" onClick={saveUser} disabled={!status.save}>{status.icon && <FontAwesomeIcon icon={status.icon} spin={status.spin}/>} Save</Button>
-            </Modal.Footer>
+            <FormProvider {...methods}>
+                <Form onSubmit={methods.handleSubmit(handleSave,handleError)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>{props.newUser && `New `}User: {firstName} {lastName}</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
+                            <Tabs activeKey={activeTab} onSelect={navigate} id="admin-groups-tabs">
+                                {tabs.map(t=>(
+                                    <Tab key={t.id} eventKey={t.id} title={t.title}>
+                                        <Container className="mt-3" fluid>
+                                            <TabRouter tab={t.id} newUser={props.newUser}/>
+                                        </Container>
+                                    </Tab>
+                                ))}
+                            </Tabs>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        {status.state != 'error' && <p>{status.message}</p>}
+                        <Button variant="secondary" onClick={closeModal}  disabled={!status.cancel}>Cancel</Button>
+                        <Button variant="danger" type="submit"disabled={!status.save||!methods.formState.isValid}>{status.icon && <Icon icon={status.icon} className={status.spin?'spin':''}/>}Save</Button>
+                    </Modal.Footer>
+                </Form>
+            </FormProvider>
         </Modal>
     );
 }
 
-function AddEditUserTabs({userInfo,setUserInfo,groupLists,setGroupLists,setStatus,newUser}) {
-    const [tab,setTab] = useState('info');
-    return (    
-        <Form>
-            <Tabs id="user-tabs" activeKey={tab} onSelect={t=>setTab(t)}>
-                <Tab eventKey="info" title="Info">
-                    <Container className="p-2">
-                        <UserInfo userInfo={userInfo} setUserInfo={setUserInfo} newUser={newUser} setStatus={setStatus}/>
-                    </Container>
-                </Tab>
-                <Tab eventKey="groups" title="Groups">
-                    <Container className="p-2">
-                        <UserGroups groupLists={groupLists} setGroupLists={setGroupLists} newUser={newUser}/>
-                    </Container>
-                </Tab>
-            </Tabs>
-        </Form>
-    );
+function TabRouter({tab,newUser}) {
+    switch(tab) {
+        case "info": return <UserInfo newUser={newUser}/>;
+        case "groups": return <UserGroups/>;
+        default: return <p>{tab}</p>;
+    }
 }
 
-
-function UserInfo({userInfo,setUserInfo,newUser,setStatus}) {
-    const ref = useRef();
-    const [lookupId,setLookupId] = useState('');
-    const [startDate,setStartDate] = useState(userInfo.startDate);
-    const [endDate,setEndDate] = useState(userInfo.endDate);
+function UserInfo({newUser}) {
     const lookupStateDefault = {
         state:'',
-        icon:'search',
+        icon:'mdi:account-search',
         variant:'secondary',
-        spin:false,
-        message:''
+        spin:false
     };
+    const { control, watch, reset, setError, formState: { errors } } = useFormContext();
+    const sunyid = watch('SUNYID');
+
     const [lookupState,setLookupState] = useReducer((state,action) => {
         switch(action) {
-            case 'invalid':
-                return {state:'invalid',icon:'exclamation-triangle',variant:'danger',spin:false,message:'Invalid SUNY ID'};
-            case 'valid':
-                return {state:'valid',icon:'check',variant:'success',spin:false,message:''};
-            case 'search':
-                return {state:'search',icon:'circle-notch',variant:'secondary',spin:true,message:''};
             case 'error':
-                return {state:'invalid',icon:'exclamation-triangle',variant:'danger',spin:false,message:'Error'};
-            default:
-                return lookupStateDefault;
+            case 'invalid': return {state:'invalid',icon:'mdi:account-alert',variant:'danger',spin:false};
+            case 'valid': return {state:'valid',icon:'mdi:account-check',variant:'success',spin:false};
+            case 'search': return {state:'search',icon:'mdi:loading',variant:'secondary',spin:true};
+            default: return lookupStateDefault;
         }
     },lookupStateDefault);
 
     const queryclient = useQueryClient();
+    const {lookupUser} = useUserQueries(sunyid);
+    const lookupuser = lookupUser({enabled:false});
+    
+    const handleLookup = () => {
+        console.log('do lookup:',sunyid);
+        if (!sunyid) {
+            setLookupState('invalid');
+            setError("SUNYID",{type:'required',message:'You must enter a SUNY ID'});
+            return;
+        }
+        const userExists = queryclient.getQueryData('users').find(u=>u.SUNY_ID==sunyid);
+        if (userExists) {
+            setLookupState('invalid');
+            setError("SUNYID",{type:'manual',message:'User Already Exists'});
+            return;
+        }
+        setLookupState('search');
+        lookupuser.refetch().then(d => {
+            if (d.isError) {
+                console.error(d.error);
+                setLookupState('error');
+                setError("SUNYID",{type:'manual',message:d.error?.description});
+                return false;    
+            }
+            const userData = d.data[0];
+            if (!userData) {
+                setLookupState('error');
+                setError("SUNYID",{type:'manual',message:'Invalid SUNY ID'});
+                return false;    
+            }
+            setLookupState('valid');
+            reset(Object.assign({},defaultVals,{
+                SUNYID:userData.SUNY_ID,
+                firstName:userData.LEGAL_FIRST_NAME,
+                lastName:userData.LEGAL_LAST_NAME,
+                email:userData.EMAIL_ADDRESS_WORK,
+            }));
+        });
+    }
     const handleKeyDown = e => {
         if (e.which == 13) {
             e.preventDefault();
@@ -392,75 +472,13 @@ function UserInfo({userInfo,setUserInfo,newUser,setStatus}) {
             return true;
         }
         if (e.which == 27) {
-            if (lookupId == '') return true; //if the SUNY ID field is empty allow the ESC to propagate and close the modal
             e.preventDefault();
-            e.stopPropagation();
-            setLookupId('');
-            setLookupState('reset');
-            setStatus({state:'clear'});
-            setUserInfo({
-                SUNY_ID:'',
-                LEGAL_FIRST_NAME:'',
-                LEGAL_LAST_NAME:'',
-                email:'',
-                startDate: null,
-                endDate: null
-            });
+            setLookupState('clear');
+            reset(defaultVals);
+            return true;
         }
     }
-    const handleLookup = () => {
-        if (!lookupId) return;
-        //is sunyid already in the users list?
-        const userExists = queryclient.getQueryData(['users']).filter(u=>u.SUNY_ID==lookupId).length;
-        if (userExists) {
-            setLookupState('invalid');
-            setStatus({state:'error',message:'SUNY ID already exists as user'});
-            return;
-        }
-        setLookupState('search');
-        fetch(`api/api.php/user/${lookupId}`).then(r=>{
-            if (!r.ok) throw Error(`${r.status} - ${r.statusText}`);
-            return r.json();
-        }).then(d=>{
-            if (!d.length) {
-                setLookupState('invalid');
-                setStatus({state:'error',message:'Invalid SUNY ID'});
-            } else {
-                const now = new Date();
-                setLookupState('valid');
-                setUserInfo({
-                    SUNY_ID:d[0].SUNY_ID,
-                    LEGAL_FIRST_NAME:d[0].LEGAL_FIRST_NAME,
-                    LEGAL_LAST_NAME:d[0].LEGAL_LAST_NAME,
-                    email:(d[0].EMAIL_ADDRESS_WORK && d[0].EMAIL_ADDRESS_WORK.toLowerCase())||'',
-                    startDate:now,
-                    endDate:null
-                });
-                setStartDate(now);
-                setStatus({state:'clear',save:true});
-            }
-        }).catch(e => {
-            console.error('Error fetching user by SUNY ID: ',e);
-            setLookupState('error');
-            setStatus({state:'error',message:e?.message});
-        });
-    }
-    const handleDateChange = (...args) => {
-        switch(args[0]) {
-            case "start":
-                setStartDate(args[1]);
-                setUserInfo({startDate:args[1]});
-                setStatus({save:!!args[1]});
-                break;
-            case "end":
-                setEndDate(args[1]);
-                setUserInfo({endDate:args[1]});
-                break;
-        }
-    }
-    useEffect(() => {
-        newUser && ref.current.focus();
-    },[]);
+
     return (
         <>
             <Form.Row>
@@ -468,104 +486,119 @@ function UserInfo({userInfo,setUserInfo,newUser,setStatus}) {
                     <Form.Label>SUNY ID</Form.Label>
                     {newUser?
                         <InputGroup hasValidation className="mb-3">
-                            <Form.Control ref={ref} placeholder="Search for SUNY ID" aria-label="Search for SUNY ID" aria-describedby="basic-addon" value={lookupId} onChange={e=>setLookupId(e.target.value)} onKeyDown={handleKeyDown}/>
+                            <Controller
+                                name="SUNYID"
+                                control={control}
+                                render={({field}) => <Form.Control {...field} type="text" placeholder="Search for SUNY ID" aria-label="Search for SUNY ID" aria-describedby="basic-addon" onKeyDown={handleKeyDown} isInvalid={errors.SUNYID}/>}
+                            />
                             <InputGroup.Append>
-                                <Button variant={lookupState.variant} title="Search" onClick={handleLookup} disabled={!lookupId}><FontAwesomeIcon icon={lookupState.icon} spin={lookupState.spin}/></Button>
+                                <Button variant={lookupState.variant} className="no-label" title="Search" onClick={handleLookup}><Icon icon={lookupState.icon} className={lookupState.spin&&'spin'}/></Button>
                             </InputGroup.Append>
-                            <Form.Control.Feedback type="invalid">{lookupState.message}</Form.Control.Feedback>
+                            <Form.Control.Feedback type="invalid">{errors.SUNYID?.message}</Form.Control.Feedback>
                         </InputGroup>
                     :
-                        <Form.Control type="text" placeholder="SUNY ID" value={userInfo.SUNY_ID} disabled/>
+                        <Controller
+                            name="SUNYID"
+                            control={control}
+                            render={({field}) => <Form.Control {...field} type="text" disabled/>}
+                        />
                     }
                 </Form.Group>
             </Form.Row>
             <Form.Row>
                 <Form.Group as={Col} controlId="first_name">
                     <Form.Label>First Name</Form.Label>
-                    <Form.Control placeholder="First Name" value={userInfo.LEGAL_FIRST_NAME} disabled/>
+                    <Controller
+                        name="firstName"
+                        control={control}
+                        render={({field}) => <Form.Control {...field} type="text" disabled/>}
+                    />
                 </Form.Group>
                 <Form.Group as={Col} controlId="last_name">
                     <Form.Label>Last Name</Form.Label>
-                    <Form.Control placeholder="Last Name" value={userInfo.LEGAL_LAST_NAME} disabled/>
+                    <Controller
+                        name="lastName"
+                        control={control}
+                        render={({field}) => <Form.Control {...field} type="text" disabled/>}
+                    />
                 </Form.Group>
             </Form.Row>
             <Form.Row>
                 <Form.Group as={Col} controlId="email">
                     <Form.Label>Email</Form.Label>
-                    <Form.Control type="email" value={userInfo.email} disabled/>
+                    <Controller
+                        name="email"
+                        control={control}
+                        render={({field}) => <Form.Control {...field} type="text" disabled/>}
+                    />
                 </Form.Group>
             </Form.Row>
             <Form.Row>
                 <Form.Group as={Col} controlId="start_date">
                     <Form.Label>Start Date</Form.Label>
-                    <Form.Control as={DatePicker} selected={startDate} maxDate={endDate && subDays(endDate,1)} onChange={d=>handleDateChange('start',d)} placeholderText="mm/dd/yyyy"/>
+                    <Controller
+                        name="startDate"
+                        control={control}
+                        rules={{required:{value:true,message:'Start Date is required'}}}
+                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.startDate}/>}
+                    />
+                    <Form.Control.Feedback type="invalid">{errors.startDate?.message}</Form.Control.Feedback>                    
                 </Form.Group>
                 <Form.Group as={Col} controlId="end_date">
                     <Form.Label>End Date</Form.Label>
-                    <Form.Control as={DatePicker} selected={endDate} minDate={startDate && addDays(startDate,1)} onChange={d=>handleDateChange('end',d)} placeholderText="mm/dd/yyyy" disabled={!startDate}/>
+                    <Controller
+                        name="endDate"
+                        control={control}
+                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value}/>}
+                    />
                 </Form.Group>
             </Form.Row>
         </>
     );
 }
 
-function UserGroups({groupLists,setGroupLists,newUser}) {
+function UserGroups() {
     return (
         <div className="drag-col-2">
             <div className="dlh1">Unassigned Groups</div>
             <div className="dlh2">Assigned Groups</div>
-            <UserGroupsList groupLists={groupLists} setGroupLists={setGroupLists}/>
+            <UserGroupsList/>
         </div>
     );
 }
 
-function UserGroupsList({groupLists,setGroupLists}) {
-    const [value,setValue] = useState(0);//used to force rerender on dblClick
+function UserGroupsList() {
+    const { control } = useFormContext();
+    const { insert:insertAssignedGroups, remove:removeAssignedGroups } = useFieldArray({control:control,name:'assignedGroups'});
+    const { insert:insertAvailableGroups, remove:removeAvailableGroups } = useFieldArray({control:control,name:'availableGroups'});
+    const assignedgroups = useWatch({name:'assignedGroups',control:control});
+    const availablegroups = useWatch({name:'availableGroups',control:control});
+
     const onDragEnd = ({source,destination}) => {
-        if (!source || !destination) return; //something happened - we need both
-        if (source.droppableId == destination.droppableId) return;
-        setGroupLists([(destination.droppableId == 'assigned')?'add':'del',source.index,destination.index]);
+        if (source.droppableId == destination.droppableId) return false; //no reordering
+        if (source.droppableId == 'available') {
+            insertAssignedGroups(destination.index,availablegroups[source.index]);
+            removeAvailableGroups(source.index);
+        }
+        if (source.droppableId == 'assigned') {
+            insertAvailableGroups(destination.index,assignedgroups[source.index]);
+            removeAssignedGroups(source.index);
+        }
     }
     const handleDblClick = useCallback(e => {
-        const {grouplist,idx} = e.target.dataset;
+        const {list,idx} = e.target.dataset;
         onDragEnd({
-            source:{droppableId:grouplist,index:idx},
-            destination:{droppableId:(grouplist=='available'?'assigned':'available'),index:0}
+            source:{droppableId:list,index:parseInt(idx,10)},
+            destination:{droppableId:(list=='available'?'assigned':'available'),index:0}
         });
-        setValue(value=>value+1);
-    },[]);
-    return (
+    },[availablegroups,assignedgroups]);
+    return(
         <DragDropContext onDragEnd={onDragEnd}>
             <Droppable droppableId="available">
                 {(provided, snapshot) => ( 
                     <div ref={provided.innerRef} className={`droplist dl1 ${snapshot.isDraggingOver?'over':''}`}>
-                        {groupLists.available.map(g => {
-                            return (
-                                <Draggable key={g.GROUP_ID} draggableId={g.GROUP_ID} index={g.idx}>
-                                    {(provided,snapshot) => (
-                                        <div 
-                                            ref={provided.innerRef} 
-                                            {...provided.draggableProps} 
-                                            {...provided.dragHandleProps}
-                                            className={snapshot.isDragging?'dragging':''}
-                                            onDoubleClick={handleDblClick}
-                                            data-grouplist="available" data-idx={g.idx}
-                                        >
-                                            {g.GROUP_NAME}
-                                        </div>
-                                    )}
-                                </Draggable>
-                            );
-                        })}
-                        {provided.placeholder}
-                    </div>
-                )}
-            </Droppable>
-            <Droppable droppableId="assigned">
-                {(provided, snapshot) => ( 
-                    <div ref={provided.innerRef} className={`droplist dl2 ${snapshot.isDraggingOver?'over':''}`}>
-                        {groupLists.assigned.map(g => (
-                            <Draggable key={g.GROUP_ID} draggableId={g.GROUP_ID} index={g.idx}>
+                        {availablegroups.map((g,i) => (
+                            <Draggable key={g.GROUP_ID} draggableId={g.GROUP_ID} index={i}>
                                 {(provided,snapshot) => (
                                     <div
                                         ref={provided.innerRef} 
@@ -573,7 +606,30 @@ function UserGroupsList({groupLists,setGroupLists}) {
                                         {...provided.dragHandleProps}
                                         className={snapshot.isDragging?'dragging':''}
                                         onDoubleClick={handleDblClick}
-                                        data-grouplist="assigned" data-idx={g.idx}
+                                        data-list="available" data-idx={i}
+                                    >
+                                        {g.GROUP_NAME}
+                                    </div>
+                                )}
+                            </Draggable>
+                        ))}
+                        {provided.placeholder}
+                    </div>
+                )}
+            </Droppable>
+            <Droppable droppableId="assigned">
+                {(provided, snapshot) => ( 
+                    <div ref={provided.innerRef} className={`droplist dl2 ${snapshot.isDraggingOver?'over':''}`}>
+                        {assignedgroups.map((g,i) => (
+                            <Draggable key={g.GROUP_ID} draggableId={g.GROUP_ID} index={i}>
+                                {(provided,snapshot) => (
+                                    <div
+                                        ref={provided.innerRef} 
+                                        {...provided.draggableProps} 
+                                        {...provided.dragHandleProps}
+                                        className={snapshot.isDragging?'dragging':''}
+                                        onDoubleClick={handleDblClick}
+                                        data-list="assigned" data-idx={i}
                                     >
                                         {g.GROUP_NAME}
                                     </div>

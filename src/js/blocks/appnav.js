@@ -58,7 +58,6 @@ export default function AppNav({userCounts}) {
                             <NavDropdown.Item as={Link} to="/admin/users">Users</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/groups">Groups</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/departments">Departments</NavDropdown.Item>
-                            <NavDropdown.Item as={Link} to="/admin/groupsOLD">GroupsOLD</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/lists">Lists</NavDropdown.Item>
                             <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/admin/hierarchy" disabled>Hierarchy</NavDropdown.Item>
