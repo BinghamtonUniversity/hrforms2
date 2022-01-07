@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef, useReducer } from "react";
 import { useQueryClient } from "react-query";
-import { useAdminQueries } from "../../queries";
+import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
 import { Loading } from "../../blocks/components";
 import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert } from "react-bootstrap";
 import { Icon } from "@iconify/react";
-import { orderBy, startsWith, sortBy, difference, differenceWith, isEqual } from "lodash";
+import { orderBy, startsWith, sortBy, difference, differenceWith, isEqual, capitalize } from "lodash";
 import DataTable from 'react-data-table-component';
 import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
 import DatePicker from "react-datepicker";
@@ -20,7 +20,7 @@ export default function AdminGroups() {
     const groups = getGroups();
 
     return (
-        <React.StrictMode>
+        <>
             <Row>
                 <Col><h2>Admin: Groups <Button variant="success" onClick={()=>setNewGroup(true)}><Icon icon="mdi:account-multiple-plus"/>Add New</Button></h2></Col>
             </Row>
@@ -31,7 +31,7 @@ export default function AdminGroups() {
                     {groups.isSuccess && <GroupsTable groups={groups.data} newGroup={newGroup} setNewGroup={setNewGroup}/>}
                 </Col>
             </Row>
-        </React.StrictMode>
+        </>
     );
 }
 
@@ -116,6 +116,9 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
         {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
     ],[groups]);
+    const paginationComponentOptions = {
+        selectAllRowsItem: true
+    };
     useEffect(()=>{
         setRows(orderBy(groups,[sortField],[sortDir]));
     },[groups]);
@@ -129,7 +132,9 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
                 responsive
                 subHeader
                 subHeaderComponent={filterComponent} 
-                paginationResetDefaultPage={resetPaginationToggle}   
+                paginationRowsPerPageOptions={[10,20,30,40,50,100]}
+                paginationResetDefaultPage={resetPaginationToggle}
+                paginationComponentOptions={paginationComponentOptions}
                 pointerOnHover
                 highlightOnHover
                 onRowClicked={handleRowClick}
@@ -151,15 +156,16 @@ function ToggleGroup({group,setToggleGroup}) {
     const update = patchGroup();
     useEffect(() => {
         const newEndDate = (group.END_DATE)?'':format(new Date(),'dd-MMM-yy');
-        addToast(<><h5>Updating</h5><p>Updating group...</p></>,{appearance:'info',autoDismiss:false},id=>{
+        const words = (group.END_DATE)?['activate','activating','activated']:['deactivate','deactivating','deactivated'];
+        addToast(<><h5>{capitalize(words[1])}</h5><p>{capitalize(words[1])} group...</p></>,{appearance:'info',autoDismiss:false},id=>{
             update.mutateAsync({END_DATE:newEndDate}).then(() => {
                 queryclient.refetchQueries(['groups'],{exact:true,throwOnError:true}).then(() => {
                     removeToast(id);
-                    addToast(<><h5>Success!</h5><p>Group updated successfully.</p></>,{appearance:'success'});
+                    addToast(<><h5>Success!</h5><p>Group {words[2]} successfully.</p></>,{appearance:'success'});
                 });
             }).catch(e => {
                 removeToast(id);
-                addToast(<><h5>Error!</h5><p>Failed to update group. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
+                addToast(<><h5>Error!</h5><p>Failed to {words[0]} group. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
             }).finally(() => {
                 setToggleGroup({});
             });
@@ -244,7 +250,7 @@ function AddEditGroupForm(props) {
 
     const queryclient = useQueryClient();    
     const {getGroupUsers,postGroup,putGroup,getAvailableGroupDepts,getGroupDepts} = useGroupQueries(props.GROUP_ID);
-    const {getUsers} = useAdminQueries();
+    const {getUsers} = useUserQueries();
     const users = getUsers({enabled:false,select:data=>sortBy(data.filter(u=>(u.active&&!!u.SUNY_ID)),['sortName'])});
     const depts = getAvailableGroupDepts({enabled:false});
     const groupusers = getGroupUsers({enabled:false,select:data=>sortBy(data,['sortName'])});
@@ -267,24 +273,26 @@ function AddEditGroupForm(props) {
             closeModal();
             return true;
         }
+        const origIds = (groupusers.data)?groupusers.data.map(u=>u.SUNY_ID):[];
+        const newIds = data.assignedUsers.map(u=>u.SUNY_ID);
+        const addUsers = difference(newIds,origIds);
+        const delUsers = difference(origIds,newIds);
+        const origDepts = groupdepts.data||[];
+        const addDepts = differenceWith(data.assignedDepts,origDepts,isEqual);
+        const delDepts = differenceWith(origDepts,data.assignedDepts,isEqual);
+        const reqData = {
+            GROUP_NAME:data.groupName,
+            START_DATE:format(data.startDate,'dd-MMM-yyyy'),
+            END_DATE:(data.endDate)?format(data.endDate,'dd-MMM-yyyy'):'',
+            ADD_USERS:addUsers,
+            DEL_USERS:delUsers,
+            ADD_DEPTS:addDepts,
+            DEL_DEPTS:delDepts
+        }
         setStatus({state:'saving'});
-        if (props?.GROUP_ID) {
-            const origIds = groupusers.data.map(u=>u.SUNY_ID);
-            const newIds = data.assignedUsers.map(u=>u.SUNY_ID);
-            const addUsers = difference(newIds,origIds);
-            const delUsers = difference(origIds,newIds);
-            const addDepts = differenceWith(data.assignedDepts,groupdepts.data,isEqual);
-            const delDepts = differenceWith(groupdepts.data,data.assignedDepts,isEqual);
+        if (!props.newGroup) {
             //Could be separate mutations encapped in Promise.all?
-            updateGroup.mutateAsync({
-                GROUP_NAME:data.groupName,
-                START_DATE:format(data.startDate,'dd-MMM-yyyy'),
-                END_DATE:(data.endDate)?format(data.endDate,'dd-MMM-yyyy'):'',
-                ADD_USERS:addUsers,
-                DEL_USERS:delUsers,
-                ADD_DEPTS:addDepts,
-                DEL_DEPTS:delDepts
-            }).then(d=>{
+            updateGroup.mutateAsync(reqData).then(()=>{
                 Promise.all([
                     queryclient.refetchQueries('groups',{exact:true,throwOnError:true}),
                     queryclient.refetchQueries(['groupusers',props.GROUP_ID],{exact:true,throwOnError:true})
@@ -298,14 +306,7 @@ function AddEditGroupForm(props) {
                 setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
             });
         } else {
-            const addUsers = data.assignedUsers.map(u=>u.SUNY_ID);
-            createGroup.mutateAsync({
-                GROUP_NAME:data.groupName,
-                START_DATE:format(data.startDate,'dd-MMM-yyyy'),
-                END_DATE:(data.endDate)?format(data.endDate,'dd-MMM-yyyy'):'',
-                ADD_USERS:addUsers,
-                DEL_USERS:[]
-            }).then(d=>{
+            createGroup.mutateAsync(reqData).then(d=>{
                 queryclient.refetchQueries('groups',{exact:true,throwOnError:true}).then(() => {
                     setStatus({state:'clear'});
                     addToast(<><h5>Success!</h5><p>Group created successfully</p></>,{appearance:'success'});
@@ -322,7 +323,6 @@ function AddEditGroupForm(props) {
     }
 
     useEffect(() => {
-        //get departments; use Promise.all()
         Promise.all([
             users.refetch(),
             depts.refetch()

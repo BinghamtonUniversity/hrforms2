@@ -32,9 +32,10 @@ class User extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
+		//TODO: this needs to be re-worked to query the HRFORMS2_USERS table (which needs to include meta data) first, then query persemp
+		//sleep(4);
+		//return $this->raiseError(400);
 		if (!isset($this->req[0])) {
-			//sleep(4);
-			//return $this->raiseError(400);
 			$qry = "select p.*, u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date
 			from hrforms2_users u
 			left join (select ".$this->BASE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.suny_id)";
@@ -47,7 +48,8 @@ class User extends HRForms2 {
 			$stmt = oci_parse($this->db,$qry);
 			oci_bind_by_name($stmt,":suny_id", $this->req[0]);
 		}
-		oci_execute($stmt);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
 			//$this->userAttributes($row);
 			$this->_arr[] = $row;
@@ -64,10 +66,12 @@ class User extends HRForms2 {
 		oci_bind_by_name($stmt,":start_date", $this->POSTvars['START_DATE']);
 		oci_bind_by_name($stmt,":end_date", $this->POSTvars['END_DATE']);
 		oci_bind_by_name($stmt,":suny_id", $this->req[0]);
-		oci_execute($stmt);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
 		oci_commit($this->db);
 		oci_free_statement($stmt);
 		new UserGroups(array($this->POSTvars['SUNY_ID']));
+		$this->done();
 	}
 
 	function POST() {
@@ -78,9 +82,25 @@ class User extends HRForms2 {
 		oci_bind_by_name($stmt,":created_by", $this->sessionData['SUNY_ID']);
 		oci_bind_by_name($stmt,":start_date", $this->POSTvars['START_DATE']);
 		oci_bind_by_name($stmt,":end_date", $this->POSTvars['END_DATE']);
-		oci_execute($stmt);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
 		oci_commit($this->db);
 		oci_free_statement($stmt);
 		new UserGroups(array($this->POSTvars['SUNY_ID']));
+		$this->done();
+	}
+
+	function PATCH() {
+		if (isset($this->POSTvars['END_DATE'])) {
+			$qry = "update hrforms2_users set end_date = :end_date where suny_id = :suny_id";
+			$stmt = oci_parse($this->db,$qry);
+			oci_bind_by_name($stmt,":end_date", $this->POSTvars['END_DATE']);
+			oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+			$r = oci_execute($stmt);
+			if (!$r) $this->raiseError();
+			oci_commit($this->db);
+			oci_free_statement($stmt);
+		}
+		$this->done();
 	}
 }

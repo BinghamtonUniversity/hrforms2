@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import {Alert,Button,Modal} from "react-bootstrap";
 import {parse,format} from "date-fns";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import invoke from "lodash/invoke";
+import get from "lodash/get";
+import { Icon } from '@iconify/react';
 
 /*
 const LoadingOLD = React.memo(function LoadingOLD({className='',title,error,type,variant='dark'}) {
@@ -16,7 +19,7 @@ const LoadingOLD = React.memo(function LoadingOLD({className='',title,error,type
 });
 */
 const Loading = React.memo(function Loading({children,className='',isError,error,variant,type}){
-    const icon = (isError)?<FontAwesomeIcon icon="exclamation-triangle"/>:<FontAwesomeIcon icon="sync" spin/>;
+    const icon = (isError)?<Icon icon="mdi:alert"/>:<Icon icon="mdi:loading" className="spin"/>;
     const cl = (isError)?`text-danger ${className}`:className;
     if (type == 'alert') {
         return <Alert variant={variant||'dark'} className={`text-center ${cl}`}>{icon} {children}</Alert>
@@ -34,22 +37,18 @@ export function DateFormat({children,inFmt,outFmt,nvl=null}) {
     return format(d,oFmt);
 }
 
-const ModalConfirm = React.memo(({children,show,title,buttons}) => {
-    const handleClose = () => {
-        buttons?.close?.callback&&buttons.close.callback();
-    }
-    const handleConfirm = () => {
-        buttons?.confirm?.callback&&buttons.confirm.callback();
-    }
+const ModalConfirm = React.memo(({children,show,title,buttons,icon}) => {
+    const handleClose = () => invoke(buttons,'close.callback');
+    const handleConfirm = () => invoke(buttons,'confirm.callback');
     return (
         <Modal show={show} onHide={handleClose} backdrop="static">
             <Modal.Header closeButton>
-                <Modal.Title>{title}</Modal.Title>
+                <Modal.Title>{icon&&<Icon className="iconify-inline" icon={icon} mr={2}/>}{title}</Modal.Title>
             </Modal.Header>
             <Modal.Body>{children}</Modal.Body>
             <Modal.Footer>
-                <Button variant={buttons?.close?.variant||'secondary'} onClick={handleClose}>{buttons?.close?.title||'Close'}</Button>
-                <Button variant={buttons?.confirm?.variant||'primary'} onClick={handleConfirm}>{buttons?.confirm?.title||'Confirm'}</Button>
+                <Button variant={get(buttons,'close.variant','secondary')} onClick={handleClose}>{get(buttons,'close.title','Close')}</Button>
+                <Button variant={get(buttons,'confirm.variant','primary')} onClick={handleConfirm}>{get(buttons,'confirm.title','Confirm')}</Button>
             </Modal.Footer>
         </Modal>
     );

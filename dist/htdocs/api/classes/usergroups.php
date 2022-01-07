@@ -36,7 +36,8 @@ class UserGroups extends HRForms2 {
             and ug.suny_id = :suny_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":suny_id", $this->req[0]);
-		oci_execute($stmt);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
 			$this->_arr[] = $row;
 		}
@@ -51,7 +52,8 @@ class UserGroups extends HRForms2 {
 			$stmt = oci_parse($this->db,$qry);
 			oci_bind_by_name($stmt,":suny_id", $this->req[0]);
 			oci_bind_by_name($stmt,":group_id", $group);
-			oci_execute($stmt);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
 			oci_free_statement($stmt);
 		}
 		foreach ($this->POSTvars['ADD_GROUPS'] as $group) {
@@ -59,11 +61,11 @@ class UserGroups extends HRForms2 {
 			$stmt = oci_parse($this->db,$qry);
 			oci_bind_by_name($stmt,":suny_id", $this->req[0]);
 			oci_bind_by_name($stmt,":group_id", $group);
-			oci_execute($stmt);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
 			oci_free_statement($stmt);
 		}
 		oci_commit($this->db);
-		$this->done();
 	}
 	function POST() {
 		$this->PUT();
