@@ -19,7 +19,7 @@ const LoadingOLD = React.memo(function LoadingOLD({className='',title,error,type
 });
 */
 const Loading = React.memo(function Loading({children,className='',isError,error,variant,type}){
-    const icon = (isError)?<Icon icon="mdi:alert"/>:<Icon icon="mdi:loading" className="spin"/>;
+    const icon = (isError)?<Icon icon="mdi:alert" className="iconify-inline"/>:<Icon icon="mdi:loading" className="spin iconify-inline"/>;
     const cl = (isError)?`text-danger ${className}`:className;
     if (type == 'alert') {
         return <Alert variant={variant||'dark'} className={`text-center ${cl}`}>{icon} {children}</Alert>

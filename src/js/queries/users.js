@@ -34,6 +34,7 @@ export default function useUserQueries(SUNY_ID) {
     const postUser = () => useMutation(d=>q('user','POST',d)());
     const putUser = () => useMutation(d=>q(`user/${SUNY_ID}`,'PUT',d)());
     const patchUser = () => useMutation(d=>q(`user/${SUNY_ID}`,'PATCH',d)());
+    const deleteUser = () => useMutation(d=>q(`user/${SUNY_ID}`,'DELETE',d)());
 
     const getUserGroups = (...args) => {
         const options = args[0]?.options||args[0]||{};
@@ -54,5 +55,5 @@ export default function useUserQueries(SUNY_ID) {
         return useQuery(['usergroups',SUNY_ID],q(`usergroups/${SUNY_ID}`),options);
     }
 
-    return {lookupUser,getUsers,postUser,putUser,patchUser,getUserGroups};
+    return {lookupUser,getUsers,postUser,putUser,patchUser,deleteUser,getUserGroups};
 }

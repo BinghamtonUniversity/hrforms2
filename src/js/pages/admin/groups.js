@@ -116,6 +116,15 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
         {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
     ],[groups]);
+    
+    const conditionalRowStyles = [
+        {
+            when: row => !row.active,
+            style: {
+                color: '#999'
+            }
+        }
+    ];
     const paginationComponentOptions = {
         selectAllRowsItem: true
     };
@@ -141,6 +150,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
                 defaultSortFieldId={2}
                 onSort={handleSort}
                 sortServer
+                conditionalRowStyles={conditionalRowStyles}
             />
             {(selectedRow?.GROUP_ID||newGroup) && <AddEditGroupForm {...selectedRow} setSelectedRow={setSelectedRow} newGroup={newGroup} setNewGroup={setNewGroup}/>}
             {toggleGroup?.GROUP_ID && <ToggleGroup group={toggleGroup} setToggleGroup={setToggleGroup}/>}
@@ -365,7 +375,7 @@ function AddEditGroupForm(props) {
                         {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
                         {(props.newGroup && (users.isIdle || users.isLoading))||
                         (!props.newGroup && (groupusers.isIdle || groupusers.isLoading))&&
-                            <Loading type="alert">Loading Group Data</Loading>
+                            <Loading type="alert" variant="info">Loading Group Data</Loading>
                         }
                         {users.isError && <Loading type="alert" isError>Failed to load users <small>{users.error?.description}</small></Loading>}
                         {groupusers.isError && <Loading type="alert" isError>Failed to load group users <small>{groupusers.error?.description}</small></Loading> }
@@ -384,7 +394,7 @@ function AddEditGroupForm(props) {
                     <Modal.Footer>
                         {status.state != 'error' && <p>{status.message}</p>}
                         <Button variant="secondary" onClick={closeModal}  disabled={!status.cancel}>Cancel</Button>
-                        <Button variant="danger" type="submit"disabled={!status.save||!methods.formState.isValid}>{status.icon && <Icon icon={status.icon} className={status.spin?'spin':''}/>}Save</Button>
+                        <Button variant="danger" type="submit"disabled={!(status.save&&methods.formState.isValid)}>{status.icon && <Icon icon={status.icon} className={status.spin?'spin':''}/>}Save</Button>
                     </Modal.Footer>
                 </Form>
             </FormProvider>
