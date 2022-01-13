@@ -7,7 +7,7 @@ import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert, InputGroup 
 import { Icon } from "@iconify/react";
 import { orderBy, startsWith, sortBy, difference, differenceWith, isEqual, capitalize } from "lodash";
 import DataTable from 'react-data-table-component';
-import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
+import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray, useFormState } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { format } from "date-fns";
@@ -126,6 +126,15 @@ function UsersTable({users,newUser,setNewUser}) {
         {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
     ],[users]);
 
+    const conditionalRowStyles = [
+        {
+            when: row => !row.active,
+            style: {
+                color: '#999'
+            }
+        }
+    ];
+
     const paginationComponentOptions = {
         selectAllRowsItem: true
     };
@@ -152,6 +161,7 @@ function UsersTable({users,newUser,setNewUser}) {
                 defaultSortFieldId={2}
                 onSort={handleSort}
                 sortServer
+                conditionalRowStyles={conditionalRowStyles}
             />
             {(selectedRow?.SUNY_ID||newUser) && <AddEditUserForm {...selectedRow} setSelectedRow={setSelectedRow} newUser={newUser} setNewUser={setNewUser}/>}
             {impersonateUser?.SUNY_ID && <ImpersonateUser user={impersonateUser} setImpersonateUser={setImpersonateUser}/>}
@@ -219,6 +229,7 @@ function DeleteUser({user,setDeleteUser}) {
     const {addToast,removeToast} = useToasts();
     const queryclient = useQueryClient();
     const {deleteUser} = useUserQueries(user.SUNY_ID);
+    const del = deleteUser();
 
     const buttons = {
         close: {
@@ -232,12 +243,17 @@ function DeleteUser({user,setDeleteUser}) {
             title: 'Delete',
             variant: 'danger',
             callback: () => {
-                deleteUser.mutateAsync().then(() => {
-                    setShow(false);
-                    setDeleteUser({});    
+                del.mutateAsync().then(() => {
+                    queryclient.refetchQueries(['users'],{exact:true,throwOnError:true}).then(() => {
+                        setShow(false);
+                        setDeleteUser({});    
+                        addToast(<><h5>Success!</h5><p>User deleted successfully.</p></>,{appearance:'success'});
+                    });
                 }).catch(e => {
-                    
+                    setShow(false);
+                    setDeleteUser({});
                     console.error(e);
+                    addToast(<><h5>Error!</h5><p>Failed to delete user. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
                 });
             }
         }
@@ -255,13 +271,13 @@ function AddEditUserForm(props) {
         {id:'info',title:'Info'},
         {id:'groups',title:'Groups'},
     ];
-    const defaultStatus = {state:'',message:'',icon:'',spin:false,cancel:true,save:true};
+    const defaultStatus = {state:'',message:'',icon:'',spin:false,cancel:true,save:false};
 
     const [activeTab,setActiveTab] = useState('info');
     const [status,setStatus] = useReducer((state,args) => {
         let presets = {};
         switch(args.state) {
-            case "error": presets = {icon:'mdi:alert',spin:false,save:false,cancel:true}; break;
+            case "error": presets = {icon:'mdi:alert',spin:false,save:true,cancel:true}; break;
             case "saving": presets = {message:'Saving...',icon:'mdi:loading',spin:true,cancel:false,save:false}; break;
             case "loading": presets = {message:'Loading...',icon:null,spin:false,save:false}; break;
             case "clear": presets = defaultStatus; break;
@@ -272,7 +288,7 @@ function AddEditUserForm(props) {
     const {addToast} = useToasts();
 
     const methods = useForm({
-        mode:'onChange',
+        mode:'onSubmit',
         reValidateMode:'onChange',
         defaultValues:Object.assign({},defaultVals,{
             SUNYID: props.SUNY_ID||'',
@@ -291,6 +307,7 @@ function AddEditUserForm(props) {
     const groups = getGroups({enabled:false,select:data=>sortBy(data.filter(g=>g.active),['GROUP_NAME'])});
     const usergroups = getUserGroups({enabled:false,select:data=>sortBy(data.filter(g=>g.active),['GROUP_NAME'])});
     const updateuser = putUser();
+    const createuser = postUser();
 
     const navigate = tab => {
         setActiveTab(tab);
@@ -302,7 +319,8 @@ function AddEditUserForm(props) {
     }
     
     const handleSave = data => {
-        if (!Object.keys(methods.formState.dirtyFields).length) {
+        console.log(data,methods.formState.dirtyFields);
+        if (!Object.keys(methods.formState.dirtyFields).length &&!props.newUser) {
             addToast(<><h5>No Change</h5><p>No changes to user data.</p></>,{appearance:'info'});
             closeModal();
             return true;
@@ -319,7 +337,7 @@ function AddEditUserForm(props) {
             DEL_GROUPS:delGroups
         }
         setStatus({state:'saving'});
-        if (!props.newGroup) {
+        if (!props.newUser) {
             updateuser.mutateAsync(reqData).then(()=>{
                 Promise.all([
                     queryclient.refetchQueries('users',{exact:true,throwOnError:true}),
@@ -334,18 +352,29 @@ function AddEditUserForm(props) {
                 setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
             });
         } else {
-            console.log('create');
+            createuser.mutateAsync(reqData).then(()=>{
+                queryclient.refetchQueries('users',{exact:true,throwOnError:true}).then(() => {
+                    setStatus({state:'clear'});
+                    addToast(<><h5>Success!</h5><p>User created successfully</p></>,{appearance:'success'});
+                    closeModal();
+                });
+            }).catch(e => {
+                console.error(e);
+                setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
+            });
         }
-        console.log(data);
     }
 
     const handleError = error => {
-        console.log(error);
+        const msg = Object.keys(error).map(k=>error[k]?.message && <p key={k} className="mb-0">{error[k]?.message}</p>);
+        setStatus({state:'error',message:msg});
     }
 
     useEffect(() => {
+        setStatus({state:'loading'});
         groups.refetch().then(({data:groupsData}) => {
             if (props.newUser) {
+                setStatus({state:'clear'});
                 methods.reset(Object.assign({},defaultVals,{
                     availableGroups:groupsData
                 }));
@@ -362,7 +391,8 @@ function AddEditUserForm(props) {
                         endDate: props.endDate,
                         assignedGroups:usergroupData,
                         availableGroups:filtered
-                    });    
+                    });
+                    setStatus({state:'clear',save:true});
                 });
             }
         })
@@ -376,20 +406,21 @@ function AddEditUserForm(props) {
                     </Modal.Header>
                     <Modal.Body>
                         {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
-                            <Tabs activeKey={activeTab} onSelect={navigate} id="admin-groups-tabs">
-                                {tabs.map(t=>(
-                                    <Tab key={t.id} eventKey={t.id} title={t.title}>
-                                        <Container className="mt-3" fluid>
-                                            <TabRouter tab={t.id} newUser={props.newUser}/>
-                                        </Container>
-                                    </Tab>
-                                ))}
-                            </Tabs>
+                        {status.state == 'loading' && <Loading type="alert" variant="info">Loading User Information...</Loading>}
+                        {status.state != 'loading' && <Tabs activeKey={activeTab} onSelect={navigate} id="admin-groups-tabs">
+                            {tabs.map(t=>(
+                                <Tab key={t.id} eventKey={t.id} title={t.title}>
+                                    <Container className="mt-3" fluid>
+                                        <TabRouter tab={t.id} newUser={props.newUser} setStatus={setStatus}/>
+                                    </Container>
+                                </Tab>
+                            ))}
+                        </Tabs>}
                     </Modal.Body>
                     <Modal.Footer>
                         {status.state != 'error' && <p>{status.message}</p>}
                         <Button variant="secondary" onClick={closeModal}  disabled={!status.cancel}>Cancel</Button>
-                        <Button variant="danger" type="submit"disabled={!status.save||!methods.formState.isValid}>{status.icon && <Icon icon={status.icon} className={status.spin?'spin':''}/>}Save</Button>
+                        <Button variant="danger" type="submit"disabled={!(status.save&&Object.keys(methods.formState.errors).length==0)}>{status.icon && <Icon icon={status.icon} className={status.spin?'spin':''}/>}Save</Button>
                     </Modal.Footer>
                 </Form>
             </FormProvider>
@@ -397,22 +428,22 @@ function AddEditUserForm(props) {
     );
 }
 
-function TabRouter({tab,newUser}) {
+function TabRouter({tab,newUser,setStatus}) {
     switch(tab) {
-        case "info": return <UserInfo newUser={newUser}/>;
+        case "info": return <UserInfo newUser={newUser} setStatus={setStatus}/>;
         case "groups": return <UserGroups/>;
         default: return <p>{tab}</p>;
     }
 }
 
-function UserInfo({newUser}) {
+function UserInfo({newUser,setStatus}) {
     const lookupStateDefault = {
         state:'',
         icon:'mdi:account-search',
         variant:'secondary',
         spin:false
     };
-    const { control, watch, reset, setError, formState: { errors } } = useFormContext();
+    const { control, watch, reset, setValue, setError, formState: { errors } } = useFormContext();
     const sunyid = watch('SUNYID');
 
     const [lookupState,setLookupState] = useReducer((state,action) => {
@@ -428,17 +459,20 @@ function UserInfo({newUser}) {
     const queryclient = useQueryClient();
     const {lookupUser} = useUserQueries(sunyid);
     const lookupuser = lookupUser({enabled:false});
+    const ref = useRef();
     
     const handleLookup = () => {
         console.log('do lookup:',sunyid);
         if (!sunyid) {
             setLookupState('invalid');
+            setStatus({save:false});
             setError("SUNYID",{type:'required',message:'You must enter a SUNY ID'});
             return;
         }
         const userExists = queryclient.getQueryData('users').find(u=>u.SUNY_ID==sunyid);
         if (userExists) {
             setLookupState('invalid');
+            setStatus({save:false});
             setError("SUNYID",{type:'manual',message:'User Already Exists'});
             return;
         }
@@ -447,16 +481,19 @@ function UserInfo({newUser}) {
             if (d.isError) {
                 console.error(d.error);
                 setLookupState('error');
+                setStatus({save:false});
                 setError("SUNYID",{type:'manual',message:d.error?.description});
                 return false;    
             }
             const userData = d.data[0];
             if (!userData) {
                 setLookupState('error');
+                setStatus({save:false});
                 setError("SUNYID",{type:'manual',message:'Invalid SUNY ID'});
                 return false;    
             }
             setLookupState('valid');
+            setStatus({save:true});
             reset(Object.assign({},defaultVals,{
                 SUNYID:userData.SUNY_ID,
                 firstName:userData.LEGAL_FIRST_NAME,
@@ -464,6 +501,14 @@ function UserInfo({newUser}) {
                 email:userData.EMAIL_ADDRESS_WORK,
             }));
         });
+    }
+    const handleChange = (e,field) => {
+        field.onChange(e);
+        if (lookupState.state == 'valid') {
+            setLookupState('reset');
+            setStatus({save:false});
+            ['firstName','lastName','email'].forEach(v=>setValue(v,'')); //reset firstName, lastName, and email
+        }
     }
     const handleKeyDown = e => {
         if (e.which == 13) {
@@ -479,6 +524,8 @@ function UserInfo({newUser}) {
         }
     }
 
+    useEffect(() => { newUser && ref.current.focus();},[]);
+
     return (
         <>
             <Form.Row>
@@ -489,7 +536,7 @@ function UserInfo({newUser}) {
                             <Controller
                                 name="SUNYID"
                                 control={control}
-                                render={({field}) => <Form.Control {...field} type="text" placeholder="Search for SUNY ID" aria-label="Search for SUNY ID" aria-describedby="basic-addon" onKeyDown={handleKeyDown} isInvalid={errors.SUNYID}/>}
+                                render={({field}) => <Form.Control {...field} ref={ref} type="text" placeholder="Search for SUNY ID" aria-label="Search for SUNY ID" aria-describedby="basic-addon" onKeyDown={handleKeyDown} onChange={e=>handleChange(e,field)} isInvalid={errors.SUNYID}/>}
                             />
                             <InputGroup.Append>
                                 <Button variant={lookupState.variant} className="no-label" title="Search" onClick={handleLookup}><Icon icon={lookupState.icon} className={lookupState.spin&&'spin'}/></Button>

@@ -13,7 +13,7 @@ class User extends HRForms2 {
 	private $_arr = array();
 
 	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+		$this->allowedMethods = "GET,POST,PUT,PATCH,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
 		$this->reqAuth = true; //default: true - NB: See note above
 		$this->retJSON = $rjson;
 		$this->req = $req;
@@ -101,6 +101,17 @@ class User extends HRForms2 {
 			oci_commit($this->db);
 			oci_free_statement($stmt);
 		}
+		$this->done();
+	}
+	function DELETE() {
+		//$this->raiseError(403);
+		$qry = "delete from hrforms2_users where suny_id = :suny_id";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		oci_commit($this->db);
+		oci_free_statement($stmt);
 		$this->done();
 	}
 }
