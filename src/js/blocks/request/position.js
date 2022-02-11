@@ -4,8 +4,8 @@ import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
 
-export default function Position({posTypes}) {
-    const {control,getValues,setValue,formState:{errors}} = useFormContext();
+export default function Position() {
+    const {control,getValues,setValue,posTypes,formState:{errors}} = useFormContext();
     const [oldLineNum,setOldLineNum] = useState(getValues('lineNumber'));
 
     const posType = useWatch({name:'posType.id',control:control})||'';

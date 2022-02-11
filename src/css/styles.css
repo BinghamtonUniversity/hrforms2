@@ -169,6 +169,7 @@ button.no-label svg.iconify {
 #col-SUNYAccount div.rbt {
   width: 400px;
 }
+#col-SUNYAccount input:disabled { color: #ccc }
 .split-account-table tbody tr td:nth-child(1) {
   width: 80px;
   text-align: center;

@@ -100,23 +100,6 @@ export function useAppQueries() {
     return {getSession,getSettings,getTerms,getNews,getLists,getList,getListData,getBudgetTitles,putNews,patchNews};
 }
 
-/** REQUEST QUERIES */
-export function useRequestQueries(REQUEST_ID) {
-    const getRequest = (...args) => {
-        const options = args[0]?.options||args[0]||{};
-        return useQuery(['requests',REQUEST_ID],q(`requests/${REQUEST_ID.replaceAll('-','/')}`),options);
-    }
-    const postRequest = () => useMutation(d=>q('requests/','POST',d)());
-    const putRequest = () => useMutation(d=>q(`requests/${REQUEST_ID.replaceAll('-','/')}`,'PUT',d)());
-    const deleteRequest = () => useMutation(d=>q(`requests/${REQUEST_ID.replaceAll('-','/')}`,'DELETE',d)());
-
-    const getRequestList = (...args) => {
-        const options = args[0]?.options||args[0]||{};
-        return useQuery('requestlist',q('requestlist'),options);
-    }
-    return {getRequest,postRequest,putRequest,deleteRequest,getRequestList};
-}
-
 /** USER QUERIES */
 export function useUserQueries(SUNY_ID) {
     const getUser = () => {

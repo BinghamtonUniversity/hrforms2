@@ -57,5 +57,3 @@ export default function Account() {
         </>
     );
 }
-
-//TODO: move to separate component file

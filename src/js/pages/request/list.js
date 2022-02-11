@@ -1,6 +1,6 @@
 import React from "react";
 import {useParams} from "react-router-dom";
-import { useRequestQueries } from "../../queries";
+import useRequestQueries from "../../queries/requests";
 import { Link } from "react-router-dom";
 import { Table } from "react-bootstrap";
 import { format } from "date-fns";
