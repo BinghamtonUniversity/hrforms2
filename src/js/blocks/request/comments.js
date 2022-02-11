@@ -26,6 +26,6 @@ export default function Comments() {
 
 function CommentsHistory() {
     return (
-        <p>comments history...only show if there is an id; no id means new and no history</p>
+        <p>comments history; get comments data if not draft</p>
     );
 }

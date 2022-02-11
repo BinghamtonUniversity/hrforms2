@@ -1,6 +1,6 @@
 import React from "react";
 import { Row, Col, Alert } from "react-bootstrap";
-import { useFormContext, useFormState } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { format } from "date-fns";
 
 export default function Review() {
@@ -70,7 +70,7 @@ export default function Review() {
                     <Col as="dt" md={2} className="mb-0">Appointment Status:</Col>
                     <Col as="dd" md={4} className="mb-0">{formValues.apptStatus.title}</Col>
                     <Col as="dt" md={2} className="mb-0">Appointment Duration:</Col>
-                    <Col as="dd" md={4} className="mb-0">{formValues.apptDuration}</Col>
+                    <Col as="dd" md={4} className="mb-0">{formValues.apptDuration} {formValues.apptPeriod}</Col>
                     <Col as="dt" md={2} className="mb-0">Tentative End Date:</Col>
                     <Col as="dd" md={4} className="mb-0">{formValues.tentativeEndDate && format(formValues.tentativeEndDate,'M/d/yyyy')}</Col>
                 </Row>
@@ -92,6 +92,7 @@ export default function Review() {
                     }
                     <Col as="dt" md={2} className="mb-0">Org Name:</Col>
                     <Col as="dd" md={4} className="mb-0">{formValues.orgName}</Col>
+                    <Col as="dt" md={2} className="mb-0">SUNY Account:</Col>
                 </Row>
             </section>
             <section className="mb-4">
@@ -111,7 +112,12 @@ export default function Review() {
         </>
     );
 }
+/*
+                    <Col as="dd" md={10} className="mb-0">{formValues.SUNYAccounts.map(a => {
+                        return <p className="m-0" key={a.account.id}>{a.account.label} ({a.pct}%)</p>
+                    })}</Col>
 
+*/
 function ReviewAlert() {
     const {formState:{errors}} = useFormContext();
     return (

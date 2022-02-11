@@ -4,8 +4,8 @@ import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import { useAppQueries } from "../../queries";
 
-export default function Information({posTypes}) {
-    const {control,setValue,formState:{errors}} = useFormContext();
+export default function Information() {
+    const {control,setValue,posTypes,formState:{errors}} = useFormContext();
     const watchPosType = useWatch({name:'posType.id',control:control});
     const watchReqType = useWatch({name:'reqType.id',control:control});
     
