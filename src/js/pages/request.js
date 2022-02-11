@@ -2,15 +2,17 @@ import React,{lazy, useEffect, useState} from "react";
 import { useParams, useHistory, Prompt } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal } from "react-bootstrap";
 import { useForm, useWatch, FormProvider, useFormContext } from "react-hook-form";
-import { getAuthInfo, NotFound } from "../app";
-import { useAppQueries, useRequestQueries } from "../queries";
+import { currentUser, getAuthInfo, NotFound } from "../app";
+import { useAppQueries } from "../queries";
+import useRequestQueries from "../queries/requests";
 import { useQueryClient } from "react-query";
 import { useToasts } from "react-toast-notifications";
 import { Loading } from "../blocks/components";
 import format from "date-fns/format";
+import getUnixTime from "date-fns/getUnixTime";
 import get from "lodash/get";
+import pick from "lodash/pick";
 import { Icon } from '@iconify/react';
-
 
 /* TABS */
 const Information = lazy(()=>import("../blocks/request/information"));
@@ -21,10 +23,68 @@ const Review = lazy(()=>import("../blocks/request/review"));
 
 export default function Request() {
     const [reqId,setReqId] = useState('');
+    const [isNew,setIsNew] = useState(false);
+
+    const {id,sunyid,ts} = useParams();
+    const {SUNY_ID} = getAuthInfo();
+
+    useEffect(() => {
+        if (!id) {
+            const now = getUnixTime(new Date());
+            setIsNew(true);
+            setReqId(`draft-${SUNY_ID}-${now}`);
+        } else {
+            setReqId((id=='draft')?`${id}-${sunyid}-${ts}`:id);
+        }
+    },[id,sunyid,ts]);
+    if (!reqId) return null;
+    return(
+        <RequestWrapper reqId={reqId} isNew={isNew}/>
+    );
+}
+function RequestWrapper({reqId,isNew}) {
+    const [reqData,setReqData] = useState();
+    const [isBlocking,setIsBlocking] = useState(false);
+
+    const {getRequest} = useRequestQueries(reqId);
+    const request = getRequest({enabled:false});
+    useEffect(()=>{
+        if (!isNew) {
+            request.refetch({throwOnError:true,cancelRefetch:true}).then(r=>{
+                console.log('refetch done');
+                setReqData(r.data);
+            }).catch(e => {
+                console.error(e);
+            });
+        } else {
+            setReqData({});
+        }
+    },[reqId]);
+    if (request.isError) return <Loading type="alert" isError>Failed To Load Request Data - <small>{request.error?.name} - {request.error?.description||request.error?.message}</small></Loading>;
+    if (!reqData) return <Loading type="alert">Loading Request Data</Loading>;
+    return(
+        <section>
+            <header>
+                <Row>
+                    <Col>
+                        <h2>{isNew&&'New '}Position Request</h2>
+                    </Col>
+                </Row>
+            </header>
+            {reqData && <RequestForm reqId={reqId} data={reqData} setIsBlocking={setIsBlocking} isNew={isNew}/>}
+            {reqData && <BlockNav reqId={reqId} when={isBlocking} isDraft={isNew}/>}
+        </section>
+    );
+}
+/*
+export default function Request() {
+    const [reqId,setReqId] = useState('');
     const [reqData,setReqData] = useState();
     const [isNew,setIsNew] = useState(false);
-    const [error,setError] = useState('');
+    const [isDraft,setIsDraft] = useState(false);
+    //const [error,setError] = useState('');
     const [isBlocking,setIsBlocking] = useState(false);
+    const [redirect,setRedirect] = useState('');
 
     const {id,sunyid,ts} = useParams();
     const {SUNY_ID} = getAuthInfo();
@@ -39,8 +99,13 @@ export default function Request() {
         console.debug('ID Changed:',id);
         if (!id) {
             setIsNew(true);
+            setIsDraft(true);
             setReqData({reqId:'',SUNYAccounts:[{id:'default-SUNYAccounts',account:'',pct:'100'}]});
         } else {
+            if (id == 'draft') {
+                setIsDraft(true);
+                setIsBlocking(true);
+            }
             if (!isNew) {
                 request.refetch().then(d=>{            
                     setReqData(d.data);
@@ -48,7 +113,16 @@ export default function Request() {
                 });
             }
         }
+        return () => {
+            console.log('dismounting Request...')
+            setReqId('');
+            setReqData(undefined);
+            setIsBlocking(false);
+            setIsDraft(false);
+            setIsNew(false);
+        }
     },[id]);
+    if (redirect) return(<Redirect to={redirect}/>);
     return (
         <section>
             <header>
@@ -58,28 +132,41 @@ export default function Request() {
                     </Col>
                 </Row>
             </header>
-            {reqData && <RequestForm reqId={reqId} setReqId={setReqId} data={reqData} setIsBlocking={setIsBlocking} isNew={isNew}/>}
-            {error && <Loading variant="danger" type="alert" isError>{error}</Loading>}
-            {reqData && <BlockNav when={isBlocking} isNew={isNew}/>}
+            {reqData && <RequestForm reqId={reqId} setReqId={setReqId} data={reqData} setIsBlocking={setIsBlocking} isNew={isNew} isDraft={isDraft} setRedirect={setRedirect}/>}
+            {reqData && <BlockNav reqId={reqId} when={isBlocking} isDraft={isDraft}/>}
         </section>
     );
 }
+*/
 
-function BlockNav({when,isNew}) {
+function BlockNav({reqId,when,isDraft}) {
     const [showModal,setShowModal] = useState(false);
     const [nextLocation,setNextLocation] = useState();
     const [shouldProceed,setShouldProceed] = useState(false);
+    const queryclient = useQueryClient();
+    const {deleteRequest} = useRequestQueries(reqId);
+    const delReq = deleteRequest();
     const history = useHistory();
     const stopNav = location => {
-        if (location.pathname.startsWith('/request/draft') && isNew) return true;
         if (!shouldProceed) {
             setShowModal(true);
             setNextLocation(location);
             return false;
-        } 
+        }
         return true;
     }
     const handleClose = () => setShowModal(false);
+    const handleDelete = () => {
+        setShowModal(false);
+        delReq.mutateAsync().then(()=>{
+            Promise.all([
+                queryclient.refetchQueries('counts'),
+                queryclient.refetchQueries('requestlist')
+            ]).then(() => {
+                handleProceed();
+            });
+        });
+    }
     const handleProceed = () => {
         console.debug('proceed to location: ',nextLocation);
         setShowModal(false);
@@ -97,7 +184,8 @@ function BlockNav({when,isNew}) {
                     The position request has not been saved.  Do you want to leave and lose your changes?
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="danger" onClick={handleProceed}>Leave</Button>
+                    {isDraft&&<Button variant="danger" onClick={handleDelete}>Discard</Button>}
+                    <Button variant="primary" onClick={handleProceed}>Leave</Button>
                     <Button variant="secondary" onClick={handleClose}>Cancel</Button>
                 </Modal.Footer>
             </Modal>
@@ -106,7 +194,127 @@ function BlockNav({when,isNew}) {
     )
 }
 
-function RequestForm({reqId,setReqId,data,setIsBlocking,isNew}) {
+function RequestForm({reqId,data,setIsBlocking,isNew,setRedirect}) {
+    const tabs = [
+        {id:'information',title:'Information'},
+        {id:'position',title:'Position'},
+        {id:'account',title:'Account'},
+        {id:'comments',title:'Comments'},
+        {id:'review',title:'Review'},
+    ];
+    const requiredFields = ['posType.id','reqType.id','effDate','orgName','comment'];
+    const [activeTab,setActiveTab] = useState('information');
+    const [lockTabs,setLockTabs] = useState(false);
+    const [isSaving,setIsSaving] = useState(false);
+
+    const methods = useForm({
+        mode:'onSubmit',
+        reValidateMode:'onChange',
+        defaultValues:Object.assign({},data)
+    });
+
+    const { getListData } = useAppQueries();
+    const postypes = getListData('posTypes');
+
+    const navigate = tab => {
+        if (isNew && !methods.getValues('reqId')) {
+            console.log('create reqId?');
+            methods.setValue('reqId','draft-1234');
+        }
+        setActiveTab(tab);
+    }
+
+    const handleNext = () => {
+        const curIdx = tabs.map(t=>t.id).indexOf(activeTab);
+        const nextTab = tabs[curIdx+1]?.id;
+        if (!nextTab) return;
+        navigate(nextTab);
+    }
+
+    const handleSave = () =>{
+        console.log('saving...');
+        //display modal overlay, problem with modal is a fast save would result in a flicker
+        //alternate is to lock buttons and block nav
+        /*setIsSaving(true);
+        setIsBlocking(true); //complete block, no prompt
+        setLockTabs(true);*/
+        methods.handleSubmit(handleSubmit,handleError)();
+    }
+
+    const handleSubmit = data => {
+        console.log(data);
+    }
+    const handleError = errors => {
+        console.error('error:',errors);
+    }
+
+    const handleLockTabs = d => {
+        const posType = get(d,'posType.id');
+        const reqType = get(d,'reqType.id');
+        const effDate = d.effDate;
+        setLockTabs(!(posType && reqType && effDate));
+    }
+    useEffect(()=>{
+        setIsBlocking(methods.formState.isDirty);
+    },[methods.formState.isDirty]);
+    useEffect(() => {
+        const watchFields = methods.watch((frmData,{name,type}) => {
+            //console.log(name,type);
+            if (type == 'change') {
+                handleLockTabs(frmData);
+                if (name == 'posType.id') {
+                    methods.setValue('reqType',{id:'',title:''});
+                    setLockTabs(true);
+                }
+                if (requiredFields.includes(name)) {
+                    methods.trigger(name);
+                }
+            }
+        });
+        return () => watchFields.unsubscribe();
+    },[methods.watch]);
+    useEffect(() => {handleLockTabs(data)},[reqId]);
+
+    if (postypes.isError) return <Loading type="alert" isError>Error Loading Position Types</Loading>;
+    if (postypes.isLoading) return <Loading type="alert">Loading Position Types</Loading>;
+    if (!postypes.data) return <Loading type="alert" isError>Error - No Position Type Data Loaded</Loading>;
+    return(
+        <FormProvider {...methods} posTypes={postypes.data}>
+            <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
+                <Tabs activeKey={activeTab} onSelect={navigate} id="position-request-tabs">
+                    {tabs.map(t=>(
+                        <Tab key={t.id} eventKey={t.id} title={t.title} disabled={t.id!='information'&&lockTabs}>
+                            <Container as="article" className="mt-3" fluid>
+                                <Row as="header">
+                                    <Col as="h3">{t.title}</Col>
+                                </Row>
+                                {(t.id!='information'&&t.id!='review')&& <RequestInfoBox/>}
+                                <RequestTabRouter tab={t.id}/>
+                                <Row as="footer">
+                                    <Col className="button-group button-group-right">
+                                        {isSaving && <Button variant="" disabled><Icon icon="mdi:loading" className="spin"/>Saving...</Button>}
+                                        {!(isNew&&lockTabs)&&<Button id="save" variant="warning" onClick={handleSave} disabled={isSaving||lockTabs||!methods.formState.isDirty}><Icon icon="mdi:content-save-move"/>Save &amp; Exit</Button>}
+                                        {t.id!='review'&&<Button variant="primary" onClick={handleNext} disabled={lockTabs}><Icon icon="mdi:arrow-right-thick"/>Next</Button>}
+                                        {t.id=='review'&&<Button variant="danger" onClick={()=>console.log('submit form')} disabled={Object.keys(methods.formState.errors).length}>Submit</Button>}
+                                    </Col>
+                                </Row>
+                            </Container>
+                        </Tab>
+                    ))}
+                </Tabs>
+            </Form>
+        </FormProvider>
+    );
+}
+/* buttons:
+next: not if review
+submit: if review
+save&exit: not if new and tab == info
+delete: not if new
+undo: form is dirty
+*/
+
+function RequestForm2({reqId,setReqId,data,setIsBlocking,isNew,isDraft,setRedirect}) {
     const tabs = [
         {id:'information',title:'Information'},
         {id:'position',title:'Position'},
@@ -189,10 +397,12 @@ function RequestForm({reqId,setReqId,data,setIsBlocking,isNew}) {
     const history = useHistory();
     const queryclient = useQueryClient();
 
+    const user = currentUser();
+
     const { getListData } = useAppQueries();
     const {addToast,removeToast} = useToasts();
     const methods = useForm({
-        mode:'onChange',
+        mode:'onSubmit',//TODO:change to onSubmit?
         reValidateMode:'onChange',
         defaultValues:Object.assign({},defaultVals,data)
     });
@@ -203,6 +413,7 @@ function RequestForm({reqId,setReqId,data,setIsBlocking,isNew}) {
     const deleteReq = deleteRequest();
     const postypes = getListData('posTypes',{enabled:false});
 
+    //TODO: useWatch optimized for render not useEffect; need custom hook.
     const watchPosType = useWatch({name:'posType.id',control:methods.control});
     const watchRequiredFields = useWatch({name:requiredFields.map(fld=>fld.id),control:methods.control});
 
@@ -240,7 +451,7 @@ function RequestForm({reqId,setReqId,data,setIsBlocking,isNew}) {
         });
     }
     const handleSave = e => {
-        const eventId = (e)?e.target.id:'tab';
+        const eventId = (e)?e.target.closest('BUTTON').id:'tab';
         const data = methods.getValues();
         console.log('handleSave:',eventId,data,e);
         if (methods.formState.isDirty) {
@@ -262,7 +473,10 @@ function RequestForm({reqId,setReqId,data,setIsBlocking,isNew}) {
                 });
             } else {
                 updateReq.mutateAsync({data:data}).then(() => {
-                    if (eventId == 'save_draft') history.push('/');
+                    if (eventId == 'save_draft') {
+                        console.debug('navigate home');
+                        setRedirect('/');
+                    }
                 }).catch(e => {
                     console.error(e);
                     addToast(<><h5>Error!</h5><p>Failed to save Position Request. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
@@ -272,20 +486,21 @@ function RequestForm({reqId,setReqId,data,setIsBlocking,isNew}) {
             }
         }
     }
-    const handleSubmit = (data,e) => {
-        console.log('submit:',data,e);
-        createReq.mutateAsync({data:data}).then(() => {
+    const handleSubmit = data => {
+        data['submitterDeptCode'] = user?.REPORTING_DEPARTMENT_CODE
+        console.log('submit:',data,user);
+        /*createReq.mutateAsync({data:data}).then(() => {
             console.log('done');
-        });
+        });*/
     }
     const handleError = (errors,e) => {
         console.log('error:',errors,e);
     }
 
-    useEffect(() => {
-        console.log('setting is blocking:',methods.formState.isDirty,isSaved);
+    /*useEffect(() => {
+        console.log('setting is blocking:',methods.formState.isDirty,isSaved,isNew);
         //but only if saved?
-        setIsBlocking(methods.formState.isDirty);
+        if (!isDraft) setIsBlocking(methods.formState.isDirty);
     },[methods.formState.isDirty]);
     useEffect(() => {
         setLockTabs(!watchRequiredFields.every(el=>!!el));
@@ -294,7 +509,7 @@ function RequestForm({reqId,setReqId,data,setIsBlocking,isNew}) {
         if (!watchPosType||!methods.formState.isDirty) return;
         console.debug('Position Type Change.  Resetting Fields');
         resetFields.forEach(f=>methods.setValue(f,''));
-    },[watchPosType]);
+    },[watchPosType]);*/
     useEffect(()=>{
         postypes.refetch();
         methods.reset(Object.assign({},defaultVals,data));
@@ -316,7 +531,7 @@ function RequestForm({reqId,setReqId,data,setIsBlocking,isNew}) {
                                         {isSaving && <Button variant="" disabled><Icon icon="mdi:loading" className="spin"/> Saving...</Button>}
                                         {methods.formState.isDirty && <Button variant="secondary" onClick={handleUndo} disabled={isSaving}><Icon icon="mdi:undo"/>Undo</Button>}
                                         {!isNew && <Button variant="danger" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}><Icon icon="mdi:delete"/>Delete</Button>}
-                                        <Button id="save_draft" onClick={handleSave} variant="warning" disabled={lockTabs||isSaving}><Icon icon="mdi:content-save-move"/>Save &amp; Exit</Button>
+                                        <Button id="save_draft" onClick={handleSave} variant="warning" ><Icon icon="mdi:content-save-move"/>Save &amp; Exit</Button>
                                         {activeTab != 'review' && <Button id="next" onClick={()=>navigate('_next')} variant="primary" disabled={lockTabs||isSaving}><Icon icon="mdi:arrow-right-thick"/>Next</Button>}
                                         {activeTab == 'review' && <Button id="submit" type="submit" variant="primary" disabled={!!Object.keys(methods.formState.errors).length||isSaving}><Icon icon="mdi:content-save-check"/>Submit</Button>}
                                     </Col>
@@ -330,6 +545,7 @@ function RequestForm({reqId,setReqId,data,setIsBlocking,isNew}) {
         </FormProvider>
     );
 }
+//disabled={lockTabs||isSaving}
 
 function DeleteRequestModal({showDeleteModal,setShowDeleteModal,handleDelete}) {
     const handleClose = () => setShowDeleteModal(false);
@@ -361,9 +577,9 @@ function RequestInfoBox() {
                 <Col as="dt" sm={2} className="mb-0">Effective Date:</Col>
                 <Col as="dd" sm={4} className="mb-0">{effDate && format(effDate,'M/d/yyyy')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Position Type:</Col>
-                <Col as="dd" sm={4} className="mb-0">{posType.id} - {posType.title}</Col>
+                <Col as="dd" sm={4} className="mb-0">{posType?.id} - {posType?.title}</Col>
                 <Col as="dt" sm={2} className="mb-0">Request Type:</Col>
-                <Col as="dd" sm={4} className="mb-0">{reqType.id} - {reqType.title}</Col>
+                <Col as="dd" sm={4} className="mb-0">{reqType?.id} - {reqType?.title}</Col>
                 <Col as="dt" sm={2} className="mb-0">Candidate Name:</Col>
                 <Col as="dd" sm={4} className="mb-0">{candidateName}</Col>
             </Row>
@@ -373,11 +589,11 @@ function RequestInfoBox() {
 
 function RequestTabRouter({tab,...props}) {
     switch(tab) {
-        case "information": return <Information {...props}/>;
-        case "position": return <Position {...props}/>;
-        case "account": return <Account {...props}/>;
-        case "comments": return <Comments {...props}/>;
-        case "review": return <Review {...props}/>;
-        default: return <NotFound/>
+        case "information": return <Information/>;
+        case "position": return <Position/>;
+        case "account": return <Account/>;
+        case "comments": return <Comments/>;
+        //case "review": return <Review/>;
+        default: return <NotFound/>;
     }
 }

@@ -20,6 +20,7 @@ Class HRForms2 {
 	protected $allowedMethods = "";	protected $hasError = false;
 
 	protected $sessionData = array('VERSION'=>VERSION,'REVISION'=>REVISION,'INSTANCE'=>INSTANCE,'HOST'=>HOST,'DEBUG'=>DEBUG);
+	protected $userData = array();
 	public $returnData;
 
 	protected $BASE_PERSEMP_FIELDS = "suny_id,regexp_substr(b_number,'(B[0-9]{8})',1,1,'i',1) as b_number,legal_last_name,legal_first_name,legal_middle_name,alias_first_name,
@@ -183,25 +184,26 @@ Class HRForms2 {
 	/**
 	* Returns true/false if the SUNY ID is in the local admin table
 	* @param {number} $id - SUNY ID to check
-	* @returns {boolean} 
+	* @return {boolean} 
 	*/
 	protected function isAdmin($id) {
 		if (isset($this->sessionData['isAdmin'])) return $this->sessionData['isAdmin'];
 		$qry = "select count(suny_id) as IS_ADMIN from hrforms2_user_groups where group_id = -1 and suny_id = :sunyid";
-		try {
-			$stmt = oci_parse($this->db,$qry);
-			oci_bind_by_name($stmt, ":sunyid", $id);
-			oci_execute($stmt);
-			$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-			$this->sessionData['isAdmin'] = ($row['IS_ADMIN'] == 1) ? true : false;
-			return $this->sesisonData['isAdmin'];
-		} catch (Exception $e) {
-			return false;
-		}
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt, ":sunyid", $id);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+		$this->sessionData['isAdmin'] = ($row['IS_ADMIN'] == '1') ? true : false;
+		return $this->sessionData['isAdmin'];
 	}
 
-	protected function newRequest() {
-		$this->sessionData['NEW_REQUEST'] = '1234';
-		return true;
+	/**
+	 * Returns something...
+	 * @param {number} $deptcode - Department Code to lookup 
+	 * @return {Array}
+	 */
+	function getGroupIds($deptcode) {
+		
 	}
 }

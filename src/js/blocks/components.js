@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {Alert,Button,Modal} from "react-bootstrap";
 import {parse,format} from "date-fns";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import invoke from "lodash/invoke";
 import get from "lodash/get";
 import { Icon } from '@iconify/react';
@@ -22,7 +21,7 @@ const Loading = React.memo(function Loading({children,className='',isError,error
     const icon = (isError)?<Icon icon="mdi:alert" className="iconify-inline"/>:<Icon icon="mdi:loading" className="spin iconify-inline"/>;
     const cl = (isError)?`text-danger ${className}`:className;
     if (type == 'alert') {
-        return <Alert variant={variant||'dark'} className={`text-center ${cl}`}>{icon} {children}</Alert>
+        return <Alert variant={variant||(isError)?'danger':'light'} className={`text-center ${cl}`}>{icon} {children}</Alert>
     } else {
         return <span className={cl}>{icon} {children} {error && <small>({error?.name && <>{error?.name} - </>}{error?.message})</small>}</span>
     }
