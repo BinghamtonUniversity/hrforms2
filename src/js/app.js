@@ -5,7 +5,7 @@ import {Container,Button} from "react-bootstrap";
 import {useToasts} from "react-toast-notifications";
 import {useScrollPosition} from "@n8tb1t/use-scroll-position";
 import head from "lodash/head";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import { Icon } from '@iconify/react';
 import {useAppQueries,useUserQueries} from "./queries";
 import AppNav from "./blocks/appnav";
 import Footer from "./blocks/footer";
@@ -37,12 +37,12 @@ export function getNavContext() { return useContext(NavContext); } // do we need
 const CenterPage = ({children}) => <div className="center-page">{children}</div>;
 const LoadingApp = React.memo(() => (
     <CenterPage>
-        <p className="display-4"><FontAwesomeIcon icon="sync" spin/> Starting App...</p>
+        <p className="display-4"><Icon icon="mdi:loading" className="spin iconify-inline"/>Starting App...</p>
     </CenterPage>
 ));
 const LoadingAppError = ({children}) => (
     <CenterPage>
-        <p className="display-4"><FontAwesomeIcon icon="exclamation-triangle"/> Failed To Load</p>
+        <p className="display-4"><Icon icon="mdi:alert" className="iconify-inline"/>Failed To Load</p>
         <p>{children}</p>
     </CenterPage>
 );
@@ -137,7 +137,7 @@ const ScrollToTop = React.memo(function ScrollToTop() {
     }
     if (!show) return null;
     return (
-        <Button onClick={scrollTop} variant="secondary" size="lg" className="toTop" title="Scroll to top"><FontAwesomeIcon icon="chevron-up"/></Button>
+        <Button onClick={scrollTop} variant="secondary" size="lg" className="toTop" title="Scroll to top"><Icon icon="mdi:chevron-up" style={{margin:0,fontSize:'32px'}}/></Button>
     );
 });
 

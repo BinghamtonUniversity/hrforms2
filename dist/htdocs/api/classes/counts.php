@@ -34,7 +34,7 @@ class Counts extends HRForms2 {
         oci_bind_by_name($stmt,":suny_id",$this->req[0]);
         //oci_bind_by_name($stmt,":suny_id",$suny_id);
         oci_execute($stmt);
-		$reqDrafts = oci_fetch_array($stmt,OCI_ARRAY+OCI_RETURN_NULLS);
+		$reqDrafts = oci_fetch_array($stmt,OCI_RETURN_NULLS);
 		oci_free_statement($stmt);
 
 		$counts = array(
