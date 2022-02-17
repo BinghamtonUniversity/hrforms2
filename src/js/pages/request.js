@@ -206,11 +206,20 @@ function RequestForm({reqId,data,setIsBlocking,isNew,setRedirect}) {
     const [activeTab,setActiveTab] = useState('information');
     const [lockTabs,setLockTabs] = useState(false);
     const [isSaving,setIsSaving] = useState(false);
+    const [hasErrors,setHasErrors] = useState(false);
 
     const methods = useForm({
         mode:'onSubmit',
         reValidateMode:'onChange',
-        defaultValues:Object.assign({},data)
+        defaultValues:Object.assign({},{
+            "SUNYAccounts": [
+                {
+                    account:[],
+                    pct:'100'
+                }
+            ],
+            "SUNYAccountSplit":false
+        },data)
     });
 
     const { getListData } = useAppQueries();
@@ -242,10 +251,13 @@ function RequestForm({reqId,data,setIsBlocking,isNew,setRedirect}) {
     }
 
     const handleSubmit = data => {
+        setHasErrors(false);
         console.log(data);
     }
     const handleError = errors => {
+        setHasErrors(true);
         console.error('error:',errors);
+        //set error?
     }
 
     const handleLockTabs = d => {
@@ -267,7 +279,10 @@ function RequestForm({reqId,data,setIsBlocking,isNew,setRedirect}) {
                     setLockTabs(true);
                 }
                 if (requiredFields.includes(name)) {
-                    methods.trigger(name);
+                    methods.trigger(name).then(() => {
+                        console.log('check for errors still and display alert if still has errors');
+                        setHasErrors(!!Object.keys(methods.formState.errors).length);
+                    });
                 }
             }
         });
@@ -288,11 +303,13 @@ function RequestForm({reqId,data,setIsBlocking,isNew,setRedirect}) {
                                 <Row as="header">
                                     <Col as="h3">{t.title}</Col>
                                 </Row>
+                                {hasErrors && <Alert variant="danger">Form has errors!</Alert>}
                                 {(t.id!='information'&&t.id!='review')&& <RequestInfoBox/>}
                                 <RequestTabRouter tab={t.id}/>
                                 <Row as="footer">
                                     <Col className="button-group button-group-right">
-                                        {isSaving && <Button variant="" disabled><Icon icon="mdi:loading" className="spin"/>Saving...</Button>}
+                                        {hasErrors && <div className="d-inline-flex align-items-center text-danger mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:alert"/><span>Errors</span></div>}
+                                        {isSaving && <div className="d-inline-flex align-items-center mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:loading" className="spin"/><span>Saving...</span></div>}
                                         {!(isNew&&lockTabs)&&<Button id="save" variant="warning" onClick={handleSave} disabled={isSaving||lockTabs||!methods.formState.isDirty}><Icon icon="mdi:content-save-move"/>Save &amp; Exit</Button>}
                                         {t.id!='review'&&<Button variant="primary" onClick={handleNext} disabled={lockTabs}><Icon icon="mdi:arrow-right-thick"/>Next</Button>}
                                         {t.id=='review'&&<Button variant="danger" onClick={()=>console.log('submit form')} disabled={Object.keys(methods.formState.errors).length}>Submit</Button>}
