@@ -407,8 +407,18 @@ function TabRouter({tab}) {
         case "info": return <GroupInfo/>;
         case "users": return <GroupUsers/>;
         case "depts": return <GroupDepts/>;
-        default: return <p>{tab}</p>;
+        default: return <GroupTabNotFound/>;
     }
+}
+
+function GroupTabNotFound() {
+    return (
+        <Row>
+            <Col>
+                <Alert variant="danger">Tab Data Not Found</Alert>
+            </Col>
+        </Row>
+    );
 }
 
 function GroupInfo() {
@@ -421,7 +431,7 @@ function GroupInfo() {
     return (
         <>
             <Form.Row>
-                <Form.Group as={Col} controlId="group_id">
+                <Form.Group as={Col} controlId="groupId">
                     <Form.Label>Group ID</Form.Label>
                     <Controller
                         name="groupId"
@@ -431,7 +441,7 @@ function GroupInfo() {
                 </Form.Group>
             </Form.Row>
             <Form.Row>
-                <Form.Group as={Col}>
+                <Form.Group as={Col} controlId="groupName">
                     <Form.Label>Group Name:</Form.Label>
                     <Controller
                         name="groupName"

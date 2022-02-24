@@ -4,6 +4,7 @@ import {useQueryClient} from "react-query";
 import {Container,Button} from "react-bootstrap";
 import {useToasts} from "react-toast-notifications";
 import {useScrollPosition} from "@n8tb1t/use-scroll-position";
+import { ErrorBoundary } from "react-error-boundary";
 import head from "lodash/head";
 import { Icon } from '@iconify/react';
 import {useAppQueries,useUserQueries} from "./queries";
@@ -72,7 +73,9 @@ export default function StartApp() {
         return (
             <GlobalContext.Provider value={{...global.data}}>
                 <AuthContext.Provider value={{...authData}}>
-                    <AppContent SUNY_ID={authData.SUNY_ID}/>
+                    <ErrorBoundary FallbackComponent={ErrorFallback}>
+                        <AppContent SUNY_ID={authData.SUNY_ID}/>
+                    </ErrorBoundary>
                 </AuthContext.Provider>
             </GlobalContext.Provider>
         );
@@ -105,6 +108,7 @@ function AppContent({SUNY_ID}) {
                         <Route path="/request" component={Request}/>
                         <Route path="/form/:id" component={HRForm}/>
                         <Route path="/form" component={HRForm}/>
+                        <Route path="/admin/:page/:subpage" component={AdminPages}/>
                         <Route path="/admin/:page" component={AdminPages}/>
                         <Route path="*"><NotFound/></Route>
                     </Switch>
@@ -113,6 +117,15 @@ function AppContent({SUNY_ID}) {
                 <ScrollToTop/>
             </Suspense>
         </UserContext.Provider>
+    );
+}
+
+function ErrorFallback({error}) {
+    return (
+        <div>
+            <p>Error</p>
+            <p>{error.message}</p>
+        </div>
     );
 }
 

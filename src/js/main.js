@@ -10,6 +10,7 @@ import {faExclamationCircle,faExclamationTriangle,faSync,faChevronUp,faChevronDo
         faPlusSquare,faMinusSquare} from "@fortawesome/free-solid-svg-icons";
 
 import "react-datepicker/dist/react-datepicker.css";
+import 'react-bootstrap-typeahead/css/Typeahead.css';
 import '../scss/binghamton-bs4.scss';
 import '../css/styles.css';
 

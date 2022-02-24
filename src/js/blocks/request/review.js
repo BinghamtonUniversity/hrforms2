@@ -2,13 +2,13 @@ import React from "react";
 import { Row, Col, Alert } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { format } from "date-fns";
+import { Icon } from '@iconify/react';
 
-export default function Review() {
+export default function Review({isNew}) {
     const {getValues} = useFormContext();
     const formValues = getValues();
     return (
         <>
-            <ReviewAlert/>
             <section className="mb-4">
                 <header>
                     <Row>
@@ -19,7 +19,7 @@ export default function Review() {
                 </header>
                 <Row as="dl" className="mb-0">
                     <Col as="dt" md={2} className="mb-0">Request ID:</Col>
-                    <Col as="dd" md={4} className="mb-0">{formValues.reqId}</Col>
+                    <Col as="dd" md={4} className="mb-0">{formValues.reqId} {isNew && <span className="text-warning">[<Icon className="iconify-inline" icon="mdi:alert"/>not saved]</span>}</Col>
                     <Col as="dt" md={2} className="mb-0">Effective Date:</Col>
                     <Col as="dd" md={4} className="mb-0">{formValues.effDate && format(formValues.effDate,'M/d/yyyy')}</Col>
                     <Col as="dt" md={2} className="mb-0">Position Type:</Col>
@@ -30,6 +30,8 @@ export default function Review() {
                     <Col as="dd" md={4} className="mb-0">{formValues.candidateName}</Col>
                     <Col as="dt" md={2} className="mb-0">B-Number:</Col>
                     <Col as="dd" md={4} className="mb-0">{formValues.bNumber}</Col>
+                    <Col as="dt" md={2} className="mb-0">Job Description:</Col>
+                    <Col as="dd" md={10} className="mb-0"><pre>{formValues.jobDesc}</pre></Col>
                 </Row>
             </section>
             <section className="mb-4">
@@ -91,8 +93,11 @@ export default function Review() {
                         </>
                     }
                     <Col as="dt" md={2} className="mb-0">Org Name:</Col>
-                    <Col as="dd" md={4} className="mb-0">{formValues.orgName}</Col>
+                    <Col as="dd" md={(formValues.posType.id == 'F')?4:10} className="mb-0">{formValues.orgName}</Col>
                     <Col as="dt" md={2} className="mb-0">SUNY Account:</Col>
+                    <Col as="dd" md={10} className="mb-0">
+                        {formValues.SUNYAccounts.map((a,i)=><p className="m-0" key={i}>{a.account[0]?.label} ({a.pct}%)</p>)}
+                    </Col>
                 </Row>
             </section>
             <section className="mb-4">
@@ -105,35 +110,10 @@ export default function Review() {
                 </header>
                 <Row className="mb-0">
                     <Col md={12} className="mb-0">
-                        <blockquote>{formValues.comment}</blockquote>
+                        <pre>{formValues.comment}</pre>
                     </Col>
                 </Row>
             </section>
-        </>
-    );
-}
-/*
-                    <Col as="dd" md={10} className="mb-0">{formValues.SUNYAccounts.map(a => {
-                        return <p className="m-0" key={a.account.id}>{a.account.label} ({a.pct}%)</p>
-                    })}</Col>
-
-*/
-function ReviewAlert() {
-    const {formState:{errors}} = useFormContext();
-    return (
-        <>
-        {(Object.keys(errors).length)?
-            <Alert variant="danger">
-                <p>You have errors in your Position Request that <em>must</em> be corrected before you can submit</p>
-                <ul>
-                    {Object.keys(errors).map(k=><li key={k}>{errors[k]?.message}</li>)}
-                </ul>
-            </Alert>
-        :
-            <Alert variant="warning">
-                Review the information below for accuracy and correctness. When you are satisfied everything is correct you may click the submit button at the bottom.
-            </Alert>
-        }
         </>
     );
 }

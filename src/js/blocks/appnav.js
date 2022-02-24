@@ -60,7 +60,8 @@ export default function AppNav({userCounts}) {
                             <NavDropdown.Item as={Link} to="/admin/departments">Departments</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/lists">Lists</NavDropdown.Item>
                             <NavDropdown.Divider/>
-                            <NavDropdown.Item as={Link} to="/admin/hierarchy" disabled>Hierarchy</NavDropdown.Item>
+                            <NavDropdown.Item as={Link} to="/admin/hierarchy/form" disabled>Form Hierarchy</NavDropdown.Item>
+                            <NavDropdown.Item as={Link} to="/admin/hierarchy/request">Request Hierarchy</NavDropdown.Item>
                             <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/admin/settings">Settings</NavDropdown.Item>
                         </NavDropdown>}

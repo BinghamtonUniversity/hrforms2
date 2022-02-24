@@ -23,8 +23,8 @@ export default function Account() {
                             control={control}
                             render={({field}) => (
                                 <>
-                                    <Form.Check {...field} inline type="radio" label="PSR" value='PSR' checked={field.value=='PSR'}/>
-                                    <Form.Check {...field} inline type="radio" label="PST" value='PST' checked={field.value=='PST'}/>
+                                    <Form.Check {...field} inline type="radio" id="expType-PSR" label="PSR" value='PSR' checked={field.value=='PSR'}/>
+                                    <Form.Check {...field} inline type="radio" id="expType-PST" label="PST" value='PST' checked={field.value=='PST'}/>
                                 </>
                             )}
                         />
