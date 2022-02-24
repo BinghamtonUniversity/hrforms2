@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Row, Col, Form } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
@@ -7,7 +7,8 @@ import { useAppQueries } from "../../queries";
 export default function Information() {
     const {control,setValue,posTypes,formState:{errors}} = useFormContext();
     const watchPosType = useWatch({name:'posType.id',control:control});
-    const watchReqType = useWatch({name:'reqType.id',control:control});
+
+    const [showJobDesc,setShowJobDesc] = useState(true);
     
     const { getListData } = useAppQueries();
     const reqtypes = getListData('reqTypes',{cacheTime:600000,staleTime:600000,
@@ -17,11 +18,13 @@ export default function Information() {
     const handlePosTypeChange = (field,e) => {
         field.onChange(e);
         setValue('posType.title',posTypes[e.target.value].title);
+        setShowJobDesc(true);
     }
     const handleReqTypeChange = (field,e) => {
         field.onChange(e);
         const rt = reqtypes.data.find(a=>a[0]==e.target.value);
         setValue('reqType.title',(rt)?rt[1]:'');
+        setShowJobDesc((e.target.value!='EX'&&e.target.value!='FS'));
     }
     return (
         <>
@@ -33,7 +36,7 @@ export default function Information() {
                         defaultValue=""
                         control={control}
                         rules={{required:{value:true,message:'You must select a Position Type'}}}
-                        render={({field})=>Object.keys(posTypes).map(k=><Form.Check key={k} {...field} inline type="radio" label={posTypes[k].title} value={k} checked={k==field.value} onChange={e=>handlePosTypeChange(field,e)}/>) }
+                        render={({field})=>Object.keys(posTypes).map(k=><Form.Check key={k} {...field} inline id={`posType-${k}`} type="radio" label={posTypes[k].title} value={k} checked={k==field.value} onChange={e=>handlePosTypeChange(field,e)}/>) }
                     />
                 </Col>
             </Form.Group>
@@ -90,7 +93,7 @@ export default function Information() {
                     />
                 </Col>
             </Form.Group>
-            {(watchReqType?.id!='EX' && watchReqType?.id!='FS') &&
+            {showJobDesc &&
                 <Form.Group as={Row}>
                     <Form.Label column md={2}>Brief Job Description:</Form.Label>
                     <Col md={9}>

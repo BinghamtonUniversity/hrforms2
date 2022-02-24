@@ -27,7 +27,7 @@ Class HRForms2 {
 	email_address_work,title_description,campus_title,derived_fac_type,card_affil,negotiating_unit,salary_grade,
 	appointment_type,appointment_effective_date,appointment_end_date,appointment_percent,continuing_permanency_date,
 	reporting_department_code,reporting_department_name,
-	supervisor_suny_id,supervisor_last_name,supervisor_first_name";
+	supervisor_suny_id,supervisor_last_name,supervisor_first_name";	
 
 	function init(array $args = array()) {
 		$this->AppPath = $_SERVER['DOCUMENT_ROOT'];
@@ -203,7 +203,14 @@ Class HRForms2 {
 	 * @param {number} $deptcode - Department Code to lookup 
 	 * @return {Array}
 	 */
-	function getGroupIds($deptcode) {
-		
+	protected function getGroupIds($deptcode) {
+		if (!isset($deptcode)) $this->raiseError(400); //return?
+		$qry = "select group_id from hrforms2_group_departments where department_code = :dept_code";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt, ":dept_code", $deptcode);
+		oci_execute($stmt);
+		$group_id = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+		oci_free_statement($stmt);
+		return $group_id;
 	}
 }
