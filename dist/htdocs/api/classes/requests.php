@@ -49,38 +49,64 @@ class Requests extends HRForms2 {
 
     function POST() {
         if ($this->POSTvars['action'] == 'submit') {
-            // insert into position_requests with nextval of sequence
-            // insert into journal
-            // delete from drafts
-            // insert into hrforms2_requests and get reqid
-            //HRFORMS2_REQUEST_ID_SEQ.nextval
-            /*$qry = "insert into HRFORMS2_REQUESTS values(0, :suny_id, sysdate, EMPTY_CLOB()) returning REQUEST_ID, DATA into :request_id, :data";
-            $stmt = oci_parse($this->db,$qry);
-            $clob = oci_new_descriptor($this->db, OCI_D_LOB);
-            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
-            oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
-            oci_bind_by_name($stmt, ":request_id", $request_id, -1, OCI_B_INT);
-            $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
-            if (!$r) $this->raiseError();
-            $clob->save(json_encode($this->POSTvars['data']));
-            oci_commit($this->db);*/
-
             // get user's group
             include 'user.php';
             $_SERVER['REQUEST_METHOD'] = 'GET';
             $user = (new User(array($this->sessionData['SUNY_ID']),false))->returnData[0];
-            $group_id = $this->getGroupIds($user['REPORTING_DEPARTMENT_CODE']);
-            $this->toJSON($group_id);
+            $group = $this->getGroupIds($user['REPORTING_DEPARTMENT_CODE']);
 
+            //get hierarchy for group
+            include 'hierarchy.php';
+            $h = (new Hierarchy(array('request','group',$group['GROUP_ID']),false))->returnData;
+            $idx = array_search($this->POSTvars['data']['posType']['id'],array_column($h,'POSITION_TYPE'));
+            // if idx == -1 not found
+            $hierarchy = $h[$idx];
+            $groups = $hierarchy['GROUPS'];
             // get next group to
+            $groups_array = explode(",",$groups);
+            $group_to = $groups_array[0];
+            
+            //extract comments from JSON?
+
+            // insert into hrforms2_request (get request id);
+            /*$qry = "insert into HRFORMS2_REQUESTS 
+            values(HRFORMS2_REQUEST_ID_SEQ.nextval,EMPTY_CLOB(),sysdate,EMPTY_CLOB()) 
+            returning REQUEST_ID, CREATED_BY, REQUEST_DATA into :request_id, :created_by, :request_data";
+            $stmt = oci_parse($this->db,$qry);
+            $created_by = oci_new_descriptor($this->db, OCI_D_LOB);
+            $request_data = oci_new_descriptor($this->db, OCI_D_LOB);
+            oci_bind_by_name($stmt,":request_id", $request_id,-1,SQLT_INT);
+            oci_bind_by_name($stmt, ":created_by", $created_by, -1, OCI_B_CLOB);
+            oci_bind_by_name($stmt, ":request_data", $request_data, -1, OCI_B_CLOB);
+            $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+            if (!$r) $this->raiseError();
+            $created_by->save(json_encode($user));
+            $request_data->save(json_encode($this->POSTvars['data']));
+            oci_commit($this->db);*/
+            $request_id = 8;
+
+            $request_data = array(
+                'hierarchy_id'=>$hierarchy['HIERARCHY_ID'],
+                'workflow_id'=>$hierarchy['WORKFLOW_ID'],
+                'seq'=>$idx,
+                'groups'=>$groups,
+                'group_from'=>$group['GROUP_ID'],
+                'group_to'=>$group_to,
+                'request_id'=>$request_id
+            );
+            $this->POSTvars['request_data'] = $request_data;
 
             // insert into hrforms2_requests_journal
+            include 'journal.php';
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            //possibly make the request data a parent class array?
+            $journal = (new Journal(array($request_id,'S',$request_data),false))->returnData;
 
-            // delete from hrforms2_requests_drafts
-            
-            //$this->done();
+            // delete from hrforms2_requests_drafts (call delete)
+            $_SERVER['REQUEST_METHOD'] = 'DELETE';
+            $del_draft = (new Requests($this->req,false));
 
-            $this->toJSON(array('submit'=>true));
+            $this->toJSON($request_data);
         } else {
             $qry = "select count(*) from HRFORMS2_REQUESTS_DRAFTS where SUNY_ID = :suny_id";
             $stmt = oci_parse($this->db,$qry);
@@ -107,92 +133,6 @@ class Requests extends HRForms2 {
             //$this->toJSON($this->POSTvars['data']);
             $this->done();
         }
-
-        /*if ($this->POSTvars['data']['reqId'] == '') {
-            $qry = "select count(*) from HRFORMS2_REQUESTS_DRAFTS where SUNY_ID = :suny_id";
-            $stmt = oci_parse($this->db,$qry);
-            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
-            $r = oci_execute($stmt);
-			if (!$r) $this->raiseError();
-            $row = oci_fetch_array($stmt,OCI_ARRAY+OCI_RETURN_NULLS);
-            oci_free_statement($stmt);
-            if ($row[0] > MAX_DRAFTS) {
-                $this->raiseError(E_TOO_MANY_DRAFTS);
-                return;
-            }
-            $unix_ts = time();
-            $reqId = "draft-".$this->sessionData['SUNY_ID']."-".$unix_ts;
-            $this->POSTvars['data']['reqId'] = $reqId;
-            $qry = "insert into HRFORMS2_REQUESTS_DRAFTS values(:suny_id, :unix_ts, EMPTY_CLOB()) returning DATA into :data";
-            $stmt = oci_parse($this->db,$qry);
-            $clob = oci_new_descriptor($this->db, OCI_D_LOB);
-            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
-            oci_bind_by_name($stmt, ":unix_ts", $unix_ts);
-            oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
-            $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
-            if (!$r) $this->raiseError();
-            $clob->save(json_encode($this->POSTvars['data']));
-            oci_commit($this->db);
-            $this->toJSON($this->POSTvars['data']);
-        } else {
-            $this->toJSON($this->POSTvars);
-            // insert into hrforms2_requests and get reqid
-            #$qry = "insert into HRFORMS2_REQUESTS values(HRFORMS2_REQUEST_ID_SEQ.nextval, :suny_id, sysdate, EMPTY_CLOB()) returning REQUEST_ID, DATA into :request_id, :data";
-            #$stmt = oci_parse($this->db,$qry);
-            #$clob = oci_new_descriptor($this->db, OCI_D_LOB);
-            #oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
-            #oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
-            #oci_bind_by_name($stmt, ":request_id", $request_id, -1, OCI_B_INT);
-            #$r = oci_execute($stmt);
-            #if (!$r) $this->raiseError();
-            #$clob->save(json_encode($this->POSTvars['data']));
-            #oci_commit($this->db);
-
-            // get users group
-
-            // get next group to
-
-            // insert into hrforms2_requests_journal
-
-            #$this->toJSON(array("request_id"=>$request_id));
-
-            // delete from hrforms2_requests_drafts
-            
-            //$this->done();
-        }
-
-        /*
-        if ($this->req[0] == 'draft') {
-            $qry = "select count(*) from HRFORMS2_REQUESTS_DRAFTS where SUNY_ID = :suny_id";
-            $stmt = oci_parse($this->db,$qry);
-            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
-            oci_execute($stmt);
-            $row = oci_fetch_array($stmt,OCI_ARRAY+OCI_RETURN_NULLS);
-            oci_free_statement($stmt);
-            if ($row[0] > MAX_DRAFTS) {
-                $this->raiseError(E_TOO_MANY_DRAFTS);
-                return;
-            }
-            list($mode,$suny_id,$unix_ts) = explode("-",$this->POSTvars['reqId']);
-            if ($suny_id != $this->sessionData['SUNY_ID']) {
-                //TODO: also check if isAdmin
-                $this->raiseError(E_NOT_AUTHORIZED);
-                return;
-            }
-            $qry = "insert into HRFORMS2_REQUESTS_DRAFTS values(:suny_id, :unix_ts, EMPTY_CLOB()) returning DATA into :data";
-            $stmt = oci_parse($this->db,$qry);
-            $clob = oci_new_descriptor($this->db, OCI_D_LOB);
-            oci_bind_by_name($stmt, ":suny_id", $suny_id);
-            oci_bind_by_name($stmt, ":unix_ts", $unix_ts);
-            oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
-            oci_execute($stmt,OCI_DEFAULT);
-            $clob->save(json_encode($this->POSTvars['data']));
-            oci_commit($this->db);
-            $this->done();
-        } else {
-            $this->toJSON($this->req);
-        }*/
-
     }
 
     function PUT() {
@@ -209,7 +149,7 @@ class Requests extends HRForms2 {
             if (!$r) $this->raiseError();
             $clob->save(json_encode($this->POSTvars['data']));
             oci_commit($this->db);
-            $this->done();
+            if ($this->retJSON) $this->done();
         } else {
             $this->toJSON($this->req);
         }
@@ -224,7 +164,7 @@ class Requests extends HRForms2 {
             $r = oci_execute($stmt);
             if (!$r) $this->raiseError();
             oci_commit($this->db);
-            $this->done();
+            if ($this->retJSON) $this->done();
         } else {
             //raise error; cannot delete non-drafts.
             $this->raiseError(E_METHOD_NOT_ALLOWED);

@@ -42,4 +42,38 @@ class Workflow extends HRForms2 {
 		$this->returnData = $this->_arr;
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
+	function POST() {
+		$qry = "insert into hrforms2_requests_workflow values(HRFORMS2_REQUESTS_WORKFLOW_SEQ.nextval,:groups) returning WORKFLOW_ID into :workflow_id";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt,":groups", $this->POSTvars['GROUPS']);
+		oci_bind_by_name($stmt,":workflow_id", $WORKFLOW_ID,-1,SQLT_INT);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		oci_commit($this->db);
+		oci_free_statement($stmt);
+		$this->toJSON(array("WORKFLOW_ID"=>$WORKFLOW_ID));
+	}
+	function PATCH() {
+		if (isset($this->POSTvars['GROUPS'])) {
+			$qry = "update hrforms2_requests_workflow set groups = :groups where workflow_id = :workflow_id";
+			$stmt = oci_parse($this->db,$qry);
+			oci_bind_by_name($stmt,":groups", $this->POSTvars['GROUPS']);
+			oci_bind_by_name($stmt,":workflow_id", $this->req[0]);
+			$r = oci_execute($stmt);
+			if (!$r) $this->raiseError();
+			oci_commit($this->db);
+			oci_free_statement($stmt);
+		}
+		$this->done();
+	}
+	function DELETE() {
+		$qry = "delete from hrforms2_requests_workflow where workflow_id = :workflow_id";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt,":workflow_id", $this->req[0]);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		oci_commit($this->db);
+		oci_free_statement($stmt);
+		$this->done();
+	}
 }

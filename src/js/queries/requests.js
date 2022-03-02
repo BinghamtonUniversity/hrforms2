@@ -16,7 +16,7 @@ export default function useRequestQueries(REQUEST_ID) {
         }
         return useQuery(['requests',REQUEST_ID],q(`requests/${reqIdAsPath}`),options);
     }
-    const postRequest = () => useMutation(d=>q('requests/','POST',d)());
+    const postRequest = () => useMutation(d=>q(`requests/${reqIdAsPath}`,'POST',d)());
     const putRequest = () => useMutation(d=>q(`requests/${reqIdAsPath}`,'PUT',d)());
     const deleteRequest = () => useMutation(d=>q(`requests/${reqIdAsPath}`,'DELETE',d)());
 

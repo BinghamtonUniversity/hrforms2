@@ -394,7 +394,7 @@ function AddEditGroupForm(props) {
                     <Modal.Footer>
                         {status.state != 'error' && <p>{status.message}</p>}
                         <Button variant="secondary" onClick={closeModal}  disabled={!status.cancel}>Cancel</Button>
-                        <Button variant="danger" type="submit"disabled={!(status.save&&methods.formState.isValid)}>{status.icon && <Icon icon={status.icon} className={status.spin?'spin':''}/>}Save</Button>
+                        <Button variant="danger" type="submit" disabled={!(status.save&&methods.formState.isValid)}>{status.icon && <Icon icon={status.icon} className={status.spin?'spin':''}/>}Save</Button>
                     </Modal.Footer>
                 </Form>
             </FormProvider>
@@ -467,7 +467,7 @@ function GroupInfo() {
                         rules={{required:{value:true,message:'Start Date is required'}}}
                         render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.startDate}/>}
                     />
-                    <Form.Control.Feedback type="invalid">{errors.startDate?.message}</Form.Control.Feedback>                    
+                    <Form.Control.Feedback type="invalid">{errors.startDate?.message}</Form.Control.Feedback>
                 </Form.Group>
                 <Form.Group as={Col} controlId="end_date">
                     <Form.Label>End Date</Form.Label>
