@@ -14,7 +14,7 @@ import { format } from "date-fns";
 import { useToasts } from "react-toast-notifications";
 import { useHotkeys } from "react-hotkeys-hook";
 
-const defaultVals = {SUNYID:'',firstName:'',lastName:'',email:'',startDate:new Date(),endDate:'',assignedGroups:[],availableGroups:[]};
+const defaultVals = {SUNYID:'',firstName:'',lastName:'',email:'',dept:'',startDate:new Date(),endDate:'',assignedGroups:[],availableGroups:[]};
 
 export default function AdminUsers() {
     const [newUser,setNewUser] = useState(false);
@@ -295,6 +295,7 @@ function AddEditUserForm(props) {
             firstName:props.LEGAL_FIRST_NAME||'',
             lastName:props.LEGAL_LAST_NAME||'',
             email:props.email||'',
+            dept:props.REPORTING_DEPARTMENT_NAME||'No Department',
             startDate: props.startDate||new Date(),
             endDate: props.endDate||''
         })
@@ -386,6 +387,7 @@ function AddEditUserForm(props) {
                         SUNYID:props.SUNY_ID,
                         firstName:props.LEGAL_FIRST_NAME,
                         lastName:props.LEGAL_LAST_NAME,
+                        dept:props.REPORTING_DEPARTMENT_NAME,
                         email:props.email,
                         startDate: props.startDate,
                         endDate: props.endDate,
@@ -499,6 +501,7 @@ function UserInfo({newUser,setStatus}) {
                 firstName:userData.LEGAL_FIRST_NAME,
                 lastName:userData.LEGAL_LAST_NAME,
                 email:userData.EMAIL_ADDRESS_WORK,
+                dept:userData.REPORTING_DEPARTMENT_NAME
             }));
         });
     }
@@ -568,13 +571,31 @@ function UserInfo({newUser,setStatus}) {
                         control={control}
                         render={({field}) => <Form.Control {...field} type="text" disabled/>}
                     />
-                </Form.Group>
+                </Form.Group>            
             </Form.Row>
             <Form.Row>
                 <Form.Group as={Col} controlId="email">
                     <Form.Label>Email</Form.Label>
                     <Controller
                         name="email"
+                        control={control}
+                        render={({field}) => <Form.Control {...field} type="text" disabled/>}
+                    />
+                </Form.Group>
+            </Form.Row>
+            <Form.Row>
+                <Form.Group as={Col} controlId="dept">
+                    <Form.Label>Department</Form.Label>
+                    <Controller
+                        name="dept"
+                        control={control}
+                        render={({field}) => <Form.Control {...field} type="text" disabled/>}
+                    />
+                </Form.Group>
+                <Form.Group as={Col} controlId="dept_group">
+                    <Form.Label>Department Group</Form.Label>
+                    <Controller
+                        name="deptGroup"
                         control={control}
                         render={({field}) => <Form.Control {...field} type="text" disabled/>}
                     />

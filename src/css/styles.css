@@ -110,6 +110,7 @@ button.btn-sm.no-label svg.iconify {
   font-size:1.5em;
   margin-right: 0;
 }
+/* droplist styling */
 .droplist {
   height: 50vh;
   overflow-y:scroll;
@@ -132,6 +133,11 @@ button.btn-sm.no-label svg.iconify {
 }
 .droplist div.dragging {
   background-color: #90ee90;
+}
+/* styling for placeholder */
+.droplist [data-rbd-placeholder-context-id] {
+  border: 1px dashed navy;
+  background-color:aquamarine;
 }
 .dlh1{
   grid-area:dlh1;

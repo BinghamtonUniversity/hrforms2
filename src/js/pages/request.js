@@ -318,11 +318,10 @@ function RequestForm({reqId,data,setIsBlocking,isNew}) {
             console.log('this is a test');
         }
 
-        console.log('saving...');
         console.log(action);
-        setIsSaving(true);
+        /*setIsSaving(true);
         setIsBlocking(true); //complete block, no prompt
-        setLockTabs(true);
+        setLockTabs(true);*/
 
         handleValidation();
         // should not be able to submit if there are errors, just to be safe.
@@ -330,7 +329,8 @@ function RequestForm({reqId,data,setIsBlocking,isNew}) {
         
         data = methods.getValues();
         if (isNew || action=='submit') {
-            createReq.mutateAsync({action:action,data:data}).then(() => {
+            createReq.mutateAsync({action:action,data:data}).then(d => {
+                console.log(d);
                 setIsSaving(false);
                 setIsBlocking(false);
                 setLockTabs(false);

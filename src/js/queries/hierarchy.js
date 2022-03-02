@@ -1,17 +1,29 @@
 import q from '../queries';
 import {useQuery,useMutation} from "react-query";
 
-//may need to make workflowqueries and hierarchyqueries or not default since WF is part of hierarchy
-
-export default function useHierarchyQueries() {
-    const getWorkflows = (...args) => {
+export function useWorkflowQueries(WORKFLOW_ID) {
+    const getWorkflow = (...args) => {
         const options = args[0]?.options||args[0]||{};
         return useQuery('workflow',q('workflow'),options);
     }
+    const postWorkflow = () => useMutation(d=>q('workflow','POST',d)());
+    const patchWorkflow = () => useMutation(d=>q(`workflow/${WORKFLOW_ID}`,'PATCH',d)());
+    const deleteWorkflow = () => useMutation(d=>q(`workflow/${WORKFLOW_ID}`,'DELETE',{})());
+
+    return {getWorkflow,postWorkflow,patchWorkflow,deleteWorkflow};
+}
+
+//TODO: probably change to useRequestHierarchyQueries()
+export function useHierarchyQueries(HIERARCHY_ID) {
     const getHierarchy = (...args) => {
         const options = args[0]?.options||args[0]||{};
-        return useQuery('hierarchy',q('hierarchy'),options);
+        return useQuery('hierarchy',q('hierarchy/request/'),options);
+    
     }
+    const postHierarchy = () => useMutation(d=>q('hierarchy','POST',d)());
+    const patchHierarchy = () => useMutation(d=>q(`hierarchy/${HIERARCHY_ID}`,'PATCH',d)());
+    const deleteHierarchy = () => useMutation(d=>q(`hierarchy/${HIERARCHY_ID}`,'DELETE',{})());
 
-    return {getWorkflows,getHierarchy};
+    return {getHierarchy,postHierarchy,patchHierarchy,deleteHierarchy};
 }
+

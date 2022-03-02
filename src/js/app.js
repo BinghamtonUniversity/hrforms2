@@ -10,6 +10,7 @@ import { Icon } from '@iconify/react';
 import {useAppQueries,useUserQueries} from "./queries";
 import AppNav from "./blocks/appnav";
 import Footer from "./blocks/footer";
+import { Alert } from "react-bootstrap";
 
 /* PAGES */
 const Home = lazy(()=>import("./pages/home"));
@@ -73,7 +74,7 @@ export default function StartApp() {
         return (
             <GlobalContext.Provider value={{...global.data}}>
                 <AuthContext.Provider value={{...authData}}>
-                    <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <ErrorBoundary FallbackComponent={AppErrorFallback}>
                         <AppContent SUNY_ID={authData.SUNY_ID}/>
                     </ErrorBoundary>
                 </AuthContext.Provider>
@@ -99,19 +100,21 @@ function AppContent({SUNY_ID}) {
             <AppNav userCounts={userCounts}/>
             <Suspense fallback={null}>
                 <Container as="main" fluid>
-                    <Switch>
-                        <Route exact path="/" component={Home}/>
-                        <Route exact path="/request/list" component={RequestList}/>
-                        <Route path="/request/list/:part" component={RequestList}/>
-                        <Route path="/request/:id/:sunyid/:ts" component={Request}/>
-                        <Route path="/request/:id" component={Request}/>
-                        <Route path="/request" component={Request}/>
-                        <Route path="/form/:id" component={HRForm}/>
-                        <Route path="/form" component={HRForm}/>
-                        <Route path="/admin/:page/:subpage" component={AdminPages}/>
-                        <Route path="/admin/:page" component={AdminPages}/>
-                        <Route path="*"><NotFound/></Route>
-                    </Switch>
+                    <ErrorBoundary FallbackComponent={ErrorFallback}>
+                        <Switch>
+                            <Route exact path="/" component={Home}/>
+                            <Route exact path="/request/list" component={RequestList}/>
+                            <Route path="/request/list/:part" component={RequestList}/>
+                            <Route path="/request/:id/:sunyid/:ts" component={Request}/>
+                            <Route path="/request/:id" component={Request}/>
+                            <Route path="/request" component={Request}/>
+                            <Route path="/form/:id" component={HRForm}/>
+                            <Route path="/form" component={HRForm}/>
+                            <Route path="/admin/:page/:subpage" component={AdminPages}/>
+                            <Route path="/admin/:page" component={AdminPages}/>
+                            <Route path="*"><NotFound/></Route>
+                        </Switch>
+                    </ErrorBoundary>
                 </Container>
                 <Footer/>
                 <ScrollToTop/>
@@ -120,12 +123,22 @@ function AppContent({SUNY_ID}) {
     );
 }
 
-function ErrorFallback({error}) {
+function AppErrorFallback({error}) {
     return (
         <div>
-            <p>Error</p>
+            <p>Fatal Error</p>
             <p>{error.message}</p>
         </div>
+    );
+}
+
+function ErrorFallback({error}) {
+    return (
+        <Alert variant="danger">
+            <Alert.Heading>Error</Alert.Heading>
+            <p>The application encounted the following error.  If the problem persists please contact technical support</p>
+            <pre>{error.message}</pre>
+        </Alert>
     );
 }
 

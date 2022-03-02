@@ -161,6 +161,22 @@ Class HRForms2 {
 		return $this->sessionData;
 	}
 
+	// may not need this; call new User instead...
+	protected function userInfo() {
+		// do query, if no results get saved data from user table.  If results, update user table data.
+		if (isset($this->userData)) return $this->userData;
+		$qry = "select ".$this->BASE_PERSEMP_FIELDS.", r.recent_campus_date
+		from buhr.buhr_persemp_mv@banner.cc.binghamton.edu p
+		left join (select suny_id as recent_suny_id, recent_campus_date from buhr.buhr_general_info_mv@banner.cc.binghamton.edu) r on (r.recent_suny_id = p.suny_id)
+		where p.role_status = 'C' and p.suny_id = :suny_id";
+        $stmt = oci_parse($this->db,$qry);
+        oci_bind_by_name($stmt, ":sid", $this->sessionData['SUNY_ID']);
+        oci_execute($stmt);
+        $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+		$this->userData = (!$row)?array():array_merge($this->userData,$row);
+		return $this->userData;
+	}
+
   	protected function notAllowed() {
 		$this->raiseError(E_METHOD_NOT_ALLOWED);
 	}
