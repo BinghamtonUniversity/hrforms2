@@ -8,7 +8,7 @@ export default function AppNav({userCounts}) {
     const user = currentUser();
     const [requests,setRequests] = useState(new Map());
     const [forms,setForms] = useState(new Map());
-    //const {SUNY_ID:b,IS_ELIGIBLE,IS_SUPER} = currentUser();
+
     const logout = e => {
         e.preventDefault();
         //clearAuth();
@@ -21,6 +21,7 @@ export default function AppNav({userCounts}) {
         }
     },[userCounts]);
     //TODO: check a/b match; if different and isAdmin then impersonation; otherwise kickout.
+    //(!isAdmin && SUNY_ID != user.SUNY_ID)
     return (
         <header>
             <Navbar bg="main" variant="dark" expand="lg" className="mb-4 shadow" fixed="top" collapseOnSelect={true}>
@@ -37,6 +38,8 @@ export default function AppNav({userCounts}) {
                             {requests.has('approval') && <NavDropdown.Item as={Link} to="/request/list/approvals">Approvals ({requests.get('approval')})</NavDropdown.Item>}
                             {requests.has('final') && <NavDropdown.Item as={Link} to="/request/list/final">Final Approvals ({requests.get('final')})</NavDropdown.Item>}
                             <NavDropdown.Divider/>
+                            <NavDropdown.Item as={Link} to="/request/list/submitted">My Requests</NavDropdown.Item>
+                            <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/request/list">List</NavDropdown.Item>
                         </NavDropdown>}
                         {(forms.size > 0) && 
@@ -50,7 +53,7 @@ export default function AppNav({userCounts}) {
                             <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/request/list">List</NavDropdown.Item>
                         </NavDropdown>}
-                        {isAdmin &&
+                        {(isAdmin && SUNY_ID == user.SUNY_ID) &&
                         <NavDropdown title="Admin" id="admin-nav-dropdown" alignRight>
                             <NavDropdown.Item as={Link} to="/admin/news">News</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/journal">Journal</NavDropdown.Item>

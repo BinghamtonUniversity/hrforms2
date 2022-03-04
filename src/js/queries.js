@@ -1,3 +1,4 @@
+import { getAuthInfo } from "./app";
 import {useQuery,useMutation} from "react-query";
 import {format,parse} from "date-fns";
 
@@ -90,6 +91,8 @@ export function useAppQueries() {
     }
     /*admin?*/
     const patchNews = () => useMutation(q('news','PATCH',{}));
+    const patchSession = () => useMutation(q('session','PATCH',{}));
+
     const putNews = (...args) => {
         const newsid = args[0]?.NEWS_ID||args[0];
         if (!newsid) return stub;
@@ -97,11 +100,14 @@ export function useAppQueries() {
             return q(`news/${newsid}`,'PUT',d)();
         });
     }
-    return {getSession,getSettings,getTerms,getNews,getLists,getList,getListData,getBudgetTitles,putNews,patchNews};
+    return {getSession,getSettings,getTerms,getNews,getLists,getList,getListData,getBudgetTitles,putNews,patchNews,patchSession};
 }
 
 /** USER QUERIES */
-export function useUserQueries(SUNY_ID) {
+export function useUserQueries() {
+    const authData = getAuthInfo();
+    const SUNY_ID = (authData.OVR_SUNY_ID)?authData.OVR_SUNY_ID:authData.SUNY_ID;
+
     const getUser = () => {
         return useQuery('user',q(`user/${SUNY_ID}`),{staleTime:Infinity,cacheTime:Infinity,onSuccess:d => {
             return d.map(u => {
@@ -111,7 +117,9 @@ export function useUserQueries(SUNY_ID) {
         }});
     }
     
-    const getCounts = () => useQuery(['counts',SUNY_ID],q(`counts/${SUNY_ID}`));
+    const getCounts = () => {
+        return useQuery('counts',q(`counts/${SUNY_ID}`));
+    }
 
     return {getUser,getCounts};
 }

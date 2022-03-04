@@ -41,8 +41,8 @@ class Groups extends HRForms2 {
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
 	function POST() {
-		include 'groupusers.php';
-		include 'groupdepts.php';
+		//include 'groupusers.php';
+		//include 'groupdepts.php';
 		$qry = "insert into hrforms2_groups values(HRFORMS2_GROUP_ID_SEQ.nextval, :group_name, sysdate, :start_date, :end_date) returning GROUP_ID into :group_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":group_name", $this->POSTvars['GROUP_NAME']);
@@ -52,13 +52,13 @@ class Groups extends HRForms2 {
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
 		oci_free_statement($stmt);
-		new GroupUsers(array($GROUP_ID));
-		new GroupDepts(array($GROUP_ID));
+		new groupusers(array($GROUP_ID));
+		new groupdepts(array($GROUP_ID));
 		$this->done();
 	}
 	function PUT() {
-		include 'groupusers.php';
-		include 'groupdepts.php';
+		//include 'groupusers.php';
+		//include 'groupdepts.php';
 		$qry = "update hrforms2_groups set group_name = :group_name, start_date = :start_date, end_date = :end_date where group_id = :group_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":group_name", $this->POSTvars['GROUP_NAME']);
@@ -69,8 +69,8 @@ class Groups extends HRForms2 {
 		if (!$r) $this->raiseError();
 		oci_commit($this->db);
 		oci_free_statement($stmt);
-		new GroupUsers($this->req);
-		new GroupDepts($this->req);
+		new groupusers($this->req);
+		new groupdepts($this->req);
 		$this->done();
 	}
 	function PATCH() {

@@ -145,7 +145,23 @@ class Session extends HRForms2 {
 
     function PATCH() {
         // insert/update into session_override
-
+        $now = time();
+        if ($this->POSTvars['IMPERSONATE_SUNY_ID'] != '') {
+            $qry = "insert into hrforms2_session_override values(:session_id,:cas_session_id,:suny_id,:ovr_by,:start_ovr,null)";
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":session_id",$this->sessionData['SESSION_ID']);
+            oci_bind_by_name($stmt,":cas_session_id",$this->sessionData['CAS_SID']);
+            oci_bind_by_name($stmt,":suny_id",$this->POSTvars['IMPERSONATE_SUNY_ID']);
+            oci_bind_by_name($stmt,":ovr_by",$this->sessionData['SUNY_ID']);
+            oci_bind_by_name($stmt,":start_ovr",$now);
+        } else {
+            $qry = "update hrforms2_session_override set end_override = :end_ovr where session_id = :session_id and cas_session_id = :cas_session_id and end_override is null";
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":end_ovr",$now);
+            oci_bind_by_name($stmt,":session_id",$this->sessionData['SESSION_ID']);
+            oci_bind_by_name($stmt,":cas_session_id",$this->sessionData['CAS_SID']);
+        }
+        oci_execute($stmt);
         //return user
         $id = ($this->POSTvars['IMPERSONATE_SUNY_ID'] != '')?$this->POSTvars['IMPERSONATE_SUNY_ID']:$this->sessionData['SUNY_ID'];
         $_SERVER['REQUEST_METHOD'] = 'GET';
