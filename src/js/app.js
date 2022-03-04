@@ -1,7 +1,7 @@
 import React,{useContext,useState,useEffect,lazy,Suspense} from "react";
-import {Switch,Route,useLocation} from "react-router-dom";
+import {Switch,Route,useLocation,Redirect} from "react-router-dom";
 import {useQueryClient} from "react-query";
-import {Container,Button} from "react-bootstrap";
+import {Container,Button,Alert} from "react-bootstrap";
 import {useToasts} from "react-toast-notifications";
 import {useScrollPosition} from "@n8tb1t/use-scroll-position";
 import { ErrorBoundary } from "react-error-boundary";
@@ -10,7 +10,6 @@ import { Icon } from '@iconify/react';
 import {useAppQueries,useUserQueries} from "./queries";
 import AppNav from "./blocks/appnav";
 import Footer from "./blocks/footer";
-import { Alert } from "react-bootstrap";
 
 /* PAGES */
 const Home = lazy(()=>import("./pages/home"));
@@ -66,16 +65,16 @@ export default function StartApp() {
     //const settings = getSettings({enabled:session.isSuccess});
 
     useEffect(() => {
+        console.log('session data changed',session.data);
         setAuthData(session.data);
     },[session.data]);
-
     if (session.isError || global.isError) return <LoadingAppError>{session.error?.message||global.error?.message}</LoadingAppError>;
     if (session.isSuccess && global.isSuccess) {
         return (
             <GlobalContext.Provider value={{...global.data}}>
                 <AuthContext.Provider value={{...authData}}>
                     <ErrorBoundary FallbackComponent={AppErrorFallback}>
-                        <AppContent SUNY_ID={authData.SUNY_ID}/>
+                        <AppContent SUNY_ID={authData.SUNY_ID} OVR_SUNY_ID={authData.OVR_SUNY_ID}/>
                     </ErrorBoundary>
                 </AuthContext.Provider>
             </GlobalContext.Provider>
@@ -84,15 +83,19 @@ export default function StartApp() {
     return <LoadingApp/>;
 }
 
-function AppContent({SUNY_ID}) {
-    const {getUser,getCounts} = useUserQueries(SUNY_ID);
+function AppContent({SUNY_ID,OVR_SUNY_ID}) {
+    const {getUser,getCounts} = useUserQueries();
     const user = getUser();
-    const counts = getCounts();
+    const counts = getCounts({enabled:false});
     const [userData,setUserData] = useState();
-    const [userCounts,setUserCounts] = useState()
-    useEffect(() => {setUserData(head(user.data));},[user.data]);
-    useEffect(() => {setUserCounts(counts.data);},[counts.data]);
-    if (user.isLoading || counts.isLoading) return <LoadingApp/>;
+    const [userCounts,setUserCounts] = useState();
+    useEffect(() => {
+        setUserData(head(user.data));
+        counts.refetch();
+    },[user.data]);
+    useEffect(()=>setUserCounts(counts.data),[counts.data]);
+    useEffect(()=>user.refetch(),[OVR_SUNY_ID]);
+    if (user.isLoading || counts.isLoading || counts.isIdle) return <LoadingApp/>;
     if (user.isError || counts.isError) return <LoadingAppError>Failed to retreive user information</LoadingAppError>
     return (
         <UserContext.Provider value={{...userData,setUserData}}>
@@ -101,6 +104,7 @@ function AppContent({SUNY_ID}) {
             <Suspense fallback={null}>
                 <Container as="main" fluid>
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
+                        {(userData && OVR_SUNY_ID) && <ImpersonationAlert {...userData}/>}
                         <Switch>
                             <Route exact path="/" component={Home}/>
                             <Route exact path="/request/list" component={RequestList}/>
@@ -139,6 +143,40 @@ function ErrorFallback({error}) {
             <p>The application encounted the following error.  If the problem persists please contact technical support</p>
             <pre>{error.message}</pre>
         </Alert>
+    );
+}
+
+function ImpersonationAlert({SUNY_ID,fullname}) {
+    const [redirect,setRedirect] = useState(false);
+
+    const queryclient = useQueryClient();
+    const {patchSession} = useAppQueries();
+    const mutation = patchSession();
+
+    const endImpersonation = () => {
+        mutation.mutateAsync({IMPERSONATE_SUNY_ID:''}).then(d => {
+            //queryclient.setQueryData('user',d);
+            //let sess = queryclient.getQueryData('session');
+            //sess.OVR_SUNY_ID = '';
+            //sess.isAdmin = true;
+            //queryclient.setQueryData('session',sess);
+            queryclient.refetchQueries('session').then(()=>{
+                setRedirect(true);
+            });
+            /*.then(()=>{
+                Promise.all([
+                    queryclient.refetchQueries('user'),
+                    //queryclient.refetchQueries('counts')
+                ]).then(()=>{
+                    setRedirect(true);
+                });
+            });*/
+        });        
+    }
+    useEffect(()=>setRedirect(false),[SUNY_ID]);
+    if (redirect) return <Redirect to="/"/>
+    return (
+        <Alert variant="primary" onClose={endImpersonation} dismissible>Impersonating <strong>{fullname} ({SUNY_ID})</strong> - Close to end impersonation</Alert>
     );
 }
 

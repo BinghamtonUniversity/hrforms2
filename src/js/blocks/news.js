@@ -34,7 +34,7 @@ export function News() {
     },[news.data]);
     if (show && news.data) {
         return (
-            <Alert variant="success" onClose={dismissNews} dismissible>
+            <Alert variant="light" onClose={dismissNews} dismissible>
                 <Alert.Heading>News & Notices</Alert.Heading>
                 {htmr(news.data.NEWS_TEXT)}
             </Alert>        

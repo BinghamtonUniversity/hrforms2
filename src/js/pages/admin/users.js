@@ -2,17 +2,19 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, useReducer } 
 import { useQueryClient } from "react-query";
 import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
+import {useAppQueries} from "../../queries";
 import { Loading, ModalConfirm } from "../../blocks/components";
 import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert, InputGroup } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { orderBy, startsWith, sortBy, difference, differenceWith, isEqual, capitalize } from "lodash";
 import DataTable from 'react-data-table-component';
-import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray, useFormState } from "react-hook-form";
+import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { format } from "date-fns";
 import { useToasts } from "react-toast-notifications";
 import { useHotkeys } from "react-hotkeys-hook";
+import { Redirect } from "react-router-dom";
 
 const defaultVals = {SUNYID:'',firstName:'',lastName:'',email:'',dept:'',startDate:new Date(),endDate:'',assignedGroups:[],availableGroups:[]};
 
@@ -173,7 +175,13 @@ function UsersTable({users,newUser,setNewUser}) {
 
 function ImpersonateUser({user,setImpersonateUser}) {
     const [show,setShow] = useState(true);
+    const [redirect,setRedirect] = useState(false);
+
     const {addToast,removeToast} = useToasts();
+
+    const queryclient = useQueryClient();
+    const {patchSession} = useAppQueries();
+    const mutation = patchSession();
 
     const buttons = {
         close: {
@@ -186,12 +194,32 @@ function ImpersonateUser({user,setImpersonateUser}) {
         confirm:{
             title: 'Impersonate',
             callback: () => {
-                setShow(false);
-                setImpersonateUser({});
+                mutation.mutateAsync({IMPERSONATE_SUNY_ID:user.SUNY_ID}).then(d => {
+                    //queryclient.setQueryData('user',d);
+                    //let sess = queryclient.getQueryData('session');
+                    //sess.OVR_SUNY_ID = d[0].SUNY_ID;
+                    //sess.isAdmin = false;
+                    //queryclient.setQueryData('session',sess);
+                    queryclient.refetchQueries('session').then(() =>{
+                        setShow(false);
+                        //setImpersonateUser({});
+                        setRedirect(true);
+                    });
+                    /*.then(()=>{
+                        Promise.all([
+                            queryclient.refetchQueries('user'),
+                            //queryclient.refetchQueries('counts'),
+                        ]).then(()=>{
+                            setShow(false);
+                            //setImpersonateUser({});
+                            setRedirect(true);        
+                        });
+                    });*/
+                });        
             }
         }
     }
-
+    if (redirect) return <Redirect to="/"/>;
     return (
         <ModalConfirm show={show} icon="mdi:account-question" title="Impersonate User?" buttons={buttons}>
             <p>Are you sure you want to impersonate {user.fullName} ({user.SUNY_ID})?</p>

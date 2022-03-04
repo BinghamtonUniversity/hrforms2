@@ -32,10 +32,9 @@ class User extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		//TODO: this needs to be re-worked to query the HRFORMS2_USERS table (which needs to include meta data) first, then query persemp
-		//sleep(4);
-		//return $this->raiseError(400);
 		if (!isset($this->req[0])) {
+			// TODO: if refresh date < 24 hours use USER_INFO field.  Otherwise fetch from HR tables and update user_info
+			// TODO: if no data from HR tables fall back to USER_INFO and do not update.
 			$qry = "select p.*, u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date
 			from hrforms2_users u
 			left join (select ".$this->BASE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.suny_id)";
@@ -60,7 +59,6 @@ class User extends HRForms2 {
 	}
 
 	function PUT() {
-		include 'usergroups.php';
 		$qry = "update hrforms2_users set start_date = :start_date, end_date = :end_date where suny_id = :suny_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":start_date", $this->POSTvars['START_DATE']);
@@ -70,12 +68,11 @@ class User extends HRForms2 {
 		if (!$r) $this->raiseError();
 		oci_commit($this->db);
 		oci_free_statement($stmt);
-		new UserGroups(array($this->POSTvars['SUNY_ID']));
+		new usergroups(array($this->POSTvars['SUNY_ID']));
 		$this->done();
 	}
 
 	function POST() {
-		include 'usergroups.php';
 		$qry = "insert into hrforms2_users values(:suny_id, sysdate, :created_by, :start_date, :end_date)";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":suny_id", $this->POSTvars['SUNY_ID']);
@@ -86,7 +83,7 @@ class User extends HRForms2 {
 		if (!$r) $this->raiseError();
 		oci_commit($this->db);
 		oci_free_statement($stmt);
-		new UserGroups(array($this->POSTvars['SUNY_ID']));
+		new usergroups(array($this->POSTvars['SUNY_ID']));
 		$this->done();
 	}
 
@@ -104,7 +101,6 @@ class User extends HRForms2 {
 		$this->done();
 	}
 	function DELETE() {
-		//$this->raiseError(403);
 		$qry = "delete from hrforms2_users where suny_id = :suny_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":suny_id", $this->req[0]);
