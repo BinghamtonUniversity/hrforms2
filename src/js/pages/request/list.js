@@ -1,48 +1,83 @@
-import React from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {useParams} from "react-router-dom";
 import useRequestQueries from "../../queries/requests";
-import { Link } from "react-router-dom";
-import { Table } from "react-bootstrap";
+import { Redirect } from "react-router-dom";
+import { Row, Col, Button } from "react-bootstrap";
 import { format } from "date-fns";
+import DataTable from 'react-data-table-component';
+import { Icon } from "@iconify/react";
 
 export default function RequestList() {
     const {part} = useParams();
     return (
         <>
-            <h2>List Page: {part}</h2>
-            {(part=='drafts') && <DraftList/>}
+            <header>
+                <Row>
+                    <Col><h2>List: {part}</h2></Col>
+                </Row>
+            </header>
+            <section>
+                <ListRouter list={part}/>
+            </section>
         </>
     );
+}
+
+function ListRouter({list}) {
+    switch(list) {
+        case "drafts": return <DraftList/>;
+        default: return <p>{list}</p>;
+    }
 }
 
 function DraftList() {
     const {getRequestList} = useRequestQueries();
     const listdata = getRequestList();
+    if (listdata.isError) return <p>Error Loading Data</p>;
+    if (listdata.isLoading) return <p>Loading Data</p>;
     return (
-        <Table striped bordered hover>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Position Type</th>
-                    <th>Request Type</th>
-                    <th>Effective Date</th>
-                    <th>Candidate Name</th>
-                </tr>
-            </thead>
-            <tbody>
-                {listdata.data && listdata.data.map(l => {
-                    const lnk = `/request/draft/${l.SUNY_ID}/${l.UNIX_TS}`;
-                    return (
-                        <tr key={l.UNIX_TS}>
-                            <td><Link to={lnk}>{lnk}</Link></td>
-                            <td>{JSON.parse(l.POSTYPE)?.id}</td>
-                            <td>reqType</td>
-                            <td>{format(new Date(l.EFFDATE),'M/d/yyyy')}</td>
-                            <td>{l.CANDIDATENAME}</td>
-                        </tr>
-                    );
-                })}
-            </tbody>
-        </Table>
+        <Row>
+            <Col>
+                <ListTable data={listdata.data} />
+            </Col>
+        </Row>
+    );
+}
+
+function ListTable({data}) {
+    const [redirect,setRedirect] = useState();
+
+    const handleRowClick = row => {
+        setRedirect('/request/'+row.REQID.replaceAll('-','/'));
+    }
+
+    const columns = useMemo(() => [
+        {name:'Actions',cell:row=>{
+            return (
+                <div className="button-group">
+                    <Button variant="danger" className="no-label" size="sm" title="Delete Draft" onClick={()=>console.log('delete draft')}><Icon icon="mdi:delete"/></Button>
+                </div>
+            );
+        },ignoreRowClick:true,maxWidth:'100px'},
+        {name:'ID',selector:row=>row.REQID,sortable:true,sortField:'REQID'},
+        {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortField:'UNIX_TS'},
+        {name:'Position Type',selector:row=>row.POSTYPE.id,format:row=>`${row.POSTYPE.id} - ${row.POSTYPE.title}`,sortable:true},
+        {name:'Request Type',selector:row=>row.REQTYPE.id,format:row=>`${row.REQTYPE.id} - ${row.REQTYPE.title}`,sortable:true},
+        {name:'Candidate Name',selector:row=>row.CANDIDATENAME,sortable:true},
+        {name:'Effective Date',selector:row=>row.EFFDATE,format:row=>format(new Date(row.EFFDATE),'P'),sortable:true}
+    ],[data]);
+    useEffect(()=>setRedirect(undefined),[data]);
+    if (redirect) return <Redirect to={redirect}/>
+    return (
+        <DataTable 
+            columns={columns} 
+            data={data}
+            pagination 
+            striped 
+            responsive
+            pointerOnHover
+            highlightOnHover
+            onRowClicked={handleRowClick}
+        />
     );
 }

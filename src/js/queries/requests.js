@@ -9,7 +9,6 @@ export default function useRequestQueries(REQUEST_ID) {
         if(options.select) options.select2 = options.select;
         options.select = data => {
             if (!data) return;
-            //parse(d.START_DATE,'dd-MMM-yy',new Date())
             data.effDate = (data.effDate)?new Date(data.effDate):"";
             data.tentativeEndDate = (data.tentativeEndDate)?new Date(data.tentativeEndDate):"";
             return (options.select2)?options.select2(data):data;
@@ -22,6 +21,15 @@ export default function useRequestQueries(REQUEST_ID) {
 
     const getRequestList = (...args) => {
         const options = args[0]?.options||args[0]||{};
+        if(options.select) options.select2 = options.select;
+        options.select = data => {
+            if (!data) return;
+            data.map(d => {
+                d.createdDate = new Date(d.UNIX_TS*1000);
+                d.createdDateFmt = format(d.createdDate,'Pp');
+            });
+            return (options.select2)?options.select2(data):data;
+        }
         return useQuery('requestlist',q('requestlist'),options);
     }
 

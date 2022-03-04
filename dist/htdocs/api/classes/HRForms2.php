@@ -144,7 +144,7 @@ Class HRForms2 {
 	protected function sessionInfo() {
 		if (isset($this->sessionData['SUNY_ID'])) return $this->sessionData;
         $qry = "select s.suny_id, s.user_id, s.bnumber, s.ip_address, sp.spriden_pidm, em.email,
-            ovr.suny_id as ovr_suny_id
+            ovr.suny_id as ovr_suny_id, nvl(ovr.suny_id,s.suny_id) as effective_suny_id
             from hrforms2_sessions s
             left join (select session_id, cas_session_id, suny_id, override_by
                 from hrforms2_session_override where end_override is null) ovr on (ovr.session_id = s.session_id and ovr.cas_session_id = s.cas_session_id)

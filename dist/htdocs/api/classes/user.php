@@ -76,7 +76,7 @@ class User extends HRForms2 {
 		$qry = "insert into hrforms2_users values(:suny_id, sysdate, :created_by, :start_date, :end_date)";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":suny_id", $this->POSTvars['SUNY_ID']);
-		oci_bind_by_name($stmt,":created_by", $this->sessionData['SUNY_ID']);
+		oci_bind_by_name($stmt,":created_by", $this->sessionData['EFFECTIVE_SUNY_ID']);
 		oci_bind_by_name($stmt,":start_date", $this->POSTvars['START_DATE']);
 		oci_bind_by_name($stmt,":end_date", $this->POSTvars['END_DATE']);
 		$r = oci_execute($stmt);

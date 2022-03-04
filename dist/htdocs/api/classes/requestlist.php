@@ -30,14 +30,16 @@ class RequestList extends HRForms2 {
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
 		// check for req[0] for filter parameter
-        $qry = "select suny_id, unix_ts, drafts.data.posType, drafts.data.reqType, drafts.data.effDate,
+        $qry = "select suny_id, unix_ts, drafts.data.reqId, drafts.data.posType, drafts.data.reqType, drafts.data.effDate,
         drafts.data.candidateName
         from hrforms2_requests_drafts drafts where suny_id = :suny_id";
         $stmt = oci_parse($this->db,$qry);
-        oci_bind_by_name($stmt,":suny_id",$this->sessionData['SUNY_ID']);
+        oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
         //oci_bind_by_name($stmt,":suny_id",$suny_id);
         oci_execute($stmt);
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+			$row['POSTYPE'] = json_decode($row['POSTYPE']);
+			$row['REQTYPE'] = json_decode($row['REQTYPE']);
 			$this->_arr[] = $row;
 		}
 		oci_free_statement($stmt);

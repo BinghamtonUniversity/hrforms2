@@ -24,9 +24,8 @@ class Requests extends HRForms2 {
 	 * validate called from init()
 	 */
 	function validate() {
-		if ($this->method == 'DELETE') {
-            if ($this->req[1] != $this->sessionData['SUNY_ID'] && $this->req[1] != $this->sessionData['OVR_SUNY_ID']) $this->raiseError(E_FORBIDDEN);
-        }
+		if ($this->method == 'DELETE' && $this->req[1] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN);
+		//if ($this->method == 'POST' && $this->req[1] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN);
 	}
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -54,7 +53,7 @@ class Requests extends HRForms2 {
             // get user's group
             //include 'user.php';
             $_SERVER['REQUEST_METHOD'] = 'GET';
-            $user = (new user(array($this->sessionData['SUNY_ID']),false))->returnData[0];
+            $user = (new user(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData[0];
             $group = $this->getGroupIds($user['REPORTING_DEPARTMENT_CODE']);
 
             //get hierarchy for group
@@ -108,10 +107,13 @@ class Requests extends HRForms2 {
             $del_draft = (new requests($this->req,false));
 
             $this->toJSON($request_data);
+
+        /* New Draft */
         } else {
+            //Limit number of drafts a user may have; to prevent "SPAMMING"
             $qry = "select count(*) from HRFORMS2_REQUESTS_DRAFTS where SUNY_ID = :suny_id";
             $stmt = oci_parse($this->db,$qry);
-            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
+            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
             $r = oci_execute($stmt);
 			if (!$r) $this->raiseError();
             $row = oci_fetch_array($stmt,OCI_ARRAY+OCI_RETURN_NULLS);
@@ -121,17 +123,20 @@ class Requests extends HRForms2 {
                 return;
             }
             $unix_ts = time();
+            $reqId = 'draft-'.$this->sessionData['EFFECTIVE_SUNY_ID'].'-'.$unix_ts;
+            $this->POSTvars['reqId'] = $reqId;
+            //TODO: need to modify POSTvars to use new assigned draft ID; don't use the assigned code... assigned could just be "draft"?
             $qry = "insert into HRFORMS2_REQUESTS_DRAFTS values(:suny_id, :unix_ts, EMPTY_CLOB()) returning DATA into :data";
             $stmt = oci_parse($this->db,$qry);
             $clob = oci_new_descriptor($this->db, OCI_D_LOB);
-            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
+            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
             oci_bind_by_name($stmt, ":unix_ts", $unix_ts);
             oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
             $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
             if (!$r) $this->raiseError();
             $clob->save(json_encode($this->POSTvars));
             oci_commit($this->db);
-            $this->done();
+            if ($this->retJSON) $this->toJSON(array('reqId'=>$reqId));
         }
     }
 
@@ -142,7 +147,7 @@ class Requests extends HRForms2 {
                 returning DATA into :data";
             $stmt = oci_parse($this->db,$qry);
             $clob = oci_new_descriptor($this->db, OCI_D_LOB);
-            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
+            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
             oci_bind_by_name($stmt, ":unix_ts", $this->req[2]);
             oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
             $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
@@ -159,7 +164,7 @@ class Requests extends HRForms2 {
         if ($this->req[0] == 'draft') {
             $qry = "delete from HRFORMS2_REQUESTS_DRAFTS where SUNY_ID = :suny_id and UNIX_TS = :unix_ts";
             $stmt = oci_parse($this->db,$qry);
-            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
+            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
             oci_bind_by_name($stmt, ":unix_ts", $this->req[2]);
             $r = oci_execute($stmt);
             if (!$r) $this->raiseError();

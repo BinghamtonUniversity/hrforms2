@@ -1,7 +1,7 @@
 import React,{lazy, useEffect, useState} from "react";
 import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal } from "react-bootstrap";
-import { useForm, useWatch, FormProvider, useFormContext } from "react-hook-form";
+import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { currentUser, NotFound } from "../app";
 import { useAppQueries } from "../queries";
 import useRequestQueries from "../queries/requests";
@@ -12,7 +12,6 @@ import { Loading } from "../blocks/components";
 import format from "date-fns/format";
 import getUnixTime from "date-fns/getUnixTime";
 import get from "lodash/get";
-import pick from "lodash/pick";
 import { Icon } from '@iconify/react';
 
 /* TABS */
@@ -31,10 +30,9 @@ export default function Request() {
 
     useEffect(() => {
         if (!id) {
-            const now = getUnixTime(new Date());
+            //const now = getUnixTime(new Date());
             setIsNew(true);
-            setReqId(`draft-${SUNY_ID}-${now}`);
-            //setReqId('draft')
+            setReqId(`draft-${SUNY_ID}`);
         } else {
             setReqId((id=='draft')?`${id}-${sunyid}-${ts}`:id);
         }
@@ -80,68 +78,6 @@ function RequestWrapper({reqId,isNew}) {
         </section>
     );
 }
-/*
-export default function Request() {
-    const [reqId,setReqId] = useState('');
-    const [reqData,setReqData] = useState();
-    const [isNew,setIsNew] = useState(false);
-    const [isDraft,setIsDraft] = useState(false);
-    //const [error,setError] = useState('');
-    const [isBlocking,setIsBlocking] = useState(false);
-    const [redirect,setRedirect] = useState('');
-
-    const {id,sunyid,ts} = useParams();
-    const {SUNY_ID} = getAuthInfo();
-
-    const {getRequest} = useRequestQueries((id=='draft')?`${id}-${sunyid}-${ts}`:(id||''));
-    const request = getRequest({enabled:false,select:d => {
-        if (d.hasOwnProperty('effDate') && d.effDate != '') d.effDate = new Date(d.effDate);
-        if (d.hasOwnProperty('tentativeEndDate') && d.tentativeEndDate != '') d.tentativeEndDate = new Date(d.tentativeEndDate);
-        return d;
-    }});
-    useEffect(() => {
-        console.debug('ID Changed:',id);
-        if (!id) {
-            setIsNew(true);
-            setIsDraft(true);
-            setReqData({reqId:'',SUNYAccounts:[{id:'default-SUNYAccounts',account:'',pct:'100'}]});
-        } else {
-            if (id == 'draft') {
-                setIsDraft(true);
-                setIsBlocking(true);
-            }
-            if (!isNew) {
-                request.refetch().then(d=>{            
-                    setReqData(d.data);
-                    setReqId(d.data.reqId);
-                });
-            }
-        }
-        return () => {
-            console.log('dismounting Request...')
-            setReqId('');
-            setReqData(undefined);
-            setIsBlocking(false);
-            setIsDraft(false);
-            setIsNew(false);
-        }
-    },[id]);
-    if (redirect) return(<Redirect to={redirect}/>);
-    return (
-        <section>
-            <header>
-                <Row>
-                    <Col>
-                        <h2>{isNew&&'New '}Position Request</h2>
-                    </Col>
-                </Row>
-            </header>
-            {reqData && <RequestForm reqId={reqId} setReqId={setReqId} data={reqData} setIsBlocking={setIsBlocking} isNew={isNew} isDraft={isDraft} setRedirect={setRedirect}/>}
-            {reqData && <BlockNav reqId={reqId} when={isBlocking} isDraft={isDraft}/>}
-        </section>
-    );
-}
-*/
 
 function BlockNav({reqId,when,isDraft}) {
     const [showModal,setShowModal] = useState(false);
@@ -291,21 +227,21 @@ function RequestForm({reqId,data,setIsBlocking,isNew}) {
             queryclient.refetchQueries('requestlist'), //update request list
             queryclient.refetchQueries(['counts']) //update counts
         ]).then(() => {
-            setIsBlocking(false);
-            setRedirect('/');
-        }).catch(e => {
-            console.error(e);
-        }).finally(() => {
             setShowDeleteModal(false);
             setIsSaving(false);
             setLockTabs(false);
+            setIsBlocking(false);
+            setRedirect('/');
+        }).catch(e => {
+            setShowDeleteModal(false);
+            setIsSaving(false);
+            setLockTabs(false);
+            console.error(e);
         });
     }
 
     const navigate = tab => {
-        /*if (isNew && !methods.getValues('reqId')) {
-            methods.setValue('reqId','new-draft');
-        }*/
+        methods.setValue('action','');
         if (tab == 'review') handleValidation();
         setActiveTab(tab);
     }
@@ -334,28 +270,9 @@ function RequestForm({reqId,data,setIsBlocking,isNew}) {
     const handleSave = action => {
         methods.setValue('action',action);
         handleValidation();
-        /*if (hasErrors) return;
-        setIsSaving(true);
-        setIsBlocking(true); //TODO: when true should be full block with no prompt
-        setLockTabs(true);
-    
-        data = methods.getValues();
-        if (isNew || action=='submit') {
-            createReq.mutateAsync({action:action,data:data}).then(d => {
-                console.debug(d);
-                handleRedirect();
-            }).catch(e => {
-                console.error(e);
-            });
-        } else {
-            updateReq.mutateAsync({data:data}).then(() => {
-                handleRedirect();
-            }).catch(e => {
-                console.error(e);
-            });
-        }*/
     }
     const handleDelete = () => {
+        //setIsBlocking(false);
         deleteReq.mutateAsync().then(() => {
             handleRedirect();
         }).catch(e => {
