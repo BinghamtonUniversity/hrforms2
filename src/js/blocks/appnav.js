@@ -4,7 +4,7 @@ import {Navbar,Nav,NavDropdown} from "react-bootstrap";
 import {currentUser,getAuthInfo} from "../app";
 
 export default function AppNav({userCounts}) {
-    const {SUNY_ID,isAdmin} = getAuthInfo();
+    const {SUNY_ID,isAdmin,OVR_SUNY_ID} = getAuthInfo();
     const user = currentUser();
     const [requests,setRequests] = useState(new Map());
     const [forms,setForms] = useState(new Map());
@@ -53,7 +53,7 @@ export default function AppNav({userCounts}) {
                             <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/request/list">List</NavDropdown.Item>
                         </NavDropdown>}
-                        {(isAdmin && SUNY_ID == user.SUNY_ID) &&
+                        {(isAdmin && !OVR_SUNY_ID) &&
                         <NavDropdown title="Admin" id="admin-nav-dropdown" alignRight>
                             <NavDropdown.Item as={Link} to="/admin/news">News</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/journal">Journal</NavDropdown.Item>

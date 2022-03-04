@@ -39,7 +39,7 @@ class Journal extends HRForms2 {
         $comments = oci_new_descriptor($this->db, OCI_D_LOB);
         oci_bind_by_name($stmt,":request_id", $this->req[0]);
         oci_bind_by_name($stmt,":status", $this->req[1]);
-        oci_bind_by_name($stmt,":suny_id", $this->sessionData['SUNY_ID']);
+        oci_bind_by_name($stmt,":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
         oci_bind_by_name($stmt,":hierarchy_id", $this->req[2]['hierarchy_id']);
         oci_bind_by_name($stmt,":workflow_id", $this->req[2]['workflow_id']);
         oci_bind_by_name($stmt,":seq", $this->req[2]['seq']);
