@@ -44,7 +44,16 @@ class Requests extends HRForms2 {
 			$this->returnData = json_decode($this->_arr['DATA']);
 	        if ($this->retJSON) $this->toJSON($this->returnData);
         } else {
-		    $this->done();
+            $qry = "select REQUEST_DATA from HRFORMS2_REQUESTS where REQUEST_ID = :request_id";
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":request_id",$this->req[0]);
+            $r = oci_execute($stmt);
+			if (!$r) $this->raiseError();
+            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+            $this->_arr['REQUEST_DATA'] = (is_object($row['REQUEST_DATA'])) ? $row['REQUEST_DATA']->load() : "";
+            oci_free_statement($stmt);
+			$this->returnData = json_decode($this->_arr['REQUEST_DATA']);
+	        if ($this->retJSON) $this->toJSON($this->returnData);		    
         }
 	}
 
@@ -82,6 +91,7 @@ class Requests extends HRForms2 {
             $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
             if (!$r) $this->raiseError();
             $created_by->save(json_encode($user));
+            $this->POSTvars['reqId'] = $request_id;
             $request_data->save(json_encode($this->POSTvars));
             oci_commit($this->db);
 

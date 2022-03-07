@@ -37,7 +37,7 @@ class User extends HRForms2 {
 			// TODO: if no data from HR tables fall back to USER_INFO and do not update.
 			$qry = "select p.*, u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date
 			from hrforms2_users u
-			left join (select ".$this->BASE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.suny_id)";
+			left join (select distinct ".$this->BASE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.suny_id)";
 			$stmt = oci_parse($this->db,$qry);
 		} else {
 			$qry = "select ".$this->BASE_PERSEMP_FIELDS.", r.recent_campus_date

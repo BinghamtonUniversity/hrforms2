@@ -155,22 +155,8 @@ function ImpersonationAlert({SUNY_ID,fullname}) {
 
     const endImpersonation = () => {
         mutation.mutateAsync({IMPERSONATE_SUNY_ID:''}).then(d => {
-            //queryclient.setQueryData('user',d);
-            //let sess = queryclient.getQueryData('session');
-            //sess.OVR_SUNY_ID = '';
-            //sess.isAdmin = true;
-            //queryclient.setQueryData('session',sess);
-            queryclient.refetchQueries('session').then(()=>{
-                setRedirect(true);
-            });
-            /*.then(()=>{
-                Promise.all([
-                    queryclient.refetchQueries('user'),
-                    //queryclient.refetchQueries('counts')
-                ]).then(()=>{
-                    setRedirect(true);
-                });
-            });*/
+            queryclient.refetchQueries('session');
+            setRedirect(true);
         });        
     }
     useEffect(()=>setRedirect(false),[SUNY_ID]);

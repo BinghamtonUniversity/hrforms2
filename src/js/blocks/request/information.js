@@ -5,7 +5,7 @@ import DatePicker from "react-datepicker";
 import { useAppQueries } from "../../queries";
 
 export default function Information() {
-    const {control,setValue,posTypes,formState:{errors}} = useFormContext();
+    const {control,setValue,posTypes,isDraft,formState:{errors}} = useFormContext();
     const watchPosType = useWatch({name:'posType.id',control:control});
 
     const [showJobDesc,setShowJobDesc] = useState(true);
@@ -36,7 +36,7 @@ export default function Information() {
                         defaultValue=""
                         control={control}
                         rules={{required:{value:true,message:'You must select a Position Type'}}}
-                        render={({field})=>Object.keys(posTypes).map(k=><Form.Check key={k} {...field} inline id={`posType-${k}`} type="radio" label={posTypes[k].title} value={k} checked={k==field.value} onChange={e=>handlePosTypeChange(field,e)}/>) }
+                        render={({field})=>Object.keys(posTypes).map(k=><Form.Check key={k} {...field} inline id={`posType-${k}`} type="radio" label={posTypes[k].title} value={k} checked={k==field.value} onChange={e=>handlePosTypeChange(field,e)} disabled={!isDraft}/>) }
                     />
                 </Col>
             </Form.Group>
@@ -49,7 +49,7 @@ export default function Information() {
                         control={control}
                         rules={{required:{value:true,message:'Request Type is required'}}}
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleReqTypeChange(field,e)} isInvalid={errors.reqType}>
+                            <Form.Control {...field} as="select" onChange={e=>handleReqTypeChange(field,e)} isInvalid={errors.reqType} disabled={!isDraft}>
                                 <option></option>
                                 {reqtypes.data && reqtypes.data.map(r=><option key={r[0]} value={r[0]}>{r[0]} - {r[1]}</option>)}
                             </Form.Control>
@@ -66,7 +66,7 @@ export default function Information() {
                         defaultValue=""
                         control={control}
                         rules={{required:{value:true,message:'Effective Date is required'}}}
-                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.effDate}/>}
+                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.effDate} disabled={!isDraft}/>}
                     />
                     <Form.Control.Feedback type="invalid">{errors.effDate?.message}</Form.Control.Feedback>
                 </Col>
@@ -78,7 +78,7 @@ export default function Information() {
                         name="candidateName"
                         defaultValue=""
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Candidate Name"/>}
+                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Candidate Name" disabled={!isDraft}/>}
                     />
                 </Col>
             </Form.Group>
@@ -89,7 +89,7 @@ export default function Information() {
                         name="bNumber"
                         defaultValue=""
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter B-Number"/>}
+                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter B-Number" disabled={!isDraft}/>}
                     />
                 </Col>
             </Form.Group>
@@ -101,7 +101,7 @@ export default function Information() {
                             name="jobDesc"
                             defaultValue=""
                             control={control}
-                            render={({field}) => <Form.Control {...field} as="textarea" placeholder="Enter a brief job description" rows={5}/>}
+                            render={({field}) => <Form.Control {...field} as="textarea" placeholder="Enter a brief job description" rows={5} disabled={!isDraft}/>}
                         />
                     </Col>
                 </Form.Group>

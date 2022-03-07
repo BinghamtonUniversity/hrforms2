@@ -6,7 +6,7 @@ import { Loading } from "../components";
 import SUNYAccount from "../sunyaccount";
 
 export default function Account() {
-    const {control,formState:{errors}} = useFormContext();
+    const {control,isDraft,formState:{errors}} = useFormContext();
     const posType = useWatch({name:'posType',control:control});
 
     const {getListData} = useAppQueries();
@@ -23,8 +23,8 @@ export default function Account() {
                             control={control}
                             render={({field}) => (
                                 <>
-                                    <Form.Check {...field} inline type="radio" id="expType-PSR" label="PSR" value='PSR' checked={field.value=='PSR'}/>
-                                    <Form.Check {...field} inline type="radio" id="expType-PST" label="PST" value='PST' checked={field.value=='PST'}/>
+                                    <Form.Check {...field} inline type="radio" id="expType-PSR" label="PSR" value='PSR' checked={field.value=='PSR'} disabled={!isDraft}/>
+                                    <Form.Check {...field} inline type="radio" id="expType-PST" label="PST" value='PST' checked={field.value=='PST'} disabled={!isDraft}/>
                                 </>
                             )}
                         />
@@ -43,7 +43,7 @@ export default function Account() {
                             control={control}
                             rules={{required:{value:true,message:'Org Name is required'}}}
                             render={({field}) => (
-                                <Form.Control {...field} as="select" isInvalid={errors.orgName}>
+                                <Form.Control {...field} as="select" isInvalid={errors.orgName} disabled={!isDraft}>
                                     <option></option>
                                     {orgs.data.map(o=><option key={o.DEPARTMENT_CODE}>{o.DEPARTMENT_DESC}</option>)}
                                 </Form.Control>

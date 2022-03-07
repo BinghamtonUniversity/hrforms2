@@ -24,6 +24,7 @@ const Review = lazy(()=>import("../blocks/request/review"));
 export default function Request() {
     const [reqId,setReqId] = useState('');
     const [isNew,setIsNew] = useState(false);
+    const [isDraft,setIsDraft] = useState(false);
 
     const {id,sunyid,ts} = useParams();
     const {SUNY_ID} = currentUser();
@@ -32,17 +33,19 @@ export default function Request() {
         if (!id) {
             //const now = getUnixTime(new Date());
             setIsNew(true);
+            setIsDraft(true);
             setReqId(`draft-${SUNY_ID}`);
         } else {
+            setIsDraft((id=='draft'));
             setReqId((id=='draft')?`${id}-${sunyid}-${ts}`:id);
         }
     },[id,sunyid,ts]);
     if (!reqId) return null;
     return(
-        <RequestWrapper reqId={reqId} isNew={isNew}/>
+        <RequestWrapper reqId={reqId} isDraft={isDraft} isNew={isNew}/>
     );
 }
-function RequestWrapper({reqId,isNew}) {
+function RequestWrapper({reqId,isDraft,isNew}) {
     const [reqData,setReqData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
 
@@ -72,7 +75,7 @@ function RequestWrapper({reqId,isNew}) {
                 </Row>
             </header>
             <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-                {reqData && <RequestForm reqId={reqId} data={reqData} setIsBlocking={setIsBlocking} isNew={isNew}/>}
+                {reqData && <RequestForm reqId={reqId} data={reqData} setIsBlocking={setIsBlocking} isDraft={isDraft} isNew={isNew}/>}
                 {reqData && <BlockNav reqId={reqId} when={isBlocking} isDraft={isNew}/>}
             </ErrorBoundary>
         </section>
@@ -135,7 +138,7 @@ function BlockNav({reqId,when,isDraft}) {
     )
 }
 
-function RequestForm({reqId,data,setIsBlocking,isNew}) {
+function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
     const tabs = [
         {id:'information',title:'Information'},
         {id:'position',title:'Position'},
@@ -341,7 +344,7 @@ function RequestForm({reqId,data,setIsBlocking,isNew}) {
     if (postypes.isLoading) return <Loading type="alert">Loading Position Types</Loading>;
     if (!postypes.data) return <Loading type="alert" isError>Error - No Position Type Data Loaded</Loading>;
     return(
-        <FormProvider {...methods} posTypes={postypes.data}>
+        <FormProvider {...methods} posTypes={postypes.data} isDraft={isDraft}>
             <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
                 <Tabs activeKey={activeTab} onSelect={navigate} id="position-request-tabs">
                     {tabs.map(t=>(
@@ -358,7 +361,7 @@ function RequestForm({reqId,data,setIsBlocking,isNew}) {
                                         {hasErrors && <div className="d-inline-flex align-items-center text-danger mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:alert"/><span>Errors</span></div>}
                                         {isSaving && <div className="d-inline-flex align-items-center mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:loading" className="spin"/><span>Saving...</span></div>}
                                         {methods.formState.isDirty && <Button variant="secondary" onClick={handleUndo} disabled={isSaving}><Icon icon="mdi:undo"/>Undo</Button>}
-                                        {!isNew && <Button variant="danger" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}><Icon icon="mdi:delete"/>Delete</Button>}
+                                        {(!isNew&&isDraft) && <Button variant="danger" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}><Icon icon="mdi:delete"/>Delete</Button>}
                                         {!(isNew&&lockTabs)&&<Button id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}><Icon icon="mdi:content-save-move"/>Save &amp; Exit</Button>}
                                         {t.id!='review'&&<Button variant="primary" onClick={handleNext} disabled={lockTabs}><Icon icon="mdi:arrow-right-thick"/>Next</Button>}
                                         {t.id=='review'&&<Button id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}><Icon icon="mdi:content-save-check"/>Submit</Button>}
