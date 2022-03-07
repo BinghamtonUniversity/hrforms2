@@ -118,13 +118,14 @@ export function useUserQueries() {
     }
     
     const getCounts = () => {
-        return useQuery('counts',q(`counts/${SUNY_ID}`));
+        return useQuery(['counts',SUNY_ID],q('counts'));
     }
 
     return {getUser,getCounts};
 }
 
 /** ADMIN QUERIES */
+//TODO: move
 export function useAdminQueries() {
     const putSettings = () => useMutation(d=>q('settings','PUT',d)());
 

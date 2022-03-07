@@ -145,6 +145,7 @@ class Session extends HRForms2 {
 
     function PATCH() {
         // insert/update into session_override
+        // need some GC cleanup
         $now = time();
         if ($this->POSTvars['IMPERSONATE_SUNY_ID'] != '') {
             $qry = "insert into hrforms2_session_override values(:session_id,:cas_session_id,:suny_id,:ovr_by,:start_ovr,null)";

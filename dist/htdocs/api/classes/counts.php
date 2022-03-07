@@ -29,18 +29,15 @@ class Counts extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		$qry = "select count(*) from hrforms2_requests_drafts where suny_id = :suny_id";
-        $stmt = oci_parse($this->db,$qry);
-        oci_bind_by_name($stmt,":suny_id",$this->req[0]);
-        //oci_bind_by_name($stmt,":suny_id",$suny_id);
-        oci_execute($stmt);
-		$reqDrafts = oci_fetch_array($stmt,OCI_RETURN_NULLS);
-		oci_free_statement($stmt);
+		$request_drafts = count((new requestlist(array('drafts'),false))->returnData);
+		$request_approvals = count((new requestlist(array('approvals'),false))->returnData);
+		$request_rejections = count((new requestlist(array('rejections'),false))->returnData);
 
 		$counts = array(
             "requests" => array(
-                "draft"=>$reqDrafts[0],
-                "approval"=>0,
+                "draft"=>$request_drafts,
+                "approval"=>$request_approvals,
+				"rejection"=>$request_rejections,
                 "final"=>0
             ),
             "forms" => array(

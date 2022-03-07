@@ -1,6 +1,7 @@
 import q from '../queries';
 import {useQuery,useMutation} from "react-query";
-import {format,parse} from "date-fns";
+import {format} from "date-fns";
+import { getAuthInfo } from '../app';
 
 export default function useRequestQueries(REQUEST_ID) {
     const reqIdAsPath = (REQUEST_ID)?REQUEST_ID.replaceAll('-','/'):'';
@@ -20,17 +21,24 @@ export default function useRequestQueries(REQUEST_ID) {
     const deleteRequest = () => useMutation(d=>q(`requests/${reqIdAsPath}`,'DELETE',d)());
 
     const getRequestList = (...args) => {
-        const options = args[0]?.options||args[0]||{};
+        const authData = getAuthInfo();
+        const SUNY_ID = (authData.OVR_SUNY_ID)?authData.OVR_SUNY_ID:authData.SUNY_ID;
+    
+        const list = args[0]?.list||args[0];
+        const options = args[0]?.options||args[1]||{};
         if(options.select) options.select2 = options.select;
         options.select = data => {
             if (!data) return;
             data.map(d => {
-                d.createdDate = new Date(d.UNIX_TS*1000);
+                d.createdDate = (d?.UNIX_TS)?new Date(d.UNIX_TS*1000):new Date(d.CREATED_DATE);
                 d.createdDateFmt = format(d.createdDate,'Pp');
+                const fName = (d?.ALIAS_FIRST_NAME)?d.ALIAS_FIRST_NAME:(d?.LEGAL_FIRST_NAME)?d.LEGAL_FIRST_NAME:'';
+                d.fullName = (fName)?`${fName} ${d.LEGAL_LAST_NAME}`:'';
+                d.sortName = (fName)?`${d.LEGAL_LAST_NAME}, ${fName}`:'';
             });
             return (options.select2)?options.select2(data):data;
         }
-        return useQuery('requestlist',q('requestlist'),options);
+        return useQuery(['requestlist',list,SUNY_ID],q(`requestlist/${list}`),options);
     }
 
     return {getRequest,postRequest,putRequest,deleteRequest,getRequestList};

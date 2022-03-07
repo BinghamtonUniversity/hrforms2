@@ -195,26 +195,9 @@ function ImpersonateUser({user,setImpersonateUser}) {
             title: 'Impersonate',
             callback: () => {
                 mutation.mutateAsync({IMPERSONATE_SUNY_ID:user.SUNY_ID}).then(d => {
-                    //queryclient.setQueryData('user',d);
-                    //let sess = queryclient.getQueryData('session');
-                    //sess.OVR_SUNY_ID = d[0].SUNY_ID;
-                    //sess.isAdmin = false;
-                    //queryclient.setQueryData('session',sess);
-                    queryclient.refetchQueries('session').then(() =>{
-                        setShow(false);
-                        //setImpersonateUser({});
-                        setRedirect(true);
-                    });
-                    /*.then(()=>{
-                        Promise.all([
-                            queryclient.refetchQueries('user'),
-                            //queryclient.refetchQueries('counts'),
-                        ]).then(()=>{
-                            setShow(false);
-                            //setImpersonateUser({});
-                            setRedirect(true);        
-                        });
-                    });*/
+                    queryclient.refetchQueries('session');
+                    setShow(false);
+                    setRedirect(true);
                 });        
             }
         }
