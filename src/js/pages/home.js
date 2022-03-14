@@ -52,6 +52,7 @@ function DashBoardCards({SUNY_ID}) {
                     <ListGroup variant="flush">
                         <Link to="/request/" component={DashBoardListComponent}><span className="font-italic">New Request</span></Link>
                         {requests.has('draft') && <Link className="d-flex justify-content-between" to="/request/list/drafts" component={DashBoardListComponent}><span>Drafts</span>{requests.get('draft')}</Link>}
+                        {requests.has('rejection') && <Link className="d-flex justify-content-between" to="/request/list/rejections" component={DashBoardListComponent}><span>Rejections</span>{requests.get('rejection')}</Link>}
                         {requests.has('approval') && <Link className="d-flex justify-content-between" to="/request/list/approvals" component={DashBoardListComponent}><span>Approvals</span>{requests.get('approval')}</Link>}
                         {requests.has('final') && <Link className="d-flex justify-content-between" to="/request/list/final" component={DashBoardListComponent}><span>Final Approvals</span>{requests.get('final')}</Link>}
                     </ListGroup>
@@ -81,32 +82,3 @@ function DashBoardListComponent(props) {
         <ListGroup.Item className={props.className} href={props.href} action>{props.children}</ListGroup.Item>
     );
 }
-/*
-function DashBoardCards() {
-    return (
-        <GlobalContext.Consumer>
-            {({navTerms}) => {
-                return (
-                <UserContext.Consumer>
-                    {({requests,forms}) => {
-                        return [{requests},{forms}].map(d => {
-                            const k = Object.keys(d)[0];
-                            return (
-                                <Col key={k} sm={6}>
-                                    <Card border="main">
-                                        <Card.Header className="bg-main text-white">{navTerms[k].title}s</Card.Header>
-                                        <ListGroup variant="flush">
-                                            <ListGroupItem><em>New {navTerms[k].title}</em></ListGroupItem>
-                                            <ListGroupItem>Drafts...</ListGroupItem>
-                                        </ListGroup>
-                                    </Card>
-                                </Col>
-                            );
-                        });
-                    }}
-                </UserContext.Consumer>
-            );}}
-        </GlobalContext.Consumer>
-    );
-}
-*/

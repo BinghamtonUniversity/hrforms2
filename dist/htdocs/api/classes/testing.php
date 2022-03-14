@@ -9,7 +9,7 @@ NB: HTTP Codes: https://tools.ietf.org/html/rfc7231#section-6
 NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 */
 
-class Counts extends HRForms2 {
+class Testing extends HRForms2 {
 	private $_arr = array();
 
 	function __construct($req,$rjson=true) {
@@ -24,29 +24,11 @@ class Counts extends HRForms2 {
 	 * validate called from init()
 	 */
 	function validate() {
-		// Validation...		
+		// Validation...
 	}
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		$request_drafts = count((new requestlist(array('drafts'),false))->returnData);
-		$request_approvals = count((new requestlist(array('approvals'),false))->returnData);
-		$request_rejections = count((new requestlist(array('rejections'),false))->returnData);
-
-		$counts = array(
-            "requests" => array(
-                "draft"=>$request_drafts,
-                "approval"=>$request_approvals,
-				"rejection"=>$request_rejections,
-                "final"=>0
-            ),
-            "forms" => array(
-                "draft"=>0,
-                "approval"=>0,
-                "rejection"=>0,
-                "final"=>0
-            )
-        );
-        $this->toJSON($counts);
+		echo json_decode($_COOKIE['hrforms2_local'])->bnumber;
 	}
 }

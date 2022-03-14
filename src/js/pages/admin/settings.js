@@ -4,8 +4,9 @@ import { Row, Col, Form, Button, Alert } from "react-bootstrap";
 import { useForm, Controller } from "react-hook-form";
 import { useAppQueries, useAdminQueries } from "../../queries";
 import { Loading } from "../../blocks/components";
-import { pick, invertBy, forEach } from "lodash";
+import { pick, invertBy, forEach, orderBy } from "lodash";
 import { useToasts } from "react-toast-notifications";
+import useGroupQueries from "../../queries/groups";
 
 export default function AdminSettings() {
     const [status,setStatus] = useReducer((state,args) => {
@@ -19,7 +20,9 @@ export default function AdminSettings() {
     const queryclient = useQueryClient();
     const settings = queryclient.getQueryData('settings');
     const {getLists} = useAppQueries();
+    const {getGroups} = useGroupQueries();
     const lists = getLists();
+    const groups = getGroups({select:data => orderBy(data,['GROUP_NAME'])});
     const {putSettings} = useAdminQueries();
     const update = putSettings();
     const { addToast, removeToast } = useToasts();
@@ -79,9 +82,9 @@ export default function AdminSettings() {
             <Row>
                 <Col><h2>Admin: Settings</h2></Col>
             </Row>
-            {lists.isLoading && <Loading type="alert">Loading settings...</Loading>}
-            {lists.isError && <Loading type="alert" isError>Failed to load settings</Loading>}
-            {lists.data &&
+            {(lists.isError||groups.isError) && <Loading type="alert" isError>Failed to load settings</Loading>}
+            {(lists.isLoading||groups.isLoading) && <Loading type="alert">Loading settings...</Loading>}
+            {(lists.data&&groups.data) &&
                 <>
                     {status.state && <Row><Col><Alert variant={status.state}>{status.message}</Alert></Col></Row>}
                     <Form onSubmit={handleSubmit(saveSettings)}>
@@ -89,7 +92,31 @@ export default function AdminSettings() {
                         <ListsComponent name="reqTypesList" label="Request Types List" control={control} data={lists.data} errors={errors}/>
                         <ListsComponent name="payBasisTypesList" label="Pay Basis Types List" control={control} data={lists.data} errors={errors}/>
                         <ListsComponent name="apptTypesList" label="Appointment Types List" control={control} data={lists.data} errors={errors}/>
-
+                        <Form.Group as={Row}>
+                            <Form.Label column md={2}>Allow Request Rejections:</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name="requestRejections"
+                                    control={control}
+                                    render={({field}) => <Form.Check {...field} /> }
+                                />
+                            </Col>
+                        </Form.Group>
+                        <Form.Group as={Row}>
+                            <Form.Label column md={2}>Request Default Routing:</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name="requestDefaultRouting"
+                                    control={control}
+                                    render={({field}) => (
+                                        <Form.Control {...field} as="select">
+                                            <option></option>
+                                            {groups.data.map(g=><option key={g.GROUP_ID} value={g.GROUP_ID}>{g.GROUP_NAME}</option>)}
+                                        </Form.Control>
+                                    )}
+                                />
+                            </Col>
+                        </Form.Group>                        
                         <Row>
                             <Col>
                                 <Button variant="danger" type="submit">Save</Button>

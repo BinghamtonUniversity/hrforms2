@@ -35,6 +35,7 @@ export default function AppNav({userCounts}) {
                             <NavDropdown.Item as={Link} to="/request/">New Request</NavDropdown.Item>
                             <NavDropdown.Divider/>
                             {requests.has('draft') && <NavDropdown.Item as={Link} to="/request/list/drafts">Drafts ({requests.get('draft')})</NavDropdown.Item>}
+                            {requests.has('rejection') && <NavDropdown.Item as={Link} to="/request/list/rejections">Rejections ({requests.get('rejection')})</NavDropdown.Item>}
                             {requests.has('approval') && <NavDropdown.Item as={Link} to="/request/list/approvals">Approvals ({requests.get('approval')})</NavDropdown.Item>}
                             {requests.has('final') && <NavDropdown.Item as={Link} to="/request/list/final">Final Approvals ({requests.get('final')})</NavDropdown.Item>}
                             <NavDropdown.Divider/>
@@ -56,15 +57,17 @@ export default function AppNav({userCounts}) {
                         {(isAdmin && !OVR_SUNY_ID) &&
                         <NavDropdown title="Admin" id="admin-nav-dropdown" alignRight>
                             <NavDropdown.Item as={Link} to="/admin/news">News</NavDropdown.Item>
-                            <NavDropdown.Item as={Link} to="/admin/journal">Journal</NavDropdown.Item>
                             <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/admin/users">Users</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/groups">Groups</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/departments">Departments</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/lists">Lists</NavDropdown.Item>
                             <NavDropdown.Divider/>
-                            <NavDropdown.Item as={Link} to="/admin/hierarchy/form" disabled>Form Hierarchy</NavDropdown.Item>
+                            <NavDropdown.Item as={Link} to="/admin/journal/request">Request Journal</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/hierarchy/request">Request Hierarchy</NavDropdown.Item>
+                            <NavDropdown.Divider/>
+                            <NavDropdown.Item as={Link} to="/admin/journal/form" disabled>Form Journal</NavDropdown.Item>
+                            <NavDropdown.Item as={Link} to="/admin/hierarchy/form" disabled>Form Hierarchy</NavDropdown.Item>
                             <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/admin/settings">Settings</NavDropdown.Item>
                         </NavDropdown>}
