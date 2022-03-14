@@ -195,10 +195,10 @@ function ImpersonateUser({user,setImpersonateUser}) {
             title: 'Impersonate',
             callback: () => {
                 mutation.mutateAsync({IMPERSONATE_SUNY_ID:user.SUNY_ID}).then(d => {
-                    queryclient.refetchQueries('session');
+                    queryclient.invalidateQueries();
                     setShow(false);
                     setRedirect(true);
-                });        
+                });
             }
         }
     }

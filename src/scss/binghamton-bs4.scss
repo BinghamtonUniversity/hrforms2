@@ -24,7 +24,11 @@ $theme-colors: (
   "danger":scale-color($danger,$lightness:$pct*-1),
   "warning":scale-color($warning,$lightness:$pct*-1),
   "success":scale-color($success,$lightness:$pct*-1),
-  "info":scale-color($info,$lightness:$pct*-1)
+  "info":scale-color($info,$lightness:$pct*-1),
+  "info-light":scale-color($info,$saturation:-30%,$lightness:50%),
+  "success-light":scale-color($success,$saturation:-30%,$lightness:50%),
+  "warning-light":scale-color($warning,$saturation:-30%,$lightness:50%),
+  "danger-light":scale-color($danger,$saturation:-30%,$lightness:50%),
 );
 
 $table-hover-bg: rgba($main, .15);

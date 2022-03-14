@@ -4,7 +4,7 @@ import {format} from "date-fns";
 import { getAuthInfo } from '../app';
 
 export default function useRequestQueries(REQUEST_ID) {
-    const reqIdAsPath = (REQUEST_ID)?REQUEST_ID.replaceAll('-','/'):'';
+    const reqIdAsPath = (REQUEST_ID)?new String(REQUEST_ID).replaceAll('-','/'):'';
     const getRequest = (...args) => {
         const options = args[0]?.options||args[0]||{};
         if(options.select) options.select2 = options.select;
@@ -41,5 +41,10 @@ export default function useRequestQueries(REQUEST_ID) {
         return useQuery(['requestlist',list,SUNY_ID],q(`requestlist/${list}`),options);
     }
 
-    return {getRequest,postRequest,putRequest,deleteRequest,getRequestList};
+    const getJournal = (...args) => {
+        const options = args[0]?.options||args[0]||{};
+        return useQuery(['journal',REQUEST_ID],q(`journal/${REQUEST_ID}`),options);
+    }
+
+    return {getRequest,postRequest,putRequest,deleteRequest,getRequestList,getJournal};
 }

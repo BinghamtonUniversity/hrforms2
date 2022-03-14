@@ -25,11 +25,28 @@ class Journal extends HRForms2 {
 	 */
 	function validate() {
 		// Validation...
+        if ($this->method == 'GET' && !isset($this->req[0])) $this->raiseError(E_BAD_REQUEST);
 	}
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		$this->done();
+		$qry = "select request_id, to_char(journal_date,'DD-MON-YYYY HH24:MI:SS') as journal_date,
+        suny_id, status, hierarchy_id, workflow_id, sequence, group_from, group_to, comments
+        from hrforms2_requests_journal where request_id = :request_id";
+        $stmt = oci_parse($this->db,$qry);
+        oci_bind_by_name($stmt,":request_id",$this->req[0]);
+        $r = oci_execute($stmt);
+        if (!$r) $this->raiseError();
+        while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+            $comments = (is_object($row['COMMENTS']))?$row['COMMENTS']->load():"";
+            unset($row['COMMENTS']);
+            $row['COMMENTS'] = $comments;
+            $this->_arr[] = $row;
+        }
+        oci_free_statement($stmt);
+		$this->returnData = $this->_arr;
+		if ($this->retJSON) $this->toJSON($this->returnData);
+        //echo "test";
 	}
     function POST() {
         $qry = "insert into HRFORMS2_REQUESTS_JOURNAL 
@@ -48,7 +65,7 @@ class Journal extends HRForms2 {
         oci_bind_by_name($stmt,":comments", $comments, -1, OCI_B_CLOB);
         $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
         if (!$r) $this->raiseError();
-        $comments->save($this->POSTvars['data']['comment']);
+        $comments->save($this->req[2]['comment']);
         oci_commit($this->db);
         if ($this->retJSON) $this->done();
     }

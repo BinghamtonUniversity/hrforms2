@@ -33,35 +33,56 @@ class RequestList extends HRForms2 {
 		switch($this->req[0]) {
 			case "drafts":
 				$qry = "select suny_id, unix_ts, drafts.data.reqId as REQUEST_ID, drafts.data.posType, drafts.data.reqType, drafts.data.effDate,
-				drafts.data.candidateName
+				drafts.data.candidateName, 'draft' as status, '0' as sequence, ' ' as groups
 				from hrforms2_requests_drafts drafts where suny_id = :suny_id";
 				break;
 			case "approvals":
 				$qry = "select r.request_id, r.created_by.SUNY_ID, to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
-				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME
-				from hrforms2_requests r
-				where r.request_id in (select j.request_id
-					from (select jr.*,
-						rank() over (partition by jr.request_id order by jr.journal_date desc) as rnk
-						from hrforms2_requests_journal jr) j
-					where j.rnk = 1
-					and group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id))";
+				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
+				j.status, j.sequence, w.groups
+				from hrforms2_requests r,
+				(select jr2.* from (select jr1.*,
+					rank() over (partition by jr1.request_id order by jr1.journal_date desc) as rnk
+					from hrforms2_requests_journal jr1
+				) jr2
+				where jr2.rnk = 1 and jr2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
+				left join (select * from hrforms2_requests_workflow) w on (j.workflow_id = w.workflow_id)
+				where r.request_id = j.request_id
+				and r.created_by.SUNY_ID != :suny_id";
 				break;
 			case "rejections":
 				$qry = "select r.request_id, r.created_by.SUNY_ID, to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
-				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME
-				from hrforms2_requests r
-				where r.request_id in (select j.request_id
-				  from (select jr.*,
-					rank() over (partition by jr.request_id order by jr.journal_date desc) as rnk
-					from hrforms2_requests_journal jr) j
-				  where j.rnk = 1
-				  and j.status = 'R'
-				)
+				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
+				j.status, j.sequence, w.groups
+				from hrforms2_requests r,
+				(select jr2.* from (select jr1.*,
+					rank() over (partition by jr1.request_id order by jr1.journal_date desc) as rnk
+					from hrforms2_requests_journal jr1
+				) jr2
+				where jr2.rnk = 1 and jr2.status = 'R') j
+				left join (select * from hrforms2_requests_workflow) w on (j.workflow_id = w.workflow_id)
+				where r.request_id = j.request_id
 				and r.created_by.SUNY_ID = :suny_id";
 				break;
+			case "my-requests":
+				//change this to "pending" and exclude "final/completed/archived" 
+				$qry = "select r.request_id, r.created_by.SUNY_ID, to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
+				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
+				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
+				j.status, j.sequence, w.groups
+				from hrforms2_requests r,
+				(select jr2.* from (select jr1.*,
+					rank() over (partition by jr1.request_id order by jr1.journal_date desc) as rnk
+					from hrforms2_requests_journal jr1
+					where jr1.request_id in (select request_id from hrforms2_requests_journal where suny_id = :suny_id and status = 'S')) jr2
+				where jr2.rnk = 1) j
+				left join (select * from hrforms2_requests_workflow) w on (j.workflow_id = w.workflow_id)
+				where r.request_id = j.request_id";
+				break;
+			case "final":
+				$this->done();
 			default:
 				$this->raiseError(E_BAD_REQUEST);
 		}

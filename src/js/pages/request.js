@@ -10,9 +10,14 @@ import { useToasts } from "react-toast-notifications";
 import { ErrorBoundary } from "react-error-boundary";
 import { Loading } from "../blocks/components";
 import format from "date-fns/format";
-import getUnixTime from "date-fns/getUnixTime";
 import get from "lodash/get";
 import { Icon } from '@iconify/react';
+
+//TODO: need to look at the status of the request
+//IF 'draft': edit only if owner
+//IF 'R': edit/re-submit only if owner
+//IF 'A': view only; approve/reject buttons only if approver 
+//IF 'S': view only; approve/reject buttons only if approver 
 
 /* TABS */
 const Information = lazy(()=>import("../blocks/request/information"));
@@ -358,13 +363,23 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
                                 <RequestTabRouter tab={t.id} isNew={isNew}/>
                                 <Row as="footer">
                                     <Col className="button-group button-group-right">
-                                        {hasErrors && <div className="d-inline-flex align-items-center text-danger mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:alert"/><span>Errors</span></div>}
-                                        {isSaving && <div className="d-inline-flex align-items-center mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:loading" className="spin"/><span>Saving...</span></div>}
-                                        {methods.formState.isDirty && <Button variant="secondary" onClick={handleUndo} disabled={isSaving}><Icon icon="mdi:undo"/>Undo</Button>}
-                                        {(!isNew&&isDraft) && <Button variant="danger" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}><Icon icon="mdi:delete"/>Delete</Button>}
-                                        {!(isNew&&lockTabs)&&<Button id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}><Icon icon="mdi:content-save-move"/>Save &amp; Exit</Button>}
-                                        {t.id!='review'&&<Button variant="primary" onClick={handleNext} disabled={lockTabs}><Icon icon="mdi:arrow-right-thick"/>Next</Button>}
-                                        {t.id=='review'&&<Button id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}><Icon icon="mdi:content-save-check"/>Submit</Button>}
+                                        {isDraft && 
+                                            <>
+                                                {hasErrors && <div className="d-inline-flex align-items-center text-danger mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:alert"/><span>Errors</span></div>}
+                                                {isSaving && <div className="d-inline-flex align-items-center mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:loading" className="spin"/><span>Saving...</span></div>}
+                                                {methods.formState.isDirty && <Button variant="secondary" onClick={handleUndo} disabled={isSaving}><Icon icon="mdi:undo"/>Undo</Button>}
+                                                {!isNew && <Button variant="danger" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}><Icon icon="mdi:delete"/>Delete</Button>}
+                                                {!(isNew&&lockTabs)&&<Button id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}><Icon icon="mdi:content-save-move"/>Save &amp; Exit</Button>}
+                                                {t.id!='review'&&<Button variant="primary" onClick={handleNext} disabled={lockTabs}><Icon icon="mdi:arrow-right-thick"/>Next</Button>}
+                                                {t.id=='review'&&<Button id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}><Icon icon="mdi:content-save-check"/>Submit</Button>}
+                                            </>
+                                        }
+                                        {!isDraft && 
+                                            <>
+                                                <Button id="reject" variant="danger" onClick={()=>console.log('reject')} disabled={hasErrors||isSaving}><Icon icon="mdi:close-circle"/>Reject</Button>
+                                                <Button id="approve" variant="success" onClick={()=>console.log('approve')} disabled={hasErrors||isSaving}><Icon icon="mdi:check"/>Appprove</Button>
+                                            </>
+                                        }
                                     </Col>
                                 </Row>
                             </Container>

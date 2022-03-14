@@ -56,11 +56,20 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
     const handleRowClick = useCallback(row=>setSelectedRow(row));
     
     const handleSort = useCallback((...args) => {
+        console.log(args);
         if (!args[0].sortable) return false;
-        const sortKey = columns[(args[0].id-1)].sortField;
+        const sortKey = args[0].sortField; //columns[(args[0].id-1)].sortField;
         setsortField(sortKey);
         setSortDir(args[1]);
-        setRows(orderBy(groups,[sortKey],[args[1]]));
+        if (sortKey == 'GROUP_ID') {
+            if (args[1] == 'asc') {
+                setRows([...groups].sort((a,b)=>a.GROUP_ID-b.GROUP_ID));
+            } else {
+                setRows([...groups].sort((a,b)=>b.GROUP_ID-a.GROUP_ID));
+            }
+        } else {
+            setRows(orderBy(groups,[sortKey],[args[1]]));
+        }
     },[]);
 
     const filterComponent = useMemo(() => {
@@ -99,7 +108,9 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
     const filteredRows = rows.filter(row => {
         if (row.active && statusFilter == 'inactive') return false;
         if (!row.active && statusFilter == 'active') return false;
-        return startsWith(row.GROUP_NAME.toLowerCase(),filterText.toLowerCase());
+        const gName = row.GROUP_NAME.toLowerCase();
+        const filterFields = `${row.GROUP_ID} ${gName} ${row.START_DATE} ${row.END_DATE}`;
+        return filterFields.includes(filterText.toLowerCase());
     });
 
     const columns = useMemo(() => [
@@ -112,6 +123,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
                 </div>
             );
         },ignoreRowClick:true},
+        {name:'Group ID',selector:row=>row.GROUP_ID,sortable:true,sortField:'GROUP_ID'},
         {name:'Group Name',selector:row=>row.GROUP_NAME,sortable:true,sortField:'GROUP_NAME'},
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
         {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
@@ -147,7 +159,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
                 pointerOnHover
                 highlightOnHover
                 onRowClicked={handleRowClick}
-                defaultSortFieldId={2}
+                defaultSortFieldId={3}
                 onSort={handleSort}
                 sortServer
                 conditionalRowStyles={conditionalRowStyles}

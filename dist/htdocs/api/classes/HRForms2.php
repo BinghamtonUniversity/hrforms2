@@ -1,5 +1,6 @@
 <?php
-require $_SERVER['DOCUMENT_ROOT'] .'/../etc/config.php';
+set_include_path(implode(PATH_SEPARATOR, array(get_include_path(),'../../','./api/classes/')));
+include_once 'etc/config.php';
 
 /* define error codes */
 define("E_NO_DATA",204);
@@ -128,16 +129,24 @@ Class HRForms2 {
 	}
 
 	protected function checkAuth() {
+		include_once 'etc/CASconfig.php';
+		include_once 'vendor/autoload.php';
 		if (!CAS_HOST && INSTANCE == 'LOCAL') {
-			$this->sessionData = array_merge($this->sessionData,array("SESSION_ID"=>$_COOKIE['session'],"CAS_SID"=>"local"));
+			$UDC_IDENTIFIER = json_decode($_COOKIE['hrforms2_local'])->bnumber;
+			$this->sessionData = array_merge($this->sessionData,array("SESSION_ID"=>$_COOKIE['session-id'],"CAS_SID"=>"local","UDC_IDENTIFIER"=>$UDC_IDENTIFIER));
 		} else {
-			//do CAS check...
-			phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context);
-			if (!phpCAS::isSessionAuthenticated()) $this->raiseError(401);
-			$this->sessionData = array_merge($this->sessionData,array("SESSION_ID"=>$_COOKIE['session'],"CAS_SID"=>session_id()));
+			if (!phpCAS::isInitialized()) {
+				session_set_cookie_params($client_lifetime,$client_path,$client_domain,$client_secure,$client_httpOnly);
+				phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context);
+				phpCAS::setCasServerCACert($cas_server_ca_cert_path);
+				phpCAS::setNoCasServerValidation();//TODO: should this be off?
+				phpCAS::handleLogoutRequests(true, $cas_real_hosts);
+			}
+			phpCAS::forceAuthentication();
+			$this->sessionData = array_merge($this->sessionData,array("SESSION_ID"=>$_COOKIE['session-id'],"CAS_SID"=>session_id(),"UDC_IDENTIFIER"=>phpCAS::getAttribute('UDC_IDENTIFIER')));
 		}
-		$sessInfo = $this->sessionInfo();
-		if (!isset($sessInfo['SUNY_ID'])) $this->raiseError(401);
+		if (!isset($this->sessionData['CAS_SID'])) $this->raiseError(401);
+		$this->sessionInfo();
 		return true;
 	}
 

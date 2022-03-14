@@ -58,11 +58,11 @@ const LoggedOutApp = React.memo(() => (
 export default function StartApp() {
     const [authData,setAuthData] = useState();
 
-    const {getSession,getTerms} = useAppQueries();
+    const {getSession,getTerms,getSettings} = useAppQueries();
 
     const session = getSession();
     const global = getTerms({enabled:session.isSuccess});
-    //const settings = getSettings({enabled:session.isSuccess});
+    const settings = getSettings({enabled:session.isSuccess});
 
     useEffect(() => {
         console.log('session data changed',session.data);
@@ -155,7 +155,7 @@ function ImpersonationAlert({SUNY_ID,fullname}) {
 
     const endImpersonation = () => {
         mutation.mutateAsync({IMPERSONATE_SUNY_ID:''}).then(d => {
-            queryclient.refetchQueries('session');
+            queryclient.invalidateQueries();
             setRedirect(true);
         });        
     }
