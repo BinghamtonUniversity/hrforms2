@@ -38,7 +38,7 @@ export default function useRequestQueries(REQUEST_ID) {
             });
             return (options.select2)?options.select2(data):data;
         }
-        return useQuery(['requestlist',list,SUNY_ID],q(`requestlist/${list}`),options);
+        return useQuery([SUNY_ID,'requestlist',list],q(`requestlist/${list}`),options);
     }
 
     const getJournal = (...args) => {

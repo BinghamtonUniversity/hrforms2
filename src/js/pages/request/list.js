@@ -21,7 +21,7 @@ export default function RequestList() {
                 </Row>
             </header>
             <section>
-                <ListData list={(part)?part:'my-requests'}/>
+                <ListData list={(part)?part:'all'}/>
             </section>
         </>
     );
@@ -121,7 +121,7 @@ function ListTable({data,list}) {
             return (
                 <div className="button-group">
                     {(list=='drafts')&&<Button variant="danger" className="no-label" size="sm" title="Delete Draft" onClick={()=>handleDelete(row)}><Icon icon="mdi:delete"/></Button>}
-                    {!(['drafts','my-requests','rejections'].includes(list))&&
+                    {!(['drafts','pending','rejections'].includes(list))&&
                         <>
                             <Button variant="success" className="no-label" size="sm" title="Approve" onClick={()=>handleAction('approve',row)}><Icon icon="mdi:check"/></Button>
                             <Button variant="danger" className="no-label" size="sm" title="Reject" onClick={()=>handleAction('reject',row)}><Icon icon="mdi:close-circle"/></Button>
@@ -133,15 +133,16 @@ function ListTable({data,list}) {
         {name:'ID',selector:row=>row.REQUEST_ID,sortable:true,sortField:'REQID'},
         {name:'Status',selector:row=>row.STATUS,format:row=>{
             switch(row.STATUS) {
+                case "S":
                 case "A": return "Pending Review"; break;
                 case "R": return "Rejected"; break;
-                case "S": return "Submitted"; break;
+                case "Z": return "Archived"; break;
                 case "draft": return "Draft"; break;
                 default: return row.STATUS;
             }
         },sortable:true,sortField:'STATUS'},
         {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortField:'UNIX_TS'},
-        {name:'Submitted By',selector:row=>row.SUNY_ID,sortable:true,omit:(list=='drafts'||list=='my-requests'),format:row=>`${row.fullName} (${row.SUNY_ID})`},
+        {name:'Submitted By',selector:row=>row.SUNY_ID,sortable:true,omit:(list=='drafts'||list=='pending'),format:row=>`${row.fullName} (${row.SUNY_ID})`},
         {name:'Position Type',selector:row=>row.POSTYPE.id,format:row=>`${row.POSTYPE.id} - ${row.POSTYPE.title}`,sortable:true},
         {name:'Request Type',selector:row=>row.REQTYPE.id,format:row=>`${row.REQTYPE.id} - ${row.REQTYPE.title}`,sortable:true},
         {name:'Candidate Name',selector:row=>row.CANDIDATENAME,sortable:true},

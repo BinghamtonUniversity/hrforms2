@@ -3,7 +3,7 @@ import { useQueryClient } from "react-query";
 import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
 import {useAppQueries} from "../../queries";
-import { Loading, ModalConfirm } from "../../blocks/components";
+import { Loading, ModalConfirm, AppButton } from "../../blocks/components";
 import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert, InputGroup } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { orderBy, startsWith, sortBy, difference, differenceWith, isEqual, capitalize } from "lodash";
@@ -14,7 +14,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { format } from "date-fns";
 import { useToasts } from "react-toast-notifications";
 import { useHotkeys } from "react-hotkeys-hook";
-import { Redirect } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 
 const defaultVals = {SUNYID:'',firstName:'',lastName:'',email:'',dept:'',startDate:new Date(),endDate:'',assignedGroups:[],availableGroups:[]};
 
@@ -26,7 +26,7 @@ export default function AdminUsers() {
     return (
         <>
             <Row>
-                <Col><h2>Admin: Users <Button variant="success" onClick={()=>setNewUser(true)}><Icon icon="mdi:account-plus"/>Add New</Button></h2></Col>
+                <Col><h2>Admin: Users <AppButton format="add-user" onClick={()=>setNewUser(true)}>Add New</AppButton></h2></Col>
             </Row>
             <Row>
                 <Col>
@@ -114,10 +114,10 @@ function UsersTable({users,newUser,setNewUser}) {
         {name:'Actions',cell:row=>{
             return (
                 <div className="button-group">
-                    {row.SUNY_ID && <Button variant="primary" className="no-label" size="sm" title="Impersonate User" onClick={()=>setImpersonateUser(row)} disabled={!row.active}><Icon icon="mdi:account-switch"/></Button>}
-                    {row.active && <Button variant="warning" className="no-label" size="sm" title="Deactivate User" onClick={()=>setToggleUser(row)}><Icon icon="mdi:account-remove"/></Button>}
-                    {!row.active && <Button variant="success" className="no-label" size="sm" title="Restore User" onClick={()=>setToggleUser(row)}><Icon icon="mdi:account" /></Button>}
-                    <Button variant="danger" className="no-label" size="sm" title="Delete User" onClick={()=>setDeleteUser(row)}><Icon icon="mdi:delete"/></Button>
+                    {row.SUNY_ID && <AppButton format="impersonate" size="sm" title="Impersonate User" onClick={()=>setImpersonateUser(row)} disabled={!row.active}/>}
+                    {row.active && <AppButton format="deactivate-user" size="sm" title="Deactivate User" onClick={()=>setToggleUser(row)}/>}
+                    {!row.active && <AppButton format="activate-user" size="sm" title="Restore User" onClick={()=>setToggleUser(row)}/>}
+                    <AppButton format="delete" size="sm" title="Delete User" onClick={()=>setDeleteUser(row)}/>
                 </div>
             );
         },ignoreRowClick:true},
@@ -144,6 +144,7 @@ function UsersTable({users,newUser,setNewUser}) {
     useEffect(()=>{
         setRows(orderBy(users,[sortField],[sortDir]));
     },[users]);
+    useEffect(()=>searchRef.current.focus(),[]);
     return (
         <>
             <DataTable 
@@ -175,9 +176,10 @@ function UsersTable({users,newUser,setNewUser}) {
 
 function ImpersonateUser({user,setImpersonateUser}) {
     const [show,setShow] = useState(true);
-    const [redirect,setRedirect] = useState(false);
 
     const {addToast,removeToast} = useToasts();
+
+    const history = useHistory();
 
     const queryclient = useQueryClient();
     const {patchSession} = useAppQueries();
@@ -195,14 +197,14 @@ function ImpersonateUser({user,setImpersonateUser}) {
             title: 'Impersonate',
             callback: () => {
                 mutation.mutateAsync({IMPERSONATE_SUNY_ID:user.SUNY_ID}).then(d => {
-                    queryclient.invalidateQueries();
-                    setShow(false);
-                    setRedirect(true);
+                    queryclient.refetchQueries('session').then(()=>{
+                        setShow(false);
+                        history.push('/');
+                    });
                 });
             }
         }
     }
-    if (redirect) return <Redirect to="/"/>;
     return (
         <ModalConfirm show={show} icon="mdi:account-question" title="Impersonate User?" buttons={buttons}>
             <p>Are you sure you want to impersonate {user.fullName} ({user.SUNY_ID})?</p>

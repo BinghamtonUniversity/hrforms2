@@ -8,7 +8,7 @@ import useRequestQueries from "../queries/requests";
 import { useQueryClient } from "react-query";
 import { useToasts } from "react-toast-notifications";
 import { ErrorBoundary } from "react-error-boundary";
-import { Loading } from "../blocks/components";
+import { Loading, AppButton } from "../blocks/components";
 import format from "date-fns/format";
 import get from "lodash/get";
 import { Icon } from '@iconify/react';
@@ -362,16 +362,16 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
                                 {(t.id!='information'&&t.id!='review')&& <RequestInfoBox isNew={isNew}/>}
                                 <RequestTabRouter tab={t.id} isNew={isNew}/>
                                 <Row as="footer">
-                                    <Col className="button-group button-group-right">
+                                    <Col className="button-group justify-content-end">
                                         {isDraft && 
                                             <>
                                                 {hasErrors && <div className="d-inline-flex align-items-center text-danger mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:alert"/><span>Errors</span></div>}
                                                 {isSaving && <div className="d-inline-flex align-items-center mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:loading" className="spin"/><span>Saving...</span></div>}
-                                                {methods.formState.isDirty && <Button variant="secondary" onClick={handleUndo} disabled={isSaving}><Icon icon="mdi:undo"/>Undo</Button>}
-                                                {!isNew && <Button variant="danger" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}><Icon icon="mdi:delete"/>Delete</Button>}
-                                                {!(isNew&&lockTabs)&&<Button id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}><Icon icon="mdi:content-save-move"/>Save &amp; Exit</Button>}
-                                                {t.id!='review'&&<Button variant="primary" onClick={handleNext} disabled={lockTabs}><Icon icon="mdi:arrow-right-thick"/>Next</Button>}
-                                                {t.id=='review'&&<Button id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}><Icon icon="mdi:content-save-check"/>Submit</Button>}
+                                                {methods.formState.isDirty && <AppButton format="undo" onClick={handleUndo} disabled={isSaving}>Undo</AppButton>}
+                                                {!isNew && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
+                                                {!(isNew&&lockTabs)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
+                                                {t.id!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
+                                                {t.id=='review'&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}>Submit</AppButton>}
                                             </>
                                         }
                                         {!isDraft && 

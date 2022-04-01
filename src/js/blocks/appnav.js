@@ -1,24 +1,20 @@
-import React,{useState,useEffect} from "react";
-import {Link} from "react-router-dom";
-import {Navbar,Nav,NavDropdown} from "react-bootstrap";
-import {currentUser,getAuthInfo} from "../app";
+import React,{ useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Navbar, Nav, NavDropdown } from "react-bootstrap";
+import { currentUser, getAuthInfo, SettingsContext } from "../app";
+import capitalize from "lodash/capitalize";
+import get from "lodash/get";
 
 export default function AppNav({userCounts}) {
     const {SUNY_ID,isAdmin,OVR_SUNY_ID} = getAuthInfo();
     const user = currentUser();
-    const [requests,setRequests] = useState(new Map());
-    const [forms,setForms] = useState(new Map());
 
     const logout = e => {
         e.preventDefault();
-        //clearAuth();
         console.log('logout');
     }
-    useEffect(() => {
-        if (userCounts) {
-            if (userCounts.requests) setRequests(new Map(Object.entries(userCounts.requests)));
-            if (userCounts.forms) setForms(new Map(Object.entries(userCounts.forms)));
-        }
+    useEffect(()=>{
+        console.log(userCounts);
     },[userCounts]);
     //TODO: check a/b match; if different and isAdmin then impersonation; otherwise kickout.
     //(!isAdmin && SUNY_ID != user.SUNY_ID)
@@ -30,30 +26,31 @@ export default function AppNav({userCounts}) {
                 <Navbar.Collapse id="basic-navbar-nav" className="justify-content-end">
                     <Nav>
                         <Nav.Link as={Link} to="/">Home</Nav.Link>
-                        {(requests.size > 0) &&
-                        <NavDropdown title="Request" id="request-nav-dropdown" alignRight>
-                            <NavDropdown.Item as={Link} to="/request/">New Request</NavDropdown.Item>
-                            <NavDropdown.Divider/>
-                            {requests.has('draft') && <NavDropdown.Item as={Link} to="/request/list/drafts">Drafts ({requests.get('draft')})</NavDropdown.Item>}
-                            {requests.has('rejection') && <NavDropdown.Item as={Link} to="/request/list/rejections">Rejections ({requests.get('rejection')})</NavDropdown.Item>}
-                            {requests.has('approval') && <NavDropdown.Item as={Link} to="/request/list/approvals">Approvals ({requests.get('approval')})</NavDropdown.Item>}
-                            {requests.has('final') && <NavDropdown.Item as={Link} to="/request/list/final">Final Approvals ({requests.get('final')})</NavDropdown.Item>}
-                            <NavDropdown.Divider/>
-                            <NavDropdown.Item as={Link} to="/request/list/submitted">My Requests</NavDropdown.Item>
-                            <NavDropdown.Divider/>
-                            <NavDropdown.Item as={Link} to="/request/list">List</NavDropdown.Item>
-                        </NavDropdown>}
-                        {(forms.size > 0) && 
-                        <NavDropdown title="Forms" id="forms-nav-dropdown" alignRight>
-                            <NavDropdown.Item as={Link} to="/form/">New Form</NavDropdown.Item>
-                            <NavDropdown.Divider/>
-                            {forms.has('draft') && <NavDropdown.Item as={Link} to="/form/list/drafts">Drafts ({forms.get('draft')})</NavDropdown.Item>}
-                            {forms.has('approval') && <NavDropdown.Item as={Link} to="/form/list/approvals">Approvals ({forms.get('approval')})</NavDropdown.Item>}
-                            {forms.has('rejection') && <NavDropdown.Item as={Link} to="/form/list/rejections">Rejections ({forms.get('rejection')})</NavDropdown.Item>}
-                            {forms.has('final') && <NavDropdown.Item as={Link} to="/form/list/final">Final Approvals ({forms.get('final')})</NavDropdown.Item>}
-                            <NavDropdown.Divider/>
-                            <NavDropdown.Item as={Link} to="/request/list">List</NavDropdown.Item>
-                        </NavDropdown>}
+                        {Object.keys(userCounts).map(c =>{
+                            const single = c.slice(0,-1);
+                            return (
+                                <NavDropdown key={`${single}-menu`} title={capitalize(c)} id="request-nav-dropdown" alignRight>
+                                    <NavDropdown.Item as={Link} to={single}>New {capitalize(single)}</NavDropdown.Item>
+                                    <NavDropdown.Divider/>
+                                    <SettingsContext.Consumer>
+                                        {settings=>(
+                                            <>
+                                                {Object.keys(userCounts[c]).map(l=>{
+                                                    const key = `${c}.${l}`;
+                                                    const title = get(settings,`${key}.title`,l);
+                                                    const show = get(settings,`${key}.showOnMenu`,!!l);
+                                                    const cnt = get(userCounts,key,0);
+                                                    if (!show) return null;
+                                                    return <NavDropdown.Item key={l} as={Link} to={`${single}/list/${l}`}>{title} ({cnt})</NavDropdown.Item>;
+                                                })}
+                                            </>
+                                        )}
+                                    </SettingsContext.Consumer>
+                                    <NavDropdown.Divider/>
+                                    <NavDropdown.Item as={Link} to={`/${single}/list`}>My {capitalize(c)}</NavDropdown.Item>
+                                </NavDropdown>
+                            );
+                        })}
                         {(isAdmin && !OVR_SUNY_ID) &&
                         <NavDropdown title="Admin" id="admin-nav-dropdown" alignRight>
                             <NavDropdown.Item as={Link} to="/admin/news">News</NavDropdown.Item>
@@ -78,3 +75,31 @@ export default function AppNav({userCounts}) {
         </header>
     );
 }
+
+/*
+                        {(requests.size > 0) &&
+                        <NavDropdown title="Request" id="request-nav-dropdown" alignRight>
+                            <NavDropdown.Item as={Link} to="/request/">New Request</NavDropdown.Item>
+                            <NavDropdown.Divider/>
+                            {requests.has('draft') && <NavDropdown.Item as={Link} to="/request/list/drafts">Drafts ({requests.get('draft')})</NavDropdown.Item>}
+                            {requests.has('pending') && <NavDropdown.Item as={Link} to="/request/list/pending">Pending Review ({requests.get('pending')})</NavDropdown.Item>}
+                            {requests.has('rejection') && <NavDropdown.Item as={Link} to="/request/list/rejections">Rejections ({requests.get('rejection')})</NavDropdown.Item>}
+                            {requests.has('approval') && <NavDropdown.Item as={Link} to="/request/list/approvals">Approvals ({requests.get('approval')})</NavDropdown.Item>}
+                            {requests.has('final') && <NavDropdown.Item as={Link} to="/request/list/final">Final Approvals ({requests.get('final')})</NavDropdown.Item>}
+                            <NavDropdown.Divider/>
+                            <NavDropdown.Item as={Link} to="/request/list">My Requests</NavDropdown.Item>
+                            <NavDropdown.Divider/>
+                            <NavDropdown.Item as={Link} to="/request/list">List</NavDropdown.Item>
+                        </NavDropdown>}
+                        {(forms.size > 0) && 
+                        <NavDropdown title="Forms" id="forms-nav-dropdown" alignRight>
+                            <NavDropdown.Item as={Link} to="/form/">New Form</NavDropdown.Item>
+                            <NavDropdown.Divider/>
+                            {forms.has('draft') && <NavDropdown.Item as={Link} to="/form/list/drafts">Drafts ({forms.get('draft')})</NavDropdown.Item>}
+                            {forms.has('approval') && <NavDropdown.Item as={Link} to="/form/list/approvals">Approvals ({forms.get('approval')})</NavDropdown.Item>}
+                            {forms.has('rejection') && <NavDropdown.Item as={Link} to="/form/list/rejections">Rejections ({forms.get('rejection')})</NavDropdown.Item>}
+                            {forms.has('final') && <NavDropdown.Item as={Link} to="/form/list/final">Final Approvals ({forms.get('final')})</NavDropdown.Item>}
+                            <NavDropdown.Divider/>
+                            <NavDropdown.Item as={Link} to="/request/list">List</NavDropdown.Item>
+                        </NavDropdown>}
+*/

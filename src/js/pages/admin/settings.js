@@ -1,14 +1,97 @@
-import React, { useReducer, useEffect } from "react";
+import React, { useState, useReducer, useEffect, lazy } from "react";
+import { getSettings } from "../../app";
 import { useQueryClient } from "react-query";
-import { Row, Col, Form, Button, Alert } from "react-bootstrap";
-import { useForm, Controller } from "react-hook-form";
-import { useAppQueries, useAdminQueries } from "../../queries";
-import { Loading } from "../../blocks/components";
+import { Row, Col, Form, Button, Alert, Tabs, Tab, Container } from "react-bootstrap";
+import { useForm, Controller, FormProvider } from "react-hook-form";
+import { useAppQueries } from "../../queries";
+import { AppButton, Loading } from "../../blocks/components";
 import { pick, invertBy, forEach, orderBy } from "lodash";
 import { useToasts } from "react-toast-notifications";
 import useGroupQueries from "../../queries/groups";
+import useAdminQueries from "../../queries/admin";
+
+const SettingsLists = lazy(()=>import("../../blocks/admin/settings/lists"));
+const SettingsRequests = lazy(()=>import("../../blocks/admin/settings/requests"));
+const SettingsForms = lazy(()=>import("../../blocks/admin/settings/forms"));
 
 export default function AdminSettings() {
+    const tabs = [
+        {id:'lists',title:'Lists'},
+        {id:'requests',title:'Requests'},
+        {id:'forms',title:'Forms'},
+        {id:'general',title:'General'}
+    ];
+    const settings = getSettings();
+
+    const [activeTab,setActiveTab] = useState('lists');
+
+    const methods = useForm({
+        mode:'onSubmit',
+        reValidateMode:'onChange',
+        defaultValues:settings
+    });
+
+    const queryclient = useQueryClient();
+    const {putSettings} = useAdminQueries();
+    const update = putSettings();
+    const handleSubmit = data => {
+        console.log(data);
+        update.mutateAsync(data).then(()=>{
+            console.log('saved, reload');
+            queryclient.invalidateQueries('settings');
+        });
+    }
+    const handleError = error => {
+        console.error(error);
+    }
+    
+    return (
+        <>
+            <header>
+                <Row>
+                    <Col><h2>Settings:</h2></Col>
+                </Row>
+            </header>
+            <Row>
+                <Col>
+                    <FormProvider {...methods}>
+                        <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
+                            <Tabs activeKey={activeTab} onSelect={tab=>setActiveTab(tab)} id="sewttings-tabs">
+                            {tabs.map(t=>(
+                                <Tab key={t.id} eventKey={t.id} title={t.title}>
+                                    <Container as="article" className="mt-3" fluid>
+                                        <Row as="header">
+                                            <Col as="h3">{t.title}</Col>
+                                        </Row>
+                                        <SettingsRouter tab={activeTab}/>
+                                    </Container>
+                                </Tab>
+                            ))}
+                            </Tabs>
+                            <Row as="footer">
+                                <Col className="button-group justify-content-end">
+                                    <AppButton format="save" type="submit">Save Settings</AppButton>
+                                </Col>
+                            </Row>
+                        </Form>
+                    </FormProvider>
+                </Col>
+            </Row>
+        </>
+    );
+}
+
+function SettingsRouter({tab}) {
+    switch(tab) {
+        case "lists": return <SettingsLists/>;
+        case "requests": return <SettingsRequests/>;
+        case "forms": return <SettingsForms/>;
+        default: return <p>Not Found</p>;
+    }
+}
+
+
+function AdminSettingsOLD() {
     const [status,setStatus] = useReducer((state,args) => {
         let presets = {state:'',message:''};
         switch(args) {

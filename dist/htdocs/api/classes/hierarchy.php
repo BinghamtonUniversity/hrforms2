@@ -33,7 +33,7 @@ class Hierarchy extends HRForms2 {
 		//TODO: Handle form vs request hierarchy
 		//TODO: Allow for lookup with groupID
 		if ($this->req[0] == 'request') {
-			$qry = "select h.HIERARCHY_ID,h.POSITION_TYPE,h.GROUP_ID,g.GROUP_NAME,h.WORKFLOW_ID,w.GROUPS
+			$qry = "select h.HIERARCHY_ID,h.POSITION_TYPE,h.GROUP_ID,g.GROUP_NAME,h.WORKFLOW_ID,w.GROUPS,w.CONDITIONS
 			from hrforms2_requests_hierarchy h
 			left join (select * from hrforms2_groups) g on (h.group_id = g.group_id)
 			left join (select * from hrforms2_requests_workflow) w on (h.workflow_id = w.workflow_id)";	
@@ -49,6 +49,9 @@ class Hierarchy extends HRForms2 {
 			$r = oci_execute($stmt);
 			if (!$r) $this->raiseError();
 			while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+				$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
+				unset($row['CONDITIONS']);
+				$row['CONDITIONS'] = json_decode($conditions);
 				$this->_arr[] = $row;
 			}
 			oci_free_statement($stmt);
@@ -58,22 +61,7 @@ class Hierarchy extends HRForms2 {
 		}
 		if ($this->req[0] == 'form') {
 			echo "form hierarchy";
-		} 
-		
-
-        $qry = "select h.HIERARCHY_ID,h.POSITION_TYPE,h.GROUP_ID,g.GROUP_NAME,h.WORKFLOW_ID,w.GROUPS
-        from hrforms2_requests_hierarchy h
-        left join (select * from hrforms2_groups) g on (h.group_id = g.group_id)
-        left join (select * from hrforms2_requests_workflow) w on (h.workflow_id = w.workflow_id)";
-		$stmt = oci_parse($this->db,$qry);
-		$r = oci_execute($stmt);
-		if (!$r) $this->raiseError();
-		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
-            $this->_arr[] = $row;
 		}
-		oci_free_statement($stmt);
-		$this->returnData = $this->_arr;
-		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
 	function POST() {
 		$qry = "insert into hrforms2_requests_hierarchy 
