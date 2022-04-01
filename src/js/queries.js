@@ -42,20 +42,6 @@ export function useAppQueries() {
         const options = args[0]?.options||args[0]||{};
         return useQuery('settings',q('settings'),{staleTime:Infinity,cacheTime:Infinity,retry:false,...options});
     }
-    //this should be a list
-    const getTerms = (...args) => {
-        //TODO: store in sessionStorage
-        const options = args[0]?.options||args[0]||{};
-        if (typeof options != 'object') return false;
-        return useQuery('terms',()=>{
-            return new Promise((res) => {
-                res({navTerms:{
-                    requests:{title:'Request',draft:{title:'Draft'},approval:{title:'Approval'},final:{title:'Final Approval'}},
-                    forms:{title:'Form',draft:{title:'Draft'},approval:{title:'Approval'},reject:{title:'Rejection'},final:{title:'Final Approval'}}
-                }});
-            });
-        },options);
-    }
     const getNews = (...args) => {
         const options = args[0]?.options||args[0]||{};
         if(options.select) options.select2 = options.select;
@@ -100,7 +86,7 @@ export function useAppQueries() {
             return q(`news/${newsid}`,'PUT',d)();
         });
     }
-    return {getSession,getSettings,getTerms,getNews,getLists,getList,getListData,getBudgetTitles,putNews,patchNews,patchSession};
+    return {getSession,getSettings,getNews,getLists,getList,getListData,getBudgetTitles,putNews,patchNews,patchSession};
 }
 
 /** USER QUERIES */
@@ -118,7 +104,7 @@ export function useUserQueries() {
     }
     
     const getCounts = () => {
-        return useQuery(['counts',SUNY_ID],q('counts'));
+        return useQuery([SUNY_ID,'counts'],q('counts'));
     }
 
     return {getUser,getCounts};

@@ -2,7 +2,6 @@ import React,{useState,useEffect} from "react";
 import {useAppQueries} from "../queries";
 import { useCookies } from "react-cookie";
 import {Alert} from "react-bootstrap";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import htmr from "htmr";
 
 export function News() {

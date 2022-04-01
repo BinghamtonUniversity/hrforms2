@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, useReducer } 
 import { useQueryClient } from "react-query";
 import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
-import { Loading } from "../../blocks/components";
+import { Loading, AppButton } from "../../blocks/components";
 import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { orderBy, startsWith, sortBy, difference, differenceWith, isEqual, capitalize } from "lodash";
@@ -22,7 +22,7 @@ export default function AdminGroups() {
     return (
         <>
             <Row>
-                <Col><h2>Admin: Groups <Button variant="success" onClick={()=>setNewGroup(true)}><Icon icon="mdi:account-multiple-plus"/>Add New</Button></h2></Col>
+                <Col><h2>Admin: Groups <AppButton format="add-group" onClick={()=>setNewGroup(true)}>Add New</AppButton></h2></Col>
             </Row>
             <Row>
                 <Col>
@@ -117,9 +117,9 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
         {name:'Actions',cell:row=>{
             return (
                 <div className="button-group">
-                    {row.active && <Button variant="warning" className="no-label" size="sm" title="Deactivate Group" onClick={()=>setToggleGroup(row)}><Icon icon="mdi:account-multiple-remove"/></Button>}
-                    {!row.active && <Button variant="success" className="no-label" size="sm" title="Restore Group" onClick={()=>setToggleGroup(row)}><Icon icon="mdi:account-multiple" /></Button>}
-                    <Button variant="danger" className="no-label" size="sm" title="Delete Group" onClick={()=>setDeleteGroup(row)}><Icon icon="mdi:delete"/></Button>
+                    {row.active && <AppButton format="deactivate-group" size="sm" title="Deactivate Group" onClick={()=>setToggleGroup(row)}/>}
+                    {!row.active && <AppButton format="activate-group" size="sm" title="Restore Group" onClick={()=>setToggleGroup(row)}/>}
+                    <AppButton format="delete" size="sm" title="Delete Group" onClick={()=>setDeleteGroup(row)}/>
                 </div>
             );
         },ignoreRowClick:true},
@@ -143,6 +143,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
     useEffect(()=>{
         setRows(orderBy(groups,[sortField],[sortDir]));
     },[groups]);
+    useEffect(()=>searchRef.current.focus(),[]);
     return (
         <>
             <DataTable 

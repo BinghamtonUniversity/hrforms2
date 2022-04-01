@@ -1,5 +1,5 @@
 import React,{useContext,useState,useEffect,lazy,Suspense} from "react";
-import {Switch,Route,useLocation,Redirect} from "react-router-dom";
+import {Switch,Route,useLocation,useHistory} from "react-router-dom";
 import {useQueryClient} from "react-query";
 import {Container,Button,Alert} from "react-bootstrap";
 import {useToasts} from "react-toast-notifications";
@@ -23,12 +23,12 @@ export const AuthContext = React.createContext();
 AuthContext.displayName = 'AuthContext';
 export const UserContext = React.createContext();
 UserContext.displayName = 'UserContext';
-export const GlobalContext = React.createContext();
-GlobalContext.displayName = 'GlobalContext';
+export const SettingsContext = React.createContext();
+SettingsContext.displayName = 'SettingsContext';
 
 export function getAuthInfo() { return useContext(AuthContext); }
 export function currentUser() { return useContext(UserContext); }
-export function getGlobal() { return useContext(GlobalContext); } //should this be getGlobalContext.  Do we need it? This is nav terms right now, cosolidate with NavContext
+export function getSettings() { return useContext(SettingsContext); }
 export function getNavContext() { return useContext(NavContext); } // do we need this?  can't we import useContext from react and import NavContext from app?
 
 /* QUERIES */
@@ -58,49 +58,48 @@ const LoggedOutApp = React.memo(() => (
 export default function StartApp() {
     const [authData,setAuthData] = useState();
 
-    const {getSession,getTerms,getSettings} = useAppQueries();
+    const {getSession,getSettings} = useAppQueries();
 
     const session = getSession();
-    const global = getTerms({enabled:session.isSuccess});
     const settings = getSettings({enabled:session.isSuccess});
 
     useEffect(() => {
-        console.log('session data changed',session.data);
+        if (session.data) console.debug('Session Data:',session.data);
         setAuthData(session.data);
     },[session.data]);
-    if (session.isError || global.isError) return <LoadingAppError>{session.error?.message||global.error?.message}</LoadingAppError>;
-    if (session.isSuccess && global.isSuccess) {
+    if (session.isError || settings.isError) return <LoadingAppError>{session.error?.message||settings.error?.message}</LoadingAppError>;
+    if (session.isSuccess && settings.isSuccess) {
         return (
-            <GlobalContext.Provider value={{...global.data}}>
+            <SettingsContext.Provider value={{...settings.data}}>
                 <AuthContext.Provider value={{...authData}}>
                     <ErrorBoundary FallbackComponent={AppErrorFallback}>
                         <AppContent SUNY_ID={authData.SUNY_ID} OVR_SUNY_ID={authData.OVR_SUNY_ID}/>
                     </ErrorBoundary>
                 </AuthContext.Provider>
-            </GlobalContext.Provider>
+            </SettingsContext.Provider>
         );
     }
     return <LoadingApp/>;
 }
 
 function AppContent({SUNY_ID,OVR_SUNY_ID}) {
+    const queryclient = useQueryClient();
     const {getUser,getCounts} = useUserQueries();
     const user = getUser();
     const counts = getCounts({enabled:false});
     const [userData,setUserData] = useState();
-    const [userCounts,setUserCounts] = useState();
+    //add counts to UserContext?
     useEffect(() => {
         setUserData(head(user.data));
-        counts.refetch();
+        queryclient.refetchQueries(SUNY_ID);
     },[user.data]);
-    useEffect(()=>setUserCounts(counts.data),[counts.data]);
     useEffect(()=>user.refetch(),[OVR_SUNY_ID]);
     if (user.isLoading || counts.isLoading || counts.isIdle) return <LoadingApp/>;
     if (user.isError || counts.isError) return <LoadingAppError>Failed to retreive user information</LoadingAppError>
     return (
         <UserContext.Provider value={{...userData,setUserData}}>
             <PageChange/>
-            <AppNav userCounts={userCounts}/>
+            <AppNav userCounts={counts.data}/>
             <Suspense fallback={null}>
                 <Container as="main" fluid>
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
@@ -114,6 +113,7 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
                             <Route path="/request" component={Request}/>
                             <Route path="/form/:id" component={HRForm}/>
                             <Route path="/form" component={HRForm}/>
+                            <Route path="/admin/:page/:subpage/:pagetab" component={AdminPages}/>
                             <Route path="/admin/:page/:subpage" component={AdminPages}/>
                             <Route path="/admin/:page" component={AdminPages}/>
                             <Route path="*"><NotFound/></Route>
@@ -129,14 +129,16 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
 
 function AppErrorFallback({error}) {
     return (
-        <div>
-            <p>Fatal Error</p>
-            <p>{error.message}</p>
-        </div>
+        <Alert variant="danger">
+            <Alert.Heading>Fatal Error</Alert.Heading>
+            <p>A fatal application error was encountered.  Cannot render the application.</p>
+            <pre>{error.message}</pre>
+        </Alert>
     );
 }
 
 function ErrorFallback({error}) {
+    //TODO: allow for reset
     return (
         <Alert variant="danger">
             <Alert.Heading>Error</Alert.Heading>
@@ -147,20 +149,18 @@ function ErrorFallback({error}) {
 }
 
 function ImpersonationAlert({SUNY_ID,fullname}) {
-    const [redirect,setRedirect] = useState(false);
-
+    const history = useHistory();
     const queryclient = useQueryClient();
     const {patchSession} = useAppQueries();
     const mutation = patchSession();
 
     const endImpersonation = () => {
         mutation.mutateAsync({IMPERSONATE_SUNY_ID:''}).then(d => {
-            queryclient.invalidateQueries();
-            setRedirect(true);
+            queryclient.refetchQueries('session').then(()=>{
+                history.push('/');
+            });
         });        
     }
-    useEffect(()=>setRedirect(false),[SUNY_ID]);
-    if (redirect) return <Redirect to="/"/>
     return (
         <Alert variant="primary" onClose={endImpersonation} dismissible>Impersonating <strong>{fullname} ({SUNY_ID})</strong> - Close to end impersonation</Alert>
     );

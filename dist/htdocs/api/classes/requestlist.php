@@ -66,8 +66,8 @@ class RequestList extends HRForms2 {
 				where r.request_id = j.request_id
 				and r.created_by.SUNY_ID = :suny_id";
 				break;
-			case "my-requests":
-				//change this to "pending" and exclude "final/completed/archived" 
+			case "pending":
+				//TODO: exclude "final/completed/archived" 
 				$qry = "select r.request_id, r.created_by.SUNY_ID, to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
@@ -79,9 +79,12 @@ class RequestList extends HRForms2 {
 					where jr1.request_id in (select request_id from hrforms2_requests_journal where suny_id = :suny_id and status = 'S')) jr2
 				where jr2.rnk = 1) j
 				left join (select * from hrforms2_requests_workflow) w on (j.workflow_id = w.workflow_id)
-				where r.request_id = j.request_id";
+				where r.request_id = j.request_id
+				and j.status != 'R'";
 				break;
 			case "final":
+				$this->done();
+			case "archived":
 				$this->done();
 			default:
 				$this->raiseError(E_BAD_REQUEST);

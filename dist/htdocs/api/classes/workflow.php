@@ -13,7 +13,7 @@ class Workflow extends HRForms2 {
 	private $_arr = array();
 
 	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+		$this->allowedMethods = "GET,POST,PUT,PATCH,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
 		$this->reqAuth = true; //default: true - NB: See note above
 		$this->retJSON = $rjson;
 		$this->req = $req;
@@ -36,6 +36,9 @@ class Workflow extends HRForms2 {
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+			$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
+			unset($row['CONDITIONS']);
+			$row['CONDITIONS'] = json_decode($conditions);
 			$this->_arr[] = $row;
 		}
 		oci_free_statement($stmt);
@@ -43,7 +46,7 @@ class Workflow extends HRForms2 {
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
 	function POST() {
-		$qry = "insert into hrforms2_requests_workflow values(HRFORMS2_REQUESTS_WORKFLOW_SEQ.nextval,:groups) returning WORKFLOW_ID into :workflow_id";
+		$qry = "insert into hrforms2_requests_workflow values(HRFORMS2_REQUESTS_WORKFLOW_SEQ.nextval,:groups,null) returning WORKFLOW_ID into :workflow_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":groups", $this->POSTvars['GROUPS']);
 		oci_bind_by_name($stmt,":workflow_id", $WORKFLOW_ID,-1,SQLT_INT);
@@ -52,6 +55,20 @@ class Workflow extends HRForms2 {
 		oci_commit($this->db);
 		oci_free_statement($stmt);
 		$this->toJSON(array("WORKFLOW_ID"=>$WORKFLOW_ID));
+	}
+	function PUT() {
+		$qry = "update hrforms2_requests_workflow set groups = :groups, CONDITIONS = EMPTY_CLOB()
+		where workflow_id = :workflow_id returning CONDITIONS into :conditions";
+		$stmt = oci_parse($this->db,$qry);
+		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
+		oci_bind_by_name($stmt,":groups", $this->POSTvars['GROUPS']);
+		oci_bind_by_name($stmt,":workflow_id", $this->req[0]);
+		oci_bind_by_name($stmt,":conditions", $clob, -1, OCI_B_CLOB);
+		$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+		if (!$r) $this->raiseError();
+		$clob->save(json_encode($this->POSTvars['CONDITIONS']));
+		oci_commit($this->db);
+		$this->done();
 	}
 	function PATCH() {
 		if (isset($this->POSTvars['GROUPS'])) {

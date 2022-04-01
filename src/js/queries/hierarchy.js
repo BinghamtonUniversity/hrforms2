@@ -7,10 +7,10 @@ export function useWorkflowQueries(WORKFLOW_ID) {
         return useQuery('workflow',q('workflow'),options);
     }
     const postWorkflow = () => useMutation(d=>q('workflow','POST',d)());
-    const patchWorkflow = () => useMutation(d=>q(`workflow/${WORKFLOW_ID}`,'PATCH',d)());
+    const putWorkflow = () => useMutation(d=>q(`workflow/${WORKFLOW_ID}`,'PUT',d)());
     const deleteWorkflow = () => useMutation(d=>q(`workflow/${WORKFLOW_ID}`,'DELETE',{})());
 
-    return {getWorkflow,postWorkflow,patchWorkflow,deleteWorkflow};
+    return {getWorkflow,postWorkflow,putWorkflow,deleteWorkflow};
 }
 
 //TODO: probably change to useRequestHierarchyQueries()

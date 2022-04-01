@@ -6,6 +6,7 @@ import JoditEditor from "jodit-react";
 import {editorConfig} from "../../config";
 import {useForm,Controller} from "react-hook-form";
 import {useAppQueries} from "../../queries";
+import { AppButton } from "../../blocks/components";
 
 export default function AdminNews() {
     const {addToast,removeToast} = useToasts();
@@ -38,12 +39,18 @@ export default function AdminNews() {
             </header>
             <article>
                 <Form onSubmit={handleSubmit(onSubmit)}>
-                    <Form.Group controlId="newsText">
-                        <Controller name="newsText" control={control} render={({field:{onBlur,onChange,value}}) => (
-                            <JoditEditor ref={editor} config={config} onBlur={onBlur} value={news.data?.NEWS_TEXT} onChange={onChange}/>
-                        )}/>
+                    <Form.Group as={Row} controlId="newsText">
+                        <Col xs="auto">
+                            <Controller name="newsText" control={control} render={({field:{onBlur,onChange,value}}) => (
+                                <JoditEditor ref={editor} config={config} onBlur={onBlur} value={news.data?.NEWS_TEXT} onChange={onChange}/>
+                            )}/>
+                        </Col>
                     </Form.Group>
-                    <Button variant="primary" type="submit">Update</Button>
+                    <Row>
+                        <Col xs="auto" className="button-group">
+                            <AppButton format="save" type="submit">Update</AppButton>
+                        </Col>
+                    </Row>
                 </Form>
             </article>
         </section>

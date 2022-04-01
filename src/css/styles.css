@@ -42,6 +42,11 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
   border-style: solid;
   border-width: 2px;
 }
+/* striped white badge */
+.badge-white-striped {
+  background: repeating-linear-gradient(-45deg,#ccc,#ccc 5px,#fff 5px,#fff 10px);
+}
+
 
 /* hover effect on nav-links */
 .navbar-dark .navbar-nav .nav-link:hover, 
@@ -84,9 +89,6 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
   display:flex;
   gap:0.3rem;
 }
-.button-group-right {
-  justify-content: right;
-}
 .button-group button { 
   display: inline;
   padding: 0.6rem;
@@ -119,6 +121,7 @@ button.btn-sm.no-label svg.iconify {
 /* droplist styling */
 .droplist {
   height: 50vh;
+  max-height: 300px;
   overflow-y:scroll;
   padding: 0.5rem;
   border: 1px solid #999;

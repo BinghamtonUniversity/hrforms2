@@ -2,11 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useQueryClient } from "react-query";
 import { Row, Col, Form, ToggleButtonGroup, ToggleButton, Button } from "react-bootstrap";
 import { useAppQueries, useAdminQueries } from "../../queries";
-import { Loading } from "../../blocks/components";
-import { useForm, Controller, useWatch } from "react-hook-form";
+import { Loading, AppButton } from "../../blocks/components";
+import { useForm, Controller } from "react-hook-form";
 import { useToasts } from "react-toast-notifications";
 import camelCase from "lodash/camelCase";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { ModalConfirm } from "../../blocks/components";
 
 export default function AdminLists() {
@@ -175,7 +174,7 @@ export default function AdminLists() {
             <section>
                 <header className="mb-4">
                     <Row>
-                        <Col><h2>Admin: Lists <Button variant="success" onClick={newList}>Add New</Button></h2></Col>
+                        <Col><h2>Admin: Lists <AppButton format="add-list" onClick={newList}>Add New</AppButton></h2></Col>
                     </Row>
                 </header>
                 <Form.Group as={Row}>
