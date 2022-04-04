@@ -159,7 +159,7 @@ function DeleteHierarchy({HIERARCHY_ID,setDeleteHierarchy}) {
         setShow(false);
         addToast(<><h5>Deleting</h5><p>Deleting hierarchy...</p></>,{appearance:'info',autoDismiss:false},id=>{
             del.mutateAsync().then(() => {
-                queryclient.refetchQueries(['hierarchy'],{exact:true,throwOnError:true}).then(() => {
+                queryclient.refetchQueries(['hierarchy','request'],{exact:true,throwOnError:true}).then(() => {
                     removeToast(id);
                     addToast(<><h5>Success!</h5><p>Hierarchy deleted successfully.</p></>,{appearance:'success'});
                 });
@@ -234,7 +234,7 @@ function AddEditHierarchy(props) {
             }
             setStatus({state:'saving'});
             create.mutateAsync({...data}).then(d=>{
-                queryclient.refetchQueries('hierarchy').then(() => {
+                queryclient.refetchQueries(['hierarchy','request']).then(() => {
                     setStatus({state:'clear'});
                     addToast(<><h5>Success!</h5><p>Hierarchy created successfully</p></>,{appearance:'success'});
                     closeModal();
@@ -247,7 +247,7 @@ function AddEditHierarchy(props) {
             if (data.workflowId != props.WORKFLOW_ID) {
                 setStatus({state:'saving'});
                 update.mutateAsync({WORKFLOW_ID:data.workflowId}).then(d=>{
-                    queryclient.refetchQueries('hierarchy').then(() => {
+                    queryclient.refetchQueries(['hierarchy','request']).then(() => {
                         setStatus({state:'clear'});
                         addToast(<><h5>Success!</h5><p>Hierarchy updated successfully</p></>,{appearance:'success'});
                         closeModal();

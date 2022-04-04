@@ -123,7 +123,7 @@ function DeleteWorkflow({WORKFLOW_ID,setDeleteWorkflow}) {
         setShow(false);
         addToast(<><h5>Deleting</h5><p>Deleting workflow...</p></>,{appearance:'info',autoDismiss:false},id=>{
             del.mutateAsync().then(() => {
-                queryclient.refetchQueries(['workflow'],{exact:true,throwOnError:true}).then(() => {
+                queryclient.refetchQueries(['workflow','request'],{exact:true,throwOnError:true}).then(() => {
                     removeToast(id);
                     addToast(<><h5>Success!</h5><p>Workflow deleted successfully.</p></>,{appearance:'success'});
                 });
@@ -204,7 +204,10 @@ function AddEditWorkflow(props) {
             }
             setStatus({state:'saving'});
             create.mutateAsync({GROUPS:newGroups}).then(d=>{
-                queryclient.refetchQueries('workflow').then(() => {
+                Promise.all([
+                    queryclient.refetchQueries(['hierarchy','request']),
+                    queryclient.refetchQueries(['workflow','request'])
+                ]).then(() => {
                     setStatus({state:'clear'});
                     addToast(<><h5>Success!</h5><p>Workflow created successfully</p></>,{appearance:'success'});
                     closeModal();
@@ -216,7 +219,10 @@ function AddEditWorkflow(props) {
         } else {
             setStatus({state:'saving'});
             update.mutateAsync({GROUPS:newGroups,CONDITIONS:data.conditions}).then(() => {
-                queryclient.refetchQueries('workflow').then(() => {
+                Promise.all([
+                    queryclient.refetchQueries(['hierarchy','request']),
+                    queryclient.refetchQueries(['workflow','request'])
+                ]).then(() => {
                     setStatus({state:'clear'});
                     addToast(<><h5>Success!</h5><p>Workflow updated successfully</p></>,{appearance:'success'});
                     closeModal();
@@ -229,6 +235,9 @@ function AddEditWorkflow(props) {
     }
     const handleError = error => {
         console.error(error);
+        let msg = 'Workflow form has errors';
+        if (Object.keys(error).includes('conditions')) msg = 'Error with Conditions';
+        setStatus({state:'error',message:msg});
     }
     useEffect(() => {
         const watchFields = methods.watch(()=>setStatus({state:'clear'}));
@@ -359,9 +368,9 @@ function WorkflowGroupList() {
 }
 
 function WorkflowConditions() {
-    const { control, setValue } = useFormContext();
+    const { control, setValue, formState:{ errors } } = useFormContext();
     const assignedgroups = useWatch({name:'assignedGroups',control:control});
-    const { fields, append, remove } = useFieldArray({control:control,name:'conditions'});
+    const { fields, append, remove, update } = useFieldArray({control:control,name:'conditions'});
     
     const handleNewCondition = () =>{
         append({
@@ -374,9 +383,22 @@ function WorkflowConditions() {
     }
     const handleGroupChange = (field,index,e) => {
         field.onChange(e);
-        const group_id = e.target[parseInt(e.target.value)+1].dataset.group_id;
+        let group_id = null;
+        if (e.target.value) group_id = e.target[parseInt(e.target.value)+1].dataset.group_id;
         setValue(`conditions.${index}.group_id`,group_id);
     }
+    useEffect(()=>{
+        fields.forEach((c,i) => {
+            const newIdx = assignedgroups.findIndex(g=>g.GROUP_ID==c.group_id);
+            if (newIdx == -1) {
+                remove(i);
+            } else {
+                c.seq = newIdx;
+                update(i,c);
+                setValue(`conditions.${i}.seq`,newIdx);
+            }
+        });
+    },[assignedgroups]);
     return (
         <>
             <Row className="mb-2">
@@ -386,7 +408,7 @@ function WorkflowConditions() {
             </Row>
             <Row>
                 <Col>
-                    <Table striped bordered>
+                    <Table id="wfConditionsTable" striped bordered>
                         <thead>
                             <tr>
                                 <th>Action</th>
@@ -409,8 +431,9 @@ function WorkflowConditions() {
                                                 name={`conditions.${index}.seq`}
                                                 defaultValue=""
                                                 control={control}
+                                                rules={{required:{value:true,message:'Skip condition selection is required'}}}
                                                 render={({field})=>(
-                                                    <Form.Control {...field} as="select" size="sm" onChange={e=>handleGroupChange(field,index,e)}>
+                                                    <Form.Control {...field} as="select" size="sm" onChange={e=>handleGroupChange(field,index,e)} isInvalid={errors.conditions?.[index].seq}>
                                                         <option></option>
                                                         {assignedgroups.map((g,i)=><option key={i} value={i} data-group_id={g.GROUP_ID}>{i}: {g.GROUP_NAME}</option>)}
                                                     </Form.Control>
@@ -425,8 +448,9 @@ function WorkflowConditions() {
                                                 name={`conditions.${index}.field_name`}
                                                 defaultValue=""
                                                 control={control}
+                                                rules={{required:{value:true,message:'When condition fields are required'}}}
                                                 render={({field})=>(
-                                                    <Form.Control {...field} as="select" size="sm">
+                                                    <Form.Control {...field} as="select" size="sm" isInvalid={errors.conditions?.[index].field_name}>
                                                         <option></option>
                                                         <option value="suny_account">SUNY Account</option>
                                                     </Form.Control>
@@ -438,8 +462,9 @@ function WorkflowConditions() {
                                                 name={`conditions.${index}.field_operator`}
                                                 defaultValue=""
                                                 control={control}
+                                                rules={{required:{value:true,message:'Group selection is required'}}}
                                                 render={({field})=>(
-                                                    <Form.Control {...field} as="select" size="sm">
+                                                    <Form.Control {...field} as="select" size="sm" isInvalid={errors.conditions?.[index].field_operator}>
                                                         <option></option>
                                                         <option value="eq">==</option>
                                                         <option value="ne">!=</option>
@@ -454,7 +479,8 @@ function WorkflowConditions() {
                                                 name={`conditions.${index}.field_value`}
                                                 defaultValue=""
                                                 control={control}
-                                                render={({field})=><Form.Control {...field} type="text" size="sm" />}
+                                                rules={{required:{value:true,message:'Group selection is required'}}}
+                                                render={({field})=><Form.Control {...field} type="text" size="sm" isInvalid={errors.conditions?.[index].field_value}/>}
                                             />
                                         </Col>
                                     </Form.Group>
