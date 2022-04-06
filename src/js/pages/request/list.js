@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import DataTable from 'react-data-table-component';
 import { Icon } from "@iconify/react";
 import { Loading } from "../../blocks/components";
+import { getSettings, currentUser } from "../../app";
 
 export default function RequestList() {
     const {part} = useParams();
@@ -33,6 +34,7 @@ function ListData({list}) {
     const groups = getGroups();
     const listdata = getRequestList(list,{enabled:!!groups.data,select:d=>{
         return d.map(l => {
+            l.STATUS_ARRAY = l.JOURNAL_STATUS.split(',');
             l.GROUPS_ARRAY = l.GROUPS.split(',').map(g => {
                 const name = find(groups.data,{GROUP_ID:g})
                 return {GROUP_ID:g,GROUP_NAME:name?.GROUP_NAME}
@@ -59,6 +61,7 @@ function ListTable({data,list}) {
     const [showApprove,setShowApprove] = useState(undefined);
     const [comment,setComment] = useState('');
 
+    const {SUNY_ID} = currentUser();
     const queryclient = useQueryClient();
     const {postRequest} = useRequestQueries();
     const req = postRequest();
@@ -86,10 +89,7 @@ function ListTable({data,list}) {
         req.mutateAsync({action:action,comment:comment,...selectedRow}).then(d=>{
             console.log(d);
             //refetch: counts and requestlist
-            Promise.all([
-                queryclient.refetchQueries('requestlist'),
-                queryclient.refetchQueries('counts'),
-            ]).then(() => {
+            queryclient.refetchQueries(SUNY_ID).then(() => {
                 setAction(undefined);
                 setSelectedRow(undefined);    
             });
@@ -174,6 +174,8 @@ function ListTable({data,list}) {
 }
 
 function ExpandedComponent({data}) {
+    // TODO: need to create usersettings/permissions and control this per user
+    const [showSkipped,setShowSkipped] = useState(true);
     return (
         <div className="p-3" style={{backgroundColor:'#ddd'}}>
             <span className="my-1">
@@ -181,10 +183,17 @@ function ExpandedComponent({data}) {
                 <span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>
             </span>
             {data.GROUPS_ARRAY.map((g,i)=>{
+                if (data.STATUS_ARRAY[i] == 'X' && !showSkipped) return null;
                 let variant = 'white';
                 let classname = 'p-2 m-0 d-inline-flex flex-column badge-outline border';
                 let title = 'Awaiting';
-                if (i < data.SEQUENCE) { variant = 'success-light'; classname += '-success'; title = 'Approved'; }
+                if (i < data.SEQUENCE) { 
+                    if (data.STATUS_ARRAY[i] == 'X') {
+                        classname += '-dark badge-white-striped'; title = 'Skipped';
+                    } else {
+                        variant = 'success-light'; classname += '-success'; title = 'Approved'; 
+                    }
+                }
                 if (i == data.SEQUENCE && data.STATUS != 'R') { variant = 'info-light'; classname += '-info'; title = 'Pending'; }
                 if (i == data.SEQUENCE && data.STATUS == 'R') { variant = 'danger-light'; classname += '-danger'; title = 'Rejected'; }
                 return (

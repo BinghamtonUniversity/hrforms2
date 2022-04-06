@@ -91,6 +91,7 @@ function BlockNav({reqId,when,isDraft}) {
     const [showModal,setShowModal] = useState(false);
     const [nextLocation,setNextLocation] = useState();
     const [shouldProceed,setShouldProceed] = useState(false);
+    const {SUNY_ID} = currentUser();
     const queryclient = useQueryClient();
     const {deleteRequest} = useRequestQueries(reqId);
     const delReq = deleteRequest();
@@ -108,10 +109,7 @@ function BlockNav({reqId,when,isDraft}) {
         setShowModal(false);
         //TODO: only delete if not saved
         delReq.mutateAsync().then(()=>{
-            Promise.all([
-                queryclient.refetchQueries('counts'),
-                queryclient.refetchQueries('requestlist')
-            ]).then(() => {
+            queryclient.refetchQueries(SUNY_ID).then(() => {
                 handleProceed();
             });
         });
@@ -222,6 +220,8 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
         defaultValues:Object.assign({},defaultVals,data)
     });
 
+    const {SUNY_ID} = currentUser();
+
     const queryclient = useQueryClient();
     const { getListData } = useAppQueries();
     const {postRequest,putRequest,deleteRequest} = useRequestQueries(reqId);
@@ -231,10 +231,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
     const postypes = getListData('posTypes');
 
     const handleRedirect = () => {
-        Promise.all([
-            queryclient.refetchQueries('requestlist'), //update request list
-            queryclient.refetchQueries(['counts']) //update counts
-        ]).then(() => {
+        queryclient.refetchQueries(SUNY_ID).then(() => {
             setShowDeleteModal(false);
             setIsSaving(false);
             setLockTabs(false);
@@ -289,7 +286,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
         });
     }
     const handleSubmit = data => {
-        console.log(data);
+        console.debug(data);
         setHasErrors(false);
         if (!data.action) return; // just validating the form, not saving
         setIsSaving(true);
@@ -300,6 +297,11 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
                 console.debug(d);
                 handleRedirect();
             }).catch(e => {
+                //TODO: for testing
+                //TODO: need to handle errors better
+                setIsSaving(false);
+                setLockTabs(false);
+                //end testing
                 console.error(e);
             });
         } else {

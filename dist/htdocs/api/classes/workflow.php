@@ -24,24 +24,37 @@ class Workflow extends HRForms2 {
 	 * validate called from init()
 	 */
 	function validate() {
-		// Validation...
+		//TODO: check this, do regular users need to GET?
+		if (!$this->sessionData['isAdmin']) $this->raiseError(403);
+		if (in_array($this->method,array('PUT','PATCH','DELETE')) && !isset($this->req[0])) $this->raiseError(400);		
 	}
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-        $qry = "select * from hrforms2_requests_workflow";
-        if (isset($this->req[0])) $qry .= " where workflow_id = :id";
-		$stmt = oci_parse($this->db,$qry);
-        if (isset($this->req[0])) oci_bind_by_name($stmt,":id", $this->req[0]);
-		$r = oci_execute($stmt);
-		if (!$r) $this->raiseError();
-		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
-			$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
-			unset($row['CONDITIONS']);
-			$row['CONDITIONS'] = json_decode($conditions);
-			$this->_arr[] = $row;
+		switch($this->req[0]) {
+			case "request": /** Request Work Flows */
+				$qry = "select * from hrforms2_requests_workflow";
+				if (isset($this->req[1])) $qry .= " where workflow_id = :id";
+				$stmt = oci_parse($this->db,$qry);
+				if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $this->req[1]);
+				$r = oci_execute($stmt);
+				if (!$r) $this->raiseError();
+				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
+					unset($row['CONDITIONS']);
+					$row['CONDITIONS'] = json_decode($conditions);
+					$this->_arr[] = $row;
+				}		
+				oci_free_statement($stmt);
+				break;
+
+			case "form": /** Form Work Flows */
+				echo "TBD: Forms Work Flows";
+				break;
+
+			default:
+				$this->raiseError(E_BAD_REQUEST);
 		}
-		oci_free_statement($stmt);
 		$this->returnData = $this->_arr;
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
