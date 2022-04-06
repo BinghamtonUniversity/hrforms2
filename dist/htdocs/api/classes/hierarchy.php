@@ -24,44 +24,48 @@ class Hierarchy extends HRForms2 {
 	 * validate called from init()
 	 */
 	function validate() {
+		//TODO: check this, do regular users need to GET?
 		if (!$this->sessionData['isAdmin']) $this->raiseError(403);
 		if (in_array($this->method,array('PUT','PATCH','DELETE')) && !isset($this->req[0])) $this->raiseError(400);
 	}
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		//TODO: Handle form vs request hierarchy
 		//TODO: Allow for lookup with groupID
-		if ($this->req[0] == 'request') {
-			$qry = "select h.HIERARCHY_ID,h.POSITION_TYPE,h.GROUP_ID,g.GROUP_NAME,h.WORKFLOW_ID,w.GROUPS,w.CONDITIONS
-			from hrforms2_requests_hierarchy h
-			left join (select * from hrforms2_groups) g on (h.group_id = g.group_id)
-			left join (select * from hrforms2_requests_workflow) w on (h.workflow_id = w.workflow_id)";	
-			if ($this->req[1] == 'group') {
-				$qry .= " where h.group_id = :id";
-				$id = $this->req[2];
-			} elseif (isset($this->req[1])) {
-				$qry .= " where h.hierarchy_id = :id";
-				$id = $this->req[1];
-			}
-			$stmt = oci_parse($this->db,$qry);
-			if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $id);
-			$r = oci_execute($stmt);
-			if (!$r) $this->raiseError();
-			while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
-				$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
-				unset($row['CONDITIONS']);
-				$row['CONDITIONS'] = json_decode($conditions);
-				$this->_arr[] = $row;
-			}
-			oci_free_statement($stmt);
-			$this->returnData = $this->_arr;
-			if ($this->retJSON) $this->toJSON($this->returnData);
-			return;
+		switch($this->req[0]) {
+			case "request": /** Request Hierarchy */
+				$qry = "select h.HIERARCHY_ID,h.POSITION_TYPE,h.GROUP_ID,g.GROUP_NAME,h.WORKFLOW_ID,w.GROUPS,w.CONDITIONS
+				from hrforms2_requests_hierarchy h
+				left join (select * from hrforms2_groups) g on (h.group_id = g.group_id)
+				left join (select * from hrforms2_requests_workflow) w on (h.workflow_id = w.workflow_id)";	
+				if ($this->req[1] == 'group') {
+					$qry .= " where h.group_id = :id";
+					$id = $this->req[2];
+				} elseif (isset($this->req[1])) {
+					$qry .= " where h.hierarchy_id = :id";
+					$id = $this->req[1];
+				}
+				$stmt = oci_parse($this->db,$qry);
+				if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $id);
+				$r = oci_execute($stmt);
+				if (!$r) $this->raiseError();
+				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
+					unset($row['CONDITIONS']);
+					$row['CONDITIONS'] = json_decode($conditions);
+					$this->_arr[] = $row;
+				}
+				oci_free_statement($stmt);
+				break;
+
+			case "form": /** Form Hierarchy */
+				echo "TBD: Form Hierarchy";
+				break;
+			default:
+				$this->raiseError(E_BAD_REQUEST);
 		}
-		if ($this->req[0] == 'form') {
-			echo "form hierarchy";
-		}
+		$this->returnData = $this->_arr;
+		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
 	function POST() {
 		$qry = "insert into hrforms2_requests_hierarchy 

@@ -8,14 +8,10 @@ import get from "lodash/get";
 export default function AppNav({userCounts}) {
     const {SUNY_ID,isAdmin,OVR_SUNY_ID} = getAuthInfo();
     const user = currentUser();
-
     const logout = e => {
         e.preventDefault();
         console.log('logout');
     }
-    useEffect(()=>{
-        console.log(userCounts);
-    },[userCounts]);
     //TODO: check a/b match; if different and isAdmin then impersonation; otherwise kickout.
     //(!isAdmin && SUNY_ID != user.SUNY_ID)
     return (
@@ -27,7 +23,7 @@ export default function AppNav({userCounts}) {
                     <Nav>
                         <Nav.Link as={Link} to="/">Home</Nav.Link>
                         {Object.keys(userCounts).map(c =>{
-                            const single = c.slice(0,-1);
+                            const single = '/'+c.slice(0,-1);
                             return (
                                 <NavDropdown key={`${single}-menu`} title={capitalize(c)} id="request-nav-dropdown" alignRight>
                                     <NavDropdown.Item as={Link} to={single}>New {capitalize(single)}</NavDropdown.Item>

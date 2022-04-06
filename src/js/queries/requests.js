@@ -17,6 +17,9 @@ export default function useRequestQueries(REQUEST_ID) {
         return useQuery(['requests',REQUEST_ID],q(`requests/${reqIdAsPath}`),options);
     }
     const postRequest = () => useMutation(d=>q(`requests/${reqIdAsPath}`,'POST',d)());
+    const submitRequest = () => useMutation(d=>q(`requests/submit/${reqIdAsPath}`,'POST',d)());
+    const approveRequest = () => useMutation(d=>q(`requests/approve/${reqIdAsPath}`,'POST',d)());
+    const rejectRequest = () => useMutation(d=>q(`requests/reject/${reqIdAsPath}`,'POST',d)());
     const putRequest = () => useMutation(d=>q(`requests/${reqIdAsPath}`,'PUT',d)());
     const deleteRequest = () => useMutation(d=>q(`requests/${reqIdAsPath}`,'DELETE',d)());
 

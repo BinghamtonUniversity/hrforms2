@@ -57,7 +57,60 @@ class Requests extends HRForms2 {
 	}
 
     function POST() {
+        //TODO: should this be part of the URL?
+        //POST: https://{domain}/api/api.php/requests/draft/... (eq action=="save")
+        //POST: https://{domain}/api/api.php/requests/submit/12
+        //POST: https://{domain}/api/api.php/requests/approve/12
+        //POST: https://{domain}/api/api.php/requests/reject/12
+        
+        switch($this->POSTvars['action']) {
+            case "submit":
+
+            case "approve":
+
+            case "reject":
+            
+            case "save":
+                //Limit number of drafts a user may have; to prevent "SPAMMING"
+                $qry = "select count(*) from HRFORMS2_REQUESTS_DRAFTS where SUNY_ID = :suny_id";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
+                $row = oci_fetch_array($stmt,OCI_ARRAY+OCI_RETURN_NULLS);
+                oci_free_statement($stmt);
+                if ($row[0] > MAX_DRAFTS) {
+                    $this->raiseError(E_TOO_MANY_DRAFTS);
+                    return;
+                }
+                $unix_ts = time();
+                $reqId = 'draft-'.$this->sessionData['EFFECTIVE_SUNY_ID'].'-'.$unix_ts;
+                $this->POSTvars['reqId'] = $reqId;
+                //TODO: need to modify POSTvars to use new assigned draft ID; don't use the assigned code... assigned could just be "draft"?
+                $qry = "insert into HRFORMS2_REQUESTS_DRAFTS values(:suny_id, :unix_ts, EMPTY_CLOB()) returning DATA into :data";
+                $stmt = oci_parse($this->db,$qry);
+                $clob = oci_new_descriptor($this->db, OCI_D_LOB);
+                oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
+                oci_bind_by_name($stmt, ":unix_ts", $unix_ts);
+                oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
+                $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+                if (!$r) $this->raiseError();
+                $clob->save(json_encode($this->POSTvars));
+                oci_commit($this->db);
+                if ($this->retJSON) $this->toJSON(array('reqId'=>$reqId));
+                break;
+
+            default:
+                $this->raiseError(E_BAD_REUQEST);
+        }
+        return;
+
+        //TODO: need to handle out of range on groups
         if ($this->POSTvars['action'] == 'submit') {
+            $journal_array = array("S");
+            $match = array();
+            $conditions = array();
+
             // get user's group
             $_SERVER['REQUEST_METHOD'] = 'GET';
             $user = (new user(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData[0];
@@ -66,14 +119,35 @@ class Requests extends HRForms2 {
             //get hierarchy for group
             $h = (new hierarchy(array('request','group',$group['GROUP_ID']),false))->returnData;
             $idx = array_search($this->POSTvars['posType']['id'],array_column($h,'POSITION_TYPE'));
-
-            //TODO: if idx == -1 not found
+            if($idx == -1) $this->raiseError(); //TODO: handle error
             $hierarchy = $h[$idx];
             $groups = $hierarchy['GROUPS'];
             // get next group to
             $groups_array = explode(",",$groups);
-            $group_to = $groups_array[0];
             
+            // Check for skip conditions
+            $wf = (new workflow(array('request',$hierarchy['WORKFLOW_ID']),false))->returnData[0];
+            $conditions = array_filter($wf['CONDITIONS'],function($c) {return strval($c->seq) == "0";});
+            if (sizeof($conditions) != 0) {
+                //collect the account numbers
+                $accounts = array_map(function($account) {return $account['account'][0]['id'];},$this->POSTvars['SUNYAccounts']);
+                // for each account test against each condition
+                $match = array_filter($accounts,function($account) use($conditions) {
+                    foreach ($conditions as $condition) {
+                        switch($condition->field_name) {
+                            case "suny_account":
+                                switch($condition->field_operator) {
+                                    case "eq": return $account != $condition->field_value;
+                                    case "ne": return $account == $condition->field_value;
+                                    case "sw": return substr($account, 0, strlen($condition->field_value)) != $condition->field_value;
+                                    case "ns": return substr($account, 0, strlen($condition->field_value)) == $condition->field_value;
+                                }
+                                break;
+                        }
+                    }
+                });
+            }
+
             //extract comments from JSON
             $comment = $this->POSTvars['comment'];
 
@@ -96,32 +170,40 @@ class Requests extends HRForms2 {
             $request_data->save(json_encode($this->POSTvars));
             oci_commit($this->db);
 
-            $request_data = array(
-                'request_id'=>$request_id,
-                'hierarchy_id'=>$hierarchy['HIERARCHY_ID'],
-                'workflow_id'=>$hierarchy['WORKFLOW_ID'],
-                'seq'=>0,
-                'groups'=>$groups,
-                'group_from'=>$group['GROUP_ID'],
-                'group_to'=>$group_to,
-                'comment'=>$comment
-            );
-            $this->POSTvars['request_data'] = $request_data;
+            if (!$match && $conditions) {
+                array_unshift($journal_array,"X");
+            }
 
-            // insert into hrforms2_requests_journal
             $_SERVER['REQUEST_METHOD'] = 'POST';
-            $journal = (new journal(array($request_id,'S',$request_data),false))->returnData;
+
+            foreach ($journal_array as $i=>$j) {
+                $request_data = array(
+                    'request_id'=>$request_id,
+                    'hierarchy_id'=>$hierarchy['HIERARCHY_ID'],
+                    'workflow_id'=>$hierarchy['WORKFLOW_ID'],
+                    'seq'=>$i,
+                    'groups'=>$groups,
+                    'group_from'=>$group['GROUP_ID'],
+                    'group_to'=>$groups_array[$i],
+                    'comment'=>$comment
+                );
+                $this->POSTvars['request_data'] = $request_data;
+                $journal = (new journal(array($request_id,$j,$request_data),false))->returnData;
+            }
 
             // delete from hrforms2_requests_drafts (call delete)
             $_SERVER['REQUEST_METHOD'] = 'DELETE';
             $del_draft = (new requests($this->req,false));
 
+            //TODO: should the return also have the skipped one?
             $this->toJSON($request_data);
 
         /* HANDLE APPROVALS */
         } else if ($this->POSTvars['action'] == 'approve') {
             //get hierarchy info based on reqId
             //TODO: need to handle end of WF chain (i.e. final appove and archive)
+            //TODO: get conditions; if condition indicates a skip, get next index.
+
             $_SERVER['REQUEST_METHOD'] = 'GET';
             $journal = (new journal(array($this->POSTvars['REQUEST_ID']),false))->returnData;
             $last_journal = $journal[count($journal)-1];

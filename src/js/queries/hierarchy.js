@@ -4,7 +4,7 @@ import {useQuery,useMutation} from "react-query";
 export function useWorkflowQueries(WORKFLOW_ID) {
     const getWorkflow = (...args) => {
         const options = args[0]?.options||args[0]||{};
-        return useQuery(['workflow','request'],q('workflow'),options);
+        return useQuery(['workflow','request'],q('workflow/request'),options);
     }
     const postWorkflow = () => useMutation(d=>q('workflow','POST',d)());
     const putWorkflow = () => useMutation(d=>q(`workflow/${WORKFLOW_ID}`,'PUT',d)());

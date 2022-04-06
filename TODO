@@ -3,16 +3,15 @@ bug/fix:
 
 todo: 
  * use Helmet to change the title of the page
- * use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
+ + use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
  + add setting to enable/disable rejections for requests (not currently used in prod, helpful for testing).
  * when reviewing (i.e. approver) hide tabs other than review and comments?
  * work on comments tab when not draft.
- * split hierarchy/workflow code to lazy load
  + add default routing in settings
  * user should show dept and associated group
  * switch delete modals to component: ModalConfirm
- * build request archive tables: journal and request
- * make home page list and menus configurable in settings (title, enabled, show on home, show on menu)
+ + build request archive tables: journal and request
+ + make home page list and menus configurable in settings (title, enabled, show on home, show on menu)
  + "globalize" icons (e.g. the "save" icon should be the same for all; this may be making buttons a component)
  * On app error allow "reset"; test with undefined import component.
 
@@ -21,16 +20,12 @@ Future enhancement:
 
 #Notes:
 ## items for HRF2
-difr/account WF
 chosen first name
-
-* handle difr account as a "branch":
-insert after group: 
-if account one of:
 
 ##settings:
 general:
 
 draft_limit:10
-show_request_wf: yes/no/by group
-show_forms_wf: yes/no/bby group
+show_skipped_wf: yes/no/by group/per user
+show_request_wf: yes/no/by group/per user
+show_forms_wf: yes/no/by group/per user
