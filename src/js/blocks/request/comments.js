@@ -42,7 +42,7 @@ function CommentsHistory({reqId}) {
 
 function CommentsTable({reqId}) {
     const {getJournal} = useRequestQueries(reqId);
-    const journal = getJournal();
+    const journal = getJournal({select:d=>d.filter(c=>c.STATUS!='X')});
     const columns = useMemo(() => [
         {name:'Date',selector:row=>row.JOURNAL_DATE},
         {name:'By',selector:row=>row.SUNY_ID},

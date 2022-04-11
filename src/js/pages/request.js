@@ -286,29 +286,42 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
         });
     }
     const handleSubmit = data => {
-        console.debug(data);
         setHasErrors(false);
         if (!data.action) return; // just validating the form, not saving
         setIsSaving(true);
         setIsBlocking(true); //TODO: when true should be full block with no prompt
         setLockTabs(true);
-        if (isNew || data.action=='submit') {
-            createReq.mutateAsync(data).then(d => {
-                console.debug(d);
-                handleRedirect();
-            }).catch(e => {
-                //TODO: for testing
-                //TODO: need to handle errors better
-                setIsSaving(false);
-                setLockTabs(false);
-                //end testing
-                console.error(e);
-            });
+        //TODO: switch? save, submit, appove, reject?
+        if (isDraft) {
+            if (isNew || data.action=='submit') {
+                createReq.mutateAsync(data).then(d => {
+                    console.debug(d);
+                    handleRedirect();
+                }).catch(e => {
+                    //TODO: for testing
+                    //TODO: need to handle errors better
+                    setIsSaving(false);
+                    setLockTabs(false);
+                    //end testing
+                    console.error(e);
+                });
+            } else {
+                updateReq.mutateAsync(data).then(() => {
+                    handleRedirect();
+                }).catch(e => {
+                    console.error(e);
+                });
+            }
         } else {
-            updateReq.mutateAsync(data).then(() => {
+            createReq.mutateAsync(data).then(() =>{
                 handleRedirect();
             }).catch(e => {
-                console.error(e);
+                    //TODO: for testing
+                    //TODO: need to handle errors better
+                    setIsSaving(false);
+                    setLockTabs(false);
+                    //end testing
+                    console.error(e);
             });
         }
     }
@@ -365,23 +378,25 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
                                 <RequestTabRouter tab={t.id} isNew={isNew}/>
                                 <Row as="footer">
                                     <Col className="button-group justify-content-end">
-                                        {isDraft && 
-                                            <>
-                                                {hasErrors && <div className="d-inline-flex align-items-center text-danger mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:alert"/><span>Errors</span></div>}
-                                                {isSaving && <div className="d-inline-flex align-items-center mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:loading" className="spin"/><span>Saving...</span></div>}
-                                                {methods.formState.isDirty && <AppButton format="undo" onClick={handleUndo} disabled={isSaving}>Undo</AppButton>}
-                                                {!isNew && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
-                                                {!(isNew&&lockTabs)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
-                                                {t.id!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
-                                                {t.id=='review'&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}>Submit</AppButton>}
-                                            </>
-                                        }
-                                        {!isDraft && 
-                                            <>
-                                                <Button id="reject" variant="danger" onClick={()=>console.log('reject')} disabled={hasErrors||isSaving}><Icon icon="mdi:close-circle"/>Reject</Button>
-                                                <Button id="approve" variant="success" onClick={()=>console.log('approve')} disabled={hasErrors||isSaving}><Icon icon="mdi:check"/>Appprove</Button>
-                                            </>
-                                        }
+                                        <>
+                                            {hasErrors && <div className="d-inline-flex align-items-center text-danger mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:alert"/><span>Errors</span></div>}
+                                            {isSaving && <div className="d-inline-flex align-items-center mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:loading" className="spin"/><span>Saving...</span></div>}
+                                            {t.id!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
+                                            {isDraft && 
+                                                <>
+                                                    {methods.formState.isDirty && <AppButton format="undo" onClick={handleUndo} disabled={isSaving}>Undo</AppButton>}
+                                                    {!isNew && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
+                                                    {!(isNew&&lockTabs)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
+                                                    {t.id=='review'&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}>Submit</AppButton>}
+                                                </>
+                                            }
+                                            {(!isDraft&&t.id=='review') && 
+                                                <>
+                                                    <Button id="reject" variant="danger" onClick={()=>console.log('reject')} disabled={hasErrors||isSaving}><Icon icon="mdi:close-circle"/>Reject</Button>
+                                                    <Button id="approve" variant="success" onClick={()=>handleSave('approve')} disabled={hasErrors||isSaving}><Icon icon="mdi:check"/>Appprove</Button>
+                                                </>
+                                            }
+                                        </>
                                     </Col>
                                 </Row>
                             </Container>

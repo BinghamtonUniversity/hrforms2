@@ -53,7 +53,7 @@ export default function Account() {
                     <Form.Control.Feedback type="invalid">{errors.orgName?.message}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
-            <SUNYAccount/>
+            <SUNYAccount disabled={!isDraft}/>
         </>
     );
 }

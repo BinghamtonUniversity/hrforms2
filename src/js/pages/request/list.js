@@ -1,15 +1,16 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {useParams} from "react-router-dom";
 import { useQueryClient } from "react-query";
 import useRequestQueries from "../../queries/requests";
 import useGroupQueries from "../../queries/groups";
-import find from "lodash/find";
+import { useForm, Controller } from "react-hook-form";
+import { capitalize, find } from "lodash";
 import { Redirect } from "react-router-dom";
 import { Row, Col, Button, Badge, Modal, Form } from "react-bootstrap";
 import { format } from "date-fns";
 import DataTable from 'react-data-table-component';
 import { Icon } from "@iconify/react";
-import { Loading } from "../../blocks/components";
+import { Loading, ModalConfirm } from "../../blocks/components";
 import { getSettings, currentUser } from "../../app";
 
 export default function RequestList() {
@@ -58,13 +59,12 @@ function ListTable({data,list}) {
     const [redirect,setRedirect] = useState();
     const [action,setAction] = useState();
     const [selectedRow,setSelectedRow] = useState();
-    const [showApprove,setShowApprove] = useState(undefined);
-    const [comment,setComment] = useState('');
 
     const {SUNY_ID} = currentUser();
     const queryclient = useQueryClient();
-    const {postRequest} = useRequestQueries();
+    const {postRequest,deleteRequest} = useRequestQueries(selectedRow?.REQUEST_ID);
     const req = postRequest();
+    const delReq = deleteRequest();
 
     const handleRowClick = row => {
         if (list=='drafts') {
@@ -72,21 +72,20 @@ function ListTable({data,list}) {
         } else {
             setRedirect('/request/'+row.REQUEST_ID);
         }
-    }
+    };
 
     const handleAction = (a,r) => {
         setAction(a);
         setSelectedRow(r);
-    }
-    const modalCallback = e => {
+    };
+    const modalCallback = (e,comment) => {
         if (!e || e?.target.id == 'cancel') {
-            console.log('close');
             setAction(undefined);
             setSelectedRow(undefined);
             return true;
         }
-        console.log(action,selectedRow);
-        req.mutateAsync({action:action,comment:comment,...selectedRow}).then(d=>{
+        console.log(action,comment);
+        req.mutateAsync({action:action,reqId:selectedRow.REQUEST_ID,comment:comment,...selectedRow}).then(d=>{
             console.log(d);
             //refetch: counts and requestlist
             queryclient.refetchQueries(SUNY_ID).then(() => {
@@ -94,33 +93,25 @@ function ListTable({data,list}) {
                 setSelectedRow(undefined);    
             });
         });
-    }
+    };
 
-    const handleApprove = useCallback(e=>{
-        if (!e || e?.target.id == 'cancel') {
-            console.log('close');
-            setShowApprove(undefined);
-            setComment('');
-            return true;
-        } 
-        console.log(showApprove,comment);
-        console.log('do approve stuff...');
-        req.mutateAsync({action:'approve',comment:comment,...showApprove}).then(d=>{
-            console.log(d);
-        });
-        setShowApprove(undefined);
-    },[showApprove,comment]);
-
-    const handleDelete = useCallback(row => {
-        console.log(row);
-        //pop modal for confirm to delete.
-    });
+    const confirmDeleteButtons = {
+        close:{title:'Cancel',callback:()=>setAction(undefined)},
+        confirm:{title:'Delete',variant:'danger',callback:()=>{
+            delReq.mutateAsync().then(()=>{
+                queryclient.refetchQueries(SUNY_ID).then(() => {
+                    setAction(undefined);
+                    setSelectedRow(undefined);    
+                });    
+            });
+        }}
+    };
 
     const columns = useMemo(() => [
         {name:'Actions',cell:row=>{
             return (
                 <div className="button-group">
-                    {(list=='drafts')&&<Button variant="danger" className="no-label" size="sm" title="Delete Draft" onClick={()=>handleDelete(row)}><Icon icon="mdi:delete"/></Button>}
+                    {(list=='drafts')&&<Button variant="danger" className="no-label" size="sm" title="Delete Draft" onClick={()=>handleAction('delete',row)}><Icon icon="mdi:delete"/></Button>}
                     {!(['drafts','pending','rejections'].includes(list))&&
                         <>
                             <Button variant="success" className="no-label" size="sm" title="Approve" onClick={()=>handleAction('approve',row)}><Icon icon="mdi:check"/></Button>
@@ -135,6 +126,7 @@ function ListTable({data,list}) {
             switch(row.STATUS) {
                 case "S":
                 case "A": return "Pending Review"; break;
+                case "F": return "Pending Final Review"; break;
                 case "R": return "Rejected"; break;
                 case "Z": return "Archived"; break;
                 case "draft": return "Draft"; break;
@@ -167,8 +159,8 @@ function ListTable({data,list}) {
                 expandableRows={(list!='drafts')}
                 expandableRowsComponent={ExpandedComponent}
             />
-            {showApprove && <ApproveRequestModal {...showApprove} handleApprove={handleApprove} setComment={setComment}/>}
-            {action && <ActionModal action={action} modalCallback={modalCallback} setComment={setComment} />}
+            <ModalConfirm show={action=='delete'} title="Delete?" buttons={confirmDeleteButtons}>Are you sure you want to DELETE draft: {selectedRow?.REQUEST_ID}?</ModalConfirm>
+            {(action&&action!='delete') && <ActionModal action={action} modalCallback={modalCallback}/>}
         </>
     );
 }
@@ -195,6 +187,7 @@ function ExpandedComponent({data}) {
                     }
                 }
                 if (i == data.SEQUENCE && data.STATUS != 'R') { variant = 'info-light'; classname += '-info'; title = 'Pending'; }
+                if (data.STATUS_ARRAY[i] == 'F') {title = 'Pending Final';}
                 if (i == data.SEQUENCE && data.STATUS == 'R') { variant = 'danger-light'; classname += '-danger'; title = 'Rejected'; }
                 return (
                     <span key={i} className="my-1">
@@ -210,47 +203,34 @@ function ExpandedComponent({data}) {
     );
 }
 
-function ActionModal({action,modalCallback,setComment}) {
+function ActionModal({action,modalCallback}) {
+    const {handleSubmit,control,setFocus,formState:{errors}} = useForm();
+    const onSubmit = (data,e) => modalCallback(e,data.comment);
+    const onError = error => {
+        console.error(error);
+    }
+    useEffect(()=>setFocus('comment'),[setFocus]);
     return (
         <Modal show={true} onHide={modalCallback} backdrop="static">
-            <Modal.Header closeButton>
-                <Modal.Title>{action}</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <Form>
-                    <Form.Group controlId="comment">
-                        <Form.Label>Comment</Form.Label>
-                        <Form.Control as="textarea" rows={3} onChange={e=>setComment(e.target.value)}/>
-                    </Form.Group>
-                </Form>
-            </Modal.Body>
-            <Modal.Footer>
-                <Button id="cancel" variant="secondary" onClick={modalCallback}>Cancel</Button>
-                <Button id={action} variant="danger" onClick={modalCallback}>{action}</Button>
-            </Modal.Footer>
-        </Modal>
-    );
-}
-
-function ApproveRequestModal({REQUEST_ID,handleApprove,setComment}) {
-    //use a callback to do the update/patch and setselectedrow and showapprove?
-    return (
-        <Modal show={true} onHide={handleApprove} backdrop="static">
-            <Modal.Header closeButton>
-                <Modal.Title>Approve?</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <Form>
-                    <Form.Group controlId="exampleForm.ControlTextarea1">
-                        <Form.Label>Example textarea</Form.Label>
-                        <Form.Control as="textarea" rows={3} onChange={e=>setComment(e.target.value)}/>
-                    </Form.Group>
-                </Form>
-            </Modal.Body>
-            <Modal.Footer>
-                <Button id="cancel" variant="secondary" onClick={handleApprove}>Cancel</Button>
-                <Button id="approve" variant="danger" onClick={handleApprove}>Approve</Button>
-            </Modal.Footer>
+            <Form onSubmit={handleSubmit(onSubmit,onError)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>{capitalize(action)}</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                        <Controller
+                            name="comment"
+                            defaultValue=""
+                            rules={{required:{value:true,message:'Comment is required'}}}
+                            control={control}
+                            render={({field}) => <Form.Control {...field} as="textarea" placeholder="Enter a brief comment" rows={5} isInvalid={errors.comment}/>}
+                        />
+                        <Form.Control.Feedback type="invalid">{errors.comment?.message}</Form.Control.Feedback>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button id="cancel" variant="secondary" onClick={modalCallback}>Cancel</Button>
+                    <Button type="submit" id={action} variant={(action=='approve'?'success':'danger')}>{capitalize(action)}</Button>
+                </Modal.Footer>
+            </Form>
         </Modal>
     );
 }

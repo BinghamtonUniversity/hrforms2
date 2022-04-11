@@ -1,7 +1,9 @@
 bug/fix:
  * add "id" key for all tables data
+ * fix settings, getting "uncontrolled" error on form inputs
 
 todo: 
+ * remove last group from skip select list - cannot skip the last one.  Need to handle when changed.
  * use Helmet to change the title of the page
  + use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
  + add setting to enable/disable rejections for requests (not currently used in prod, helpful for testing).
@@ -10,8 +12,6 @@ todo:
  + add default routing in settings
  * user should show dept and associated group
  * switch delete modals to component: ModalConfirm
- + build request archive tables: journal and request
- + make home page list and menus configurable in settings (title, enabled, show on home, show on menu)
  + "globalize" icons (e.g. the "save" icon should be the same for all; this may be making buttons a component)
  * On app error allow "reset"; test with undefined import component.
 
