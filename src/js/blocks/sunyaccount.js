@@ -7,7 +7,7 @@ import { Icon } from '@iconify/react';
 import { get } from "lodash";
 import { Loading } from "./components";
 
-export default function SUNYAccount() {
+export default function SUNYAccount(props) {
     const {control,getValues,setValue} = useFormContext();
     const { fields, append, remove } = useFieldArray({control,name:'SUNYAccounts'});
 
@@ -65,21 +65,21 @@ export default function SUNYAccount() {
                                 name="SUNYAccounts.0.account"
                                 defaultValue=""
                                 control={control}
-                                render={({field})=><Typeahead {...field} id="SUNYAccounts-0" options={accounts.data} flip={true} minLength={2} allowNew={true} selected={field.value} onBlur={e=>handleBlur(field,0,e)} disabled={showSplit}/>}
+                                render={({field})=><Typeahead {...field} id="SUNYAccounts-0" options={accounts.data} flip={true} minLength={2} allowNew={true} selected={field.value} onBlur={e=>handleBlur(field,0,e)} disabled={showSplit||props.disabled}/>}
                             />
                             <InputGroup.Append>
-                                <Button variant={(showSplit)?'secondary':'primary'} onClick={()=>toggleSplit()}>Split</Button>
+                                <Button variant={(showSplit)?'secondary':'primary'} onClick={()=>toggleSplit()} disabled={props.disabled}>Split</Button>
                             </InputGroup.Append>
                         </InputGroup>
                     }
                 </Col>
             </Form.Group>
-            {showSplit && <SplitTable accounts={accounts.data} fields={fields} splitAction={splitAction} handleBlur={handleBlur}/>}
+            {showSplit && <SplitTable accounts={accounts.data} fields={fields} splitAction={splitAction} handleBlur={handleBlur} {...props}/>}
         </>
     );
 }
 
-function SplitTable({accounts,fields,splitAction,handleBlur}) {
+function SplitTable({accounts,fields,splitAction,handleBlur,disabled}) {
     const [splitPct,setSplitPct] = useState(0);
     
     const {control,formState:{errors}} = useFormContext();
@@ -125,7 +125,7 @@ function SplitTable({accounts,fields,splitAction,handleBlur}) {
                                         name={`SUNYAccounts.${index}.account`}
                                         defaultValue=""
                                         control={control}
-                                        render={({field})=><Typeahead {...field} id={`SUNYAccounts-${index}`} options={accounts} flip={true} minLength={2} allowNew={true} selected={field.value} onBlur={e=>handleBlur(field,index,e)} />}
+                                        render={({field})=><Typeahead {...field} id={`SUNYAccounts-${index}`} options={accounts} flip={true} minLength={2} allowNew={true} selected={field.value} onBlur={e=>handleBlur(field,index,e)} disabled={disabled}/>}
                                     />
                                 }
                             </td>
@@ -139,7 +139,7 @@ function SplitTable({accounts,fields,splitAction,handleBlur}) {
                                         max:{value:100,message:'Percentage cannot be more than 100'}
                                     }}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="number" title={get(errors.SUNYAccounts,`${index}.pct.message`)} isInvalid={get(errors.SUNYAccounts,`${index}.pct`)}/>}
+                                    render={({field}) => <Form.Control {...field} type="number" title={get(errors.SUNYAccounts,`${index}.pct.message`)} isInvalid={get(errors.SUNYAccounts,`${index}.pct`)} disabled={disabled}/>}
                                 />
                             </td>
                         </tr>

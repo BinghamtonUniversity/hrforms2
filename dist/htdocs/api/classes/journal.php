@@ -32,7 +32,8 @@ class Journal extends HRForms2 {
 	function GET() {
 		$qry = "select request_id, to_char(journal_date,'DD-MON-YYYY HH24:MI:SS') as journal_date,
         suny_id, status, hierarchy_id, workflow_id, sequence, group_from, group_to, comments
-        from hrforms2_requests_journal where request_id = :request_id";
+        from hrforms2_requests_journal where request_id = :request_id
+        order by sequence";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt,":request_id",$this->req[0]);
         $r = oci_execute($stmt);
