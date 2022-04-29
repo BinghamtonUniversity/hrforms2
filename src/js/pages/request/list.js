@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {useParams} from "react-router-dom";
 import { useQueryClient } from "react-query";
 import useRequestQueries from "../../queries/requests";
@@ -7,25 +7,30 @@ import { useForm, Controller } from "react-hook-form";
 import { capitalize, find } from "lodash";
 import { Redirect } from "react-router-dom";
 import { Row, Col, Button, Badge, Modal, Form } from "react-bootstrap";
-import { format, set } from "date-fns";
+import { format } from "date-fns";
 import DataTable from 'react-data-table-component';
 import { Icon } from "@iconify/react";
 import { Loading, ModalConfirm } from "../../blocks/components";
-import { getSettings, currentUser, getAuthInfo } from "../../app";
+import { getSettings, currentUser, getAuthInfo, SettingsContext } from "../../app";
+import { useHotkeys } from "react-hotkeys-hook";
 
 export default function RequestList() {
     const {part} = useParams();
     return (
-        <>
-            <header>
-                <Row>
-                    <Col><h2>List: {part}</h2></Col>
-                </Row>
-            </header>
-            <section>
-                <ListData list={(part)?part:'all'}/>
-            </section>
-        </>
+        <SettingsContext.Consumer>
+            {({requests}) => (
+                <>
+                    <header>
+                        <Row>
+                            <Col><h2>List: {requests[part]?.title}</h2></Col>
+                        </Row>
+                    </header>
+                    <section>
+                        <ListData list={(part)?part:'all'}/>
+                    </section>
+                </>
+            )}
+        </SettingsContext.Consumer>
     );
 }
 
@@ -55,12 +60,24 @@ function ListData({list}) {
 }
 
 function ListTable({data,list}) {
+    const [filterText,setFilterText] = useState('');
     const [rows,setRows] = useState([]);
     const [redirect,setRedirect] = useState();
     const [action,setAction] = useState();
     const [selectedRow,setSelectedRow] = useState();
+    const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
+
+    const searchRef = useRef();
+
+    useHotkeys('ctrl+f',e=>{
+        e.preventDefault();
+        searchRef.current.focus()
+    });
+
 
     const {SUNY_ID} = currentUser();
+    const {isAdmin} = getAuthInfo();
+    const {general} = getSettings();
     const queryclient = useQueryClient();
     const {postRequest,deleteRequest} = useRequestQueries(selectedRow?.REQUEST_ID);
     const req = postRequest();
@@ -107,6 +124,40 @@ function ListTable({data,list}) {
         }}
     };
 
+    const expandRow = useMemo(()=>{
+        if ((isAdmin && general.showReqWF == 'a')||general.showReqWF == 'y') {
+            if (list !== 'drafts') return true;
+        }
+        return false;
+    },[list,general,isAdmin]);
+
+    const filterComponent = useMemo(() => {
+        const handleFilterChange = e => {
+            if (e.target.value) {
+                setResetPaginationToggle(false);
+                setFilterText(e.target.value);
+            } else {
+                setResetPaginationToggle(true);
+                setFilterText('');
+            }
+        }
+        return(
+            <Form onSubmit={e=>e.preventDefault()}>
+                <Form.Group as={Row} controlId="filter">
+                    <Form.Label column sm="2">Search: </Form.Label>
+                    <Col sm="10">
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange}/>
+                    </Col>
+                </Form.Group>
+            </Form>
+        );
+    },[filterText]);
+
+    const filteredRows = rows.filter(row => {
+        const filterFields = `${row.REQUEST_ID} ${row.createdDateFmt} ${row.POSTYPE.title.toLowerCase()} ${row.REQTYPE.title.toLowerCase()} ${row.CANDIDATENAME.toLowerCase()} ${row.EFFDATE}`;
+        return filterFields.includes(filterText.toLowerCase());
+    });
+
     const columns = useMemo(() => [
         {name:'Actions',cell:row=>{
             return (
@@ -144,19 +195,23 @@ function ListTable({data,list}) {
         setRedirect(undefined);
         setRows(data);
     },[data]);
+    useEffect(()=>searchRef.current.focus(),[]);
     if (redirect) return <Redirect to={redirect}/>
     return (
         <>
             <DataTable 
                 columns={columns} 
-                data={rows}
+                data={filteredRows}
                 pagination 
                 striped 
                 responsive
+                subHeader
+                subHeaderComponent={filterComponent}
+                paginationResetDefaultPage={resetPaginationToggle}
                 pointerOnHover
                 highlightOnHover
                 onRowClicked={handleRowClick}
-                expandableRows={(list!='drafts')}
+                expandableRows={expandRow}
                 expandableRowsComponent={ExpandedComponent}
             />
             <ModalConfirm show={action=='delete'} title="Delete?" buttons={confirmDeleteButtons}>Are you sure you want to DELETE draft: {selectedRow?.REQUEST_ID}?</ModalConfirm>
