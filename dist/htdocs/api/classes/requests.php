@@ -173,7 +173,9 @@ class Requests extends HRForms2 {
 
                 $groups_array = explode(",",$workflow['GROUPS']);
                 $next_seq = intval($last_journal['SEQUENCE'])+1;
-                if ($next_seq == sizeof($groups_array)-1) {
+                if ($next_seq >= sizeof($groups_array)) {
+                    $journal_array[$next_seq] = 'Z';
+                } else if ($next_seq == sizeof($groups_array)-1) {
                     $journal_array[$next_seq] = 'F';
                 } else {
                     $journal_array[$next_seq] = 'A';
@@ -185,7 +187,7 @@ class Requests extends HRForms2 {
                     }
                 }
 
-                $_SERVER['REQUEST_METHOD'] = 'POST';
+                $_SERVER['REQUEST_METHOD'] = 'POST';                
                 foreach ($journal_array as $i=>$j) {
                     $request_data = array(
                         'request_id'=>$this->POSTvars['reqId'],
@@ -198,12 +200,14 @@ class Requests extends HRForms2 {
                         'comment'=>($j=='X')?'':$this->POSTvars['comment']
                     );
                     $journal = (new journal(array($this->POSTvars['reqId'],$j,$request_data),false))->returnData;
+                    if ($j=='Z') $archive = (new archive(array('request',$this->POSTvars['reqId']),false))->returnData;
                 }
-
                 $this->toJSON($request_data);
                 break;
 
             case "reject":
+                $this->raiseError(400);
+                break;
             
             case "save":
                 //Limit number of drafts a user may have; to prevent "SPAMMING"
