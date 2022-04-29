@@ -23,7 +23,7 @@ export default function AppNav({userCounts}) {
                     <Nav>
                         <Nav.Link as={Link} to="/">Home</Nav.Link>
                         {Object.keys(userCounts).map(c =>{
-                            const single = '/'+c.slice(0,-1);
+                            const single = c.slice(0,-1);
                             return (
                                 <NavDropdown key={`${single}-menu`} title={capitalize(c)} id="request-nav-dropdown" alignRight>
                                     <NavDropdown.Item as={Link} to={single}>New {capitalize(single)}</NavDropdown.Item>
@@ -37,12 +37,13 @@ export default function AppNav({userCounts}) {
                                                     const show = get(settings,`${key}.showOnMenu`,!!l);
                                                     const cnt = get(userCounts,key,0);
                                                     if (!show) return null;
-                                                    return <NavDropdown.Item key={l} as={Link} to={`${single}/list/${l}`}>{title} ({cnt})</NavDropdown.Item>;
+                                                    return <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`}>{title} ({cnt})</NavDropdown.Item>;
                                                 })}
                                             </>
                                         )}
                                     </SettingsContext.Consumer>
                                     <NavDropdown.Divider/>
+                                    <NavDropdown.Item as={Link} to={`/${single}/journal`}>{capitalize(c)} Journal</NavDropdown.Item>
                                     <NavDropdown.Item as={Link} to={`/${single}/list`}>My {capitalize(c)}</NavDropdown.Item>
                                 </NavDropdown>
                             );
