@@ -42,7 +42,7 @@ export default function SettingsRequests() {
                                     <Controller
                                         name={`requests.${k}.enabled`}
                                         control={control}
-                                        render={({field}) => <Form.Check {...field} type="checkbox" inline label="Enabled" checked={field.value} onChange={toggleEnable(field)}/>}
+                                        render={({field}) => <Form.Check {...field} type="checkbox" inline label="Enabled" checked={field.value}/>}
                                     />
                                 </Col>
                             }
