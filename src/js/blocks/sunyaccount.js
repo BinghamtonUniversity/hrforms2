@@ -103,7 +103,7 @@ function SplitTable({accounts,fields,splitAction,handleBlur,disabled}) {
             </thead>
             <tfoot>
                 <tr>
-                    <td colSpan={2}>Total:</td>
+                    <td colSpan={2}>Total: {splitPct!=100&&<span className="text-muted font-italic font-size-90">(Remaining: {100-parseInt(splitPct,10)}%)</span>}</td>
                     <td className="text-right"><span className={(splitPct==100)?'text-success':'text-danger'}>{splitPct}%</span></td>
                 </tr>
             </tfoot>
