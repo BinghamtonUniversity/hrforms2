@@ -7,11 +7,11 @@ import { useForm, Controller } from "react-hook-form";
 import { capitalize, find } from "lodash";
 import { Redirect } from "react-router-dom";
 import { Row, Col, Button, Badge, Modal, Form } from "react-bootstrap";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import DataTable from 'react-data-table-component';
 import { Icon } from "@iconify/react";
 import { Loading, ModalConfirm } from "../../blocks/components";
-import { getSettings, currentUser } from "../../app";
+import { getSettings, currentUser, getAuthInfo } from "../../app";
 
 export default function RequestList() {
     const {part} = useParams();
@@ -167,7 +167,16 @@ function ListTable({data,list}) {
 
 function ExpandedComponent({data}) {
     // TODO: need to create usersettings/permissions and control this per user
-    const [showSkipped,setShowSkipped] = useState(true);
+    const [showSkipped,setShowSkipped] = useState(false);
+    const {general} = getSettings();
+    const {isAdmin} = getAuthInfo();
+    useEffect(() => {
+        if (isAdmin && general.showSkipped == 'a' || general.showSkipped == 'y') {
+            setShowSkipped(true);
+        } else {
+            setShowSkipped(false);
+        }
+    },[general]);
     return (
         <div className="p-3" style={{backgroundColor:'#ddd'}}>
             <span className="my-1">
