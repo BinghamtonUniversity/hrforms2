@@ -16,6 +16,7 @@ const formats = {
     'activate-group':{icon:'mdi:account-multiple',variant:'success'},
     'activate-user':{icon:'mdi:account',variant:'success'},
     'cancel':{icon:'mdi:close-circle',variant:'danger'},
+    'clear':{icon:'mdi:eraser-variant',variant:'secondary'},
     'deactivate-group':{icon:'mdi:account-multiple-remove',variant:'warning'},
     'deactivate-user':{icon:'mdi:account-remove',variant:'warning'},
     'delete':{icon:'mdi:delete',variant:'danger'},
@@ -25,6 +26,7 @@ const formats = {
     'next':{icon:'mdi:arrow-right-thick',variant:'primary'},
     'save':{icon:'mdi:content-save',variant:'primary'},
     'save-move':{icon:'mdi:content-save-move',variant:'primary'},
+    'search':{icon:'mdi:magnify',variant:'primary'},
     'submit':{icon:'mdi:content-save-chcek',variant:'primary'},
     'undo':{icon:'mdi:undo',variant:'secondary'},
 };
