@@ -4,10 +4,10 @@ import { useHierarchyQueries } from "../../../../queries/hierarchy";
 import { useAppQueries } from "../../../../queries";
 import { find, startsWith, truncate, orderBy } from 'lodash';
 import { Row, Col, Modal, Button, Form, Alert } from "react-bootstrap";
-import { Loading } from "../../../../blocks/components";
+import { Loading, errorToast } from "../../../../blocks/components";
 import { Icon } from "@iconify/react";
 import DataTable from 'react-data-table-component';
-import { useToasts } from "react-toast-notifications";
+import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useForm, FormProvider, useFormContext, Controller } from "react-hook-form";
 import { useQueryClient } from "react-query";
@@ -152,23 +152,20 @@ function HierarchyTable() {
 function DeleteHierarchy({HIERARCHY_ID,setDeleteHierarchy}) {
     const [show,setShow] = useState(true);
     const queryclient = useQueryClient();
-    const {addToast,removeToast} = useToasts();
     const {deleteHierarchy} = useHierarchyQueries(HIERARCHY_ID);
     const del = deleteHierarchy();
     const handleDelete = () => {
         setShow(false);
-        addToast(<><h5>Deleting</h5><p>Deleting hierarchy...</p></>,{appearance:'info',autoDismiss:false},id=>{
+        toast.promise(new Promise((resolve,reject) => {
             del.mutateAsync().then(() => {
-                queryclient.refetchQueries(['hierarchy','request'],{exact:true,throwOnError:true}).then(() => {
-                    removeToast(id);
-                    addToast(<><h5>Success!</h5><p>Hierarchy deleted successfully.</p></>,{appearance:'success'});
-                });
-            }).catch(e => {
-                removeToast(id);
-                addToast(<><h5>Error!</h5><p>Failed to delete hierarchy. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
-            }).finally(() => {
+                queryclient.refetchQueries(['hierarchy','request'],{exact:true,throwOnError:true}).then(()=>resolve()).catch(err=>reject(err));
+            }).catch(err=>reject(err)).finally(()=>{
                 setDeleteHierarchy({});
             });
+        }),{
+            pending:'Deleting hierarchy...',
+            success:'Hierarchy deleted successfully',
+            error:errorToast('Failed to delete hierarchy')
         });
     }
     useEffect(()=>setShow(true),[HIERARCHY_ID]);
@@ -216,8 +213,6 @@ function AddEditHierarchy(props) {
         workflowId: props.WORKFLOW_ID||''
     }});
 
-    const {addToast} = useToasts();
-
     const closeModal = () => {
         if (status.state == 'saving') return false;
         props.setSelectedRow({});
@@ -236,11 +231,10 @@ function AddEditHierarchy(props) {
             create.mutateAsync({...data}).then(d=>{
                 queryclient.refetchQueries(['hierarchy','request']).then(() => {
                     setStatus({state:'clear'});
-                    addToast(<><h5>Success!</h5><p>Hierarchy created successfully</p></>,{appearance:'success'});
+                    toast.success('Hierarchy created successfully');
                     closeModal();
                 });
             }).catch(e => {
-                console.error(e);
                 setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
             });
         } else {
@@ -249,11 +243,10 @@ function AddEditHierarchy(props) {
                 update.mutateAsync({WORKFLOW_ID:data.workflowId}).then(d=>{
                     queryclient.refetchQueries(['hierarchy','request']).then(() => {
                         setStatus({state:'clear'});
-                        addToast(<><h5>Success!</h5><p>Hierarchy updated successfully</p></>,{appearance:'success'});
+                        toast.success('Hierarchy updated successfully');
                         closeModal();
                     });
                 }).catch(e => {
-                    console.error(e);
                     setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
                 });
             } else {

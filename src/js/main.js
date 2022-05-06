@@ -3,7 +3,6 @@ import ReactDOM from "react-dom";
 import {HashRouter} from "react-router-dom";
 import {QueryClient,QueryClientProvider} from "react-query";
 import { CookiesProvider } from 'react-cookie';
-import {ToastProvider} from "react-toast-notifications";
 import {library} from "@fortawesome/fontawesome-svg-core";
 import {faExclamationCircle,faExclamationTriangle,faSync,faChevronUp,faChevronDown,faBell,faPeopleArrows,
         faTrash,faTrashRestore,faCircleNotch,faSearch,faCheck,faUser,faUserSlash,faUsers,faUsersSlash,
@@ -11,6 +10,7 @@ import {faExclamationCircle,faExclamationTriangle,faSync,faChevronUp,faChevronDo
 
 import "react-datepicker/dist/react-datepicker.css";
 import 'react-bootstrap-typeahead/css/Typeahead.css';
+import 'react-toastify/dist/ReactToastify.css';
 import '../scss/binghamton-bs4.scss';
 import '../css/styles.css';
 
@@ -36,9 +36,7 @@ ReactDOM.render(
     <HashRouter>
         <QueryClientProvider client={queryClient}>
             <CookiesProvider>
-                <ToastProvider autoDismiss placement="bottom-right">
-                    <StartApp/>
-                </ToastProvider>
+                <StartApp/>
             </CookiesProvider>
         </QueryClientProvider>            
     </HashRouter>,document.getElementById('root')

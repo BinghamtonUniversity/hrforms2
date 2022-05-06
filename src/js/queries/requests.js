@@ -46,6 +46,16 @@ export default function useRequestQueries(REQUEST_ID) {
 
     const getJournal = (...args) => {
         const options = args[0]?.options||args[0]||{};
+        if(options.select) options.select2 = options.select;
+        options.select = data => {
+            if (!data) return;
+            data.map(d => {
+                const fName = (d?.ALIAS_FIRST_NAME)?d.ALIAS_FIRST_NAME:(d?.LEGAL_FIRST_NAME)?d.LEGAL_FIRST_NAME:'';
+                d.fullName = (fName)?`${fName} ${d.LEGAL_LAST_NAME}`:'';
+                d.sortName = (fName)?`${d.LEGAL_LAST_NAME}, ${fName}`:'';
+            });
+            return (options.select2)?options.select2(data):data;
+        }
         return useQuery(['journal',REQUEST_ID],q(`journal/${REQUEST_ID}`),options);
     }
 

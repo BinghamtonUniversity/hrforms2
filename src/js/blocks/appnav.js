@@ -1,11 +1,11 @@
 import React,{ useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Navbar, Nav, NavDropdown } from "react-bootstrap";
-import { currentUser, getAuthInfo, SettingsContext } from "../app";
+import { currentUser, getAuthInfo } from "../app";
 import capitalize from "lodash/capitalize";
-import get from "lodash/get";
+import { MenuCounts } from "./components";
 
-export default function AppNav({userCounts}) {
+export default function AppNav() {
     const {SUNY_ID,isAdmin,OVR_SUNY_ID} = getAuthInfo();
     const user = currentUser();
     const logout = e => {
@@ -22,29 +22,14 @@ export default function AppNav({userCounts}) {
                 <Navbar.Collapse id="basic-navbar-nav" className="justify-content-end">
                     <Nav>
                         <Nav.Link as={Link} to="/">Home</Nav.Link>
-                        {Object.keys(userCounts).map(c =>{
+                        {['requests','forms'].map(c =>{
                             const single = c.slice(0,-1);
                             return (
                                 <NavDropdown key={`${single}-menu`} title={capitalize(c)} id="request-nav-dropdown" alignRight>
-                                    <NavDropdown.Item as={Link} to={single}>New {capitalize(single)}</NavDropdown.Item>
+                                    <MenuCounts menu={c} showOn="menu" showNew/>
                                     <NavDropdown.Divider/>
-                                    <SettingsContext.Consumer>
-                                        {settings=>(
-                                            <>
-                                                {Object.keys(userCounts[c]).map(l=>{
-                                                    const key = `${c}.${l}`;
-                                                    const title = get(settings,`${key}.title`,l);
-                                                    const show = get(settings,`${key}.showOnMenu`,!!l);
-                                                    const cnt = get(userCounts,key,0);
-                                                    if (!show) return null;
-                                                    return <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`}>{title} ({cnt})</NavDropdown.Item>;
-                                                })}
-                                            </>
-                                        )}
-                                    </SettingsContext.Consumer>
-                                    <NavDropdown.Divider/>
-                                    <NavDropdown.Item as={Link} to={`/${single}/journal`}>{capitalize(c)} Journal</NavDropdown.Item>
                                     <NavDropdown.Item as={Link} to={`/${single}/list`}>My {capitalize(c)}</NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} to={`/${single}/journal`}>{capitalize(c)} Journal</NavDropdown.Item>
                                 </NavDropdown>
                             );
                         })}

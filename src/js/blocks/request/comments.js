@@ -45,7 +45,8 @@ function CommentsTable({reqId}) {
     const journal = getJournal({select:d=>d.filter(c=>c.STATUS!='X')});
     const columns = useMemo(() => [
         {name:'Date',selector:row=>row.JOURNAL_DATE},
-        {name:'By',selector:row=>row.SUNY_ID},
+        {name:'Group',selector:row=>row.GROUP_FROM_NAME},
+        {name:'By',selector:row=>row.SUNY_ID,format:row=><>{row.fullName} ({row.SUNY_ID})</>},
         {name:'Comment',grow:3,selector:row=>row.COMMENTS,format:row=><pre className="m-0">{row.COMMENTS}</pre>}
     ],[journal.data]);
     return (

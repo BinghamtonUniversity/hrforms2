@@ -2,7 +2,7 @@ import React,{useContext,useState,useEffect,lazy,Suspense} from "react";
 import {Switch,Route,useLocation,useHistory} from "react-router-dom";
 import {useQueryClient} from "react-query";
 import {Container,Button,Alert} from "react-bootstrap";
-import {useToasts} from "react-toast-notifications";
+import { ToastContainer } from "react-toastify";
 import {useScrollPosition} from "@n8tb1t/use-scroll-position";
 import { ErrorBoundary } from "react-error-boundary";
 import head from "lodash/head";
@@ -15,8 +15,10 @@ import Footer from "./blocks/footer";
 const Home = lazy(()=>import("./pages/home"));
 const Request = lazy(()=>import("./pages/request"));
 const RequestList = lazy(()=>import("./pages/request/list"));
+const RequestJournal = lazy(()=>import("./pages/request/journal"));
 const HRForm = lazy(()=>import("./pages/form"));
 const AdminPages = lazy(()=>import("./pages/admin"));
+const Testing = lazy(()=>import("./pages/testing"));
 
 /* CONTEXTS */
 export const AuthContext = React.createContext();
@@ -86,7 +88,7 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
     const queryclient = useQueryClient();
     const {getUser,getCounts} = useUserQueries();
     const user = getUser();
-    const counts = getCounts({enabled:false});
+    //const counts = getCounts({enabled:false});
     const [userData,setUserData] = useState();
     //add counts to UserContext?
     useEffect(() => {
@@ -94,18 +96,21 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
         queryclient.refetchQueries(SUNY_ID);
     },[user.data]);
     useEffect(()=>user.refetch(),[OVR_SUNY_ID]);
-    if (user.isLoading || counts.isLoading || counts.isIdle) return <LoadingApp/>;
-    if (user.isError || counts.isError) return <LoadingAppError>Failed to retreive user information</LoadingAppError>
+    if (user.isLoading) return <LoadingApp/>;
+    if (user.isError) return <LoadingAppError>Failed to retreive user information</LoadingAppError>
     return (
         <UserContext.Provider value={{...userData,setUserData}}>
             <PageChange/>
-            <AppNav userCounts={counts.data}/>
+            <AppNav/>
             <Suspense fallback={null}>
                 <Container as="main" fluid>
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
                         {(userData && OVR_SUNY_ID) && <ImpersonationAlert {...userData}/>}
                         <Switch>
                             <Route exact path="/" component={Home}/>
+                            <Route exact path="/testing" component={Testing}/>
+                            <Route exact path="/request/journal" component={RequestJournal}/>
+                            <Route path="/request/journal/:id" component={RequestJournal}/>
                             <Route exact path="/request/list" component={RequestList}/>
                             <Route path="/request/list/:part" component={RequestList}/>
                             <Route path="/request/:id/:sunyid/:ts" component={Request}/>
@@ -122,6 +127,7 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
                 </Container>
                 <Footer/>
                 <ScrollToTop/>
+                <ToastContainer position="bottom-right"/>
             </Suspense>
         </UserContext.Provider>
     );

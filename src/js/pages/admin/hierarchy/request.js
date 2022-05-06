@@ -3,8 +3,8 @@ import { useParams, useHistory } from "react-router-dom";
 import { useWorkflowQueries } from "../../../queries/hierarchy";
 import useGroupQueries from "../../../queries/groups";
 import { find, sortBy } from 'lodash';
-import { Container, Row, Col, Tabs, Tab, Badge, Button } from "react-bootstrap";
-import { Loading } from "../../../blocks/components";
+import { Container, Row, Col, Tabs, Tab, Badge } from "react-bootstrap";
+import { Loading, AppButton } from "../../../blocks/components";
 import { Icon } from "@iconify/react";
 
 export const WorkflowContext = React.createContext();
@@ -57,7 +57,7 @@ export default function AdminRequestHierarchy() {
                         <Tab key={t.id} eventKey={t.id} title={t.title}>
                             <Container as="article" className="mt-3" fluid>
                                 <Row as="header">
-                                    <Col as="h3">{t.title} <Button variant="success" onClick={()=>setIsNew(t.id)}><Icon icon="mdi:plus"/>New</Button></Col>
+                                    <Col as="h3">{t.title} <AppButton format="add" onClick={()=>setIsNew(t.id)}>New</AppButton></Col>
                                 </Row>
                                 <HierarchyRouter tab={t.id}/>
                             </Container>

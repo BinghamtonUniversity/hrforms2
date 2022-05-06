@@ -3,8 +3,8 @@ import { useAppQueries } from "../../queries";
 import { useQueryClient } from "react-query";
 import { Row, Col, Form, Tabs, Tab, Container } from "react-bootstrap";
 import { useForm, FormProvider } from "react-hook-form";
-import { AppButton, Loading } from "../../blocks/components";
-import { useToasts } from "react-toast-notifications";
+import { AppButton, Loading, errorToast } from "../../blocks/components";
+import { toast } from "react-toastify";
 import useAdminQueries from "../../queries/admin";
 
 const SettingsLists = lazy(()=>import("../../blocks/admin/settings/lists"));
@@ -23,30 +23,29 @@ export default function AdminSettings() {
 function AdminSettingsTabs({settingsData}) {
     const tabs = [
         {id:'general',title:'General'},
-        {id:'lists',title:'Lists'},
         {id:'requests',title:'Requests'},
         {id:'forms',title:'Forms'}
     ];
+//        {id:'lists',title:'Lists'},
 
     const [activeTab,setActiveTab] = useState('general');
 
     const methods = useForm({defaultValues:settingsData});
 
-    const {addToast,removeToast} = useToasts();
     const queryclient = useQueryClient();
     const {putSettings} = useAdminQueries();
     const update = putSettings();
     const handleSubmit = data => {
         console.debug(data);
-        addToast(<><h5>Saving</h5><p>Saving Settings...</p></>,{appearance:'info',autoDismiss:false},id=>{
-            update.mutateAsync(data).then(()=>{
-                removeToast(id);
-                addToast(<><h5>Success!</h5><p>Settings saved successfully.</p></>,{appearance:'success'});
-                queryclient.invalidateQueries('settings');
-            }).catch(e => {
-                removeToast(id);
-                console.error(e);addToast(<><h5>Error!</h5><p>Failed to save settings. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
-            });
+        toast.promise(update.mutateAsync(data),{
+            pending:'Saving Settings...',
+            success:{
+                render:() => {
+                    queryclient.invalidateQueries('settings');
+                    return 'Settings saved successfully';    
+                }
+            },
+            error:errorToast('Failed saving settings')
         });
     }
     const handleError = error => {

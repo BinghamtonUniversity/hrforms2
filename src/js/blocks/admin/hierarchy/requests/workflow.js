@@ -5,12 +5,12 @@ import { find, startsWith } from 'lodash';
 import { Row, Col, Modal, Button, Form, Alert, Tabs, Tab, Container, Table } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import DataTable from 'react-data-table-component';
-import { useToasts } from "react-toast-notifications";
+import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useForm, FormProvider, useFormContext, useFieldArray, useWatch, Controller } from "react-hook-form";
 import { useQueryClient } from "react-query";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { AppButton } from "../../../components";
+import { AppButton, errorToast } from "../../../components";
 
 
 export default function WorkflowTab() {
@@ -116,23 +116,20 @@ export default function WorkflowTab() {
 function DeleteWorkflow({WORKFLOW_ID,setDeleteWorkflow}) {
     const [show,setShow] = useState(true);
     const queryclient = useQueryClient();
-    const {addToast,removeToast} = useToasts();
     const {deleteWorkflow} = useWorkflowQueries(WORKFLOW_ID);
     const del = deleteWorkflow();
     const handleDelete = () => {
         setShow(false);
-        addToast(<><h5>Deleting</h5><p>Deleting workflow...</p></>,{appearance:'info',autoDismiss:false},id=>{
+        toast.promise(new Promise((resolve,reject) => {
             del.mutateAsync().then(() => {
-                queryclient.refetchQueries(['workflow','request'],{exact:true,throwOnError:true}).then(() => {
-                    removeToast(id);
-                    addToast(<><h5>Success!</h5><p>Workflow deleted successfully.</p></>,{appearance:'success'});
-                });
-            }).catch(e => {
-                removeToast(id);
-                addToast(<><h5>Error!</h5><p>Failed to delete workflow. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
-            }).finally(() => {
+                queryclient.refetchQueries(['workflow','request'],{exact:true,throwOnError:true}).then(()=>resolve()).catch(err=>reject(err));
+            }).catch(err=>reject(err)).finally(()=>{
                 setDeleteWorkflow({});
             });
+        }),{
+            pending:'Deleting workfolow...',
+            success:'Workflow deleted successfully',
+            error:errorToast('Failed to delete workflow')
         });
     }
     useEffect(()=>setShow(true),[WORKFLOW_ID]);
@@ -171,8 +168,6 @@ function AddEditWorkflow(props) {
 
     const {isNew,setIsNew,workflows} = useContext(WorkflowContext);
 
-    const {addToast} = useToasts();
-
     const queryclient = useQueryClient();
     const {putWorkflow,postWorkflow} = useWorkflowQueries(props.WORKFLOW_ID);
     const create = postWorkflow();
@@ -209,11 +204,10 @@ function AddEditWorkflow(props) {
                     queryclient.refetchQueries(['workflow','request'])
                 ]).then(() => {
                     setStatus({state:'clear'});
-                    addToast(<><h5>Success!</h5><p>Workflow created successfully</p></>,{appearance:'success'});
+                    toast.success('Workflow created successfully');
                     closeModal();
                 });
             }).catch(e => {
-                console.error(e);
                 setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
             });
         } else {
@@ -224,11 +218,10 @@ function AddEditWorkflow(props) {
                     queryclient.refetchQueries(['workflow','request'])
                 ]).then(() => {
                     setStatus({state:'clear'});
-                    addToast(<><h5>Success!</h5><p>Workflow updated successfully</p></>,{appearance:'success'});
+                    toast.success('Workflow updated successfully');
                     closeModal();
                 })
             }).catch(e => {
-                console.error(e);
                 setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
             });
         }
