@@ -73,7 +73,8 @@ class User extends HRForms2 {
 	}
 
 	function POST() {
-		$qry = "insert into hrforms2_users values(:suny_id, sysdate, :created_by, :start_date, :end_date)";
+		//TODO: need to store JSON info of user on last field
+		$qry = "insert into hrforms2_users values(:suny_id, sysdate, :created_by, :start_date, :end_date, null, EMPTY_CLOB())";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":suny_id", $this->POSTvars['SUNY_ID']);
 		oci_bind_by_name($stmt,":created_by", $this->sessionData['EFFECTIVE_SUNY_ID']);

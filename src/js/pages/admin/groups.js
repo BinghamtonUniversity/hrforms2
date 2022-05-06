@@ -2,16 +2,16 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, useReducer } 
 import { useQueryClient } from "react-query";
 import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
-import { Loading, AppButton } from "../../blocks/components";
+import { Loading, AppButton, errorToast } from "../../blocks/components";
 import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert } from "react-bootstrap";
 import { Icon } from "@iconify/react";
-import { orderBy, startsWith, sortBy, difference, differenceWith, isEqual, capitalize } from "lodash";
+import { orderBy, sortBy, difference, differenceWith, isEqual, capitalize } from "lodash";
 import DataTable from 'react-data-table-component';
 import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { format } from "date-fns";
-import { useToasts } from "react-toast-notifications";
+import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
 
 export default function AdminGroups() {
@@ -56,7 +56,6 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
     const handleRowClick = useCallback(row=>setSelectedRow(row));
     
     const handleSort = useCallback((...args) => {
-        console.log(args);
         if (!args[0].sortable) return false;
         const sortKey = args[0].sortField; //columns[(args[0].id-1)].sortField;
         setsortField(sortKey);
@@ -173,25 +172,20 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
 }
 
 function ToggleGroup({group,setToggleGroup}) {
-    const {addToast,removeToast} = useToasts();
     const {patchGroup} = useGroupQueries(group.GROUP_ID);
     const queryclient = useQueryClient();
     const update = patchGroup();
     useEffect(() => {
         const newEndDate = (group.END_DATE)?'':format(new Date(),'dd-MMM-yy');
         const words = (group.END_DATE)?['activate','activating','activated']:['deactivate','deactivating','deactivated'];
-        addToast(<><h5>{capitalize(words[1])}</h5><p>{capitalize(words[1])} group...</p></>,{appearance:'info',autoDismiss:false},id=>{
-            update.mutateAsync({END_DATE:newEndDate}).then(() => {
-                queryclient.refetchQueries(['groups'],{exact:true,throwOnError:true}).then(() => {
-                    removeToast(id);
-                    addToast(<><h5>Success!</h5><p>Group {words[2]} successfully.</p></>,{appearance:'success'});
-                });
-            }).catch(e => {
-                removeToast(id);
-                addToast(<><h5>Error!</h5><p>Failed to {words[0]} group. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
-            }).finally(() => {
-                setToggleGroup({});
-            });
+        toast.promise(new Promise((resolve,reject) => {
+            update.mutateAsync({END_DATE:newEndDate}).then(()=>{
+                queryclient.refetchQueries(['groups'],{exact:true,throwOnError:true}).then(()=>resolve()).catch(err=>reject(err));
+            }).catch(err=>reject(err))
+        }),{
+            pending: `${capitalize(words[1])} group...`,
+            success: `Group ${words[2]} successfully.`,
+            error: errorToast(`Failed to ${words[0]} group.`)
         });
     },[group]);
     return null;
@@ -200,23 +194,18 @@ function ToggleGroup({group,setToggleGroup}) {
 function DeleteGroup({group,setDeleteGroup}) {
     const [show,setShow] = useState(true);
     const queryclient = useQueryClient();
-    const {addToast,removeToast} = useToasts();
     const {deleteGroup} = useGroupQueries(group.GROUP_ID);
     const deletegroup = deleteGroup();
     const handleDelete = () => {
         setShow(false);
-        addToast(<><h5>Deleting</h5><p>Deleting group...</p></>,{appearance:'info',autoDismiss:false},id=>{
+        toast.promise(new Promise((resolve,reject) => {
             deletegroup.mutateAsync().then(() => {
-                queryclient.refetchQueries(['groups'],{exact:true,throwOnError:true}).then(() => {
-                    removeToast(id);
-                    addToast(<><h5>Success!</h5><p>Group deleted successfully.</p></>,{appearance:'success'});
-                });
-            }).catch(e => {
-                removeToast(id);
-                addToast(<><h5>Error!</h5><p>Failed to delete group. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
-            }).finally(() => {
-                setDeleteGroup({});
-            });
+                queryclient.refetchQueries(['groups'],{exact:true,throwOnError:true}).then(()=>resolve()).catch(err=>reject(err));
+            }).catch(err=>reject(err)).finally(()=>setDeleteGroup({}));
+        }),{
+            pending:'Deleting group...',
+            success:'Group deleted successfully',
+            error:errorToast('Failed to delete group')
         });
     }
     useEffect(()=>setShow(true),[group]);
@@ -257,8 +246,6 @@ function AddEditGroupForm(props) {
         return Object.assign({},state,presets,args);
     },defaultStatus);
 
-    const {addToast} = useToasts();
-
     const methods = useForm({
         mode:'onChange',
         reValidateMode:'onChange',
@@ -292,7 +279,7 @@ function AddEditGroupForm(props) {
 
     const handleSave = data => {
         if (!Object.keys(methods.formState.dirtyFields).length) {
-            addToast(<><h5>No Change</h5><p>No changes to group data.</p></>,{appearance:'info'});
+            toast.info('No changes to group');
             closeModal();
             return true;
         }
@@ -321,28 +308,26 @@ function AddEditGroupForm(props) {
                     queryclient.refetchQueries(['groupusers',props.GROUP_ID],{exact:true,throwOnError:true})
                 ]).then(() => {
                     setStatus({state:'clear'});
-                    addToast(<><h5>Success!</h5><p>Group saved successfully</p></>,{appearance:'success'});
+                    toast.success('Group updated successfully');
                     closeModal();
                 });
             }).catch(e => {
-                console.error(e);
                 setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
             });
         } else {
             createGroup.mutateAsync(reqData).then(d=>{
                 queryclient.refetchQueries('groups',{exact:true,throwOnError:true}).then(() => {
                     setStatus({state:'clear'});
-                    addToast(<><h5>Success!</h5><p>Group created successfully</p></>,{appearance:'success'});
+                    toast.success('Group created successfully');
                     closeModal();
                 });
             }).catch(e => {
-                console.error(e);
                 setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
             });
         }
     }
     const handleError = error => {
-        console.log(error);
+        console.error(error);
     }
 
     useEffect(() => {

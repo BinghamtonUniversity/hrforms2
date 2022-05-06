@@ -1,11 +1,14 @@
-import React from "react";
-import {Alert,Button,Modal} from "react-bootstrap";
-import {parse,format} from "date-fns";
-import invoke from "lodash/invoke";
-import get from "lodash/get";
+import React, { useEffect } from "react";
+import { Alert, Button, Modal, ListGroup, NavDropdown } from "react-bootstrap";
+import { Link } from "react-router-dom";
+import { parse, format } from "date-fns";
+import { invoke, get, capitalize } from "lodash";
 import { Icon } from '@iconify/react';
+import { SettingsContext } from "../app";
+import { useUserQueries } from "../queries";
 
-const icons = {
+/* formats for AppButton */
+const formats = {
     'add':{icon:'mdi:plus',variant:'success'},
     'add-group':{icon:'mdi:account-multiple-plus',variant:'success'},
     'add-list':{icon:'mdi:playlist-plus',variant:'success'},
@@ -64,8 +67,74 @@ const ModalConfirm = React.memo(({children,show,title,buttons,icon}) => {
 
 const AppButton = React.memo(({children,format,icon,spin,...props}) => {
     return (
-        <Button {...props} className={(!children)&&'no-label'} variant={props.variant||icons[format].variant}>{format!='none'&&<Icon className={(spin||icons[format].spin)&&'spin'} icon={icon||icons[format].icon}/>}{children}</Button>
+        <Button {...props} className={(!children)&&'no-label'} variant={props.variant||formats[format].variant}>{format!='none'&&<Icon className={(spin||formats[format].spin)&&'spin'} icon={icon||formats[format].icon}/>}{children}</Button>
     );
 });
 
-export {Loading,ModalConfirm,AppButton};
+const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
+    /* showOn: home or menu */
+    const {getCounts} = useUserQueries();
+    const counts = getCounts();
+    if (counts.isError) {
+        if (showOn == 'home') return <p>error</p>;
+        if (showOn == 'menu') return <p>error</p>;
+        return null;
+    }
+    if (counts.isLoading) {
+        if (showOn == 'home') return <ListGroup.Item className="d-flex justify-content-center"><Loading>Loading...</Loading></ListGroup.Item>
+        if (showOn == 'menu') return <NavDropdown.Item><Loading>Loading...</Loading></NavDropdown.Item>;
+        return null;
+    } 
+    return (
+        <SettingsContext.Consumer>
+        {settings=>{
+            const single = menu.slice(0,-1);
+            return (
+                <>
+                    {(showNew && showOn=='home') && <Link key={`${menu}.new`} to={`/${single}/`} component={DashBoardListComponent}><span className="font-italic">New {capitalize(single)}</span></Link> }
+                    {(showNew && showOn=='menu') && 
+                        <>
+                            <NavDropdown.Item as={Link} to={single}>New {capitalize(single)}</NavDropdown.Item>
+                            <NavDropdown.Divider/>
+
+                        </>
+                    }
+                    {Object.keys(counts.data[menu]).map(l=>{
+                        const key = `${menu}.menu.${l}`;
+                        if (!get(settings,`${key}.enabled`,true)) return null;
+                        const title = get(settings,`${key}.title`,l);
+                        const show = get(settings,`${key}.showOn${capitalize(showOn)}`,false);
+                        if (!show) return null;
+                        const cnt = get(counts.data,`${menu}.${l}`,0);
+                        if (showOn == 'home') return <Link key={key} className="d-flex justify-content-between" to={`/${single}/list/${l}`} component={DashBoardListComponent}><span>{title}</span>{cnt}</Link>;
+                        if (showOn == 'menu') return <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`}>{title} ({cnt})</NavDropdown.Item>;
+                    })}
+                </>
+            );
+        }}
+        </SettingsContext.Consumer>
+    );
+});
+
+const DashBoardListComponent = props => {
+    return <ListGroup.Item className={props.className} href={props.href} action>{props.children}</ListGroup.Item>;
+}
+
+function errorToast(message) {
+    return {
+        render: ({data}) => {
+            return <ErrorToastComponent message={message} description={data?.description}/>
+        },
+        autoClose: 10000
+    };
+}
+const ErrorToastComponent = ({message,description}) => {
+    return (
+        <>
+            <p className="mb-0">{message}</p>
+            {description && <p className="mb-0"><small>({description})</small></p>}
+        </>
+    );
+}
+
+export {Loading,ModalConfirm,AppButton,MenuCounts,errorToast};

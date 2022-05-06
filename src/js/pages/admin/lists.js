@@ -2,11 +2,10 @@ import React, { useEffect, useState } from "react";
 import { useQueryClient } from "react-query";
 import { Row, Col, Form, ToggleButtonGroup, ToggleButton, Button } from "react-bootstrap";
 import { useAppQueries, useAdminQueries } from "../../queries";
-import { Loading, AppButton } from "../../blocks/components";
 import { useForm, Controller } from "react-hook-form";
-import { useToasts } from "react-toast-notifications";
+import { toast } from "react-toastify";
 import camelCase from "lodash/camelCase";
-import { ModalConfirm } from "../../blocks/components";
+import { Loading, ModalConfirm, AppButton, errorToast } from "../../blocks/components";
 
 export default function AdminLists() {
     const [selectedList,setSelectedList] = useState();
@@ -24,9 +23,7 @@ export default function AdminLists() {
     const updatelist = putList(selectedList);
     const deletelist = deleteList(selectedList);
 
-    const {addToast,removeToast} = useToasts();
-
-    const { handleSubmit, control, setValue, getValues, setError, clearErrors, trigger, formState:{errors} } = useForm({mode:'onBlur',reValidateMode:'onBlur'});
+    const { handleSubmit, control, setValue, getValues, setError, clearErrors, reset, trigger, formState:{errors} } = useForm({mode:'onBlur',reValidateMode:'onBlur'});
     const handleBlur = e => {
         const [listId,listSlug] = getValues(['LIST_ID','LIST_SLUG']);
         const listSlugCc = camelCase(listSlug);
@@ -54,6 +51,7 @@ export default function AdminLists() {
         setSelectedList('');
         setIsNewList(true);
         resetState();
+        reset();
         setValue('LIST_ID','new');
     }
     const handleDeleteList = () => setConfirmDelete(true);
@@ -61,17 +59,17 @@ export default function AdminLists() {
         close:{title:'Cancel',callback:()=>setConfirmDelete(false)},
         confirm:{title:'Delete',variant:'danger',callback:()=>{
             setConfirmDelete(false);
-            addToast(<><h5>Deleting</h5><p>deleting list...</p></>,{appearance:'info',autoDismiss:false},id=>{
+            toast.promise(new Promise((resolve,reject) => {
                 deletelist.mutateAsync(selectedList).then(()=>{
                     queryclient.refetchQueries('lists',{exact:true}).then(() => {
-                        removeToast(id);
                         setSelectedList('');
-                        addToast(<><h5>Success!</h5><p>List deleted successfully...</p></>,{appearance:'success'});
-                    });
-                }).catch(e=>{
-                    removeToast(id);
-                    addToast(<><h5>Error!</h5><p>Failed to delete list. {e?.message}.</p></>,{appearance:'error',autoDismissTimeout:20000});
-                });
+                        resolve();
+                    }).catch(err=>reject(err))
+                }).catch(err=>reject(err));
+            }),{
+                pending: 'Deleting list...',
+                success: 'List deleted successfully',
+                error: errorToast('Failed to delete list')
             });
         }}
     };
@@ -112,32 +110,30 @@ export default function AdminLists() {
             setConfirmSave(false);
             const data = getValues();
             if (isNewList) {
-                addToast(<><h5>Creating</h5><p>Creating new list...</p></>,{appearance:'info',autoDismiss:false},id=>{
+                toast.promise(new Promise((resolve,reject) => {
                     createlist.mutateAsync(data).then(d=>{
                         queryclient.refetchQueries('lists',{exact:true}).then(() => {
-                            removeToast(id);
-                            addToast(<><h5>Success!</h5><p>List created successfully...</p></>,{appearance:'success'});
                             setSelectedList(d.LIST_ID);
-                        });
-                    }).catch(e=>{
-                        removeToast(id);
-                        addToast(<><h5>Error!</h5><p>Failed to create list. {e?.message}.</p></>,{appearance:'error',autoDismissTimeout:20000});
-                    });
+                            resolve();
+                        }).catch(err=>reject(err));
+                    }).catch(err=>reject(err));
+                }),{
+                    pending: 'Creating new list...',
+                    success: 'List created successfully',
+                    error: errorToast('Failed to create list')
                 });
             } else if (selectedList) {
-                addToast(<><h5>Updating</h5><p>Updating list...</p></>,{appearance:'info',autoDismiss:false},id=>{
+                toast.promise(new Promise((resolve,reject) => {
                     updatelist.mutateAsync(data).then(()=>{
                         Promise.all([
                             queryclient.refetchQueries('lists',{exact:true}),
                             queryclient.refetchQueries(['list',selectedList],{exact:true})
-                        ]).then(() => {
-                            removeToast(id);
-                            addToast(<><h5>Success!</h5><p>List updated successfully...</p></>,{appearance:'success'})
-                        });
-                    }).catch(e=>{
-                        removeToast(id);
-                        addToast(<><h5>Error!</h5><p>Failed to update list. {e?.message}.</p></>,{appearance:'error',autoDismissTimeout:20000});
-                    });
+                        ]).then(()=>resolve()).catch(err=>reject(err));
+                    }).catch(err=>reject(err));
+                }),{
+                    pending: 'Updating list...',
+                    success: 'List updated successfully',
+                    error: errorToast('Failed to update list')
                 });
             }
         }}
@@ -289,9 +285,9 @@ function ListDetails({control,errors,locked,handleBlur,slugHint,pickSlugHint,han
             </Form.Group>
             <Row>
                 <Col className="button-group">
-                    <Button variant="primary" type="submit" disabled={!!Object.keys(errors).length}>Save</Button>
-                    {(locked!="1") && <Button variant="danger" onClick={handleDeleteList}>Delete</Button>}
-                    <Button variant="secondary" type="reset">Cancel</Button>
+                    <AppButton format="save" type="submit" disabled={!!Object.keys(errors).length}>Save</AppButton>
+                    {(locked!="1") && <AppButton format="delete" onClick={handleDeleteList}>Delete</AppButton>}
+                    <AppButton format="cancel" variant="secondary" type="reset">Cancel</AppButton>
                 </Col>
             </Row>
         </>

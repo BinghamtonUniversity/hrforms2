@@ -6,8 +6,6 @@ import { currentUser, NotFound } from "../app";
 import { useAppQueries } from "../queries";
 import useRequestQueries from "../queries/requests";
 import { useQueryClient } from "react-query";
-import { useToasts } from "react-toast-notifications";
-import { ErrorBoundary } from "react-error-boundary";
 import { Loading, AppButton } from "../blocks/components";
 import format from "date-fns/format";
 import get from "lodash/get";
@@ -79,10 +77,8 @@ function RequestWrapper({reqId,isDraft,isNew}) {
                     </Col>
                 </Row>
             </header>
-            <ErrorBoundary FallbackComponent={ErrorBoundaryFallback}>
-                {reqData && <RequestForm reqId={reqId} data={reqData} setIsBlocking={setIsBlocking} isDraft={isDraft} isNew={isNew}/>}
-                {reqData && <BlockNav reqId={reqId} when={isBlocking} isDraft={isNew}/>}
-            </ErrorBoundary>
+            {reqData && <RequestForm reqId={reqId} data={reqData} setIsBlocking={setIsBlocking} isDraft={isDraft} isNew={isNew}/>}
+            {reqData && <BlockNav reqId={reqId} when={isBlocking} isDraft={isNew}/>}
         </section>
     );
 }
@@ -137,8 +133,7 @@ function BlockNav({reqId,when,isDraft}) {
                 </Modal.Footer>
             </Modal>
         </>
-
-    )
+    );
 }
 
 function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
@@ -406,20 +401,6 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
             </Form>
             {showDeleteModal && <DeleteRequestModal setShowDeleteModal={setShowDeleteModal} handleDelete={handleDelete}/>}
         </FormProvider>
-    );
-}
-
-function ErrorBoundaryFallback({error}) {
-    return (
-        <Row>
-            <Col>
-                <Alert variant="danger">
-                    <Alert.Heading><Icon className="iconify-inline" icon="mdi:alert" /> Application Error</Alert.Heading>
-                    <p>An error occurred within the application.  If the problem persists please contact technical support.</p>
-                    <pre>{error?.message}</pre>
-                </Alert>
-            </Col>
-        </Row>
     );
 }
 

@@ -31,8 +31,15 @@ class Journal extends HRForms2 {
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
 		$qry = "select request_id, to_char(journal_date,'DD-MON-YYYY HH24:MI:SS') as journal_date,
-        suny_id, status, hierarchy_id, workflow_id, sequence, group_from, group_to, comments
-        from hrforms2_requests_journal where request_id = :request_id
+        j.suny_id, legal_last_name,legal_first_name,legal_middle_name,alias_first_name,
+        status, hierarchy_id, workflow_id, sequence, group_from, gf.group_name as GROUP_FROM_NAME, 
+        group_to, gt.group_name as GROUP_TO_NAME, comments
+        from hrforms2_requests_journal j
+        left join (select distinct suny_id, legal_last_name,legal_first_name,legal_middle_name,alias_first_name
+        from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (j.suny_id = p.suny_id) 
+        left join (select group_id, group_name from hrforms2_groups) gf on (j.group_from = gf.group_id)
+        left join (select group_id, group_name from hrforms2_groups) gt on (j.group_to = gt.group_id)
+        where request_id = :request_id
         order by sequence";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt,":request_id",$this->req[0]);

@@ -11,14 +11,17 @@ import { format } from "date-fns";
 import DataTable from 'react-data-table-component';
 import { Icon } from "@iconify/react";
 import { Loading, ModalConfirm } from "../../blocks/components";
-import { getSettings, currentUser, getAuthInfo, SettingsContext } from "../../app";
+import { getSettings, currentUser, getAuthInfo, SettingsContext, NotFound } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
 
 export default function RequestList() {
     const {part} = useParams();
     return (
         <SettingsContext.Consumer>
-            {({requests}) => (
+            {({requests}) => {
+                if (!((requests.menu[part]?.enabled == undefined)?true:requests.menu[part]?.enabled)) return <NotFound/>;
+                if (!Object.keys(requests.menu).includes(part)) return <NotFound/>;
+                return (
                 <>
                     <header>
                         <Row>
@@ -29,7 +32,7 @@ export default function RequestList() {
                         <ListData list={(part)?part:'all'}/>
                     </section>
                 </>
-            )}
+            )}}
         </SettingsContext.Consumer>
     );
 }

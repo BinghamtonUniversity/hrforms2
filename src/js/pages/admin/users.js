@@ -3,16 +3,16 @@ import { useQueryClient } from "react-query";
 import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
 import {useAppQueries} from "../../queries";
-import { Loading, ModalConfirm, AppButton } from "../../blocks/components";
+import { Loading, ModalConfirm, AppButton, errorToast } from "../../blocks/components";
 import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert, InputGroup } from "react-bootstrap";
 import { Icon } from "@iconify/react";
-import { orderBy, startsWith, sortBy, difference, differenceWith, isEqual, capitalize } from "lodash";
+import { orderBy, sortBy, difference, capitalize } from "lodash";
 import DataTable from 'react-data-table-component';
 import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { format } from "date-fns";
-import { useToasts } from "react-toast-notifications";
+import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useHistory } from "react-router-dom";
 
@@ -177,10 +177,7 @@ function UsersTable({users,newUser,setNewUser}) {
 function ImpersonateUser({user,setImpersonateUser}) {
     const [show,setShow] = useState(true);
 
-    const {addToast,removeToast} = useToasts();
-
     const history = useHistory();
-
     const queryclient = useQueryClient();
     const {patchSession} = useAppQueries();
     const mutation = patchSession();
@@ -213,25 +210,20 @@ function ImpersonateUser({user,setImpersonateUser}) {
 }
 
 function ToggleUser({user,setToggleUser}) {
-    const {addToast,removeToast} = useToasts();
     const {patchUser} = useUserQueries(user.SUNY_ID);
     const queryclient = useQueryClient();
     const update = patchUser();
     useEffect(() => {
         const newEndDate = (user.END_DATE)?'':format(new Date(),'dd-MMM-yy');
         const words = (user.END_DATE)?['activate','activating','activated']:['deactivate','deactivating','deactivated'];
-        addToast(<><h5>{capitalize(words[1])}</h5><p>{capitalize(words[1])} user...</p></>,{appearance:'info',autoDismiss:false},id=>{
-            update.mutateAsync({END_DATE:newEndDate}).then(() => {
-                queryclient.refetchQueries(['users'],{exact:true,throwOnError:true}).then(() => {
-                    removeToast(id);
-                    addToast(<><h5>Success!</h5><p>User {words[2]} successfully.</p></>,{appearance:'success'});
-                });
-            }).catch(e => {
-                removeToast(id);
-                addToast(<><h5>Error!</h5><p>Failed to {words[0]} user. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
-            }).finally(() => {
-                setToggleUser({});
-            });
+        toast.promise(new Promise((resolve,reject) => {
+            update.mutateAsync({END_DATE:newEndDate}).then(()=>{
+                queryclient.refetchQueries(['users'],{exact:true,throwOnError:true}).then(()=>resolve()).catch(err=>reject(err))
+            }).catch(err=>reject(err))
+        }),{
+            pending: `${capitalize(words[1])} user...`,
+            success: `User ${words[2]} successfully.`,
+            error: errorToast(`Failed to ${words[0]} user.`)
         });
     },[user]);
     return null;
@@ -239,7 +231,6 @@ function ToggleUser({user,setToggleUser}) {
 
 function DeleteUser({user,setDeleteUser}) {
     const [show,setShow] = useState(true);
-    const {addToast,removeToast} = useToasts();
     const queryclient = useQueryClient();
     const {deleteUser} = useUserQueries(user.SUNY_ID);
     const del = deleteUser();
@@ -259,14 +250,13 @@ function DeleteUser({user,setDeleteUser}) {
                 del.mutateAsync().then(() => {
                     queryclient.refetchQueries(['users'],{exact:true,throwOnError:true}).then(() => {
                         setShow(false);
-                        setDeleteUser({});    
-                        addToast(<><h5>Success!</h5><p>User deleted successfully.</p></>,{appearance:'success'});
+                        setDeleteUser({});
+                        toast.success('User deleted successfully');
                     });
                 }).catch(e => {
                     setShow(false);
                     setDeleteUser({});
-                    console.error(e);
-                    addToast(<><h5>Error!</h5><p>Failed to delete user. {e?.description}.</p></>,{appearance:'error',autoDismissTimeout:20000});
+                    toast.error('Failed to delete user');
                 });
             }
         }
@@ -297,8 +287,6 @@ function AddEditUserForm(props) {
         }
         return Object.assign({},state,presets,args);
     },defaultStatus);
-
-    const {addToast} = useToasts();
 
     const methods = useForm({
         mode:'onSubmit',
@@ -333,9 +321,8 @@ function AddEditUserForm(props) {
     }
     
     const handleSave = data => {
-        console.log(data,methods.formState.dirtyFields);
         if (!Object.keys(methods.formState.dirtyFields).length &&!props.newUser) {
-            addToast(<><h5>No Change</h5><p>No changes to user data.</p></>,{appearance:'info'});
+            toast.info('No changes to user data');
             closeModal();
             return true;
         }
@@ -358,22 +345,20 @@ function AddEditUserForm(props) {
                     queryclient.refetchQueries(['usergroups',props.SUNY_ID],{exact:true,throwOnError:true})
                 ]).then(() => {
                     setStatus({state:'clear'});
-                    addToast(<><h5>Success!</h5><p>User saved successfully</p></>,{appearance:'success'});
+                    toast.success('User updated successfully');
                     closeModal();
                 });
             }).catch(e => {
-                console.error(e);
                 setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
             });
         } else {
             createuser.mutateAsync(reqData).then(()=>{
                 queryclient.refetchQueries('users',{exact:true,throwOnError:true}).then(() => {
                     setStatus({state:'clear'});
-                    addToast(<><h5>Success!</h5><p>User created successfully</p></>,{appearance:'success'});
+                    toast.success('User created successfully');
                     closeModal();
                 });
             }).catch(e => {
-                console.error(e);
                 setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
             });
         }
@@ -477,7 +462,6 @@ function UserInfo({newUser,setStatus}) {
     const ref = useRef();
     
     const handleLookup = () => {
-        console.log('do lookup:',sunyid);
         if (!sunyid) {
             setLookupState('invalid');
             setStatus({save:false});
@@ -494,7 +478,6 @@ function UserInfo({newUser,setStatus}) {
         setLookupState('search');
         lookupuser.refetch().then(d => {
             if (d.isError) {
-                console.error(d.error);
                 setLookupState('error');
                 setStatus({save:false});
                 setError("SUNYID",{type:'manual',message:d.error?.description});
