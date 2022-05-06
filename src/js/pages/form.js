@@ -1,11 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy } from "react";
 import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { currentUser, NotFound } from "../app";
-import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal } from "react-bootstrap";
+import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useFormContext } from "react-hook-form";
 
 /* TABS */
+const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
 
+
+const allTabs = [
+    {id:'basic-info',title:'Basic Info'},
+    {id:'person-info',title:'Person Info'},
+    {id:'other-info',title:'Other Info'}
+];
 
 export default function HRForm() {
     const [formId,setFormId] = useState('');
@@ -34,6 +41,34 @@ export default function HRForm() {
 function FormWrapper({formId,isDraft,isNew}) {
     const [formData,setFormData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
+    const [personInfo,setPersonInfo] = useState();
+    
+    //TODO: probably need to change to useReducer
+    const [tabList,setTabList] = useState(allTabs.filter(t=>t.id=='basic-info'));
+
+    const [activeTab,setActiveTab] = useState('basic-info');
+    const [activeNav,setActiveNav] = useState('');
+    
+    const methods = useForm();
+
+    const navigate = tab => {
+        //TODO: can we maintain last tab/sub-tab?  or should we use routing? so that it remembers when you switch
+        const idx = tabList.findIndex(t=>t.id==tab);
+        let aNav = '';
+        if (Object.keys(tabList[idx]).includes('subTabs')) aNav = tabList[idx].subTabs[0].id;
+        setActiveNav(aNav);
+        setActiveTab(tab);
+    }
+    const navigate2 = nav => {
+        setActiveNav(nav);
+    }
+
+    const handleSubmit = data => {
+        console.log(data);
+    }
+    const handleError = error => {
+        console.log(error);
+    }
 
     //const {getRequest} = useRequestQueries(reqId);
     //const request = getRequest({enabled:false});
@@ -60,26 +95,61 @@ function FormWrapper({formId,isDraft,isNew}) {
                     </Col>
                 </Row>
             </header>
-            <FormPersonLookup/>
-            <p>show after lookup...</p>
+            <FormProvider {...methods} isDraft={isDraft}>
+                <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
+                    <Tabs activeKey={activeTab} onSelect={navigate} id="hr-forms-tabs">
+                        {tabList.map(t => (
+                            <Tab key={t.id} eventKey={t.id} title={t.title}>
+                                <Container as="section" className="px-0" fluid>
+                                    {t.subTabs && 
+                                        <Row as="header" className="border-bottom">
+                                            <Nav activeKey={activeNav} onSelect={navigate2}>
+                                                {t.subTabs.map(s=>(
+                                                    <Nav.Item key={s.id}>
+                                                        {s.id==activeNav?
+                                                            <p className="px-2 pt-2 pb-1 m-0 active">{s.title}</p>:
+                                                            <Nav.Link eventKey={s.id} className="px-2 pt-2 pb-1">{s.title}</Nav.Link>
+                                                        }
+                                                    </Nav.Item>
+                                                ))}
+                                            </Nav>
+                                        </Row>
+                                    }
+                                    <FormTabRouter tab={activeTab} subTab={activeNav} setTabList={setTabList}/>
+                                    <Row as="footer">
+                                        <Col className="button-group justify-content-end">
+                                            <Button type="submit">Submit</Button>
+                                        </Col>
+                                    </Row>
+                                </Container>
+                            </Tab>
+                        ))}
+                    </Tabs>
+                </Form>
+            </FormProvider>
         </>
     );
 }
 
-function FormPersonLookup() {
-    return (
-        <section>
-            <Row as="header">
-                <Col as="h3">Person Lookup</Col>
-            </Row>
-            <article>
-                <Row>
-                    <Col>lookup form...</Col>
-                </Row>
-            </article>
-        </section>
-    );
+function FormTabRouter({tab,subTab,...props}) {
+    const r = tab + ((subTab)?'.'+subTab:'');
+    switch(r) {
+        case "basic-info": return <BasicInfo/>
+        case "test-1.test-1-1": return <p>Tab 1; Sub Tab 1</p>;
+        default: return <p>Not Found</p>;
+    }
 }
+
+function BasicInfoTab({setTabList}) {
+    const changeTabs = () => {
+        console.log('change tabs');
+        setTabList(allTabs.filter(t=>['basic-info','person-info'].includes(t.id)));
+    }
+    return (
+        <Button onClick={changeTabs}>Change Tabs</Button>
+    )
+}
+
 /*
                 {formData && <RequestForm reqId={reqId} data={formData} setIsBlocking={setIsBlocking} isDraft={isDraft} isNew={isNew}/>}
                 {formData && <BlockNav reqId={reqId} when={isBlocking} isDraft={isNew}/>}

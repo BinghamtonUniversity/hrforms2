@@ -21,6 +21,9 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
 .font-size-95 { font-size: 95% }
 .font-size-90 { font-size: 90% }
 
+/* active sub tab */
+.tab-pane.active .nav .nav-item p.active { color: #495057 }
+
 /* spin animation class for iconify icons */
 .spin {
   animation-name: spin;
