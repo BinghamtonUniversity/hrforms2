@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Alert, Button, Modal, ListGroup, NavDropdown } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { parse, format } from "date-fns";
@@ -6,6 +6,7 @@ import { invoke, get, capitalize } from "lodash";
 import { Icon } from '@iconify/react';
 import { SettingsContext } from "../app";
 import { useUserQueries } from "../queries";
+import CheckboxTree from 'react-checkbox-tree';
 
 /* formats for AppButton */
 const formats = {
@@ -17,6 +18,8 @@ const formats = {
     'activate-user':{icon:'mdi:account',variant:'success'},
     'cancel':{icon:'mdi:close-circle',variant:'danger'},
     'clear':{icon:'mdi:eraser-variant',variant:'secondary'},
+    'close':{icon:'mdi:close-circle',variant:'secondary'},
+    'copy':{icon:'mdi:content-duplicate',variant:'primary'},
     'deactivate-group':{icon:'mdi:account-multiple-remove',variant:'warning'},
     'deactivate-user':{icon:'mdi:account-remove',variant:'warning'},
     'delete':{icon:'mdi:delete',variant:'danger'},
@@ -26,6 +29,7 @@ const formats = {
     'next':{icon:'mdi:arrow-right-thick',variant:'primary'},
     'save':{icon:'mdi:content-save',variant:'primary'},
     'save-move':{icon:'mdi:content-save-move',variant:'primary'},
+    'saving':{icon:'mdi:loading',variant:'primary',spin:true},
     'search':{icon:'mdi:magnify',variant:'primary'},
     'submit':{icon:'mdi:content-save-chcek',variant:'primary'},
     'undo':{icon:'mdi:undo',variant:'secondary'},
@@ -49,7 +53,12 @@ export function DateFormat({children,inFmt,outFmt,nvl=null}) {
     const oFmt = outFmt || 'M/d/yyyy'; //TODO: global date default format and user date format
     return format(d,oFmt);
 }
-
+/*
+buttons: {
+    close:{title:'',variant:'',callback:()=>null},
+    confirm:{title:'',variant:'',callback:()=>null}
+}
+*/
 const ModalConfirm = React.memo(({children,show,title,buttons,icon}) => {
     const handleClose = () => invoke(buttons,'close.callback');
     const handleConfirm = () => invoke(buttons,'confirm.callback');
@@ -60,8 +69,16 @@ const ModalConfirm = React.memo(({children,show,title,buttons,icon}) => {
             </Modal.Header>
             <Modal.Body>{children}</Modal.Body>
             <Modal.Footer>
-                <Button variant={get(buttons,'close.variant','secondary')} onClick={handleClose}>{get(buttons,'close.title','Close')}</Button>
-                <Button variant={get(buttons,'confirm.variant','primary')} onClick={handleConfirm}>{get(buttons,'confirm.title','Confirm')}</Button>
+                <AppButton 
+                    format={get(buttons,'close.format','close')}
+                    variant={get(buttons,'close.variant','')}
+                    onClick={handleClose}
+                >{get(buttons,'close.title','Close')}</AppButton>
+                <AppButton 
+                    format={get(buttons,'confirm.format','save')}
+                    variant={get(buttons,'confirm.variant','')}
+                    onClick={handleConfirm}
+                >{get(buttons,'confirm.title','Confirm')}</AppButton>
             </Modal.Footer>
         </Modal>
     );
@@ -96,7 +113,7 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
                     {(showNew && showOn=='home') && <Link key={`${menu}.new`} to={`/${single}/`} component={DashBoardListComponent}><span className="font-italic">New {capitalize(single)}</span></Link> }
                     {(showNew && showOn=='menu') && 
                         <>
-                            <NavDropdown.Item as={Link} to={single}>New {capitalize(single)}</NavDropdown.Item>
+                            <NavDropdown.Item as={Link} to={`/${single}/`}>New {capitalize(single)}</NavDropdown.Item>
                             <NavDropdown.Divider/>
 
                         </>
@@ -125,6 +142,7 @@ const DashBoardListComponent = props => {
 function errorToast(message) {
     return {
         render: ({data}) => {
+            console.error(data);
             return <ErrorToastComponent message={message} description={data?.description}/>
         },
         autoClose: 10000
@@ -139,4 +157,24 @@ const ErrorToastComponent = ({message,description}) => {
     );
 }
 
-export {Loading,ModalConfirm,AppButton,MenuCounts,errorToast};
+/* Icon defaults for CheckboxTree */
+const iconSize = "22px"
+const icons = {
+    check: <Icon icon="mdi:checkbox-outline" width={iconSize} height={iconSize} />,
+    halfCheck: <Icon icon="mdi:checkbox-outline" width={iconSize} height={iconSize} style={{color:'#999'}} />,
+    uncheck: <Icon icon="mdi:checkbox-blank-outline" width={iconSize} height={iconSize} />,
+    expandClose: <Icon icon="mdi:chevron-right" width={iconSize} height={iconSize} />,
+    expandOpen: <Icon icon="mdi:chevron-down" width={iconSize} height={iconSize} />,
+    leaf: null,
+    parentClose: null,
+    parentOpen: null,
+}
+/*
+    expandAll: <span className="rct-icon rct-icon-expand-all" />,
+    collapseAll: <span className="rct-icon rct-icon-collapse-all" />,
+*/
+const CheckboxTreeComponent = (props) => {
+    return <CheckboxTree icons={icons} {...props}/>;
+}
+
+export {Loading,ModalConfirm,AppButton,MenuCounts,errorToast,CheckboxTreeComponent};

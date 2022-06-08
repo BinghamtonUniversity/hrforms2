@@ -148,6 +148,7 @@ function UsersTable({users,newUser,setNewUser}) {
     return (
         <>
             <DataTable 
+                keyField="USER_SUNY_ID"
                 columns={columns} 
                 data={filteredRows}
                 pagination 
@@ -510,12 +511,12 @@ function UserInfo({newUser,setStatus}) {
         }
     }
     const handleKeyDown = e => {
-        if (e.which == 13) {
+        if (e.key == 'Enter') {
             e.preventDefault();
             handleLookup();
             return true;
         }
-        if (e.which == 27) {
+        if (e.key == 'Escape') {
             e.preventDefault();
             setLookupState('clear');
             reset(defaultVals);

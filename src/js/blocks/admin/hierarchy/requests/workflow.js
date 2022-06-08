@@ -90,6 +90,7 @@ export default function WorkflowTab() {
     return (
         <>
             <DataTable 
+                keyField="WORKFLOW_ID"
                 columns={columns}
                 data={filteredRows}
                 pagination 

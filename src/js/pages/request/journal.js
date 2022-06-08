@@ -9,7 +9,7 @@ export default function RequestJournal() {
         setReqId(e.target.value);
     }
     const handleESC = e => {
-        if (e.which === 27) {
+        if (e.key == 'Escape') {
             setShowResults(false);
             setReqId('');
         }

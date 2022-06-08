@@ -5,7 +5,7 @@ import {format,parse} from "date-fns";
 export default function useUserQueries(SUNY_ID) {
     const lookupUser = (...args) => {
         const options = args[0]?.options||args[0]||{};
-        return useQuery(['user',SUNY_ID],q(`user/${SUNY_ID}`),options);        
+        return useQuery(['user',SUNY_ID],q(`user/${SUNY_ID}`),options);
     }
 
     const getUsers = (...args) => {

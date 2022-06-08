@@ -47,6 +47,7 @@ export default function AppNav() {
                             <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/admin/journal/form" disabled>Form Journal</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/hierarchy/form" disabled>Form Hierarchy</NavDropdown.Item>
+                            <NavDropdown.Item as={Link} to="/admin/transactions">Form Transactions</NavDropdown.Item>
                             <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/admin/settings">Settings</NavDropdown.Item>
                         </NavDropdown>}

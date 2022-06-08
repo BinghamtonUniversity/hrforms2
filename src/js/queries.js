@@ -14,6 +14,11 @@ const stub = {
 function f(d) {
     return () => new Promise(res=>res(d));
 }
+/* ERROR QUERY: Return a Promise Rejection with the message passed.  Option set to not retry. */
+export function qErr(key,options={},message='Bad Data') {
+    Object.assign(options,{retry:false,refetchInterval:false,refetchOnWindowFocus:false,refetchOnReconnect:false});
+    return useQuery(key,()=>new Promise((resolve,reject)=>reject(message)),options);
+}
 
 /* BASE PROMISE */
 export default function q(u,m,b) {

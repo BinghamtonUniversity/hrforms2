@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useQueryClient } from "react-query";
-import { Row, Col, Form, ToggleButtonGroup, ToggleButton, Button } from "react-bootstrap";
+import { Row, Col, Form, ToggleButtonGroup, ToggleButton } from "react-bootstrap";
 import { useAppQueries, useAdminQueries } from "../../queries";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useFormContext } from "react-hook-form";
 import { toast } from "react-toastify";
 import camelCase from "lodash/camelCase";
 import { Loading, ModalConfirm, AppButton, errorToast } from "../../blocks/components";
@@ -51,8 +51,8 @@ export default function AdminLists() {
         setSelectedList('');
         setIsNewList(true);
         resetState();
-        reset();
         setValue('LIST_ID','new');
+        ['LIST_NAME','LIST_TYPE','LIST_SLUG','PROTECTED','LIST_DATA'].forEach(k=>setValue(k,''));
     }
     const handleDeleteList = () => setConfirmDelete(true);
     const confirmDeleteButtons = {
@@ -192,7 +192,7 @@ export default function AdminLists() {
                 {listdetails.isError && <Loading type="alert" isError>Error loading list details</Loading>}
                 {(listdetails.data||isNewList) && 
                     <Form onSubmit={handleSubmit(saveList)} onReset={cancelList}>
-                        <ListDetails control={control} errors={errors} locked={listdetails.data?.PROTECTED} handleBlur={handleBlur} slugHint={slugHint} pickSlugHint={pickSlugHint} handleDeleteList={handleDeleteList}/>
+                        <ListDetails control={control} errors={errors} locked={listdetails.data?.PROTECTED} handleBlur={handleBlur} slugHint={slugHint} pickSlugHint={pickSlugHint} handleDeleteList={handleDeleteList} isNewList={isNewList}/>
                     </Form>
                 }
             </section>
@@ -202,14 +202,17 @@ export default function AdminLists() {
     );
 }
 
-function ListDetails({control,errors,locked,handleBlur,slugHint,pickSlugHint,handleDeleteList}) {
+function ListDetails({control,errors,locked,handleBlur,slugHint,pickSlugHint,handleDeleteList,isNewList}) {
     const tabIndent = e => {
-        if (e.keyCode === 9) {
+        if (e.key === 'Tab') {
             e.preventDefault();
             const t = e.target;
             t.setRangeText('  ',t.selectionStart,t.selectionEnd,'end');
         }
     }
+    useEffect(()=>{
+
+    })
     return (
         <>
             <Form.Group as={Row}>

@@ -128,6 +128,9 @@ button.btn-sm.no-label svg.iconify {
   padding: 0.5rem;
   border: 1px solid #999;
   border-radius: 5px;
+  /* see: https://dev.to/mnathani/two-lines-of-css-that-boosts-7x-rendering-performance-4mjd */
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 5000px;
 }
 .droplist.over {
   background-color: #dcf5ff;
@@ -242,3 +245,12 @@ button.btn-sm.no-label svg.iconify {
       justify-content: center
   }
 }
+
+/* styles for React-Checkbox-Tree */
+.rct-checkbox,.rct-collapse,.rct-node-icon { padding: 5px 0 }
+.rct-checkbox *,.rct-collapse *,.rct-node-icon * { width: 24px }
+.react-checkbox-tree > ol > li.rct-node.rct-node-leaf { padding-left: 5px }
+.rct-icon { height: 22px }
+
+/* styles for react-slidedown */
+.react-slidedown.transitioning { overflow: hidden; }

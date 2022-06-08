@@ -11,6 +11,8 @@ import {faExclamationCircle,faExclamationTriangle,faSync,faChevronUp,faChevronDo
 import "react-datepicker/dist/react-datepicker.css";
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 import 'react-toastify/dist/ReactToastify.css';
+import 'react-checkbox-tree/lib/react-checkbox-tree.css';
+import 'react-slidedown/lib/slidedown.css';
 import '../scss/binghamton-bs4.scss';
 import '../css/styles.css';
 

@@ -3,10 +3,10 @@ import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { currentUser, NotFound } from "../app";
 import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useFormContext } from "react-hook-form";
+import { AppButton } from "../blocks/components";
 
 /* TABS */
 const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
-
 
 const allTabs = [
     {id:'basic-info',title:'Basic Info'},
@@ -49,7 +49,11 @@ function FormWrapper({formId,isDraft,isNew}) {
     const [activeTab,setActiveTab] = useState('basic-info');
     const [activeNav,setActiveNav] = useState('');
     
-    const methods = useForm();
+    const methods = useForm({
+        defaultValues: {
+            lookup:{type:"bNumber"}
+        }
+    });
 
     const navigate = tab => {
         //TODO: can we maintain last tab/sub-tab?  or should we use routing? so that it remembers when you switch
@@ -116,9 +120,9 @@ function FormWrapper({formId,isDraft,isNew}) {
                                         </Row>
                                     }
                                     <FormTabRouter tab={activeTab} subTab={activeNav} setTabList={setTabList}/>
-                                    <Row as="footer">
+                                    <Row as="footer" className="mt-3">
                                         <Col className="button-group justify-content-end">
-                                            <Button type="submit">Submit</Button>
+                                            <AppButton type="submit" format="submit">Submit</AppButton>
                                         </Col>
                                     </Row>
                                 </Container>

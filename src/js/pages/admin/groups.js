@@ -146,6 +146,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
     return (
         <>
             <DataTable 
+                keyField="GROUP_ID"
                 columns={columns} 
                 data={filteredRows}
                 pagination 

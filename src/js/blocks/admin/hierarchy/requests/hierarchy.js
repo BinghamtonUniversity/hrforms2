@@ -126,6 +126,7 @@ function HierarchyTable() {
     return (
         <>
             <DataTable 
+                keyField="HIERARCHY_ID"
                 columns={columns}
                 data={filteredRows}
                 pagination 

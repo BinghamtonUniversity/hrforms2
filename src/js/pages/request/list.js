@@ -203,6 +203,7 @@ function ListTable({data,list}) {
     return (
         <>
             <DataTable 
+                keyField="REQUEST_ID"
                 columns={columns} 
                 data={filteredRows}
                 pagination 

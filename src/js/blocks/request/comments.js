@@ -42,7 +42,10 @@ function CommentsHistory({reqId}) {
 
 function CommentsTable({reqId}) {
     const {getJournal} = useRequestQueries(reqId);
-    const journal = getJournal({select:d=>d.filter(c=>c.STATUS!='X')});
+    const journal = getJournal({select:d=>d.filter(c=>{
+        c.id = `${c.REQUEST_ID}_${c.SEQUENCE}`;
+        return c.STATUS!='X';
+    })});
     const columns = useMemo(() => [
         {name:'Date',selector:row=>row.JOURNAL_DATE},
         {name:'Group',selector:row=>row.GROUP_FROM_NAME},
