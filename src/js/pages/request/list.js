@@ -225,7 +225,8 @@ function ListTable({data,list}) {
 }
 
 function ExpandedComponent({data}) {
-    // TODO: need to create usersettings/permissions and control this per user
+    //TODO: need to create usersettings/permissions and control this per user
+    //TODO: Consolidate title for component use.
     const [showSkipped,setShowSkipped] = useState(false);
     const {general} = getSettings();
     const {isAdmin} = getAuthInfo();

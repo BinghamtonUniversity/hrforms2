@@ -45,6 +45,7 @@ export default function useGroupQueries(GROUP_ID) {
         options.select = data => {
             if (!data) return;
             data.forEach(d=>{
+                d.fullName = `${d.LEGAL_FIRST_NAME} ${d.LEGAL_LAST_NAME}`;
                 d.sortName = `${d.LEGAL_LAST_NAME}, ${d.LEGAL_FIRST_NAME}`;
                 d.email = d.EMAIL_ADDRESS_WORK && d.EMAIL_ADDRESS_WORK.toLowerCase();
                 d.endDateUnix = d.END_DATE && format(parse(d.END_DATE,'dd-MMM-yy',new Date()),'t');

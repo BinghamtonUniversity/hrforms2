@@ -6,7 +6,9 @@ import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { AppButton } from "../blocks/components";
 
 /* TABS */
+const BasicInfoOLD = lazy(()=>import("../blocks/form/basic_infoOLD"));
 const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
+const Person = lazy(()=>import("../blocks/form/person"));
 
 const allTabs = [
     {id:'basic-info',title:'Basic Info'},
@@ -39,10 +41,9 @@ export default function HRForm() {
 }
 
 function FormWrapper({formId,isDraft,isNew}) {
-    const [formData,setFormData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
-    const [personInfo,setPersonInfo] = useState();
-    
+    const [basicInfoComplete,setBasicInfoComplete] = useState(false);
+
     //TODO: probably need to change to useReducer
     const [tabList,setTabList] = useState(allTabs.filter(t=>t.id=='basic-info'));
 
@@ -51,10 +52,27 @@ function FormWrapper({formId,isDraft,isNew}) {
     
     const methods = useForm({
         defaultValues: {
-            lookup:{type:"bNumber"}
+            formId:formId,
+            lookup:{
+                type:"bNumber",
+                values:{
+                    bNumber:"",
+                    lastName:"",
+                    dob:"",    
+                },
+                showResults:false
+            },
+            selectedRow:{},
+            payroll:"",
+            effDate:"",
+            formCode:"",
+            actionCode:"",
+            transactionCode:"",
+            basicInfoComplete:false
         }
     });
 
+    const watchBasicInfo = methods.watch('basicInfoComplete');
     const navigate = tab => {
         //TODO: can we maintain last tab/sub-tab?  or should we use routing? so that it remembers when you switch
         const idx = tabList.findIndex(t=>t.id==tab);
@@ -69,38 +87,31 @@ function FormWrapper({formId,isDraft,isNew}) {
 
     const handleSubmit = data => {
         console.log(data);
+        setBasicInfoComplete(true);
+        setTabList(allTabs);
     }
     const handleError = error => {
         console.log(error);
     }
 
-    //const {getRequest} = useRequestQueries(reqId);
-    //const request = getRequest({enabled:false});
-    /*useEffect(()=>{
-        if (!isNew) {
-            request.refetch({throwOnError:true,cancelRefetch:true}).then(r=>{
-                console.log('refetch done');
-                setFormData(r.data);
-            }).catch(e => {
-                console.error(e);
-            });
-        } else {
-            setFormData({});
-        }
-    },[reqId]);
-    if (request.isError) return <Loading type="alert" isError>Failed To Load Request Data - <small>{request.error?.name} - {request.error?.description||request.error?.message}</small></Loading>;
-    if (!formData) return <Loading type="alert">Loading Request Data</Loading>;*/
+    const handleReset = () => {
+        methods.reset()
+        setBasicInfoComplete(false);
+        setTabList(allTabs.filter(t=>t.id=='basic-info'));
+    }
+
     return(
         <>
             <header>
                 <Row>
                     <Col>
                         <h2>{isNew&&'New '}HR Form</h2>
+                        <p>{formId}</p>
                     </Col>
                 </Row>
             </header>
-            <FormProvider {...methods} isDraft={isDraft}>
-                <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
+            <FormProvider {...methods} isDraft={isDraft} basicInfoComplete={basicInfoComplete}>
+                <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)} onReset={handleReset}>
                     <Tabs activeKey={activeTab} onSelect={navigate} id="hr-forms-tabs">
                         {tabList.map(t => (
                             <Tab key={t.id} eventKey={t.id} title={t.title}>
@@ -122,6 +133,7 @@ function FormWrapper({formId,isDraft,isNew}) {
                                     <FormTabRouter tab={activeTab} subTab={activeNav} setTabList={setTabList}/>
                                     <Row as="footer" className="mt-3">
                                         <Col className="button-group justify-content-end">
+                                            <AppButton type="reset" format="delete">Discard</AppButton>
                                             <AppButton type="submit" format="submit">Submit</AppButton>
                                         </Col>
                                     </Row>
@@ -138,7 +150,8 @@ function FormWrapper({formId,isDraft,isNew}) {
 function FormTabRouter({tab,subTab,...props}) {
     const r = tab + ((subTab)?'.'+subTab:'');
     switch(r) {
-        case "basic-info": return <BasicInfo/>
+        case "basic-info": return <BasicInfo/>;
+        case "person": return <Person/>;
         case "test-1.test-1-1": return <p>Tab 1; Sub Tab 1</p>;
         default: return <p>Not Found</p>;
     }
