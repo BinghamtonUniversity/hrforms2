@@ -3,6 +3,8 @@ extra/
 dist/htdocs/css/
 dist/htdocs/js/
 dist/htdocs/index.php
+dist/htdocs/api/testemail.php
+dist/htdocs/api/classes/testing.php
 package-lock.json
 *OLD.js
 *.code-workspace

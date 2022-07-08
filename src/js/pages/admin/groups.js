@@ -5,7 +5,7 @@ import useGroupQueries from "../../queries/groups";
 import { Loading, AppButton, errorToast } from "../../blocks/components";
 import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert } from "react-bootstrap";
 import { Icon } from "@iconify/react";
-import { orderBy, sortBy, difference, differenceWith, isEqual, capitalize } from "lodash";
+import { orderBy, sortBy, difference, differenceWith, isEqual, capitalize, startsWith } from "lodash";
 import DataTable from 'react-data-table-component';
 import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
 import DatePicker from "react-datepicker";
@@ -13,12 +13,12 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
+import { useHistory, useParams } from "react-router-dom";
 
 export default function AdminGroups() {
     const [newGroup,setNewGroup] = useState(false);
     const {getGroups} = useGroupQueries();
     const groups = getGroups();
-
     return (
         <>
             <Row>
@@ -36,7 +36,9 @@ export default function AdminGroups() {
 }
 
 function GroupsTable({groups,newGroup,setNewGroup}) {
-    const [filterText,setFilterText] = useState('');
+    const {subpage} = useParams();
+    const history = useHistory();
+    const [filterText,setFilterText] = useState((!!subpage)?`id:${subpage}`:'');
     const [statusFilter,setStatusFilter] = useState('all');
     const [sortField,setsortField] = useState('GROUP_NAME');
     const [sortDir,setSortDir] = useState('asc');
@@ -79,9 +81,11 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
             if (e.target.value) {
                 setResetPaginationToggle(false);
                 setFilterText(e.target.value);
+                if (startsWith(e.target.value,'id:')) history.push('/admin/groups/'+e.target.value.split(':')[1]);
             } else {
                 setResetPaginationToggle(true);
                 setFilterText('');
+                history.push('/admin/groups');
             }
         }
         return(
@@ -89,7 +93,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
                     <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange}/>
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." value={filterText} onChange={handleFilterChange}/>
                     </Col>
                 </Form.Group>
                 <Form.Group as={Row} controlId="status">
@@ -107,7 +111,13 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
     const filteredRows = rows.filter(row => {
         if (row.active && statusFilter == 'inactive') return false;
         if (!row.active && statusFilter == 'active') return false;
+        if (startsWith(filterText,'id:')) {
+            return row.GROUP_ID == filterText.split(':')[1];
+        }
         const gName = row.GROUP_NAME.toLowerCase();
+        if (startsWith(filterText,'name:')) {
+            return gName.includes(filterText.split(':')[1].toLowerCase());
+        }
         const filterFields = `${row.GROUP_ID} ${gName} ${row.START_DATE} ${row.END_DATE}`;
         return filterFields.includes(filterText.toLowerCase());
     });

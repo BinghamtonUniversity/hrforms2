@@ -6,7 +6,7 @@ import {useAppQueries} from "../../queries";
 import { Loading, ModalConfirm, AppButton, errorToast } from "../../blocks/components";
 import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert, InputGroup } from "react-bootstrap";
 import { Icon } from "@iconify/react";
-import { orderBy, sortBy, difference, capitalize } from "lodash";
+import { orderBy, sortBy, difference, capitalize, startsWith } from "lodash";
 import DataTable from 'react-data-table-component';
 import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
 import DatePicker from "react-datepicker";
@@ -14,7 +14,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
-import { useHistory } from "react-router-dom";
+import { useParams, useHistory } from "react-router-dom";
 
 const defaultVals = {SUNYID:'',firstName:'',lastName:'',email:'',dept:'',startDate:new Date(),endDate:'',assignedGroups:[],availableGroups:[]};
 
@@ -40,7 +40,9 @@ export default function AdminUsers() {
 }
 
 function UsersTable({users,newUser,setNewUser}) {
-    const [filterText,setFilterText] = useState('');
+    const { subpage } = useParams();
+    const history = useHistory();
+    const [filterText,setFilterText] = useState((!!subpage)?`id:${subpage}`:'');
     const [statusFilter,setStatusFilter] = useState('all');
     const [sortField,setsortField] = useState('sortName');
     const [sortDir,setSortDir] = useState('asc');
@@ -76,9 +78,11 @@ function UsersTable({users,newUser,setNewUser}) {
             if (e.target.value) {
                 setResetPaginationToggle(false);
                 setFilterText(e.target.value);
+                if (startsWith(e.target.value,'id:')) history.push('/admin/users/'+e.target.value.split(':')[1]);
             } else {
                 setResetPaginationToggle(true);
                 setFilterText('');
+                history.push('/admin/users');
             }
         }
         return(
@@ -86,7 +90,7 @@ function UsersTable({users,newUser,setNewUser}) {
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
                     <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange}/>
+                        <Form.Control ref={searchRef} className="ml-2" type="search" value={filterText} placeholder="search..." onChange={handleFilterChange}/>
                     </Col>
                 </Form.Group>
                 <Form.Group as={Row} controlId="status">
@@ -104,6 +108,9 @@ function UsersTable({users,newUser,setNewUser}) {
     const filteredRows = rows.filter(row => {
         if (row.active && statusFilter == 'inactive') return false;
         if (!row.active && statusFilter == 'active') return false;
+        if (startsWith(filterText,'id:')) {
+            return row.SUNY_ID == filterText.split(':')[1];
+        }
         const fName = row.LEGAL_FIRST_NAME && row.LEGAL_FIRST_NAME.toLowerCase();
         const lName = row.LEGAL_LAST_NAME && row.LEGAL_LAST_NAME.toLowerCase();
         const filterFields = `${row.USER_SUNY_ID} ${fName} ${lName} ${row.email} ${row.startDateFmt} ${row.endDateFmt}`

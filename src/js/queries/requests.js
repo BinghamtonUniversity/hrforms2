@@ -1,6 +1,7 @@
 import q from '../queries';
-import {useQuery,useMutation} from "react-query";
-import {format} from "date-fns";
+import { useQuery, useMutation } from "react-query";
+import { parse, format } from "date-fns";
+import { truncate } from 'lodash';
 import { getAuthInfo } from '../app';
 
 export default function useRequestQueries(REQUEST_ID) {
@@ -53,6 +54,9 @@ export default function useRequestQueries(REQUEST_ID) {
                 const fName = (d?.ALIAS_FIRST_NAME)?d.ALIAS_FIRST_NAME:(d?.LEGAL_FIRST_NAME)?d.LEGAL_FIRST_NAME:'';
                 d.fullName = (fName)?`${fName} ${d.LEGAL_LAST_NAME}`:'';
                 d.sortName = (fName)?`${d.LEGAL_LAST_NAME}, ${fName}`:'';
+                d.journalDate = parse(d.JOURNAL_DATE,'dd-MMM-yyyy H:m:s',new Date())
+                d.journalDateFmt = d.JOURNAL_DATE && format(d.journalDate,'Pp');
+                d.shortComment = truncate(d.COMMENTS,{'length':100});
             });
             return (options.select2)?options.select2(data):data;
         }

@@ -1,21 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useParams, useHistory, Link } from "react-router-dom";
 import useRequestQueries from "../../queries/requests";
-import { Row, Col, Form, Button, Table } from "react-bootstrap";
+import { Row, Col, Form, Button, Popover, OverlayTrigger, Tooltip, Overlay } from "react-bootstrap";
+import DataTable from 'react-data-table-component';
+import { get, sortBy } from "lodash";
+import useGroupQueries from "../../queries/groups";
+import { getAuthInfo } from "../../app";
+
+const statusTitle = {
+    'S':'Submitter',
+    'A':'Approved',
+    'X':'Skipped',
+    'R':'Rejected',
+    'F':'Pending Final'
+};
 
 export default function RequestJournal() {
-    const [reqId,setReqId] = useState('');
-    const [showResults,setShowResults] = useState(false);
+    const {id} = useParams();
+    const history = useHistory();
+
+    const [reqId,setReqId] = useState((!!id)?id:'');
+    const [showResults,setShowResults] = useState(!!id);
+
     const handleChange = e => {
+        setShowResults(false);
         setReqId(e.target.value);
     }
     const handleESC = e => {
         if (e.key == 'Escape') {
             setShowResults(false);
             setReqId('');
+            history.push('/request/journal/');
         }
     }
     const handleSubmit = e => {
         e.preventDefault();
+        history.push('/request/journal/'+reqId);
         setShowResults(true);
     }
     return (
@@ -37,33 +57,93 @@ export default function RequestJournal() {
 function JournalSearchResults({reqId}) {
     const {getJournal} = useRequestQueries(reqId);
     const journal = getJournal();
-    if (journal.isLoading) return <p>Loading...</p>;
-    if (journal.isError) return <p>Error</p>;
+
+    const columns = useMemo(() => [
+        {name:'Sequence',selector:row=>row.SEQUENCE,sortable:true,width:'120px'},
+        {name:'Date',selector:row=>row.journalDateFmt,sortable:true,width:'250px'},
+        {name:'Status',selector:row=>(
+            <OverlayTrigger placement="auto" overlay={
+                <Tooltip id={`tooltip-status-${row.SEQUENCE}`}>{get(statusTitle,row.STATUS,'Unknown')}</Tooltip>
+            }><span>{row.STATUS}</span></OverlayTrigger>
+        ),width:'100px'},
+        {name:'Comment',selector:row=>row.shortComment,sortable:false,wrap:true}
+    ]);
+
     return (
-        <Table bordered striped>
-            <thead>
-                <tr>
-                    <th>Information</th>
-                    <th>Comments</th>
-                </tr>
-            </thead>
-            <tbody>
-                {journal.data.map(j => (
-                    <tr key={j.SEQUENCE}>
-                        <td>
-                            <dl>
-                                <dt>Sequence</dt>
-                                <dd>{j.SEQUENCE}</dd>
-                                <dt>Date</dt>
-                                <dd>{j.JOURNAL_DATE}</dd>
-                            </dl>
-                        </td>
-                        <td>
-                            {j.COMMENTS}
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </Table>
-    )
+        <DataTable 
+            keyField="SEQUENCE"
+            title={`Journal Report for Request ID: ${reqId}`}
+            columns={columns} 
+            data={journal.data}
+            progressPending={journal.isLoading}
+            striped 
+            responsive
+            pointerOnHover
+            highlightOnHover
+            expandableRows 
+            expandOnRowClicked
+            expandableRowsComponent={ExpandedComponent}
+        />
+    );
 }
+
+function ExpandedComponent({data}) {
+    //TODO: Consolidate with list flow?
+    //TODO: check for admin to link
+    const {isAdmin} = getAuthInfo();
+    const clickHander = e => !isAdmin && e.preventDefault();
+    return (
+        <div className="p-3" style={{backgroundColor:'#ddd'}}>
+            <dl className="journal-list" style={{'display':'grid','gridTemplateColumns':'120px auto'}}>
+                <dt>Request ID:</dt>
+                <dd>{data.REQUEST_ID}</dd>
+                <dt>Sequence:</dt>
+                <dd>{data.SEQUENCE}</dd>
+                <dt>Date:</dt>
+                <dd>{data.journalDateFmt}</dd>
+                <dt>Status:</dt>
+                <dd>{get(statusTitle,data.STATUS,'Unknown')}</dd>
+                {data.GROUP_FROM &&
+                    <>
+                        <dt>Group From:</dt>
+                        <dd>
+                            <OverlayTrigger placement="right" delay={{show:500,hide:500}} overlay={<GroupPopover sequence={data.SEQUENCE} groupId={data.GROUP_FROM} groupName={data.GROUP_FROM_NAME}/>}>
+                                <Link onClick={clickHander} to={`/admin/groups/${data.GROUP_FROM}`}>{data.GROUP_FROM_NAME} ({data.GROUP_FROM})</Link>
+                            </OverlayTrigger>
+                        </dd>
+                    </>
+                }
+                {data.GROUP_TO && 
+                    <>
+                        <dt>Group To:</dt>
+                        <dd>
+                                <OverlayTrigger placement="right" delay={{show:500,hide:500}} overlay={<GroupPopover sequence={data.SEQUENCE} groupId={data.GROUP_TO} groupName={data.GROUP_TO_NAME}/>}>
+                                    <Link onClick={clickHander} to={`/admin/groups/${data.GROUP_TO}`}>{data.GROUP_TO_NAME} ({data.GROUP_TO})</Link>
+                                </OverlayTrigger>
+                        </dd>
+                    </>
+                }
+                <dt>Updated By:</dt>
+                <dd>{data.fullName}</dd>
+                <dt>Comment:</dt>
+                <dd><pre>{data.COMMENTS}</pre></dd>
+            </dl>
+        </div>
+    );
+}
+
+const GroupPopover = React.forwardRef(({sequence,groupId,groupName,popper,children,show:_,...props},ref) => {
+    const {getGroupUsers} = useGroupQueries(groupId);
+    const groupusers = getGroupUsers({select:d=>{
+        return(sortBy(d,['sortName']));
+    }});
+    return (
+        <Popover ref={ref} {...props}>
+            <Popover.Title>Members of {groupName} ({groupId})</Popover.Title>
+            <Popover.Content>
+                {groupusers.isLoading && <p>Loading Users...</p>}
+                {groupusers.data && groupusers.data.map(u=><p key={u.SUNY_ID} className="mb-1 pl-1">{u.sortName}</p>)}
+            </Popover.Content>
+        </Popover>
+    );
+});
