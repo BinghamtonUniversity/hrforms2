@@ -21,6 +21,15 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
 .font-size-95 { font-size: 95% }
 .font-size-90 { font-size: 90% }
 
+/* make pre text wrap - see: https://css-tricks.com/snippets/css/make-pre-text-wrap/*/
+pre {
+  white-space: pre-wrap;       /* css-3 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;       /* Internet Explorer 5.5+ */
+ }
+
 /* active sub tab */
 .tab-pane.active .nav .nav-item p.active { color: #495057 }
 
@@ -131,7 +140,15 @@ button.btn-sm.no-label svg.iconify {
   /* see: https://dev.to/mnathani/two-lines-of-css-that-boosts-7x-rendering-performance-4mjd */
   content-visibility: auto;
   contain-intrinsic-size: 1px 5000px;
+  /* scrollbar mods*/
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--gray);
 }
+/* scrollbar mods */
+.droplist::-webkit-scrollbar-corner {background-color:var(--gray)}
+.droplist::-webkit-scrollbar-thumb {background-color:var(--accent)}
+.droplist::-webkit-scrollbar-track {background-color:var(--gray)}
+.droplist::-webkit-scrollbar {width: 10px;height: 10px;}
 .droplist.over {
   background-color: #dcf5ff;
 }
