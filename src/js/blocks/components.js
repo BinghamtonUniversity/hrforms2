@@ -31,7 +31,7 @@ const formats = {
     'save-move':{icon:'mdi:content-save-move',variant:'primary'},
     'saving':{icon:'mdi:loading',variant:'primary',spin:true},
     'search':{icon:'mdi:magnify',variant:'primary'},
-    'submit':{icon:'mdi:content-save-chcek',variant:'primary'},
+    'submit':{icon:'mdi:content-save-check',variant:'primary'},
     'undo':{icon:'mdi:undo',variant:'secondary'},
 };
 
