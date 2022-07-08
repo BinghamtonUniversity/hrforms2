@@ -29,6 +29,9 @@ class Testing extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		echo json_decode($_COOKIE['hrforms2_local'])->bnumber;
+		//echo json_decode($_COOKIE['hrforms2_local'])->bnumber;
+		//print_r($GLOBALS);
+		echo "test:";
+		echo DB;
 	}
 }

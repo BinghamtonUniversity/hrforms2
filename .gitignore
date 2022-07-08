@@ -12,4 +12,3 @@ install.sh
 vendor/
 composer.phar
 composer.lock
-

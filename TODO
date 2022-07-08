@@ -20,6 +20,7 @@ todo:
  * On app error allow "reset"; test with undefined import component.
 
 Future enhancement:
+ * Add ability to resend email to groups for PR or Form
  * Lists should use useFormContext() - need to clean up page.
  * add ability to selectively search columns on the hierarchy. (e.g. only show specific PosType), Only show specific WFIDs)
 
