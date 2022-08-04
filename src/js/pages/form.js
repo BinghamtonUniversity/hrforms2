@@ -1,19 +1,31 @@
 import React, { useState, useEffect, lazy } from "react";
-import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
+import { UserContext } from "../app";
+import { useParams, useHistory, Prompt, Redirect, useLocation } from "react-router-dom";
 import { currentUser, NotFound } from "../app";
 import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal, Nav } from "react-bootstrap";
-import { useForm, FormProvider, useFormContext } from "react-hook-form";
+import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
 import { AppButton } from "../blocks/components";
 
 /* TABS */
-const BasicInfoOLD = lazy(()=>import("../blocks/form/basic_infoOLD"));
 const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
-const Person = lazy(()=>import("../blocks/form/person"));
+const PersonInfo = lazy(()=>import("../blocks/form/person-info"));
+const PersonDemographics = lazy(()=>import("../blocks/form/person-demographics"));
+const PersonContacts = lazy(()=>import("../blocks/form/person-contacts"));
 
 const allTabs = [
     {id:'basic-info',title:'Basic Info'},
-    {id:'person-info',title:'Person Info'},
-    {id:'other-info',title:'Other Info'}
+    {id:'person-tab',title:'Person Info',subTabs:[
+        {id:'person-info',title:'Information'},
+        {id:'person-demographics',title:'Demographics'},
+        {id:'person-directory',title:'Directory'},
+        {id:'person-education',title:'Education'},
+        {id:'person-contacts',title:'Contacts'},
+    ]},
+    {id:'employment-tab',title:'Employment Info',subTabs:[
+        {id:'employment-appointment',title:'Appointment'},
+        {id:'employment-leave',title:'Leave'},
+        {id:'employment-pay',title:'Pay'},
+    ]}
 ];
 
 export default function HRForm() {
@@ -41,6 +53,9 @@ export default function HRForm() {
 }
 
 function FormWrapper({formId,isDraft,isNew}) {
+    const { search } = useLocation();
+    const qstr = new URLSearchParams(search);
+
     const [isBlocking,setIsBlocking] = useState(false);
     const [basicInfoComplete,setBasicInfoComplete] = useState(false);
 
@@ -49,30 +64,83 @@ function FormWrapper({formId,isDraft,isNew}) {
 
     const [activeTab,setActiveTab] = useState('basic-info');
     const [activeNav,setActiveNav] = useState('');
-    
-    const methods = useForm({
-        defaultValues: {
-            formId:formId,
-            lookup:{
-                type:"bNumber",
-                values:{
-                    bNumber:"",
-                    lastName:"",
-                    dob:"",    
-                },
-                showResults:false
+
+    const defaults = {
+        formId:formId,
+        isDraft:isDraft,
+        isNew:isNew,
+        lookup:{
+            type:"bNumber",
+            values:{
+                bNumber:"",
+                lastName:"",
+                dob:"",
             },
-            selectedRow:{},
-            payroll:"",
-            effDate:"",
-            formCode:"",
-            actionCode:"",
-            transactionCode:"",
-            basicInfoComplete:false
+        },
+        selectedRow:{},
+        payroll:"",
+        effDate:"",
+        formCode:"",
+        actionCode:"",
+        transactionCode:"",
+        basicInfoComplete: false,
+        person: {
+            info: {
+                sunyId:"",
+                bNumber:"",
+                salutation:"",
+                firstName:"",
+                middleName:"",
+                lastName:"",
+                suffix:"",
+                volFFEMT:"No",
+                rehireRetiree:"No"
+            }
         }
+    }
+    const testRecord = {
+        formId:formId,
+        isDraft:isDraft,
+        isNew:false, //isNew
+        lookup:{
+            type:"lastNameDOB",
+            values:{
+                bNumber:"",
+                lastName:"geiger",
+                dob:new Date("8/31/1973"),
+            },
+        },
+        selectedRow:{
+            "HR_PERSON_ID": "0_65998_NR",
+            "LINE_ITEM_NUMBER": "",
+            "SUNY_ID": "51645",
+            "NYS_EMPLID": "N01216708",
+            "EMPLOYMENT_ROLE_TYPE": "New Role",
+            "DATA_STATUS_EMP": "",
+            "STATUS_TYPE": "",
+            "APPOINTMENT_EFFECTIVE_DATE": "",
+            "APPOINTMENT_END_DATE": null,
+            "LEGAL_FIRST_NAME": "Scott",
+            "LEGAL_MIDDLE_NAME": "T",
+            "LEGAL_LAST_NAME": "Geiger",
+            "LOCAL_CAMPUS_ID": "B00073866",
+            "PAYROLL_AGENCY_CODE": "",
+            "TITLE_DESCRIPTION": "",
+            "DPT_CMP_DSC": ""
+        },
+        payroll:"28020",
+        effDate:new Date(),
+        formCode:"EF",
+        actionCode:"CCH",
+        transactionCode:"AJT",
+        basicInfoComplete: true
+    }
+    const methods = useForm({
+        defaultValues: (qstr.has('test'))?testRecord:defaults
     });
 
-    const watchBasicInfo = methods.watch('basicInfoComplete');
+    const watchBasicInfoComplete = useWatch({name:'basicInfoComplete',control:methods.control});
+
     const navigate = tab => {
         //TODO: can we maintain last tab/sub-tab?  or should we use routing? so that it remembers when you switch
         const idx = tabList.findIndex(t=>t.id==tab);
@@ -86,20 +154,39 @@ function FormWrapper({formId,isDraft,isNew}) {
     }
 
     const handleSubmit = data => {
-        console.log(data);
-        setBasicInfoComplete(true);
-        setTabList(allTabs);
+        console.debug(data);
+        /*if (activeTab == 'basic-info') {
+            console.debug('Basic Info Complete');
+            methods.setValue('isNew',false);
+            // get tabs and set...
+            setTabList(allTabs);
+            setActiveTab('person-tab');
+            setActiveNav('person-info');
+
+        }*/
     }
     const handleError = error => {
         console.log(error);
     }
-
     const handleReset = () => {
-        methods.reset()
-        setBasicInfoComplete(false);
+        console.warn('Resetting Form');
+        /*
+        // all queries used in the form need to be reset
+        queryclient.resetQueries('personLookup');
+        queryclient.resetQueries('paytrans');
+        */
+        methods.reset();
+        //setBasicInfoComplete(false);
         setTabList(allTabs.filter(t=>t.id=='basic-info'));
     }
-
+    const handleNext = () => {
+        console.debug('Basic Info Complete');
+        methods.setValue('isNew',false);
+        // get tabs and set...
+        setTabList(allTabs);
+        setActiveTab('person-tab');
+        setActiveNav('person-info');
+    }
     return(
         <>
             <header>
@@ -110,14 +197,14 @@ function FormWrapper({formId,isDraft,isNew}) {
                     </Col>
                 </Row>
             </header>
-            <FormProvider {...methods} isDraft={isDraft} basicInfoComplete={basicInfoComplete}>
+            <FormProvider {...methods} isDraft={isDraft}>
                 <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)} onReset={handleReset}>
                     <Tabs activeKey={activeTab} onSelect={navigate} id="hr-forms-tabs">
                         {tabList.map(t => (
                             <Tab key={t.id} eventKey={t.id} title={t.title}>
                                 <Container as="section" className="px-0" fluid>
                                     {t.subTabs && 
-                                        <Row as="header" className="border-bottom">
+                                        <Row as="header" className="border-bottom mb-3 ml-0">
                                             <Nav activeKey={activeNav} onSelect={navigate2}>
                                                 {t.subTabs.map(s=>(
                                                     <Nav.Item key={s.id}>
@@ -130,13 +217,17 @@ function FormWrapper({formId,isDraft,isNew}) {
                                             </Nav>
                                         </Row>
                                     }
-                                    <FormTabRouter tab={activeTab} subTab={activeNav} setTabList={setTabList}/>
+                                    <div className="px-2">
+                                        <FormTabRouter tab={t.id} activeTab={activeTab} subTab={activeNav} setTabList={setTabList}/>
+                                    </div>
                                     <Row as="footer" className="mt-3">
                                         <Col className="button-group justify-content-end">
-                                            <AppButton type="reset" format="delete">Discard</AppButton>
-                                            <AppButton type="submit" format="submit">Submit</AppButton>
+                                            <AppButton type="reset" format="delete" onClick={handleReset}>Discard</AppButton>
+                                            <AppButton id="next" format="next" onClick={handleNext} disabled={!watchBasicInfoComplete}>Next</AppButton>
+                                            <AppButton id="submit" type="submit" format="submit" disabled={!watchBasicInfoComplete}>Submit</AppButton>
                                         </Col>
                                     </Row>
+                                    <FormInfoBox/>
                                 </Container>
                             </Tab>
                         ))}
@@ -147,83 +238,33 @@ function FormWrapper({formId,isDraft,isNew}) {
     );
 }
 
-function FormTabRouter({tab,subTab,...props}) {
+function FormTabRouter({tab,activeTab,subTab,...props}) {
+    if (tab != activeTab) return null;
     const r = tab + ((subTab)?'.'+subTab:'');
     switch(r) {
         case "basic-info": return <BasicInfo/>;
-        case "person": return <Person/>;
-        case "test-1.test-1-1": return <p>Tab 1; Sub Tab 1</p>;
+        case "person-tab.person-info": return <PersonInfo/>;
+        case "person-tab.person-demographics": return <PersonDemographics/>;
+        case "person-tab.person-contacts": return <PersonContacts/>;
         default: return <p>Not Found</p>;
     }
 }
 
-function BasicInfoTab({setTabList}) {
-    const changeTabs = () => {
-        console.log('change tabs');
-        setTabList(allTabs.filter(t=>['basic-info','person-info'].includes(t.id)));
-    }
+function FormInfoBox() {
     return (
-        <Button onClick={changeTabs}>Change Tabs</Button>
-    )
+        <UserContext.Consumer>
+            {({fullname,EMAIL_ADDRESS_WORK,REPORTING_DEPARTMENT_NAME}) => (
+                <Alert variant="secondary" className="mt-3">
+                    <Row as="dl" className="mb-0">
+                        <Col as="dt" sm={2} className="mb-0">Name:</Col>
+                        <Col as="dd" sm={10} className="mb-0">{fullname}</Col>
+                        <Col as="dt" sm={2} className="mb-0">Email:</Col>
+                        <Col as="dd" sm={10} className="mb-0">{EMAIL_ADDRESS_WORK}</Col>
+                        <Col as="dt" sm={2} className="mb-0">Department:</Col>
+                        <Col as="dd" sm={10} className="mb-0">{REPORTING_DEPARTMENT_NAME}</Col>
+                    </Row>
+                </Alert>
+            )}
+        </UserContext.Consumer>
+    );
 }
-
-/*
-                {formData && <RequestForm reqId={reqId} data={formData} setIsBlocking={setIsBlocking} isDraft={isDraft} isNew={isNew}/>}
-                {formData && <BlockNav reqId={reqId} when={isBlocking} isDraft={isNew}/>}
-
-*/
-/*
-function BlockNav({reqId,when,isDraft}) {
-const [showModal,setShowModal] = useState(false);
-const [nextLocation,setNextLocation] = useState();
-const [shouldProceed,setShouldProceed] = useState(false);
-const {SUNY_ID} = currentUser();
-const queryclient = useQueryClient();
-const {deleteRequest} = useRequestQueries(reqId);
-const delReq = deleteRequest();
-const history = useHistory();
-const stopNav = location => {
-    if (!shouldProceed) {
-        setShowModal(true);
-        setNextLocation(location);
-        return false;
-    }
-    return true;
-}
-const handleClose = () => setShowModal(false);
-const handleDelete = () => {
-    setShowModal(false);
-    //TODO: only delete if not saved
-    delReq.mutateAsync().then(()=>{
-        queryclient.refetchQueries(SUNY_ID).then(() => {
-            handleProceed();
-        });
-    });
-}
-const handleProceed = () => {
-    console.debug('proceed to location: ',nextLocation);
-    setShowModal(false);
-    setShouldProceed(true);
-}
-useEffect(() => shouldProceed && history.push(nextLocation.pathname),[shouldProceed]);
-return (
-    <>
-        <Prompt when={when} message={stopNav}/>
-        <Modal show={showModal} backdrop="static" onHide={handleClose}>
-            <Modal.Header closeButton>
-                <Modal.Title>Exit?</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                The position request has not been saved.  Do you want to leave and lose your changes?
-            </Modal.Body>
-            <Modal.Footer>
-                {isDraft&&<Button variant="danger" onClick={handleDelete}>Discard</Button>}
-                <Button variant="primary" onClick={handleProceed}>Leave</Button>
-                <Button variant="secondary" onClick={handleClose}>Cancel</Button>
-            </Modal.Footer>
-        </Modal>
-    </>
-
-)
-}
-*/

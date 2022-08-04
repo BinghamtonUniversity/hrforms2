@@ -4,6 +4,8 @@ bug/fix:
  * SGRIILLS showing as "ERR: DUPLICATE IDs" on email notification in old HR Forms PR request.
 
 todo: 
+ * paytrans limit by [new empl,new role,existing empl]
+ * delete paytrans should check to see usage?
  * Switch from username to B# as primary key
  * Add progressPending to DataTables
  * Header styling needed; i.e. h1, h2, h3, etc.

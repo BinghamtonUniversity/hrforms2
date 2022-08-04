@@ -34,7 +34,6 @@ export default function Request() {
 
     useEffect(() => {
         if (!id) {
-            //const now = getUnixTime(new Date());
             setIsNew(true);
             setIsDraft(true);
             setReqId(`draft-${SUNY_ID}`);

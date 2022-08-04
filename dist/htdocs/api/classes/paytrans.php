@@ -33,18 +33,16 @@ class PayTrans extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		//sleep(10);
-		//if req[0] filter by payroll_code, if req[1] filter by formcode, if req[2] filter by actioncode
-		$qry = "SELECT pt.paytrans_id, pt.payroll_code, p.payroll_title, 
-			pt.form_code, f.form_title, 
-			pt.action_code, a.action_title,
-			pt.transaction_code, t.transaction_title,
-			pt.active
+		$qry = "SELECT pt.paytrans_id, pt.payroll_code, p.payroll_title, p.payroll_description,
+			pt.form_code, f.form_title, f.form_description,
+			pt.action_code, a.action_title, a.action_description,
+			pt.transaction_code, t.transaction_title, t.transaction_description,
+			pt.active,pt.available_for
 			FROM HRFORMS2_PAYROLL_TRANSACTIONS pt
-			join (select PAYROLL_CODE, PAYROLL_TITLE from HRFORMS2_PAYROLL_CODES) p on (pt.PAYROLL_CODE = p.PAYROLL_CODE)
-			join (select FORM_CODE, FORM_TITLE from HRFORMS2_FORM_CODES) f on (pt.FORM_CODE = f.FORM_CODE)
-			left join (select ACTION_CODE, ACTION_TITLE from HRFORMS2_ACTION_CODES) a on (pt.ACTION_CODE = a.ACTION_CODE)
-			left join (select TRANSACTION_CODE, TRANSACTION_TITLE from HRFORMS2_TRANSACTION_CODES) t on (pt.TRANSACTION_CODE = t.TRANSACTION_CODE)";
+			join (select PAYROLL_CODE, PAYROLL_TITLE, PAYROLL_DESCRIPTION from HRFORMS2_PAYROLL_CODES) p on (pt.PAYROLL_CODE = p.PAYROLL_CODE)
+			join (select FORM_CODE, FORM_TITLE, FORM_DESCRIPTION from HRFORMS2_FORM_CODES) f on (pt.FORM_CODE = f.FORM_CODE)
+			left join (select ACTION_CODE, ACTION_TITLE, ACTION_DESCRIPTION from HRFORMS2_ACTION_CODES) a on (pt.ACTION_CODE = a.ACTION_CODE)
+			left join (select TRANSACTION_CODE, TRANSACTION_TITLE, TRANSACTION_DESCRIPTION from HRFORMS2_TRANSACTION_CODES) t on (pt.TRANSACTION_CODE = t.TRANSACTION_CODE)";
 		if (isset($this->req[0])) $qry .= " WHERE pt.payroll_code = :payroll_code";
 		if (isset($this->req[1])) $qry .= " AND pt.form_code = :form_code";
 		if (isset($this->req[2])) $qry .= " AND pt.action_code = :action_code";
@@ -61,7 +59,7 @@ class PayTrans extends HRForms2 {
 
     function POST() {
         $qry = "INSERT INTO HRFORMS2_PAYROLL_TRANSACTIONS 
-            values(HRFORMS2_PAYTRANS_ID_SEQ.nextval,:payroll_code,:form_code,:action_code,:transaction_code,:active)
+            values(HRFORMS2_PAYTRANS_ID_SEQ.nextval,:payroll_code,:form_code,:action_code,:transaction_code,:active,:available_for)
             RETURNING PAYTRANS_ID into :paytrans_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":payroll_code", $this->POSTvars['PAYROLL_CODE']);
@@ -69,6 +67,7 @@ class PayTrans extends HRForms2 {
 		oci_bind_by_name($stmt,":action_code", $this->POSTvars['ACTION_CODE']);
 		oci_bind_by_name($stmt,":transaction_code", $this->POSTvars['TRANSACTION_CODE']);
 		oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
+		oci_bind_by_name($stmt,":available_for", $this->POSTvars['AVAILABLE_FOR']);
         oci_bind_by_name($stmt,":paytrans_id", $PAYTRANS_ID,-1,SQLT_INT);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
@@ -78,10 +77,12 @@ class PayTrans extends HRForms2 {
 	function PUT() {
 		/* cannot update codes, only active and tabs [TBD] */
 		$qry = "UPDATE HRFORMS2_PAYROLL_TRANSACTIONS
-			SET active = :active
+			SET active = :active,
+			available_for = :available_for
 			WHERE paytrans_id = :paytrans_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
+		oci_bind_by_name($stmt,":available_for", $this->POSTvars['AVAILABLE_FOR']);
 		oci_bind_by_name($stmt,":paytrans_id", $this->req[0]);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();

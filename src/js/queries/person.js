@@ -16,7 +16,10 @@ export default function usePersonQueries() {
         const path = [];
         switch(data?.type) {
             case "bNumber": path.push(data.values.bNumber); break;
-            case "lastNameDOB":path.push(data.values.lastName,format(data.values.dob,'dd-MMM-yyyy')); break;
+            case "lastNameDOB":
+                path.push(data.values.lastName);
+                if (data.values.dob) path.push(format(data.values.dob,'dd-MMM-yyyy')); 
+                break;
             default: return qErr('Bad Data');
         }
         if(options.select) options.select2 = options.select;

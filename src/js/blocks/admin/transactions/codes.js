@@ -2,17 +2,18 @@ import React, { useState, useCallback, useMemo, useReducer, useEffect } from "re
 import { useCodesQueries } from "../../../queries/codes";
 import { startCase, toUpper } from "lodash";
 import DataTable from 'react-data-table-component';
-import { Row, Col, Form, Modal, Alert } from "react-bootstrap";
+import { Row, Col, Form, Modal, Alert, OverlayTrigger, Popover } from "react-bootstrap";
 import { AppButton, errorToast, ModalConfirm } from "../../components";
 import { useQueryClient } from "react-query";
 import { toast } from "react-toastify";
 import { useForm, Controller } from "react-hook-form";
 
 export default function CodesTab({tab,tabName}) {
-    const vals = {code:`${tab}_code`,title:`${tab}_title`};
+    const vals = {code:`${tab}_code`,title:`${tab}_title`,description:`${tab}_description`};
     const vars = {
         code:{start:startCase(vals.code),upper:toUpper(vals.code)},
-        title:{start:startCase(vals.title),upper:toUpper(vals.title)}
+        title:{start:startCase(vals.title),upper:toUpper(vals.title)},
+        description:{start:startCase(vals.description),upper:toUpper(vals.description)}
     };
     const defaultChangedRow = {update:false,code:null,field:null,value:null}
 
@@ -63,7 +64,18 @@ export default function CodesTab({tab,tabName}) {
             );
         },ignoreRowClick:true,width:'100px'},
         {name:vars.code.start,selector:row=>row[vars.code.upper],sortable:true},
-        {name:vars.title.start,selector:row=>row[vars.title.upper],sortable:true},
+        {name:vars.title.start,selector:row=>(
+            <OverlayTrigger key={`${row[vars.code.upper]}_description`} trigger={['focus','hover']} placement="auto" overlay={
+                <Popover id={`${row[vars.code.upper]}_description`}>
+                    <Popover.Title>Description</Popover.Title>
+                    <Popover.Content>
+                        {row[vars.description.upper]}
+                    </Popover.Content>
+                </Popover>
+            }>
+                <p className="m-0">{row[vars.title.upper]}</p>
+            </OverlayTrigger>
+        ),sortable:true},
         {name:'Active',selector:row=><Form.Check aria-label="Active" name="active" id={`active_${row[vars.code.upper]}`} value={row[vars.code.upper]} checked={row.ACTIVE==1} onChange={e=>handleRowEvents(e,row)}/>,sortable:true,ignoreRowClick:true},
         {name:'Order',selector:row=><Form.Control type="number" name="orderby" defaultValue={row.ORDERBY} onBlur={e=>handleRowEvents(e,row)}/>,sortable:true,ignoreRowClick:true}
     ],[codes.data]);
@@ -177,7 +189,8 @@ function AddEditCode({tab,vars,codes,selectedRow,setSelectedRow,isNew,setIsNew,n
             code:selectedRow[vars.code.upper]||'',
             title:selectedRow[vars.title.upper]||'',
             active:((selectedRow.ACTIVE||1)==1)?true:false,
-            order:selectedRow.ORDERBY||nextOrder
+            order:selectedRow.ORDERBY||nextOrder,
+            description:selectedRow[vars.description.upper]||''
         }
     });
 
@@ -197,12 +210,16 @@ function AddEditCode({tab,vars,codes,selectedRow,setSelectedRow,isNew,setIsNew,n
             CODE:data.code,
             TITLE:data.title,
             ACTIVE:(data.active)?'1':'0',
-            ORDERBY:(data.order)?data.order:nextOrder
+            ORDERBY:(data.order)?data.order:nextOrder,
+            DESCRIPTION:data.description
         }
         setStatus({state:'saving',message:''});
         if (isNew) {
             createCode.mutateAsync(d).then(()=>{
-                queryclient.refetchQueries(['codes',tab]).then(()=>{
+                Promise.all([
+                    queryclient.refetchQueries(['codes',tab]),
+                    queryclient.refetchQueries('paytrans')
+                ]).then(()=>{
                     setStatus({state:'clear'});
                     closeModal();
                     toast.success(`${vars.title.start} created successfully`);
@@ -212,7 +229,10 @@ function AddEditCode({tab,vars,codes,selectedRow,setSelectedRow,isNew,setIsNew,n
             });
         } else {
             updateCode.mutateAsync(d).then(()=>{
-                queryclient.refetchQueries(['codes',tab]).then(()=>{
+                Promise.all([
+                    queryclient.refetchQueries(['codes',tab]),
+                    queryclient.refetchQueries('paytrans')
+                ]).then(()=>{
                     setStatus({state:'clear'});
                     closeModal();
                     toast.success(`${vars.code.start} updated successfully`);
@@ -227,7 +247,7 @@ function AddEditCode({tab,vars,codes,selectedRow,setSelectedRow,isNew,setIsNew,n
         console.error(error);
         let msg = [];
         Object.keys(error).forEach(k => {
-            msg.push(<p keyt={k} className="m-0">{error[k]?.message}</p>);
+            msg.push(<p key={k} className="m-0">{error[k]?.message}</p>);
         });
         setStatus({state:'error',message:msg});
     }
@@ -253,7 +273,7 @@ function AddEditCode({tab,vars,codes,selectedRow,setSelectedRow,isNew,setIsNew,n
                                 control={control}
                                 defaultValue={selectedRow[vars.code.upper]}
                                 rules={{required:{value:true,message:`${vars.code.start} is required`}}}
-                                render={({field}) => <Form.Control {...field} type="text" maxLength="10" placeholder={`Enter ${vars.code.start}`} isInvalid={errors.code}/>} 
+                                render={({field}) => <Form.Control {...field} type="text" maxLength="10" placeholder={`Enter ${vars.code.start}`} isInvalid={errors.code}/>}
                             />
                             <Form.Control.Feedback type="invalid">{errors.code?.message}</Form.Control.Feedback>
                         </Form.Group>
@@ -266,9 +286,20 @@ function AddEditCode({tab,vars,codes,selectedRow,setSelectedRow,isNew,setIsNew,n
                                 control={control}
                                 defaultValue={selectedRow[vars.title.upper]}
                                 rules={{required:{value:true,message:`${vars.title.start} is required`}}}
-                                render={({field}) => <Form.Control {...field} type="text" placeholder="Enter a title description" isInvalid={errors.title}/>}
+                                render={({field}) => <Form.Control {...field} type="text" placeholder="Enter a Title" isInvalid={errors.title}/>}
                             />
                             <Form.Control.Feedback type="invalid">{errors.title?.message}</Form.Control.Feedback>
+                        </Form.Group>
+                    </Form.Row>
+                    <Form.Row>
+                        <Form.Group as={Col} controlId="description">
+                            <Form.Label>{vars.description.start}:</Form.Label>
+                            <Controller
+                                name="description"
+                                control={control}
+                                defaultValue={selectedRow[vars.description.upper]}
+                                render={({field}) => <Form.Control {...field} as="textarea" rows={4} placeholder="Enter a Description (optional)"/>}
+                            />
                         </Form.Group>
                     </Form.Row>
                     <Form.Row>

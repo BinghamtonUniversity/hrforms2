@@ -44,24 +44,49 @@ class Codes extends HRForms2 {
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
     function POST() {
-        $qry = "INSERT INTO HRFORMS2_".$this->req[0]."_CODES VALUES(:code,:title,:active,:orderby)";
+        $qry = "INSERT INTO HRFORMS2_".$this->req[0]."_CODES VALUES(:code,:title,:active,:orderby,:description)";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt,":code", $this->POSTvars['CODE']);
         oci_bind_by_name($stmt,":title", $this->POSTvars['TITLE']);
+        oci_bind_by_name($stmt,":description", substr($this->POSTvars['DESCRIPTION'],0,2000));
         oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
         oci_bind_by_name($stmt,":orderby", $this->POSTvars['ORDERBY']);
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
         oci_commit($this->db);
         oci_free_statement($stmt);
-        $this->done();
+        if ($this->retJSON) $this->done();
     }
     function PUT() {
-        $qry = "UPDATE HRFORMS2_".$this->req[0]."_CODES SET ".$this->req[0]."_code = :code, ".$this->req[0]."_title = :title,
-            active = :active, orderby = :orderby WHERE ".$this->req[0]."_code = :req1";
+        if ($this->req[1] != $this->POSTvars['CODE']) {
+            $qry = "SELECT count(*) FROM HRFORMS2_PAYROLL_TRANSACTIONS WHERE ".$this->req[0]."_code = :req1";
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":req1", $this->req[1]);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
+            $row = oci_fetch_array($stmt,OCI_RETURN_NULLS);
+            if ($row[0] != 0) {
+                $this->retJSON = false;
+                $this->POST();
+                $qry = "UPDATE HRFORMS2_PAYROLL_TRANSACTIONS SET ".$this->req[0]."_code = :code WHERE ".$this->req[0]."_code = :req1";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":code", $this->POSTvars['CODE']);
+                oci_bind_by_name($stmt,":req1", $this->req[1]);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
+                oci_commit($this->db);
+                oci_free_statement($stmt);
+                $this->DELETE();
+                $this->done();
+                exit();
+            }
+        }
+        $qry = "UPDATE HRFORMS2_".$this->req[0]."_CODES SET ".$this->req[0]."_code = :code, ".$this->req[0]."_title = :title, ".
+            $this->req[0]."_description = :description, active = :active, orderby = :orderby WHERE ".$this->req[0]."_code = :req1";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt,":code", $this->POSTvars['CODE']);
         oci_bind_by_name($stmt,":title", $this->POSTvars['TITLE']);
+        oci_bind_by_name($stmt,":description", substr($this->POSTvars['DESCRIPTION'],0,2000));
         oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
         oci_bind_by_name($stmt,":orderby", $this->POSTvars['ORDERBY']);
         oci_bind_by_name($stmt,":req1", $this->req[1]);
@@ -104,6 +129,6 @@ class Codes extends HRForms2 {
 		if (!$r) $this->raiseError();
 		oci_commit($this->db);
 		oci_free_statement($stmt);
-		$this->done();
+		if ($this->retJSON) $this->done();
     }
 }

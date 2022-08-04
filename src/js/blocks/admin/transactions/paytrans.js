@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState, useReducer } from "react";
-import { Row, Col, Modal, Form, Tabs, Tab, Container, Alert } from "react-bootstrap";
+import { Row, Col, Modal, Form, Tabs, Tab, Container, Alert, OverlayTrigger, Popover } from "react-bootstrap";
 import { useForm, Controller } from "react-hook-form";
 import { AppButton, CheckboxTreeComponent, errorToast, ModalConfirm } from "../../components";
 import { useTransactionQueries, useCodesQueries } from "../../../queries/codes";
@@ -70,10 +70,54 @@ export default function PayrollTransactionsTab() {
                 </div>
             );
         },ignoreRowClick:true,width:'100px'},
-        {name:"Payroll Code",selector:row=>row.payrollDisplay,sortable:true},
-        {name:"Form Code",selector:row=>row.formDisplay,sortable:true},
-        {name:"Action Code",selector:row=>row.actionDisplay,sortable:true},
-        {name:"Trasaction Code",selector:row=>row.transactionDisplay,sortable:true},
+        {name:"Payroll Code",selector:row=>(
+            <OverlayTrigger trigger={['focus','hover']} placement="auto" overlay={
+                <Popover id={`${row.PAYTRANS_ID}_payroll_description`}>
+                    <Popover.Title>Payroll Description</Popover.Title>
+                    <Popover.Content>
+                        {row.PAYROLL_DESCRIPTION}
+                    </Popover.Content>
+                </Popover>
+            }>
+                <p className="m-0">{row.payrollDisplay}</p>
+            </OverlayTrigger>
+        ),sortable:true},
+        {name:"Form Code",selector:row=>(
+            <OverlayTrigger trigger={['focus','hover']} placement="auto" overlay={
+                <Popover id={`${row.PAYTRANS_ID}_form_description`}>
+                    <Popover.Title>Form Description</Popover.Title>
+                    <Popover.Content>
+                        {row.FORM_DESCRIPTION}
+                    </Popover.Content>
+                </Popover>
+            }>
+                <p className="m-0">{row.formDisplay}</p>
+            </OverlayTrigger>
+        ),sortable:true},
+        {name:"Action Code",selector:row=>(
+            <OverlayTrigger trigger={['focus','hover']} placement="auto" overlay={
+                <Popover id={`${row.PAYTRANS_ID}_action_description`}>
+                    <Popover.Title>Action Description</Popover.Title>
+                    <Popover.Content>
+                        {row.ACTION_DESCRIPTION}
+                    </Popover.Content>
+                </Popover>
+            }>
+                <p className="m-0">{row.actionDisplay}</p>
+            </OverlayTrigger>
+        ),sortable:true},
+        {name:"Trasaction Code",selector:row=>(
+            <OverlayTrigger trigger={['focus','hover']} placement="auto" overlay={
+                <Popover id={`${row.PAYTRANS_ID}_transaction_description`}>
+                    <Popover.Title>Transaction Description</Popover.Title>
+                    <Popover.Content>
+                        {row.TRANSACTION_DESCRIPTION}
+                    </Popover.Content>
+                </Popover>
+            }>
+                <p className="m-0">{row.transactionDisplay}</p>
+            </OverlayTrigger>
+        ),sortable:true},
         {name:'Active',selector:row=><Form.Check aria-label="Active" name="active" value={row.ACTIVE} checked={row.ACTIVE==1} onChange={()=>handleRowAction('active',row)}/>,sortable:true,ignoreRowClick:true},
     ],[paytrans.data]);
 
@@ -177,7 +221,12 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
             FORM_CODE:selectedRow.FORM_CODE||'',
             ACTION_CODE:selectedRow.ACTION_CODE||'',
             TRANSACTION_CODE:selectedRow.TRANSACTION_CODE||'',
-            ACTIVE:selectedRow.ACTIVE||'1'
+            ACTIVE:selectedRow.ACTIVE||'1',
+            for:{
+                newEmpl:(selectedRow?.AVAILABLE_FOR)?selectedRow.AVAILABLE_FOR[0]:0,
+                newRole:(selectedRow?.AVAILABLE_FOR)?selectedRow.AVAILABLE_FOR[1]:0,
+                curEmpl:(selectedRow?.AVAILABLE_FOR)?selectedRow.AVAILABLE_FOR[2]:0,
+            }
         }
     });
 
@@ -207,6 +256,8 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
         }
         const d = {...data}
         d.ACTIVE = (data.ACTIVE)?1:0;
+        d.AVAILABLE_FOR = Object.values(data.for).map(a=>(a==1)?'1':(a==0)?'0':(!!a)?'1':'0').join('');
+        delete d['for'];
         setStatus({state:'saving',message:''});
         if (isNew||selectedRow.isCopy) {
             createPayTrans.mutateAsync(d).then(()=>{
@@ -222,7 +273,7 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
         } else {
             //check to see if changes, if none then just exit
             console.log('update',selectedRow,data);
-            if ((selectedRow.ACTIVE==1)!=data.ACTIVE) {
+            if ((selectedRow.ACTIVE==1)!=data.ACTIVE||selectedRow.AVAILABLE_FOR!=data.AVAILABLE_FOR) {
                 updatePayTrans.mutateAsync(d).then(()=>{
                     queryclient.refetchQueries('paytrans').then(()=>{
                         setStatus({state:'clear'});
@@ -362,9 +413,26 @@ function PayTransInfoTab({selectedRow,control,errors,payrollcodes,formcodes,acti
                     <Form.Control.Feedback type="invalid">{errors.TRANSACTION_CODE?.message}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
+            <Form.Group as={Row} controlId="AVAILABLE_FOR">
+                <Form.Label column sm={3}>Available For:</Form.Label>
+                <Col sm={9} className="pt-2">
+                    {[
+                        {name:'newEmpl',title:'New Employee'},
+                        {name:'newRole',title:'New Role'},
+                        {name:'curEmpl',title:'Current Employee'}
+                    ].map(r => (
+                        <Controller
+                            key={r.name}
+                            name={`for.${r.name}`}
+                            control={control}
+                            render={({field}) => <Form.Check {...field} inline type="checkbox" value="1" label={r.title} checked={field.value==1}/>}
+                        />
+                    ))}
+                </Col>
+            </Form.Group>
             <Form.Group as={Row} controlId="ACTIVE">
                 <Form.Label column sm={3}>Active:</Form.Label>
-                <Col sm={9}>
+                <Col sm={9} className="pt-2">
                     <Controller
                         name="ACTIVE"
                         control={control}

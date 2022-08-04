@@ -20,6 +20,8 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
 /* smaller font */
 .font-size-95 { font-size: 95% }
 .font-size-90 { font-size: 90% }
+.font-size-85 { font-size: 85% }
+.font-size-80 { font-size: 80% }
 
 /* make pre text wrap - see: https://css-tricks.com/snippets/css/make-pre-text-wrap/*/
 pre {
