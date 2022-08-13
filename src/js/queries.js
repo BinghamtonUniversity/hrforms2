@@ -64,13 +64,14 @@ export function useAppQueries() {
         const options = args[0]?.options||args[1]||{};
         return useQuery(['list',LIST_ID],q(`lists/${LIST_ID}`),options);
     }
-    //TODO: need to handle caching better; useQuery will still query on re-mount (i.e. tab changes)
     const getListData = (...args) => {
         const LIST_ID = args[0]?.LIST_ID||args[0];
         const options = args[0]?.options||args[1]||{};
+        if (!options.hasOwnProperty('staleTime')) options.staleTime = 900000; // 15 minutes
+        if (!options.hasOwnProperty('refetchOnMount')) options.refetchOnMount = false;
         return useQuery(['listdata',LIST_ID],q(`listdata/${LIST_ID}`),options);
     }
-    const getBudgetTitles = (...args) => {
+    /*const getBudgetTitles = (...args) => {
         const posType = args[0]?.posType||args[0];
         const options = args[0]?.options||args[1]||{};
         switch(posType) {
@@ -79,7 +80,7 @@ export function useAppQueries() {
             case "P": return useQuery(['listdata','titlesP'],q('listdata/budgetTitlesProfessional'),options);
             default: return useQuery('stubGET',f());
         }
-    }
+    }*/
     /*admin?*/
     const patchNews = () => useMutation(q('news','PATCH',{}));
     const patchSession = () => useMutation(q('session','PATCH',{}));
@@ -91,7 +92,7 @@ export function useAppQueries() {
             return q(`news/${newsid}`,'PUT',d)();
         });
     }
-    return {getSession,getSettings,getNews,getLists,getList,getListData,getBudgetTitles,putNews,patchNews,patchSession};
+    return {getSession,getSettings,getNews,getLists,getList,getListData,putNews,patchNews,patchSession};
 }
 
 /** USER QUERIES */

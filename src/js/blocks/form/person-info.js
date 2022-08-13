@@ -4,7 +4,7 @@ import { useFormContext, Controller } from "react-hook-form";
 import { Row, Col, Form } from "react-bootstrap";
 
 export default function PersonInfo() {
-    const { control, formState: { errors } } = useFormContext();
+    const { control, getValues } = useFormContext();
 
     const {getListData} = useAppQueries();
     const salutations = getListData('salutations');
@@ -47,10 +47,11 @@ export default function PersonInfo() {
                             name="person.info.salutation"
                             control={control}
                             render={({field})=>(
-                            <Form.Control {...field} as="select">
-                                <option></option>
-                                {salutations.data && salutations.data.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}
-                            </Form.Control>)}
+                                <Form.Control {...field} as="select">
+                                    <option></option>
+                                    {salutations.data && salutations.data.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}
+                                </Form.Control>
+                            )}
                         />
                     </Col>
                 </Form.Group>

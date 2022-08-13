@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useQueryClient } from "react-query";
 import { Row, Col, Form, ToggleButtonGroup, ToggleButton } from "react-bootstrap";
 import { useAppQueries, useAdminQueries } from "../../queries";
-import { useForm, Controller, useFormContext } from "react-hook-form";
+import { useForm, Controller, FormProvider, useFormContext, useWatch } from "react-hook-form";
 import { toast } from "react-toastify";
 import camelCase from "lodash/camelCase";
 import { Loading, ModalConfirm, AppButton, errorToast } from "../../blocks/components";
@@ -13,6 +13,7 @@ export default function AdminLists() {
     const [slugHint,setSlugHint] = useState('');
     const [confirmDelete,setConfirmDelete] = useState(false);
     const [confirmSave,setConfirmSave] = useState(false);
+    const [runSQL,setRunSQL] = useState('');
 
     const {getLists,getList} = useAppQueries();
     const {postList,putList,deleteList} = useAdminQueries();
@@ -23,36 +24,46 @@ export default function AdminLists() {
     const updatelist = putList(selectedList);
     const deletelist = deleteList(selectedList);
 
-    const { handleSubmit, control, setValue, getValues, setError, clearErrors, reset, trigger, formState:{errors} } = useForm({mode:'onBlur',reValidateMode:'onBlur'});
+    const defaultValues = {
+        LIST_ID:'',
+        LIST_NAME:'',
+        LIST_TYPE:'',
+        LIST_SLUG:'',
+        PROTECTED:'',
+        LIST_DATA:''
+    };
+    const methods = useForm();
+    
     const handleBlur = e => {
-        const [listId,listSlug] = getValues(['LIST_ID','LIST_SLUG']);
+        const [listId,listSlug] = methods.getValues(['LIST_ID','LIST_SLUG']);
         const listSlugCc = camelCase(listSlug);
         if (e.target.name == 'LIST_NAME') {
             if (listSlug == '' || listSlug != listSlugCc) {
-                setValue('LIST_SLUG',camelCase(e.target.value));
-                trigger('LIST_SLUG');
+                methods.setValue('LIST_SLUG',camelCase(e.target.value));
+                methods.trigger('LIST_SLUG');
             }
             setSlugHint(camelCase(e.target.value));
         }
         if (e.target.name == 'LIST_SLUG') {
             if (listSlug != listSlugCc) {
-                setError('LIST_SLUG',{type:'manual',message:'Invalid List Slug'});
+                methods.setError('LIST_SLUG',{type:'manual',message:'Invalid List Slug'});
                 return false;
             }
             const chk = lists.data.find(a=>a.LIST_SLUG==listSlug)?.LIST_ID;
             if (chk && chk != listId) {
-                setError('LIST_SLUG',{type:'manual',message:'List Slug already in use'});
+                methods.setError('LIST_SLUG',{type:'manual',message:'List Slug already in use'});
                 return false;
             }
         }
     }
-    const pickSlugHint = () => setValue('LIST_SLUG',slugHint);
+    const pickSlugHint = () => methods.setValue('LIST_SLUG',slugHint);
     const newList = () => {
         setSelectedList('');
         setIsNewList(true);
+        setRunSQL('');
         resetState();
-        setValue('LIST_ID','new');
-        ['LIST_NAME','LIST_TYPE','LIST_SLUG','PROTECTED','LIST_DATA'].forEach(k=>setValue(k,''));
+        methods.setValue('LIST_ID','new');
+        ['LIST_NAME','LIST_TYPE','LIST_SLUG','PROTECTED','LIST_DATA'].forEach(k=>methods.setValue(k,''));
     }
     const handleDeleteList = () => setConfirmDelete(true);
     const confirmDeleteButtons = {
@@ -63,6 +74,7 @@ export default function AdminLists() {
                 deletelist.mutateAsync(selectedList).then(()=>{
                     queryclient.refetchQueries('lists',{exact:true}).then(() => {
                         setSelectedList('');
+                        setRunSQL('');
                         resolve();
                     }).catch(err=>reject(err))
                 }).catch(err=>reject(err));
@@ -79,7 +91,7 @@ export default function AdminLists() {
             try {
                 JSON.parse(data.LIST_DATA);
             } catch(e) {
-                setError("LIST_DATA",{type:'manual',message:'Invalid JSON',},{shouldFocus:true});
+                methods.setError("LIST_DATA",{type:'manual',message:'Invalid JSON',},{shouldFocus:true});
                 return false;    
             }
         }
@@ -87,18 +99,18 @@ export default function AdminLists() {
             try {
                 const list = JSON.parse(data.LIST_DATA);
                 if (list.filter(l=>l.length!=2).length != 0) {
-                    setError("LIST_DATA",{type:'manual',message:'Invalid List',},{shouldFocus:true});
+                    methods.setError("LIST_DATA",{type:'manual',message:'Invalid List',},{shouldFocus:true});
                     return false;
                 }
             } catch(e) {
-                setError("LIST_DATA",{type:'manual',message:'Invalid List',},{shouldFocus:true});
+                methods.setError("LIST_DATA",{type:'manual',message:'Invalid List',},{shouldFocus:true});
                 return false;    
             }
         }
         if (data.LIST_TYPE == 'sql') {
             const sql = data.LIST_DATA.toLowerCase();
             if (![';','delete','update','insert'].every(t=>!sql.includes(t))) {
-                setError("LIST_DATA",{type:'manual',message:'Invalid SQL',},{shouldFocus:true});
+                methods.setError("LIST_DATA",{type:'manual',message:'Invalid SQL',},{shouldFocus:true});
                 return false;                    
             }
         }
@@ -108,12 +120,13 @@ export default function AdminLists() {
         close:{title:'Cancel',callback:()=>setConfirmSave(false)},
         confirm:{title:'Save',callback:()=>{
             setConfirmSave(false);
-            const data = getValues();
+            const data = methods.getValues();
             if (isNewList) {
                 toast.promise(new Promise((resolve,reject) => {
                     createlist.mutateAsync(data).then(d=>{
                         queryclient.refetchQueries('lists',{exact:true}).then(() => {
                             setSelectedList(d.LIST_ID);
+                            setRunSQL('');
                             resolve();
                         }).catch(err=>reject(err));
                     }).catch(err=>reject(err));
@@ -125,10 +138,15 @@ export default function AdminLists() {
             } else if (selectedList) {
                 toast.promise(new Promise((resolve,reject) => {
                     updatelist.mutateAsync(data).then(()=>{
+                        //invalidate listdata?
                         Promise.all([
                             queryclient.refetchQueries('lists',{exact:true}),
                             queryclient.refetchQueries(['list',selectedList],{exact:true})
-                        ]).then(()=>resolve()).catch(err=>reject(err));
+                        ]).then(()=>{
+                            queryclient.invalidateQueries(['listdata',data.LIST_SLUG],{exact:true,refetchInactive:true});
+                            queryclient.invalidateQueries(['listdata',data.LIST_ID],{exact:true,refetchInactive:true});
+                            resolve();
+                        }).catch(err=>reject(err));
                     }).catch(err=>reject(err));
                 }),{
                     pending: 'Updating list...',
@@ -140,23 +158,26 @@ export default function AdminLists() {
     };
 
     const resetState = () => {
-        clearErrors();
+        methods.clearErrors();
         setConfirmDelete(false);
         setConfirmDelete(false);
         setSlugHint('');
-        if (!selectedList)
-            ['LIST_ID','LIST_NAME','LIST_TYPE','LIST_SLUG','PROTECTED','LIST_DATA'].forEach(k=>setValue(k,''));
+        setRunSQL('');
+        if (!selectedList){
+            ['LIST_ID','LIST_NAME','LIST_TYPE','LIST_SLUG','PROTECTED','LIST_DATA'].forEach(k=>methods.setValue(k,''));
+        }
     }
     const cancelList = () => {
         setSelectedList('');
         setIsNewList(false);
+        setRunSQL('');
         resetState();
     }
     
     useEffect(()=>{
-        clearErrors();
+        methods.clearErrors();
         if (!listdetails.data) return;
-        Object.keys(listdetails.data).forEach(k=>setValue(k,listdetails.data[k]));
+        Object.keys(listdetails.data).forEach(k=>methods.setValue(k,listdetails.data[k]));
     },[listdetails.data]);
     useEffect(()=>{
         if (selectedList) {
@@ -191,18 +212,25 @@ export default function AdminLists() {
                 {listdetails.isLoading && <Loading type="alert">Loading List Details..</Loading>}
                 {listdetails.isError && <Loading type="alert" isError>Error loading list details</Loading>}
                 {(listdetails.data||isNewList) && 
-                    <Form onSubmit={handleSubmit(saveList)} onReset={cancelList}>
-                        <ListDetails control={control} errors={errors} locked={listdetails.data?.PROTECTED} handleBlur={handleBlur} slugHint={slugHint} pickSlugHint={pickSlugHint} handleDeleteList={handleDeleteList} isNewList={isNewList}/>
-                    </Form>
+                    <FormProvider {...methods}>
+                        <Form onSubmit={methods.handleSubmit(saveList)} onReset={cancelList}>
+                            <ListDetails locked={listdetails.data?.PROTECTED} handleBlur={handleBlur} slugHint={slugHint} pickSlugHint={pickSlugHint} handleDeleteList={handleDeleteList} isNewList={isNewList} setRunSQL={setRunSQL}/>
+                        </Form>
+                    </FormProvider>
                 }
             </section>
+            {runSQL!='' && <ListRunSQL runSQL={runSQL}/>}
             <ModalConfirm show={confirmSave} title="Save?" buttons={confirmSaveButtons}>Are you sure you want to save this list?</ModalConfirm>
             <ModalConfirm show={confirmDelete} title="Delete?" buttons={confirmDeleteButtons}>Are you sure you want to delete this list?</ModalConfirm>
         </>
     );
 }
 
-function ListDetails({control,errors,locked,handleBlur,slugHint,pickSlugHint,handleDeleteList,isNewList}) {
+function ListDetails({locked,handleBlur,slugHint,pickSlugHint,handleDeleteList,isNewList,setRunSQL}) {
+    const [allowUpload,setAllowUpload] = useState(false);
+    
+    const { control, getValues, formState: { errors }} = useFormContext();
+    const watchListType = useWatch({name:'LIST_TYPE'});
     const tabIndent = e => {
         if (e.key === 'Tab') {
             e.preventDefault();
@@ -210,9 +238,6 @@ function ListDetails({control,errors,locked,handleBlur,slugHint,pickSlugHint,han
             t.setRangeText('  ',t.selectionStart,t.selectionEnd,'end');
         }
     }
-    useEffect(()=>{
-
-    })
     return (
         <>
             <Form.Group as={Row}>
@@ -277,6 +302,7 @@ function ListDetails({control,errors,locked,handleBlur,slugHint,pickSlugHint,han
             <Form.Group as={Row}>
                 <Form.Label column md={2}>List Data:</Form.Label>
                 <Col md={9}>
+                    {(watchListType=='list'&&allowUpload)&&<AppButton format="upload" size="sm">Upload Data</AppButton>}
                     <Controller
                         name="LIST_DATA"
                         defaultValue=''
@@ -286,13 +312,43 @@ function ListDetails({control,errors,locked,handleBlur,slugHint,pickSlugHint,han
                     <Form.Control.Feedback type="invalid">{errors.LIST_DATA?.message}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
+            {}
             <Row>
                 <Col className="button-group">
                     <AppButton format="save" type="submit" disabled={!!Object.keys(errors).length}>Save</AppButton>
-                    {(locked!="1") && <AppButton format="delete" onClick={handleDeleteList}>Delete</AppButton>}
+                    {(locked!="1"&&!isNewList) && <AppButton format="delete" onClick={handleDeleteList}>Delete</AppButton>}
+                    {(watchListType=='sql'&&!isNewList) && <AppButton format="run" onClick={()=>setRunSQL(getValues('LIST_SLUG'))}>Run SQL</AppButton>}
                     <AppButton format="cancel" variant="secondary" type="reset">Cancel</AppButton>
                 </Col>
             </Row>
         </>
+    );
+}
+
+function ListRunSQL({runSQL}) {
+    const {getListData} = useAppQueries();
+    const results = getListData(runSQL);
+    return (
+        <section className="border-top mt-4 pt-3">
+            <header>
+                <Row>
+                    <Col><h3>SQL Results</h3></Col>
+                </Row>
+            </header>
+            <article>
+                {results.data && 
+                    <Row className="mb-2">
+                        <Col><em>Displaying First 20 Records</em></Col>
+                    </Row>
+                }
+                <Row>
+                    <Col>
+                        {results.isLoading&&<p>Loading...</p>}
+                        {results.isError&&<p>Error Loading</p>}
+                        {results.data && <pre>{JSON.stringify(results.data.slice(0,19))}</pre>}
+                    </Col>
+                </Row>
+            </article>
+        </section>
     );
 }

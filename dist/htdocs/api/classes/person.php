@@ -50,8 +50,9 @@ class Person extends HRForms2 {
             nvl(pemp.data_status_emp, pers.role_status) as data_status_emp, pemp.status_type,
             nvl(pemp.appointment_effective_date, pers.role_effective_date) as appointment_effective_date,
             nvl(pemp.appointment_end_date, pers.role_end_date) as appointment_end_date,
-            pers.birth_date, pers.legal_first_name, pers.legal_middle_name, pers.legal_last_name,
-            pers.local_campus_id, pemp.payroll_agency_code, pemp.title_description, pemp.dpt_cmp_dsc
+            pers.birth_date, pers.salutation_code, pers.legal_first_name, pers.legal_middle_name, pers.legal_last_name, pers.suffix_code,
+            pers.local_campus_id, pemp.payroll_agency_code, pemp.title_description, pemp.dpt_cmp_dsc,
+            pers.gender, pers.citizenship_country_code, pers.veteran_indicator, pers.military_status_code
             FROM buhr.buhr_person_mv@banner.cc.binghamton.edu pers
             JOIN (SELECT hr_person_id, line_item_number,employment_role_type, data_status_emp, status_type, appointment_effective_date,
                 appointment_end_date, payroll_agency_code, title_description, dpt_cmp_dsc

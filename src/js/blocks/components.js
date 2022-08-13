@@ -2,7 +2,7 @@ import React from "react";
 import { Alert, Button, Modal, ListGroup, NavDropdown } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { parse, format } from "date-fns";
-import { invoke, get, capitalize } from "lodash";
+import { invoke, get, capitalize, isDate } from "lodash";
 import { Icon } from '@iconify/react';
 import { SettingsContext } from "../app";
 import { useUserQueries } from "../queries";
@@ -27,12 +27,14 @@ const formats = {
     'impersonate':{icon:'mdi:account-switch',variant:'primary'},
     'loading':{icon:'mdi:loading',variant:'secondary',spin:true},
     'next':{icon:'mdi:arrow-right-thick',variant:'primary'},
+    'run':{icon:'mdi:run',variant:'danger'},
     'save':{icon:'mdi:content-save',variant:'primary'},
     'save-move':{icon:'mdi:content-save-move',variant:'primary'},
     'saving':{icon:'mdi:loading',variant:'primary',spin:true},
     'search':{icon:'mdi:magnify',variant:'primary'},
     'submit':{icon:'mdi:content-save-check',variant:'primary'},
     'undo':{icon:'mdi:undo',variant:'secondary'},
+    'upload':{icon:'mdi:file-upload',variant:'secondary'},
 };
 
 const Loading = React.memo(function Loading({children,className='',isError,error,variant,type}){
@@ -47,9 +49,10 @@ const Loading = React.memo(function Loading({children,className='',isError,error
 });
 
 export function DateFormat({children,inFmt,outFmt,nvl=null}) {
+    if (!children) return nvl;
     const iFmt = inFmt || 'dd-MMM-yy';
-    const d = parse(children,iFmt,new Date());
-    if (d=='Invalid Date'||!children) return nvl;
+    const d = (isDate(children))?children:parse(children,iFmt,new Date());
+    if (d=='Invalid Date') return nvl;
     const oFmt = outFmt || 'M/d/yyyy'; //TODO: global date default format and user date format
     return format(d,oFmt);
 }
@@ -85,8 +88,10 @@ const ModalConfirm = React.memo(({children,show,title,buttons,icon}) => {
 });
 
 const AppButton = React.memo(({children,format,icon,spin,...props}) => {
+    const cName = props.className;
+    if (!children) cName += ' no-label';
     return (
-        <Button {...props} className={(!children)&&'no-label'} variant={props.variant||formats[format].variant}>{format!='none'&&<Icon className={(spin||formats[format].spin)&&'spin'} icon={icon||formats[format].icon}/>}{children}</Button>
+        <Button {...props} className={cName} variant={props.variant||formats[format].variant}>{format!='none'&&<Icon className={(spin||formats[format].spin)&&'spin'} icon={icon||formats[format].icon}/>}{children}</Button>
     );
 });
 

@@ -67,7 +67,7 @@ export default function FormBasicInfo() {
     }
 
     const {getCodes} = useCodesQueries('payroll');
-    const payrollcodes = getCodes();
+    const payrollcodes = getCodes({refetchOnMount:false});
 
     const {getPayTrans} = useTransactionQueries(watchPayrollDate[0]);
     const paytrans = getPayTrans({enabled:false});
@@ -171,7 +171,7 @@ export default function FormBasicInfo() {
         setActionCodes('Select an Action Code');
         setTransactionCodes('Select a Transaction Code');
         clearErrors();
-        ['lookup.values.bNumber','lookup.values.lastName','lookup.values.dob','payroll','effDate','formCode','actionCode','transactionCode'].forEach(f=>setValue(f,''));
+        ['lookup.values.bNumber','lookup.values.lastName','lookup.values.dob','payroll','effDate','formCode','actionCode','transactionCode','person.info.sunyId','person.info.bNumber','person.info.firstName','person.info.middleName','person.info.lastName','person.demographics.DOB'].forEach(f=>setValue(f,''));
         setValue('lookup.type','bNumber');
         setValue('selectedRow',{});
         setFocus('lookup.values.bNumber');
@@ -220,13 +220,19 @@ export default function FormBasicInfo() {
         if (args.selectedCount == 1) {
             setValue('selectedRow',args.selectedRows[0]);
             setValue('payroll',args.selectedRows[0]?.PAYROLL_AGENCY_CODE);
+            setValue('person.info.sunyId',args.selectedRows[0]?.SUNY_ID);
+            setValue('person.info.bNumber',args.selectedRows[0]?.LOCAL_CAMPUS_ID);
+            setValue('person.info.firstName',args.selectedRows[0]?.LEGAL_FIRST_NAME);
+            setValue('person.info.middleName',args.selectedRows[0]?.LEGAL_MIDDLE_NAME);
+            setValue('person.info.lastName',args.selectedRows[0]?.LEGAL_LAST_NAME);
+            setValue('person.demographics.DOB',args.selectedRows[0]?.birthDate);
             setSelectedId(args.selectedRows[0].HR_PERSON_ID);
             setShowPayrollDate(true);
             // Set focus on payroll if there is no payroll on the selected row; uses the DatePicker setFocus function, not native JS .focus()
             (args.selectedRows[0].PAYROLL_AGENCY_CODE=="")?payrollRef.current.focus():effDateRef.current.setFocus();
         } else {
             setValue('selectedRow',{});
-            setValue('payroll','');
+            ['payroll','person.info.sunyId','person.info.bNumber','person.info.firstName','person.info.middleName','person.info.lastName','person.demographics.DOB'].forEach(f=>setValue(f,''));
             setSelectedId(null);
             setShowPayrollDate(false);
         }
@@ -315,8 +321,11 @@ export default function FormBasicInfo() {
                 setValue('basicInfoComplete',false);
             }
         });
-        return () => watchFields.unsubscribe();
-    })
+        return () => {
+            watchFields.unsubscribe();
+            queryclient.invalidateQueries('payroll',{exact:true});
+        }
+    },[]);
     return (
         <>
             {watchIsNew &&

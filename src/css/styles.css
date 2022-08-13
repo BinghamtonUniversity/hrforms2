@@ -141,7 +141,7 @@ button.btn-sm.no-label svg.iconify {
   border-radius: 5px;
   /* see: https://dev.to/mnathani/two-lines-of-css-that-boosts-7x-rendering-performance-4mjd */
   content-visibility: auto;
-  contain-intrinsic-size: 1px 5000px;
+  contain-intrinsic-size: 1px 5000px; /*experimental property */
   /* scrollbar mods*/
   scrollbar-width: thin;
   scrollbar-color: var(--accent) var(--gray);
@@ -242,6 +242,12 @@ button.btn-sm.no-label svg.iconify {
 
 /* reset right padding for Wokflow form controls when invalid */
 #wfConditionsTable .is-invalid { padding-right: initial !important }
+
+/* disabled styling for react-phone-input-2 */
+.form-group .react-tel-input .form-control:disabled {
+  background-color:#e9ecef;
+  cursor: inherit;
+}
 
 @media (max-width:992px) {
   .drag-col-2 {

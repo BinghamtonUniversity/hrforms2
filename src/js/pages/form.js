@@ -4,12 +4,14 @@ import { useParams, useHistory, Prompt, Redirect, useLocation } from "react-rout
 import { currentUser, NotFound } from "../app";
 import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
-import { AppButton } from "../blocks/components";
+import { AppButton, DateFormat } from "../blocks/components";
 
 /* TABS */
 const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
 const PersonInfo = lazy(()=>import("../blocks/form/person-info"));
 const PersonDemographics = lazy(()=>import("../blocks/form/person-demographics"));
+const PersonDirectory = lazy(()=>import("../blocks/form/person-directory"));
+const PersonEducation = lazy(()=>import("../blocks/form/person-education"));
 const PersonContacts = lazy(()=>import("../blocks/form/person-contacts"));
 
 const allTabs = [
@@ -25,7 +27,9 @@ const allTabs = [
         {id:'employment-appointment',title:'Appointment'},
         {id:'employment-leave',title:'Leave'},
         {id:'employment-pay',title:'Pay'},
-    ]}
+    ]},
+    {id:'comments-tab',title:'Comments'},
+    {id:'review-tab',title:'Review'}
 ];
 
 export default function HRForm() {
@@ -60,7 +64,8 @@ function FormWrapper({formId,isDraft,isNew}) {
     const [basicInfoComplete,setBasicInfoComplete] = useState(false);
 
     //TODO: probably need to change to useReducer
-    const [tabList,setTabList] = useState(allTabs.filter(t=>t.id=='basic-info'));
+    //const [tabList,setTabList] = useState(allTabs.filter(t=>t.id=='basic-info'));
+    const [tabList,setTabList] = useState(allTabs);
 
     const [activeTab,setActiveTab] = useState('basic-info');
     const [activeNav,setActiveNav] = useState('');
@@ -95,6 +100,18 @@ function FormWrapper({formId,isDraft,isNew}) {
                 suffix:"",
                 volFFEMT:"No",
                 rehireRetiree:"No"
+            },
+            demographics: {
+                DOB:"",
+                citizen:"Yes",
+                gender:{id:"",value:""},
+                veteran:"No",
+                military_status:["N"]
+            },
+            directory: {
+                address:[],
+                phone:[],
+                email:[]
             }
         }
     }
@@ -217,6 +234,7 @@ function FormWrapper({formId,isDraft,isNew}) {
                                             </Nav>
                                         </Row>
                                     }
+                                    {activeTab != 'basic-info' && <FormInfoBox/>}
                                     <div className="px-2">
                                         <FormTabRouter tab={t.id} activeTab={activeTab} subTab={activeNav} setTabList={setTabList}/>
                                     </div>
@@ -225,9 +243,10 @@ function FormWrapper({formId,isDraft,isNew}) {
                                             <AppButton type="reset" format="delete" onClick={handleReset}>Discard</AppButton>
                                             <AppButton id="next" format="next" onClick={handleNext} disabled={!watchBasicInfoComplete}>Next</AppButton>
                                             <AppButton id="submit" type="submit" format="submit" disabled={!watchBasicInfoComplete}>Submit</AppButton>
+                                            <AppButton id="submit" type="submit" format="submit">Test Submit</AppButton>
                                         </Col>
                                     </Row>
-                                    <FormInfoBox/>
+                                    <SubmitterInfoBox/>
                                 </Container>
                             </Tab>
                         ))}
@@ -245,12 +264,38 @@ function FormTabRouter({tab,activeTab,subTab,...props}) {
         case "basic-info": return <BasicInfo/>;
         case "person-tab.person-info": return <PersonInfo/>;
         case "person-tab.person-demographics": return <PersonDemographics/>;
+        case "person-tab.person-directory": return <PersonDirectory/>;
+        case "person-tab.person-education": return <PersonEducation/>;
         case "person-tab.person-contacts": return <PersonContacts/>;
         default: return <p>Not Found</p>;
     }
 }
 
-function FormInfoBox() {
+function FormInfoBox () {
+    const { getValues } = useFormContext();
+    return (
+        <Alert variant="secondary" className="mb-3">
+            <Row as="dl" className="mb-0">
+                <Col as="dt" sm={2} className="mb-0">Form ID:</Col>
+                <Col as="dd" sm={10} className="mb-0">{getValues('formId')}</Col>
+                <Col as="dt" sm={2} className="mb-0">Payroll:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('payroll')}</Col>
+                <Col as="dt" sm={2} className="mb-0">SUNY ID:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('person.info.sunyId')}</Col>
+                <Col as="dt" sm={2} className="mb-0">Form Type:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('formCode')} - {getValues('actionCode')} - {getValues('transactionCode')}</Col>
+                <Col as="dt" sm={2} className="mb-0">B-Number:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('person.info.bNumber')}</Col>
+                <Col as="dt" sm={2} className="mb-0">Effective Date:</Col>
+                <Col as="dd" sm={4} className="mb-0"><DateFormat>{getValues('effDate')}</DateFormat></Col>
+                <Col as="dt" sm={2} className="mb-0">Name:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('person.info.firstName')} {getValues('person.info.lastName')}</Col>
+            </Row>
+        </Alert>
+    );
+}
+
+function SubmitterInfoBox() {
     return (
         <UserContext.Consumer>
             {({fullname,EMAIL_ADDRESS_WORK,REPORTING_DEPARTMENT_NAME}) => (

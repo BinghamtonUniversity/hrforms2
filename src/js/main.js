@@ -21,11 +21,11 @@ import StartApp from "./app";
 const queryClient = new QueryClient({
     defaultOptions:{
         queries:{
-            cacheTime:1800000,
-            staleTime:60000,
             notifyOnChangeProps:['data','error'],
             retry:2,
-            retryDelay:attempt=>Math.min(attempt > 0 ? 2 ** attempt * 2000 : 1000, 30 * 1000)
+            retryDelay:attempt=>Math.min(attempt > 0 ? 2 ** attempt * 2000 : 1000, 30 * 1000),
+            //refetchOnMount:false, //for testing? probably should specify this on a per-query basis
+            refetchOnWindowFocus:false //for testing only.
         }
     }
 });
