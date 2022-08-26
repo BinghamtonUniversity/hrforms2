@@ -1,12 +1,26 @@
 import React from "react";
-import { Alert, Button, Modal, ListGroup, NavDropdown } from "react-bootstrap";
+import { Alert, Button, Modal, ListGroup, NavDropdown, Form } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { parse, format } from "date-fns";
 import { invoke, get, capitalize, isDate } from "lodash";
 import { Icon } from '@iconify/react';
 import { SettingsContext } from "../app";
-import { useUserQueries } from "../queries";
+import { useUserQueries, useAppQueries } from "../queries";
 import CheckboxTree from 'react-checkbox-tree';
+
+/** Table Of Contents * 
+ * 
+ * Loading
+ * DateFormat
+ * ModalConfirm
+ * AppButton
+ * MenuCounts
+ * DashBoardListComponent (TODO: this should probably be moved back to home)
+ * errorToast
+ * ErrorToastComponent
+ * CheckboxTreeComponent
+ * 
+ */
 
 /* formats for AppButton */
 const formats = {
@@ -56,12 +70,13 @@ export function DateFormat({children,inFmt,outFmt,nvl=null}) {
     const oFmt = outFmt || 'M/d/yyyy'; //TODO: global date default format and user date format
     return format(d,oFmt);
 }
-/*
-buttons: {
-    close:{title:'',variant:'',callback:()=>null},
-    confirm:{title:'',variant:'',callback:()=>null}
-}
-*/
+
+/** 
+ * buttons: {
+ *      close:{title:'',variant:'',callback:()=>null},
+ *      confirm:{title:'',variant:'',callback:()=>null}
+ * }
+ */
 const ModalConfirm = React.memo(({children,show,title,buttons,icon}) => {
     const handleClose = () => invoke(buttons,'close.callback');
     const handleConfirm = () => invoke(buttons,'confirm.callback');
@@ -178,8 +193,31 @@ const icons = {
     expandAll: <span className="rct-icon rct-icon-expand-all" />,
     collapseAll: <span className="rct-icon rct-icon-collapse-all" />,
 */
-const CheckboxTreeComponent = (props) => {
+const CheckboxTreeComponent = props => {
     return <CheckboxTree icons={icons} {...props}/>;
 }
 
-export {Loading,ModalConfirm,AppButton,MenuCounts,errorToast,CheckboxTreeComponent};
+const StateSelector = ({field,...props}) => {
+    const { getListData } = useAppQueries();
+    const states = getListData('states');
+    return (
+        <Form.Control {...field} as="select" {...props}>
+            <option></option>
+            {states.data&&states.data.map(s=><option key={s.abbr} value={s.abbr}>{s.abbr} - {s.name}</option>)}
+        </Form.Control>
+    );
+}
+
+const CountrySelector = ({field,...props}) => {
+    const { getListData } = useAppQueries();
+    const countryCodes = getListData('countryCodes');
+    return (
+        <Form.Control {...field} as="select" {...props}>
+            <option></option>
+            {countryCodes.data&&countryCodes.data.map(c=><option key={c.COUNTRY_CODE} value={c.COUNTRY_CODE}>{c.COUNTRY_SHORT_DESC}</option>)}
+        </Form.Control>
+    );
+}
+
+
+export {Loading,ModalConfirm,AppButton,MenuCounts,errorToast,CheckboxTreeComponent,StateSelector,CountrySelector};

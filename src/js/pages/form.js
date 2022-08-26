@@ -13,6 +13,8 @@ const PersonDemographics = lazy(()=>import("../blocks/form/person-demographics")
 const PersonDirectory = lazy(()=>import("../blocks/form/person-directory"));
 const PersonEducation = lazy(()=>import("../blocks/form/person-education"));
 const PersonContacts = lazy(()=>import("../blocks/form/person-contacts"));
+const EmploymentPosition = lazy(()=>import("../blocks/form/employment-position"));
+const EmploymentAppointment = lazy(()=>import("../blocks/form/employment-appointment"));
 
 const allTabs = [
     {id:'basic-info',title:'Basic Info'},
@@ -24,7 +26,9 @@ const allTabs = [
         {id:'person-contacts',title:'Contacts'},
     ]},
     {id:'employment-tab',title:'Employment Info',subTabs:[
+        {id:'employment-position',title:'Position'},
         {id:'employment-appointment',title:'Appointment'},
+        {id:'employment-salary',title:'Salary'},
         {id:'employment-leave',title:'Leave'},
         {id:'employment-pay',title:'Pay'},
     ]},
@@ -112,7 +116,16 @@ function FormWrapper({formId,isDraft,isNew}) {
                 address:[],
                 phone:[],
                 email:[]
-            }
+            },
+            education:[],
+            contact:[]
+        },
+        employment: {
+            position: {
+                lineNumber:"",
+                lineNumberDetails:{}
+            },
+            appointment: {}
         }
     }
     const testRecord = {
@@ -197,6 +210,7 @@ function FormWrapper({formId,isDraft,isNew}) {
         setTabList(allTabs.filter(t=>t.id=='basic-info'));
     }
     const handleNext = () => {
+        //should validate before
         console.debug('Basic Info Complete');
         methods.setValue('isNew',false);
         // get tabs and set...
@@ -267,6 +281,8 @@ function FormTabRouter({tab,activeTab,subTab,...props}) {
         case "person-tab.person-directory": return <PersonDirectory/>;
         case "person-tab.person-education": return <PersonEducation/>;
         case "person-tab.person-contacts": return <PersonContacts/>;
+        case "employment-tab.employment-position": return <EmploymentPosition/>;
+        case "employment-tab.employment-appointment": return <EmploymentAppointment/>;
         default: return <p>Not Found</p>;
     }
 }

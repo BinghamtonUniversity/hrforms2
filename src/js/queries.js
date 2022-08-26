@@ -71,16 +71,7 @@ export function useAppQueries() {
         if (!options.hasOwnProperty('refetchOnMount')) options.refetchOnMount = false;
         return useQuery(['listdata',LIST_ID],q(`listdata/${LIST_ID}`),options);
     }
-    /*const getBudgetTitles = (...args) => {
-        const posType = args[0]?.posType||args[0];
-        const options = args[0]?.options||args[1]||{};
-        switch(posType) {
-            case "C": return useQuery(['listdata','titlesC'],q('listdata/budgetTitlesClassified'),options);
-            case "F": return useQuery(['listdata','titlesF'],q('listdata/budgetTitlesFaculty'),options);
-            case "P": return useQuery(['listdata','titlesP'],q('listdata/budgetTitlesProfessional'),options);
-            default: return useQuery('stubGET',f());
-        }
-    }*/
+
     /*admin?*/
     const patchNews = () => useMutation(q('news','PATCH',{}));
     const patchSession = () => useMutation(q('session','PATCH',{}));

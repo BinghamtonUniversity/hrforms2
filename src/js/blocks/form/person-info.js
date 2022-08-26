@@ -4,7 +4,7 @@ import { useFormContext, Controller } from "react-hook-form";
 import { Row, Col, Form } from "react-bootstrap";
 
 export default function PersonInfo() {
-    const { control, getValues } = useFormContext();
+    const { control } = useFormContext();
 
     const {getListData} = useAppQueries();
     const salutations = getListData('salutations');
