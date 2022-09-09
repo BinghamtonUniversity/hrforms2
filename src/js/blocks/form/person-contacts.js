@@ -8,13 +8,13 @@ import PhoneInput from 'react-phone-input-2';
 
 import 'react-phone-input-2/lib/style.css'
 
+const name = 'person.contact';
+
 const phoneTypes = [
     {id:'day',title:'Day Phone'},
     {id:'night',title:'Night Phone'},
     {id:'cell',title:'Cell Phone'},
 ];
-
-const name = 'person.contact';
 
 export default function PersonContacts() {
     const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext();
@@ -30,7 +30,7 @@ export default function PersonContacts() {
     const [editValues,setEditValues] = useState();
 
     const {getListData} = useAppQueries();
-    const countryCodes = getListData('countryCodes');
+    //const countryCodes = getListData('countryCodes');
     const relationships = getListData('contactRelationships');
 
     const handleNew = () => {
@@ -105,7 +105,6 @@ export default function PersonContacts() {
         if (watchContact.map(c=>c['primary']).filter(v=>v=='yes').length>1) return true;
         return false;
     },[watchContact]);
-
 
     return (
         <article className="mt-3">

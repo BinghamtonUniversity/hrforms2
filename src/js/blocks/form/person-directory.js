@@ -403,6 +403,7 @@ function PersonDirectoryPhone() {
                                         onChange={field.onChange}
                                         disabled={editIndex!=index||!editableType(index)}
                                         isInvalid={get(errors,field.name,false)}
+                                        autoComplete="off"
                                     />}
                                 />
                                 <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].effDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].effDate.message`,'')}</Form.Control.Feedback>
@@ -552,6 +553,7 @@ function PersonDirectoryEmail() {
                                         onChange={field.onChange}
                                         disabled={editIndex!=index||!editableType(index)}
                                         isInvalid={get(errors,field.name,false)}
+                                        autoComplete="off"
                                     />}
                                 />
                                 <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].effDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].effDate.message`,'')}</Form.Control.Feedback>

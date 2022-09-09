@@ -32,6 +32,7 @@ export default function PersonDemographics() {
                             selected={field.value} 
                             closeOnScroll={true} 
                             onChange={field.onChange} 
+                            autoComplete="off"
                         />}
                     />
                 </Col>

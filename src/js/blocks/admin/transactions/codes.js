@@ -2,11 +2,12 @@ import React, { useState, useCallback, useMemo, useReducer, useEffect } from "re
 import { useCodesQueries } from "../../../queries/codes";
 import { startCase, toUpper } from "lodash";
 import DataTable from 'react-data-table-component';
-import { Row, Col, Form, Modal, Alert, OverlayTrigger, Popover } from "react-bootstrap";
+import { Row, Col, Form, Modal, Alert, OverlayTrigger, Popover, Tabs, Tab } from "react-bootstrap";
 import { AppButton, errorToast, ModalConfirm } from "../../components";
 import { useQueryClient } from "react-query";
 import { toast } from "react-toastify";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, FormProvider, useFormContext } from "react-hook-form";
+
 
 export default function CodesTab({tab,tabName}) {
     const vals = {code:`${tab}_code`,title:`${tab}_title`,description:`${tab}_description`};
@@ -184,13 +185,22 @@ function AddEditCode({tab,vars,codes,selectedRow,setSelectedRow,isNew,setIsNew,n
         setSelectedRow({});
         setIsNew(false);
     }
-    const {handleSubmit, control, setFocus, setError, formState:{errors}} = useForm({
+    const addlInfoDefaults = useMemo(()=>{
+        switch (tab) {
+            case "payroll": return {
+                hasBenefits:false
+            }
+            default: return {}
+        }
+    },[tab]);
+    const methods = useForm({
         defaultValues:{
             code:selectedRow[vars.code.upper]||'',
             title:selectedRow[vars.title.upper]||'',
             active:((selectedRow.ACTIVE||1)==1)?true:false,
             order:selectedRow.ORDERBY||nextOrder,
-            description:selectedRow[vars.description.upper]||''
+            description:selectedRow[vars.description.upper]||'',
+            additionalInfo:addlInfoDefaults
         }
     });
 
@@ -200,8 +210,8 @@ function AddEditCode({tab,vars,codes,selectedRow,setSelectedRow,isNew,setIsNew,n
         if (isNew || (selectedRow[vars.code.upper]!=data.code)) {
             const v = codes.filter(c=>c[vars.code.upper]==data.code)
             if (v.length) {
-                setError('code',{type:'custom',message:`Duplicate ${vars.code.start}`});
-                setFocus('code');
+                methods.setError('code',{type:'custom',message:`Duplicate ${vars.code.start}`});
+                methods.setFocus('code');
                 setStatus({state:'error',message:<p className="m-0">The {vars.code.start} <strong>{data.code}</strong> already exists.</p>});
                 return;
             }
@@ -211,7 +221,8 @@ function AddEditCode({tab,vars,codes,selectedRow,setSelectedRow,isNew,setIsNew,n
             TITLE:data.title,
             ACTIVE:(data.active)?'1':'0',
             ORDERBY:(data.order)?data.order:nextOrder,
-            DESCRIPTION:data.description
+            DESCRIPTION:data.description,
+            ADDITIONAL_INFO:data.additionalInfo
         }
         setStatus({state:'saving',message:''});
         if (isNew) {
@@ -252,87 +263,128 @@ function AddEditCode({tab,vars,codes,selectedRow,setSelectedRow,isNew,setIsNew,n
         setStatus({state:'error',message:msg});
     }
 
-    useEffect(()=>setFocus('code'),[]);
+    useEffect(()=>methods.setFocus('code'),[]);
     return (
         <Modal show={true} onHide={closeModal} backdrop="static" size="lg">
-            <Form onSubmit={handleSubmit(handleFormSubmit,handleError)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>{vars.code.start}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Row>
-                        <Col>
-                            {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
-                        </Col>
-                    </Row>
-                    <Form.Row>
-                        <Form.Group as={Col} controlId="code">
-                            <Form.Label>{vars.code.start}:</Form.Label>
-                            <Controller
-                                name="code"
-                                control={control}
-                                defaultValue={selectedRow[vars.code.upper]}
-                                rules={{required:{value:true,message:`${vars.code.start} is required`}}}
-                                render={({field}) => <Form.Control {...field} type="text" maxLength="10" placeholder={`Enter ${vars.code.start}`} isInvalid={errors.code}/>}
-                            />
-                            <Form.Control.Feedback type="invalid">{errors.code?.message}</Form.Control.Feedback>
-                        </Form.Group>
-                    </Form.Row>
-                    <Form.Row>
-                        <Form.Group as={Col} controlId="title">
-                            <Form.Label>{vars.title.start}:</Form.Label>
-                            <Controller
-                                name="title"
-                                control={control}
-                                defaultValue={selectedRow[vars.title.upper]}
-                                rules={{required:{value:true,message:`${vars.title.start} is required`}}}
-                                render={({field}) => <Form.Control {...field} type="text" placeholder="Enter a Title" isInvalid={errors.title}/>}
-                            />
-                            <Form.Control.Feedback type="invalid">{errors.title?.message}</Form.Control.Feedback>
-                        </Form.Group>
-                    </Form.Row>
-                    <Form.Row>
-                        <Form.Group as={Col} controlId="description">
-                            <Form.Label>{vars.description.start}:</Form.Label>
-                            <Controller
-                                name="description"
-                                control={control}
-                                defaultValue={selectedRow[vars.description.upper]}
-                                render={({field}) => <Form.Control {...field} as="textarea" rows={4} placeholder="Enter a Description (optional)"/>}
-                            />
-                        </Form.Group>
-                    </Form.Row>
-                    <Form.Row>
-                        <Form.Group as={Col} controlId="active">
-                            <Form.Label>Active:</Form.Label>
-                            <Controller
-                                name="active"
-                                control={control}
-                                defaultValue={selectedRow?.ACTIVE}
-                                render={({field}) => <Form.Check {...field} type="checkbox" checked={field.value}/>}
-                            />
-                        </Form.Group>
-                    </Form.Row>
-                    <Form.Row>
-                        <Form.Group as={Col} controlId="order">
-                            <Form.Label>Order:</Form.Label>
-                            <Controller
-                                name="order"
-                                control={control}
-                                defaultValue={selectedRow?.ORDERBY}
-                                render={({field}) => <Form.Control {...field} type="number"/>} 
-                            />
-                        </Form.Group>
-                    </Form.Row>
-                </Modal.Body>
-                <Modal.Footer>
-                    <AppButton format="cancel" variant="secondary" onClick={closeModal}>Cancel</AppButton>
-                    {(status.state=='saving')?
-                        <AppButton format="saving" variant="danger" disabled>Saving...</AppButton>:
-                        <AppButton type="submit" variant="danger" format="save">Save</AppButton>
-                    }
-                </Modal.Footer>
-            </Form>
+            <FormProvider {...methods}>
+                <Form onSubmit={methods.handleSubmit(handleFormSubmit,handleError)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>{vars.code.start}</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Row>
+                            <Col>
+                                {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
+                            </Col>
+                        </Row>
+                        <PayrollTabs tab={tab}>
+                            <Form.Row>
+                                <Form.Group as={Col} controlId="code">
+                                    <Form.Label>{vars.code.start}:</Form.Label>
+                                    <Controller
+                                        name="code"
+                                        control={methods.control}
+                                        defaultValue={selectedRow[vars.code.upper]}
+                                        rules={{required:{value:true,message:`${vars.code.start} is required`}}}
+                                        render={({field}) => <Form.Control {...field} type="text" maxLength="10" placeholder={`Enter ${vars.code.start}`} isInvalid={methods.formState.errors.code}/>}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{methods.formState.errors.code?.message}</Form.Control.Feedback>
+                                </Form.Group>
+                            </Form.Row>
+                            <Form.Row>
+                                <Form.Group as={Col} controlId="title">
+                                    <Form.Label>{vars.title.start}:</Form.Label>
+                                    <Controller
+                                        name="title"
+                                        control={methods.control}
+                                        defaultValue={selectedRow[vars.title.upper]}
+                                        rules={{required:{value:true,message:`${vars.title.start} is required`}}}
+                                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter a Title" isInvalid={methods.formState.errors.title}/>}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{methods.formState.errors.title?.message}</Form.Control.Feedback>
+                                </Form.Group>
+                            </Form.Row>
+                            <Form.Row>
+                                <Form.Group as={Col} controlId="description">
+                                    <Form.Label>{vars.description.start}:</Form.Label>
+                                    <Controller
+                                        name="description"
+                                        control={methods.control}
+                                        defaultValue={selectedRow[vars.description.upper]}
+                                        render={({field}) => <Form.Control {...field} as="textarea" rows={4} placeholder="Enter a Description (optional)"/>}
+                                    />
+                                </Form.Group>
+                            </Form.Row>
+                            <Form.Group as={Row} controlId="active">
+                                <Form.Label column md={2}>Active:</Form.Label>
+                                <Col xs="auto" className="pt-2">
+                                    <Controller
+                                        name="active"
+                                        control={methods.control}
+                                        defaultValue={selectedRow?.ACTIVE}
+                                        render={({field}) => <Form.Check {...field} type="checkbox" checked={field.value}/>}
+                                    />
+                                </Col>
+                            </Form.Group>
+                            <Form.Group as={Row} controlId="order">
+                                <Form.Label column md={2}>Order:</Form.Label>
+                                <Col xs="auto">
+                                    <Controller
+                                        name="order"
+                                        control={methods.control}
+                                        defaultValue={selectedRow?.ORDERBY}
+                                        render={({field}) => <Form.Control {...field} type="number"/>} 
+                                    />
+                                </Col>
+                            </Form.Group>
+                        </PayrollTabs>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <AppButton format="cancel" variant="secondary" onClick={closeModal}>Cancel</AppButton>
+                        {(status.state=='saving')?
+                            <AppButton format="saving" variant="danger" disabled>Saving...</AppButton>:
+                            <AppButton type="submit" variant="danger" format="save">Save</AppButton>
+                        }
+                    </Modal.Footer>
+                </Form>
+            </FormProvider>
         </Modal>
+    );
+}
+
+function PayrollTabs({tab,children}) {
+    const [activeTab,setActiveTab] = useState('info');
+    const navigate = tab=>setActiveTab(tab);
+    if (tab != 'payroll') {
+        return children;
+    } else {
+        return (
+            <Tabs activeKey={activeTab} onSelect={navigate}>
+                <Tab eventKey="info" title="Info" className="ml-1 mt-3">
+                    {children}
+                </Tab>
+                <Tab eventKey="addlInfo" title="Additional Info" className="ml-1 mt-3">
+                    <PayrollTabAdditionalInfo/>
+                </Tab>
+            </Tabs>
+        );
+    }
+}
+
+function PayrollTabAdditionalInfo() {
+    const { control } = useFormContext();
+    return (
+        <Form.Group as={Row} controlId="active">
+            <Form.Label column md={2}>Has Benefits:</Form.Label>
+            <Col xs="auto" className="pt-2">
+                <Controller
+                    name="additionalInfo.hasBenefits"
+                    control={control}
+                    defaultValue={false}
+                    render={({field}) => <Form.Check {...field} type="checkbox" checked={field.value}/>}
+                />
+                <Form.Text muted>Indicate the Payroll Code is allowed benefits</Form.Text>
+            </Col>
+        </Form.Group>
     );
 }

@@ -483,7 +483,7 @@ function GroupInfo() {
                     <Controller
                         name="endDate"
                         control={control}
-                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value}/>}
+                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} autoComplete="off"/>}
                     />
                 </Form.Group>
             </Form.Row>

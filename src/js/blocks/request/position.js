@@ -14,10 +14,10 @@ export default function Position() {
     const watchFTE = useWatch({name:'fte',control:control})||100;
 
     const { getListData } = useAppQueries();
-    const paybasistypes = getListData('payBasisTypes',{enabled:!!posType,cacheTime:600000,staleTime:600000,
+    const paybasistypes = getListData('payBasisTypes',{enabled:!!posType,
         select:d=>d.filter(p=>posTypes[posType]?.payBasisTypes.includes(p[0]))});
-    const titles = getListData(posTypes[posType]?.budgetTitlesList,{enabled:!!posType,cacheTime:600000,staleTime:600000});
-    const appttypes = getListData('apptTypes',{enabled:!!posType,cacheTime:600000,staleTime:600000,
+    const titles = getListData(posTypes[posType]?.budgetTitlesList,{enabled:!!posType});
+    const appttypes = getListData('appointmentTypes',{enabled:!!posType,
         select:d=>d.filter(a=>posTypes[posType]?.apptTypes.includes(a[0])).sort()});
 
     const handleFTERangeChange = e => {
@@ -291,7 +291,7 @@ export default function Position() {
                         name="tentativeEndDate"
                         defaultValue=""
                         control={control}
-                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} disabled={!isDraft}/>}
+                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} disabled={!isDraft} autoComplete="off"/>}
                     />
                 </Col>
             </Form.Group>

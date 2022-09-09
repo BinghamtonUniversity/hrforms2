@@ -39,20 +39,29 @@ class Codes extends HRForms2 {
         $stmt = oci_parse($this->db,$qry);
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
-        oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
+        //oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
+		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+            $addlInfo = (is_object($row['ADDITIONAL_INFO']))?$row['ADDITIONAL_INFO']->load():"";
+            unset($row['ADDITIONAL_INFO']);
+            $row['ADDITIONAL_INFO'] = json_decode($addlInfo);
+			$this->_arr[] = $row;
+		}
         $this->returnData = $this->_arr;
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
     function POST() {
-        $qry = "INSERT INTO HRFORMS2_".$this->req[0]."_CODES VALUES(:code,:title,:active,:orderby,:description)";
+        $qry = "INSERT INTO HRFORMS2_".$this->req[0]."_CODES VALUES(:code,:title,:active,:orderby,:description,EMPTY_CLOB()) returning ADDITIONAL_INFO into :addl_info";
         $stmt = oci_parse($this->db,$qry);
+        $clob = oci_new_descriptor($this->db, OCI_D_LOB);
         oci_bind_by_name($stmt,":code", $this->POSTvars['CODE']);
         oci_bind_by_name($stmt,":title", $this->POSTvars['TITLE']);
         oci_bind_by_name($stmt,":description", substr($this->POSTvars['DESCRIPTION'],0,2000));
         oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
         oci_bind_by_name($stmt,":orderby", $this->POSTvars['ORDERBY']);
-        $r = oci_execute($stmt);
+        oci_bind_by_name($stmt,":addl_info", $clob, -1, OCI_B_CLOB);
+        $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
         if (!$r) $this->raiseError();
+        $clob->save(json_encode($this->POSTvars['ADDITIONAL_INFO']));
         oci_commit($this->db);
         oci_free_statement($stmt);
         if ($this->retJSON) $this->done();
@@ -82,16 +91,21 @@ class Codes extends HRForms2 {
             }
         }
         $qry = "UPDATE HRFORMS2_".$this->req[0]."_CODES SET ".$this->req[0]."_code = :code, ".$this->req[0]."_title = :title, ".
-            $this->req[0]."_description = :description, active = :active, orderby = :orderby WHERE ".$this->req[0]."_code = :req1";
+            $this->req[0]."_description = :description, active = :active, orderby = :orderby, 
+                additional_info = EMPTY_CLOB() WHERE ".$this->req[0]."_code = :req1
+                returning ADDITIONAL_INFO into :addl_info";
         $stmt = oci_parse($this->db,$qry);
+        $clob = oci_new_descriptor($this->db, OCI_D_LOB);
         oci_bind_by_name($stmt,":code", $this->POSTvars['CODE']);
         oci_bind_by_name($stmt,":title", $this->POSTvars['TITLE']);
         oci_bind_by_name($stmt,":description", substr($this->POSTvars['DESCRIPTION'],0,2000));
         oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
         oci_bind_by_name($stmt,":orderby", $this->POSTvars['ORDERBY']);
+        oci_bind_by_name($stmt,":addl_info", $clob, -1, OCI_B_CLOB);
         oci_bind_by_name($stmt,":req1", $this->req[1]);
-        $r = oci_execute($stmt);
+        $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
         if (!$r) $this->raiseError();
+        $clob->save(json_encode($this->POSTvars['ADDITIONAL_INFO']));
         oci_commit($this->db);
         oci_free_statement($stmt);
         $this->done();

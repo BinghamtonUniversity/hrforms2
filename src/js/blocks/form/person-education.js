@@ -133,6 +133,7 @@ export default function PersonEducation() {
                                     minDate={get(watchEducation,`[${index}].pending`,false)&&addDays(new Date(),1)}
                                     maxDate={!get(watchEducation,`[${index}].pending`,false)&&new Date()}
                                     isInvalid={get(errors,field.name,false)}
+                                    autoComplete="off"
                                 />}
                             />
                             <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].awardDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].awardDate.message`,'')}</Form.Control.Feedback>

@@ -15,6 +15,7 @@ const PersonEducation = lazy(()=>import("../blocks/form/person-education"));
 const PersonContacts = lazy(()=>import("../blocks/form/person-contacts"));
 const EmploymentPosition = lazy(()=>import("../blocks/form/employment-position"));
 const EmploymentAppointment = lazy(()=>import("../blocks/form/employment-appointment"));
+const EmploymentSalary = lazy(()=>import("../blocks/form/employment-salary"));
 
 const allTabs = [
     {id:'basic-info',title:'Basic Info'},
@@ -123,10 +124,35 @@ function FormWrapper({formId,isDraft,isNew}) {
         employment: {
             position: {
                 lineNumber:"",
-                lineNumberDetails:{}
+                lineNumberDetails:{},
+                apptType:"",
+                apptPercent:"100",
+                hasBenefits:false,
+                benefitsFlag:"9",
+                volReducton:"No",
+                apptEndDate:"",
+                checkSortCode:"",
+                justification:""
             },
-            appointment: {}
-        }
+            appointment: {
+                isFaculty:"No",
+                campusTitle:"",
+                supervisor:"",
+                department:""
+            },
+            salary:{
+                effDate:"",
+                FTERate:"",
+                "SUNYAccountsSplit":false,
+                "SUNYAccounts": [
+                    {
+                        account:[{id:'',label:''}],
+                        pct:'100'
+                    }
+                ],
+                additionalSalary:[]
+            }
+        },
     }
     const testRecord = {
         formId:formId,
@@ -249,6 +275,7 @@ function FormWrapper({formId,isDraft,isNew}) {
                                         </Row>
                                     }
                                     {activeTab != 'basic-info' && <FormInfoBox/>}
+                                    {(activeTab == 'employment-tab'&&['employment-appointment','employment-salary'].includes(activeNav)) && <EmploymentPositionInfoBox/>}
                                     <div className="px-2">
                                         <FormTabRouter tab={t.id} activeTab={activeTab} subTab={activeNav} setTabList={setTabList}/>
                                     </div>
@@ -261,6 +288,11 @@ function FormWrapper({formId,isDraft,isNew}) {
                                         </Col>
                                     </Row>
                                     <SubmitterInfoBox/>
+                                    <Row>
+                                        <Col>
+                                            <p>{activeTab}.{activeNav}</p>
+                                        </Col>
+                                    </Row>
                                 </Container>
                             </Tab>
                         ))}
@@ -283,6 +315,7 @@ function FormTabRouter({tab,activeTab,subTab,...props}) {
         case "person-tab.person-contacts": return <PersonContacts/>;
         case "employment-tab.employment-position": return <EmploymentPosition/>;
         case "employment-tab.employment-appointment": return <EmploymentAppointment/>;
+        case "employment-tab.employment-salary": return <EmploymentSalary/>;
         default: return <p>Not Found</p>;
     }
 }
@@ -310,7 +343,39 @@ function FormInfoBox () {
         </Alert>
     );
 }
-
+export function EmploymentPositionInfoBox() {
+    const name = 'employment.position.lineNumberDetails';
+    const { control, getValues } = useFormContext();
+    const watchApptPercent = useWatch({name:'employment.position.apptPercent',control:control});
+    return (
+        <Alert variant="secondary" className="mt-3">
+            <Row as="dl" className="mb-0">
+                <Col as="dt" sm={2} className="mb-0">Line Number:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.LINE_NUMBER`)}</Col>
+                <Col as="dt" sm={2} className="mb-0">Pay Basis:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.PAY_BASIS`)}</Col>
+                <Col as="dt" sm={2} className="mb-0">Payroll:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.PAYROLL`)}</Col>
+                <Col as="dt" sm={2} className="mb-0">Negotiating Unit:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.NEGOTIATING_UNIT`)}</Col>
+                <Col as="dt" sm={2} className="mb-0">Effective Date:</Col>
+                <Col as="dd" sm={4} className="mb-0"><DateFormat nvl="Effective Date Not Set">{getValues(`${name}.EFFECTIVE_DATE}`)}</DateFormat></Col>
+                <Col as="dt" sm={2} className="mb-0">Salary Grade:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.SALARY_GRADE`)}</Col>
+                <Col as="dt" sm={2} className="mb-0">Title:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.TITLE`)}</Col>
+                <Col as="dt" sm={2} className="mb-0">Segment Code:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.SEGMENT_CODE`)}</Col>
+                <Col as="dt" sm={2} className="mb-0">Position Department:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.POSITION_DEPARTMENT`)}</Col>
+                <Col as="dt" sm={2} className="mb-0">Position Percent:</Col>
+                <Col as="dd" sm={4} className="mb-0">{watchApptPercent}</Col>
+                <Col as="dt" sm={2} className="mb-0">Position Status:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.POSITION_STATUS`)}</Col>
+            </Row>
+        </Alert>
+    );
+}
 function SubmitterInfoBox() {
     return (
         <UserContext.Consumer>

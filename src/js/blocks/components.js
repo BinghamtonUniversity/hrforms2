@@ -55,18 +55,19 @@ const Loading = React.memo(function Loading({children,className='',isError,error
     const icon = (isError)?<Icon icon="mdi:alert" className="iconify-inline"/>:<Icon icon="mdi:loading" className="spin iconify-inline"/>;
     const cl = (isError)?`text-danger ${className}`:className;
     const vr = (isError)?'danger':(variant)?variant:'light';
+    const err = error && <small>({error?.name && <>{error?.name} - </>}{error?.message})</small>;
     if (type == 'alert') {
-        return <Alert variant={vr} className={`text-center ${cl}`}>{icon} {children}</Alert>
+        return <Alert variant={vr} className={`text-center ${cl}`}>{icon} {children} {err}</Alert>
     } else {
-        return <span className={cl}>{icon} {children} {error && <small>({error?.name && <>{error?.name} - </>}{error?.message})</small>}</span>
+        return <span className={cl}>{icon} {children} {err}</span>
     }
 });
 
-export function DateFormat({children,inFmt,outFmt,nvl=null}) {
-    if (!children) return nvl;
+export function DateFormat({children,inFmt,outFmt,nvl}) {
+    if (!children) return (nvl)?<em>{nvl}</em>:null;
     const iFmt = inFmt || 'dd-MMM-yy';
     const d = (isDate(children))?children:parse(children,iFmt,new Date());
-    if (d=='Invalid Date') return nvl;
+    if (d=='Invalid Date') return (nvl)?<em>{nvl}</em>:null;
     const oFmt = outFmt || 'M/d/yyyy'; //TODO: global date default format and user date format
     return format(d,oFmt);
 }
@@ -103,7 +104,7 @@ const ModalConfirm = React.memo(({children,show,title,buttons,icon}) => {
 });
 
 const AppButton = React.memo(({children,format,icon,spin,...props}) => {
-    const cName = props.className;
+    let cName = props.className;
     if (!children) cName += ' no-label';
     return (
         <Button {...props} className={cName} variant={props.variant||formats[format].variant}>{format!='none'&&<Icon className={(spin||formats[format].spin)&&'spin'} icon={icon||formats[format].icon}/>}{children}</Button>
@@ -119,11 +120,11 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
         if (showOn == 'menu') return <p>error</p>;
         return null;
     }
-    if (counts.isLoading) {
+    /*if (counts.isLoading) {
         if (showOn == 'home') return <ListGroup.Item className="d-flex justify-content-center"><Loading>Loading...</Loading></ListGroup.Item>
         if (showOn == 'menu') return <NavDropdown.Item><Loading>Loading...</Loading></NavDropdown.Item>;
         return null;
-    } 
+    }*/
     return (
         <SettingsContext.Consumer>
         {settings=>{
@@ -138,7 +139,9 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
 
                         </>
                     }
-                    {Object.keys(counts.data[menu]).map(l=>{
+                    {(counts.isLoading&&showOn=='home') && <ListGroup.Item className="d-flex justify-content-center"><Loading>Loading...</Loading></ListGroup.Item>}
+                    {(counts.isLoading&&showOn=='menu') && <NavDropdown.Item><Loading>Loading...</Loading></NavDropdown.Item>}
+                    {counts.data && Object.keys(counts.data[menu]).map(l=>{
                         const key = `${menu}.menu.${l}`;
                         if (!get(settings,`${key}.enabled`,true)) return null;
                         const title = get(settings,`${key}.title`,l);

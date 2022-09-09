@@ -11,6 +11,8 @@ import DataTable from 'react-data-table-component';
 import { useQueryClient } from "react-query";
 import { useLocation } from "react-router-dom";
 
+const name = ""; //TODO: use name variable
+
 export default function FormBasicInfo() {
     const { search } = useLocation();
     const qstr = new URLSearchParams(search);
@@ -251,7 +253,12 @@ export default function FormBasicInfo() {
         setTransactionCodes('Select a Transaction Code');
     }
     useEffect(()=>{
-        if (payrollcodes.data) setPayrollDescription(payrollcodes.data.find(p=>p.PAYROLL_CODE==watchPayrollDate[0])?.PAYROLL_DESCRIPTION);
+        if (payrollcodes.data) {
+            const payrollInfo = payrollcodes.data.find(p=>p.PAYROLL_CODE==watchPayrollDate[0]);
+            setPayrollDescription(payrollInfo?.PAYROLL_DESCRIPTION);
+            setValue('employment.position.hasBenefits',payrollInfo?.ADDITIONAL_INFO?.hasBenefits||false);
+            if (!payrollInfo?.ADDITIONAL_INFO?.hasBenefits) setValue('employment.position.benefitsFlag','9');
+        }
         if (!watchPayrollDate.every(a=>!!a)) {
             setShowFormActions(false);
         } else {
@@ -385,6 +392,7 @@ export default function FormBasicInfo() {
                                     onFocus={handleFocus}
                                     onKeyDown={handleLookupKeyDown}
                                     isInvalid={errors.lookup?.values?.dob}
+                                    autoComplete="off"
                                 />}
                             />
                             <Form.Control.Feedback type="invalid" style={{display:(errors.lookup?.values?.dob)?'block':'none'}}>{errors.lookup?.values?.dob?.message}</Form.Control.Feedback>
@@ -467,6 +475,7 @@ export default function FormBasicInfo() {
                                                 closeOnScroll={true} 
                                                 onChange={field.onChange} 
                                                 isInvalid={errors.effDate}
+                                                autoComplete="off"
                                             />}
                                         />
                                         <Form.Control.Feedback type="invalid">{errors.effDate?.message}</Form.Control.Feedback>

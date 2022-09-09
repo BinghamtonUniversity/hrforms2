@@ -35,9 +35,10 @@ class GroupDepts extends HRForms2 {
         if (isset($this->req[0])) oci_bind_by_name($stmt, ":group_id", $this->req[0]);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
-		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+		/*while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
             $this->_arr[] = $row;
-		}
+		}*/
+		oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
 		oci_free_statement($stmt);
 		$this->returnData = $this->_arr;
 		if ($this->retJSON) $this->toJSON($this->returnData);

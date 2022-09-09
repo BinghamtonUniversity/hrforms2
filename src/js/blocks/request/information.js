@@ -11,7 +11,7 @@ export default function Information() {
     const [showJobDesc,setShowJobDesc] = useState(true);
     
     const { getListData } = useAppQueries();
-    const reqtypes = getListData('reqTypes',{cacheTime:600000,staleTime:600000,
+    const reqtypes = getListData('reqTypes',{
         select:d=>d.filter(r=>posTypes[watchPosType]?.reqTypes.includes(r[0]))
     });
 
@@ -66,7 +66,7 @@ export default function Information() {
                         defaultValue=""
                         control={control}
                         rules={{required:{value:true,message:'Effective Date is required'}}}
-                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.effDate} disabled={!isDraft}/>}
+                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.effDate} disabled={!isDraft} autoComplete="off"/>}
                     />
                     <Form.Control.Feedback type="invalid">{errors.effDate?.message}</Form.Control.Feedback>
                 </Col>

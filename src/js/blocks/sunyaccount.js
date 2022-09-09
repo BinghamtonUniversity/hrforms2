@@ -4,12 +4,13 @@ import { Controller, useWatch, useFieldArray, useFormContext } from "react-hook-
 import { useAppQueries } from "../queries";
 import { Typeahead } from "react-bootstrap-typeahead";
 import { Icon } from '@iconify/react';
-import { get } from "lodash";
+import { get, camelCase } from "lodash";
 import { Loading } from "./components";
 
 export default function SUNYAccount(props) {
+    const name = props.name||'SUNYAccounts';
     const {control,getValues,setValue} = useFormContext();
-    const { fields, append, remove } = useFieldArray({control,name:'SUNYAccounts'});
+    const { fields, append, remove } = useFieldArray({control,name:name});
 
     const [showSplit,setShowSplit] = useState(false);
 
@@ -20,19 +21,19 @@ export default function SUNYAccount(props) {
     const toggleSplit = () => {
         if (!showSplit){
             //make sure there are at least 2 accounts and set first account pct to empty
-            const fName = (getValues('SUNYAccounts')[0].account[0]?.id)?'pct':'account';
+            const fName = (getValues(name)[0].account[0]?.id)?'pct':'account';
             for (let i = fields.length;i<2;i++) {
-                append({account:[],pct:''},{focusName:`SUNYAccounts.0.${fName}`});
+                append({account:[],pct:''},{focusName:`${name}.0.${fName}`});
             }
-            setValue('SUNYAccounts.0.pct','');
+            setValue(`${name}.0.pct`,'');
         } else {
             //remove splits
             for (let i=1;i<fields.length;i++) {
                 remove(i);
             }
-            setValue('SUNYAccounts.0.pct','100');
+            setValue(`${name}.0.pct`,'100');
         }
-        setValue('SUNYAccountSplit',!showSplit);
+        setValue(`${name}Split`,!showSplit);
         setShowSplit(!showSplit);
     }
     const splitAction = (action,index) => {
@@ -44,14 +45,11 @@ export default function SUNYAccount(props) {
     }
     const handleBlur = (field,index,e) => {
         field.onBlur(e);
-        if (e.target.value != getValues('SUNYAccounts')[index].account[0]?.label) {
-            setValue(`SUNYAccounts.${index}.account.0`,{id:`new-id-${index}`,label:e.target.value});
+        if (e.target.value != getValues(`${name}.${index}.account[0].label`)) {
+            setValue(`${name}.${index}.account.0`,{id:`new-id-${index}`,label:e.target.value});
         }
     }
-    useEffect(()=>{
-        console.log(getValues('SUNYAccountSplit'));
-        setShowSplit(getValues('SUNYAccountSplit'));
-    },[]);
+    useEffect(()=>setShowSplit(getValues(`${name}Split`)),[]);
     return(
         <>
             <Form.Group as={Row}>
@@ -62,28 +60,73 @@ export default function SUNYAccount(props) {
                     {accounts.data && 
                         <InputGroup>
                             <Controller
-                                name="SUNYAccounts.0.account"
+                                name={`${name}.0.account`}
                                 defaultValue=""
                                 control={control}
-                                render={({field})=><Typeahead {...field} id="SUNYAccounts-0" options={accounts.data} flip={true} minLength={2} allowNew={true} selected={field.value} onBlur={e=>handleBlur(field,0,e)} disabled={showSplit||props.disabled}/>}
+                                render={({field})=><Typeahead 
+                                    {...field} 
+                                    id={camelCase(`${name}.0.account`)}
+                                    options={accounts.data} 
+                                    flip={true} 
+                                    minLength={2} 
+                                    allowNew={true} 
+                                    selected={field.value} 
+                                    onBlur={e=>handleBlur(field,0,e)} 
+                                    disabled={showSplit||props.disabled}
+                                />}
                             />
-                            <InputGroup.Append>
-                                <Button variant={(showSplit)?'secondary':'primary'} onClick={()=>toggleSplit()} disabled={props.disabled}>Split</Button>
-                            </InputGroup.Append>
+                            {!props.noSplit &&
+                                <InputGroup.Append>
+                                    <Button variant={(showSplit)?'secondary':'primary'} onClick={()=>toggleSplit()} disabled={props.disabled}>Split</Button>
+                                </InputGroup.Append>
+                            }
                         </InputGroup>
                     }
                 </Col>
             </Form.Group>
-            {showSplit && <SplitTable accounts={accounts.data} fields={fields} splitAction={splitAction} handleBlur={handleBlur} {...props}/>}
+            {(!props.noSplit&&showSplit) && <SplitTable accounts={accounts.data} fields={fields} splitAction={splitAction} handleBlur={handleBlur} disabled={props.disabled} name={name}/>}
         </>
     );
 }
 
-function SplitTable({accounts,fields,splitAction,handleBlur,disabled}) {
+export function SingleSUNYAccount(props) {
+    const {control} = useFormContext();
+
+    const {getListData} = useAppQueries();
+    const accounts = getListData('accounts',{select:d=>{
+        return d.map(a=>{return {id:a.ACCOUNT_CODE,label:`${a.ACCOUNT_CODE} - ${a.ACCOUNT_DESCRIPTION}`}});
+    }});
+
+    return (
+        <>
+            {accounts.isLoading && <Loading>Loading SUNY Accounts</Loading>}
+            {accounts.isError && <Loading isError>Error Loading SUNY Accounts</Loading>}
+            {accounts.data && 
+                <Controller
+                    name={props.name}
+                    defaultValue=""
+                    control={control}
+                    render={({field})=><Typeahead 
+                        {...field} 
+                        id={camelCase(props.name)}
+                        options={accounts.data} 
+                        flip={true} 
+                        minLength={2} 
+                        allowNew={true} 
+                        selected={field.value} 
+                        disabled={props.disabled}
+                    />}
+                />
+            }
+        </>
+    );
+}
+
+function SplitTable({accounts,fields,splitAction,handleBlur,disabled,name}) {
     const [splitPct,setSplitPct] = useState(0);
     
     const {control,formState:{errors}} = useFormContext();
-    const watchSUNYAccounts = useWatch({name:'SUNYAccounts',control:control});
+    const watchSUNYAccounts = useWatch({name:name,control:control});
 
     useEffect(() => {
         if (!watchSUNYAccounts) return;
@@ -122,16 +165,26 @@ function SplitTable({accounts,fields,splitAction,handleBlur,disabled}) {
                             <td>
                                 {accounts &&
                                     <Controller
-                                        name={`SUNYAccounts.${index}.account`}
+                                        name={`${name}.${index}.account`}
                                         defaultValue=""
                                         control={control}
-                                        render={({field})=><Typeahead {...field} id={`SUNYAccounts-${index}`} options={accounts} flip={true} minLength={2} allowNew={true} selected={field.value} onBlur={e=>handleBlur(field,index,e)} disabled={disabled}/>}
+                                        render={({field})=><Typeahead 
+                                            {...field} 
+                                            id={camelCase(`${name}.${index}.account`)} 
+                                            options={accounts} 
+                                            flip={true} 
+                                            minLength={2} 
+                                            allowNew={true} 
+                                            selected={field.value} 
+                                            onBlur={e=>handleBlur(field,index,e)} 
+                                            disabled={disabled}
+                                        />}
                                     />
                                 }
                             </td>
                             <td className="text-right">
                                 <Controller
-                                    name={`SUNYAccounts.${index}.pct`}
+                                    name={`${name}.${index}.pct`}
                                     defaultValue=""
                                     rules={{
                                         required:{value:true,message:'Percentage is required'},
@@ -139,7 +192,7 @@ function SplitTable({accounts,fields,splitAction,handleBlur,disabled}) {
                                         max:{value:100,message:'Percentage cannot be more than 100'}
                                     }}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="number" title={get(errors.SUNYAccounts,`${index}.pct.message`)} isInvalid={get(errors.SUNYAccounts,`${index}.pct`)} disabled={disabled}/>}
+                                    render={({field}) => <Form.Control {...field} type="number" title={get(errors,`${name}.${index}.pct.message`)} isInvalid={get(errors,`${name}.${index}.pct`)} disabled={disabled}/>}
                                 />
                             </td>
                         </tr>

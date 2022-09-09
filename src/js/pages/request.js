@@ -191,7 +191,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
         "tentativeEndDate": "",
         "expType": "",
         "orgName": "",
-        "SUNYAccountSplit":false,
+        "SUNYAccountsSplit":false,
         "SUNYAccounts": [
             {
                 account:[{id:'',label:''}],

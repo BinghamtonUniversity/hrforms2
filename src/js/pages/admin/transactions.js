@@ -49,7 +49,7 @@ export default function AdminFormTransactions() {
 const FormTransactionRouter = React.memo(({tab,...rest}) => {
     switch(tab) {
         case "paytrans":return <PayrollTransactionsTab/>;
-        case "payroll":
+        case "payroll": 
         case "form":
         case "action":
         case "transaction": return <CodesTab tab={tab} {...rest}/>;
