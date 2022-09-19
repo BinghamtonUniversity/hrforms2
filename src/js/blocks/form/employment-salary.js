@@ -1,9 +1,9 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, Controller, useWatch, useFieldArray } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import SUNYAccount, { SingleSUNYAccount } from "../sunyaccount";
-import { AppButton, DateFormat } from "../components";
+import { AppButton, CurrencyFormat, DateFormat } from "../components";
 import { Icon } from "@iconify/react";
 import { cloneDeep } from "lodash";
 import { useAppQueries } from "../../queries";
@@ -26,18 +26,25 @@ export default function EmploymentAppointment() {
                 <Form.Group as={Row}>
                     <Form.Label column md={2}>Salary Effective Date:</Form.Label>
                     <Col xs="auto">
-                        <Controller
-                            name="effDate"
-                            control={control}
-                            render={({field}) => <Form.Control 
-                                as={DatePicker} 
-                                name={field.name}
-                                selected={field.value} 
-                                closeOnScroll={true} 
-                                onChange={field.onChange}
-                                autoComplete="off"
-                            />}
-                        />
+                        <InputGroup>
+                            <Controller
+                                name="effDate"
+                                control={control}
+                                render={({field}) => <Form.Control
+                                    as={DatePicker}
+                                    name={field.name}
+                                    selected={field.value}
+                                    closeOnScroll={true}
+                                    onChange={field.onChange}
+                                    autoComplete="off"
+                                />}
+                            />
+                            <InputGroup.Append>
+                                <InputGroup.Text>
+                                    <Icon icon="mdi:calendar-blank"/>
+                                </InputGroup.Text>
+                            </InputGroup.Append>
+                        </InputGroup>
                     </Col>
                 </Form.Group>
                 <Form.Group as={Row}>
@@ -66,7 +73,7 @@ export default function EmploymentAppointment() {
                 <Form.Group as={Row}>
                     <Form.Label column md={2}>Total Salary:</Form.Label>
                     <Col xs="auto" className="pt-2">
-                        <p className="mb-0">${calcTotalSalary}</p>
+                        <p className="mb-0"><CurrencyFormat>{calcTotalSalary}</CurrencyFormat></p>
                     </Col>
                 </Form.Group>
                 <SUNYAccount name={`${name}.SUNYAccounts`}/>
@@ -141,20 +148,8 @@ function AdditionalSalary() {
         remove(index);
     }
 
-    const calcTotal = useCallback((...args) => {
-        console.log(args);
-        console.log(getValues(blockName));
-        return 10;
-    },[blockName,getValues]);
+    const calcTotal = useCallback(index=>(!watchFieldArray[index]) ? 0 : (+watchFieldArray[index].payments*+watchFieldArray[index].amount),[watchFieldArray]);
 
-    const reCalcTotal = (field,index) => {
-        console.log(index,field);
-        setValue(`${blockName}.${index}.total`,10);
-    }
-
-    useEffect(() => {
-        console.log(watchFieldArray);
-    },[watchFieldArray]);
     return (
         <section className="mt-3">
             <Row as="header">
@@ -244,12 +239,14 @@ function AdditionalSalary() {
                                 name={`${blockName}.${index}.amount`}
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <Form.Control {...field} type="text" onChange={()=>reCalcTotal(field,index)} disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index}/>}
                             />
                         </Col>
                         <Col xs={4} sm={3} md={2} className="mb-2">
                             <Form.Label>Total:</Form.Label>
-                            <Form.Text>{getValues(`${blockName}.${index}.total`)}</Form.Text>
+                            <p className="mb-0 py-2">
+                                <CurrencyFormat>{calcTotal(index)}</CurrencyFormat>
+                            </p>
                         </Col>
                     </Form.Row>
                     <Row>

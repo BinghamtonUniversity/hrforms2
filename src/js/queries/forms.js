@@ -15,13 +15,10 @@ export default function useFormQueries() {
     }
     const getSupervisorNames = (query,options) => {
         return useQuery(['supervisor',query],q(`supervisor/${query}`),options);
-        /*return useQuery(['supervisorNames',query],()=>new Promise((res,rej) => {
-            res([
-                {id:"1",label:"Test 1"},
-                {id:"2",label:"Test 2"},
-                {id:"3",label:"Test 3"},
-            ]);
-        }),options);*/
     }
-    return {getEducationInstitutions,getPosition,getSupervisorNames}
+    const getSalary = ({sunyId,effDate,options}) => {
+        const ed = (effDate instanceof Date)?format(effDate,'dd-MMM-yyyy'):effDate;
+        return useQuery(['salary',sunyId,ed],q(`salary/${sunyId}/${ed}`),options);
+    }
+    return {getEducationInstitutions,getPosition,getSupervisorNames,getSalary}
 }

@@ -19,7 +19,7 @@ Bug fixes, enhancements and things still to complete.
  * Delete paytrans should check to see usage?
  * Switch from username to B# as primary key
  * Header styling needed; i.e. h1, h2, h3, etc.
- * Email notification for requests
+ * Email notification
  * User should NOT be able to approve/reject requests they submitted.
  * Remove last group from skip select list - cannot skip the last one.  Need to handle when changed.
  * Use Helmet to change the title of the page

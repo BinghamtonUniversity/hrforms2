@@ -3,6 +3,7 @@ import { useAppQueries } from "../../queries";
 import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
+import { Icon } from "@iconify/react";
 
 export default function Position() {
     const {control,getValues,setValue,posTypes,isDraft,formState:{errors}} = useFormContext();
@@ -287,12 +288,19 @@ export default function Position() {
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Tentative End Date:</Form.Label>
                 <Col xs="auto">
-                    <Controller
-                        name="tentativeEndDate"
-                        defaultValue=""
-                        control={control}
-                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} disabled={!isDraft} autoComplete="off"/>}
-                    />
+                    <InputGroup>
+                        <Controller
+                            name="tentativeEndDate"
+                            defaultValue=""
+                            control={control}
+                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} disabled={!isDraft} autoComplete="off"/>}
+                        />
+                        <InputGroup.Append>
+                            <InputGroup.Text>
+                                <Icon icon="mdi:calendar-blank"/>
+                            </InputGroup.Text>
+                        </InputGroup.Append>
+                    </InputGroup>
                 </Col>
             </Form.Group>
         </>

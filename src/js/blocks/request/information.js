@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { Row, Col, Form } from "react-bootstrap";
+import React, { useState } from "react";
+import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import { useAppQueries } from "../../queries";
+import { Icon } from "@iconify/react";
 
 export default function Information() {
     const {control,setValue,posTypes,isDraft,formState:{errors}} = useFormContext();
@@ -61,13 +62,20 @@ export default function Information() {
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Effective Date*:</Form.Label>
                 <Col xs="auto">
-                    <Controller
-                        name="effDate"
-                        defaultValue=""
-                        control={control}
-                        rules={{required:{value:true,message:'Effective Date is required'}}}
-                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.effDate} disabled={!isDraft} autoComplete="off"/>}
-                    />
+                    <InputGroup>
+                        <Controller
+                            name="effDate"
+                            defaultValue=""
+                            control={control}
+                            rules={{required:{value:true,message:'Effective Date is required'}}}
+                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.effDate} disabled={!isDraft} autoComplete="off"/>}
+                        />
+                        <InputGroup.Append>
+                            <InputGroup.Text>
+                                <Icon icon="mdi:calendar-blank"/>
+                            </InputGroup.Text>
+                        </InputGroup.Append>
+                    </InputGroup>
                     <Form.Control.Feedback type="invalid">{errors.effDate?.message}</Form.Control.Feedback>
                 </Col>
             </Form.Group>

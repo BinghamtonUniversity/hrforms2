@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from "react";
-import { Row, Col, Form, Alert } from "react-bootstrap";
+import React, { useState } from "react";
+import { Row, Col, Form, Alert, InputGroup } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { AppButton, DateFormat, Loading } from "../components";
 import { useAppQueries } from "../../queries";
@@ -7,6 +7,7 @@ import useFormQueries from "../../queries/forms";
 import DatePicker from "react-datepicker";
 import { addDays } from "date-fns";
 import { EmploymentPositionInfoBox } from "../../pages/form";
+import { Icon } from "@iconify/react";
 
 const name = 'employment.position';
 
@@ -139,19 +140,26 @@ function EmploymentAppointmentInformation() {
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Appointment End Date:</Form.Label>
                 <Col xs="auto">
-                    <Controller
-                        name="apptEndDate"
-                        control={control}
-                        render={({field}) => <Form.Control 
-                            as={DatePicker} 
-                            name={field.name}
-                            selected={field.value} 
-                            closeOnScroll={true} 
-                            onChange={field.onChange} 
-                            minDate={addDays(watchEffectiveDate||new Date(),1)}
-                            autoComplete="off"
-                        />}
-                    />
+                    <InputGroup>
+                        <Controller
+                            name="apptEndDate"
+                            control={control}
+                            render={({field}) => <Form.Control
+                                as={DatePicker}
+                                name={field.name}
+                                selected={field.value}
+                                closeOnScroll={true}
+                                onChange={field.onChange}
+                                minDate={addDays(watchEffectiveDate||new Date(),1)}
+                                autoComplete="off"
+                            />}
+                        />
+                        <InputGroup.Append>
+                            <InputGroup.Text>
+                                <Icon icon="mdi:calendar-blank"/>
+                            </InputGroup.Text>
+                        </InputGroup.Append>
+                    </InputGroup>
                 </Col>
             </Form.Group>
             {watchPayroll == '28020' && 

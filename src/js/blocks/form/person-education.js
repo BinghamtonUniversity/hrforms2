@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { Row, Col, Form } from "react-bootstrap";
+import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { useAppQueries } from "../../queries";
 import useFormQueries from "../../queries/forms";
@@ -8,6 +8,7 @@ import { AppButton, CountrySelector, DateFormat, StateSelector } from "../compon
 import DatePicker from "react-datepicker";
 import { addDays } from "date-fns";
 import { Typeahead } from "react-bootstrap-typeahead";
+import { Icon } from "@iconify/react";
 
 const name = 'person.education';
 
@@ -118,24 +119,31 @@ export default function PersonEducation() {
                     <Form.Group as={Row} className="mb-1">
                         <Form.Label column md={3}>Degree Award Date*:</Form.Label>
                         <Col xs="auto">
-                            <Controller
-                                name={`${name}.${index}.awardDate`}
-                                defaultValue=""
-                                control={control}
-                                rules={{required:{value:true,message:'Award Date Required'}}}
-                                render={({field}) => <Form.Control 
-                                    as={DatePicker} 
-                                    name={field.name}
-                                    closeOnScroll={true} 
-                                    selected={field.value} 
-                                    onChange={field.onChange}
-                                    disabled={editIndex!=index}
-                                    minDate={get(watchEducation,`[${index}].pending`,false)&&addDays(new Date(),1)}
-                                    maxDate={!get(watchEducation,`[${index}].pending`,false)&&new Date()}
-                                    isInvalid={get(errors,field.name,false)}
-                                    autoComplete="off"
-                                />}
-                            />
+                            <InputGroup>
+                                <Controller
+                                    name={`${name}.${index}.awardDate`}
+                                    defaultValue=""
+                                    control={control}
+                                    rules={{required:{value:true,message:'Award Date Required'}}}
+                                    render={({field}) => <Form.Control
+                                        as={DatePicker}
+                                        name={field.name}
+                                        closeOnScroll={true}
+                                        selected={field.value}
+                                        onChange={field.onChange}
+                                        disabled={editIndex!=index}
+                                        minDate={get(watchEducation,`[${index}].pending`,false)&&addDays(new Date(),1)}
+                                        maxDate={!get(watchEducation,`[${index}].pending`,false)&&new Date()}
+                                        isInvalid={get(errors,field.name,false)}
+                                        autoComplete="off"
+                                    />}
+                                />
+                                <InputGroup.Append>
+                                    <InputGroup.Text>
+                                        <Icon icon="mdi:calendar-blank"/>
+                                    </InputGroup.Text>
+                                </InputGroup.Append>
+                            </InputGroup>
                             <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].awardDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].awardDate.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col className="pt-2">

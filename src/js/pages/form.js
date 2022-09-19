@@ -16,6 +16,9 @@ const PersonContacts = lazy(()=>import("../blocks/form/person-contacts"));
 const EmploymentPosition = lazy(()=>import("../blocks/form/employment-position"));
 const EmploymentAppointment = lazy(()=>import("../blocks/form/employment-appointment"));
 const EmploymentSalary = lazy(()=>import("../blocks/form/employment-salary"));
+const EmploymentSeparation = lazy(()=>import("../blocks/form/employment-separation"));
+const EmploymentLeave = lazy(()=>import("../blocks/form/employment-leave"));
+const EmploymentPay = lazy(()=>import("../blocks/form/employment-pay"));
 
 const allTabs = [
     {id:'basic-info',title:'Basic Info'},
@@ -30,6 +33,7 @@ const allTabs = [
         {id:'employment-position',title:'Position'},
         {id:'employment-appointment',title:'Appointment'},
         {id:'employment-salary',title:'Salary'},
+        {id:'employment-separation',title:'Separation'},
         {id:'employment-leave',title:'Leave'},
         {id:'employment-pay',title:'Pay'},
     ]},
@@ -151,6 +155,18 @@ function FormWrapper({formId,isDraft,isNew}) {
                     }
                 ],
                 additionalSalary:[]
+            },
+            separation: {
+                lastDateWorked:""
+            },
+            leave: {
+                origSalary:"",
+                leavePercent:0,
+                leaveEndDate:"",
+                justification:""
+            },
+            pay: {
+                
             }
         },
     }
@@ -316,6 +332,9 @@ function FormTabRouter({tab,activeTab,subTab,...props}) {
         case "employment-tab.employment-position": return <EmploymentPosition/>;
         case "employment-tab.employment-appointment": return <EmploymentAppointment/>;
         case "employment-tab.employment-salary": return <EmploymentSalary/>;
+        case "employment-tab.employment-separation": return <EmploymentSeparation/>;
+        case "employment-tab.employment-leave": return <EmploymentLeave/>;
+        case "employment-tab.employment-pay": return <EmploymentPay/>;
         default: return <p>Not Found</p>;
     }
 }

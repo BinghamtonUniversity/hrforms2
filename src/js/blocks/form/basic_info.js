@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
-import { Row, Col, Form, Collapse } from "react-bootstrap";
+import { Row, Col, Form, Collapse, InputGroup } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import sub from "date-fns/sub";
 import { assign, keyBy, orderBy } from "lodash";
@@ -10,6 +10,7 @@ import { useCodesQueries, useTransactionQueries } from "../../queries/codes";
 import DataTable from 'react-data-table-component';
 import { useQueryClient } from "react-query";
 import { useLocation } from "react-router-dom";
+import { Icon } from "@iconify/react";
 
 const name = ""; //TODO: use name variable
 
@@ -377,24 +378,31 @@ export default function FormBasicInfo() {
                         </Col>
                         <Form.Label column xs="auto">Date of Birth:</Form.Label>
                         <Col xs="auto">
-                            <Controller
-                                name="lookup.values.dob"
-                                defaultValue=""
-                                control={control}
-                                render={({field})=><Form.Control 
-                                    as={DatePicker} 
-                                    ref={dobRef}
-                                    name={field.name}
-                                    closeOnScroll={true} 
-                                    maxDate={sub(new Date(),{years:15})} 
-                                    selected={field.value} 
-                                    onChange={field.onChange}
-                                    onFocus={handleFocus}
-                                    onKeyDown={handleLookupKeyDown}
-                                    isInvalid={errors.lookup?.values?.dob}
-                                    autoComplete="off"
-                                />}
-                            />
+                            <InputGroup>
+                                <Controller
+                                    name="lookup.values.dob"
+                                    defaultValue=""
+                                    control={control}
+                                    render={({field})=><Form.Control 
+                                        as={DatePicker} 
+                                        ref={dobRef}
+                                        name={field.name}
+                                        closeOnScroll={true} 
+                                        maxDate={sub(new Date(),{years:15})} 
+                                        selected={field.value} 
+                                        onChange={field.onChange}
+                                        onFocus={handleFocus}
+                                        onKeyDown={handleLookupKeyDown}
+                                        isInvalid={errors.lookup?.values?.dob}
+                                        autoComplete="off"
+                                    />}
+                                />
+                                <InputGroup.Append>
+                                    <InputGroup.Text>
+                                        <Icon icon="mdi:calendar-blank"/>
+                                    </InputGroup.Text>
+                                </InputGroup.Append>
+                            </InputGroup>
                             <Form.Control.Feedback type="invalid" style={{display:(errors.lookup?.values?.dob)?'block':'none'}}>{errors.lookup?.values?.dob?.message}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
@@ -463,21 +471,28 @@ export default function FormBasicInfo() {
                                 <Form.Group as={Row}>
                                     <Form.Label column md={2}>Effective Date*:</Form.Label>
                                     <Col xs="auto">
-                                        <Controller
-                                            name="effDate"
-                                            control={control}
-                                            rules={{required:{value:true,message:'Effective Date is required'}}}
-                                            render={({field}) => <Form.Control 
-                                                as={DatePicker} 
-                                                ref={effDateRef} 
-                                                name={field.name}
-                                                selected={field.value} 
-                                                closeOnScroll={true} 
-                                                onChange={field.onChange} 
-                                                isInvalid={errors.effDate}
-                                                autoComplete="off"
-                                            />}
-                                        />
+                                        <InputGroup>
+                                            <Controller
+                                                name="effDate"
+                                                control={control}
+                                                rules={{required:{value:true,message:'Effective Date is required'}}}
+                                                render={({field}) => <Form.Control
+                                                    as={DatePicker}
+                                                    ref={effDateRef}
+                                                    name={field.name}
+                                                    selected={field.value}
+                                                    closeOnScroll={true}
+                                                    onChange={field.onChange}
+                                                    isInvalid={errors.effDate}
+                                                    autoComplete="off"
+                                                />}
+                                            />
+                                            <InputGroup.Append>
+                                                <InputGroup.Text>
+                                                    <Icon icon="mdi:calendar-blank"/>
+                                                </InputGroup.Text>
+                                            </InputGroup.Append>
+                                        </InputGroup>
                                         <Form.Control.Feedback type="invalid">{errors.effDate?.message}</Form.Control.Feedback>
                                     </Col>
                                 </Form.Group>

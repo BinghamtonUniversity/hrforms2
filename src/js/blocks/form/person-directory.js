@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from "react";
-import { Row, Col, Form } from "react-bootstrap";
+import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { get, cloneDeep } from "lodash";
 import { useAppQueries } from "../../queries";
 import { AppButton, DateFormat, StateSelector } from "../components";
 import DatePicker from "react-datepicker";
+import { Icon } from "@iconify/react";
 import PhoneInput from 'react-phone-input-2';
 
 import 'react-phone-input-2/lib/style.css'
@@ -390,22 +391,29 @@ function PersonDirectoryPhone() {
                             </Col>
                             <Form.Label column md={2}>Effective Date*:</Form.Label>
                             <Col xs="auto">
-                                <Controller
-                                    name={`${name}.${index}.effDate`}
-                                    defaultValue=""
-                                    control={control}
-                                    rules={{required:{value:true,message:'Effective Date is Required'}}}
-                                    render={({field}) => <Form.Control 
-                                        as={DatePicker} 
-                                        name={field.name}
-                                        closeOnScroll={true} 
-                                        selected={field.value} 
-                                        onChange={field.onChange}
-                                        disabled={editIndex!=index||!editableType(index)}
-                                        isInvalid={get(errors,field.name,false)}
-                                        autoComplete="off"
-                                    />}
-                                />
+                                <InputGroup>
+                                    <Controller
+                                        name={`${name}.${index}.effDate`}
+                                        defaultValue=""
+                                        control={control}
+                                        rules={{required:{value:true,message:'Effective Date is Required'}}}
+                                        render={({field}) => <Form.Control
+                                            as={DatePicker}
+                                            name={field.name}
+                                            closeOnScroll={true}
+                                            selected={field.value}
+                                            onChange={field.onChange}
+                                            disabled={editIndex!=index||!editableType(index)}
+                                            isInvalid={get(errors,field.name,false)}
+                                            autoComplete="off"
+                                        />}
+                                    />
+                                    <InputGroup.Append>
+                                        <InputGroup.Text>
+                                            <Icon icon="mdi:calendar-blank"/>
+                                        </InputGroup.Text>
+                                    </InputGroup.Append>
+                                </InputGroup>
                                 <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].effDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].effDate.message`,'')}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>
@@ -540,22 +548,29 @@ function PersonDirectoryEmail() {
                             </Col>
                             <Form.Label column md={2}>Effective Date*:</Form.Label>
                             <Col xs="auto">
-                                <Controller
-                                    name={`${name}.${index}.effDate`}
-                                    defaultValue=""
-                                    control={control}
-                                    rules={{required:{value:true,message:'Effective Date is Required'}}}
-                                    render={({field}) => <Form.Control 
-                                        as={DatePicker} 
-                                        name={field.name}
-                                        closeOnScroll={true} 
-                                        selected={field.value} 
-                                        onChange={field.onChange}
-                                        disabled={editIndex!=index||!editableType(index)}
-                                        isInvalid={get(errors,field.name,false)}
-                                        autoComplete="off"
-                                    />}
-                                />
+                                <InputGroup>
+                                    <Controller
+                                        name={`${name}.${index}.effDate`}
+                                        defaultValue=""
+                                        control={control}
+                                        rules={{required:{value:true,message:'Effective Date is Required'}}}
+                                        render={({field}) => <Form.Control
+                                            as={DatePicker}
+                                            name={field.name}
+                                            closeOnScroll={true}
+                                            selected={field.value}
+                                            onChange={field.onChange}
+                                            disabled={editIndex!=index||!editableType(index)}
+                                            isInvalid={get(errors,field.name,false)}
+                                            autoComplete="off"
+                                        />}
+                                    />
+                                    <InputGroup.Append>
+                                        <InputGroup.Text>
+                                            <Icon icon="mdi:calendar-blank"/>
+                                        </InputGroup.Text>
+                                    </InputGroup.Append>
+                                </InputGroup>
                                 <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].effDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].effDate.message`,'')}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>

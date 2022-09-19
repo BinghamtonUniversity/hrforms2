@@ -608,21 +608,35 @@ function UserInfo({newUser,setStatus}) {
             <Form.Row>
                 <Form.Group as={Col} controlId="start_date">
                     <Form.Label>Start Date</Form.Label>
-                    <Controller
-                        name="startDate"
-                        control={control}
-                        rules={{required:{value:true,message:'Start Date is required'}}}
-                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.startDate}/>}
-                    />
+                    <InputGroup>
+                        <Controller
+                            name="startDate"
+                            control={control}
+                            rules={{required:{value:true,message:'Start Date is required'}}}
+                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.startDate}/>}
+                        />
+                        <InputGroup.Append>
+                            <InputGroup.Text>
+                                <Icon icon="mdi:calendar-blank"/>
+                            </InputGroup.Text>
+                        </InputGroup.Append>
+                    </InputGroup>
                     <Form.Control.Feedback type="invalid">{errors.startDate?.message}</Form.Control.Feedback>                    
                 </Form.Group>
                 <Form.Group as={Col} controlId="end_date">
                     <Form.Label>End Date</Form.Label>
-                    <Controller
-                        name="endDate"
-                        control={control}
-                        render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} autoComplete="off"/>}
-                    />
+                    <InputGroup>
+                        <Controller
+                            name="endDate"
+                            control={control}
+                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} autoComplete="off"/>}
+                        />
+                        <InputGroup.Append>
+                            <InputGroup.Text>
+                                <Icon icon="mdi:calendar-blank"/>
+                            </InputGroup.Text>
+                        </InputGroup.Append>
+                    </InputGroup>
                 </Form.Group>
             </Form.Row>
         </>

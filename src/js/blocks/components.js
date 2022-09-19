@@ -72,6 +72,13 @@ export function DateFormat({children,inFmt,outFmt,nvl}) {
     return format(d,oFmt);
 }
 
+export function CurrencyFormat({children}) {
+    return new Intl.NumberFormat('en-us',{
+        currency:'USD',
+        style:'currency',
+    }).format(children);
+}
+
 /** 
  * buttons: {
  *      close:{title:'',variant:'',callback:()=>null},

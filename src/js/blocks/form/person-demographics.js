@@ -1,8 +1,9 @@
 import React from "react";
 import { useAppQueries } from "../../queries";
 import { useFormContext, Controller } from "react-hook-form";
-import { Row, Col, Form } from "react-bootstrap";
+import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import DatePicker from "react-datepicker";
+import { Icon } from "@iconify/react";
 
 export default function PersonDemographics() {
     const { control, setValue } = useFormContext();
@@ -23,18 +24,25 @@ export default function PersonDemographics() {
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Date of Birth:</Form.Label>
                 <Col xs="auto">
-                    <Controller
-                        name="person.demographics.DOB"
-                        control={control}
-                        render={({field}) => <Form.Control 
-                            as={DatePicker} 
-                            name={field.name}
-                            selected={field.value} 
-                            closeOnScroll={true} 
-                            onChange={field.onChange} 
-                            autoComplete="off"
-                        />}
-                    />
+                    <InputGroup>
+                        <Controller
+                            name="person.demographics.DOB"
+                            control={control}
+                            render={({field}) => <Form.Control
+                                as={DatePicker}
+                                name={field.name}
+                                selected={field.value}
+                                closeOnScroll={true}
+                                onChange={field.onChange}
+                                autoComplete="off"
+                            />}
+                        />
+                        <InputGroup.Append>
+                            <InputGroup.Text>
+                                <Icon icon="mdi:calendar-blank"/>
+                            </InputGroup.Text>
+                        </InputGroup.Append>
+                    </InputGroup>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
