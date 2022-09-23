@@ -104,12 +104,15 @@ function PersonDirectoryAddresses() {
     }
     const handleRemove = index => {
         remove(index);
+        setEditIndex(undefined);
+        setEditValues(undefined);
+        setIsNew(false);
     }
 
     return (
         <article className="py-3">
             <Row as="header">
-                <Col as="h4">Addresses <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2}>New</AppButton></Col>
+                <Col as="h4">Addresses <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton></Col>
             </Row>
             {fields.map((field,index)=>(
                 <section key={field.id} className="border rounded p-2 mb-2">
@@ -248,10 +251,10 @@ function PersonDirectoryAddresses() {
                     }
                     <Row>
                         <Col className="button-group-sm">
-                            {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)}>Edit</AppButton>}
-                            {(editIndex==index&&editableType(index)) && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)}>Save</AppButton>}
-                            {(editIndex==index&&editableType(index)&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary">Cancel</AppButton>}
-                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)}>Remove</AppButton>
+                            {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
+                            {(editIndex==index&&editableType(index)) && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
+                            {(editIndex==index&&editableType(index)&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
+                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
                         </Col>
                     </Row>
                     <Row>
@@ -266,7 +269,7 @@ function PersonDirectoryAddresses() {
             ))}
             {fields.length>0 && 
                 <Row>
-                    <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2}>New Address</AppButton></Col>
+                    <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Address</AppButton></Col>
                 </Row>
             }
         </article>
@@ -342,11 +345,14 @@ function PersonDirectoryPhone() {
     }
     const handleRemove = index => {
         remove(index);
+        setEditIndex(undefined);
+        setEditValues(undefined);
+        setIsNew(false);
     }
     return (
         <article className="py-3">
             <Row as="header">
-                <Col as="h4">Phone Numbers <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2}>New</AppButton></Col>
+                <Col as="h4">Phone Numbers <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton></Col>
             </Row>
             {fields.map((field,index)=>(
                 <section key={field.id} className="border rounded p-2 mb-2">
@@ -420,10 +426,10 @@ function PersonDirectoryPhone() {
                     }
                     <Row>
                         <Col className="button-group-sm">
-                            {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)}>Edit</AppButton>}
-                            {(editIndex==index&&editableType(index)) && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)}>Save</AppButton>}
-                            {(editIndex==index&&editableType(index)&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary">Cancel</AppButton>}
-                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)}>Remove</AppButton>
+                            {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
+                            {(editIndex==index&&editableType(index)) && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
+                            {(editIndex==index&&editableType(index)&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
+                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
                         </Col>
                     </Row>
                     <Row>
@@ -438,7 +444,7 @@ function PersonDirectoryPhone() {
             ))}
             {fields.length>0 && 
                 <Row>
-                    <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2}>New Phone</AppButton></Col>
+                    <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Phone</AppButton></Col>
                 </Row>
             }
         </article>
@@ -503,11 +509,14 @@ function PersonDirectoryEmail() {
     }
     const handleRemove = index => {
         remove(index);
+        setEditIndex(undefined);
+        setEditValues(undefined);
+        setIsNew(false);
     }
     return (
         <article className="py-3">
             <Row as="header">
-                <Col as="h4">Email Addresses <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2}>New</AppButton></Col>
+                <Col as="h4">Email Addresses <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton></Col>
             </Row>
             {fields.map((field,index)=>(
                 <section key={field.id} className="border rounded p-2 mb-2">
@@ -577,10 +586,10 @@ function PersonDirectoryEmail() {
                     }
                     <Row>
                         <Col className="button-group-sm">
-                            {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)}>Edit</AppButton>}
-                            {(editIndex==index&&editableType(index)) && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)}>Save</AppButton>}
-                            {(editIndex==index&&editableType(index)&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary">Cancel</AppButton>}
-                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)}>Remove</AppButton>
+                            {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
+                            {(editIndex==index&&editableType(index)) && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
+                            {(editIndex==index&&editableType(index)&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
+                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
                         </Col>
                     </Row>
                     <Row>
@@ -595,7 +604,7 @@ function PersonDirectoryEmail() {
             ))}
             {fields.length>0 && 
                 <Row>
-                    <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2}>New Email</AppButton></Col>
+                    <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Email</AppButton></Col>
                 </Row>
             }
         </article>

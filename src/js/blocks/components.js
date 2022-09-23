@@ -229,5 +229,16 @@ const CountrySelector = ({field,...props}) => {
     );
 }
 
+const DepartmentSelector = ({field,...props}) => {
+    const { getListData } = useAppQueries();
+    const departments = getListData('deptOrgs');
+    return (
+        <Form.Control {...field} as="select" {...props}>
+            <option></option>
+            {departments.data&&departments.data.map(d=><option key={d.DEPARTMENT_CODE} value={d.DEPARTMENT_CODE}>{d.DEPARTMENT_DESC}</option>)}
+        </Form.Control>
+    );
+}
 
-export {Loading,ModalConfirm,AppButton,MenuCounts,errorToast,CheckboxTreeComponent,StateSelector,CountrySelector};
+export {Loading,ModalConfirm,AppButton,MenuCounts,errorToast,CheckboxTreeComponent,
+    StateSelector,CountrySelector,DepartmentSelector};

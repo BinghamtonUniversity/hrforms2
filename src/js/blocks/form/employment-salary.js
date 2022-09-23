@@ -146,6 +146,9 @@ function AdditionalSalary() {
     }
     const handleRemove = index => {
         remove(index);
+        setEditIndex(undefined);
+        setEditValues(undefined);
+        setIsNew(false);
     }
 
     const calcTotal = useCallback(index=>(!watchFieldArray[index]) ? 0 : (+watchFieldArray[index].payments*+watchFieldArray[index].amount),[watchFieldArray]);
@@ -239,7 +242,7 @@ function AdditionalSalary() {
                                 name={`${blockName}.${index}.amount`}
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Control {...field} type="number" disabled={editIndex!=index}/>}
                             />
                         </Col>
                         <Col xs={4} sm={3} md={2} className="mb-2">
@@ -251,10 +254,10 @@ function AdditionalSalary() {
                     </Form.Row>
                     <Row>
                         <Col className="button-group-sm">
-                            {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)}>Edit</AppButton>}
-                            {editIndex==index && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)}>Save</AppButton>}
-                            {(editIndex==index&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary">Cancel</AppButton>}
-                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)}>Remove</AppButton>
+                            {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
+                            {editIndex==index && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
+                            {(editIndex==index&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
+                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
                         </Col>
                     </Row>
                     <Row>
@@ -268,7 +271,7 @@ function AdditionalSalary() {
                 </section>
             ))}
             <Row>
-                <Col><AppButton format="add" size="sm" onClick={handleNew}>Add Salary</AppButton></Col>
+                <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={editIndex!=undefined}>Add Salary</AppButton></Col>
             </Row>
         </section>
     );

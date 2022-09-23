@@ -98,6 +98,9 @@ export default function PersonContacts() {
     }
     const handleRemove = index => {
         remove(index);
+        setEditIndex(undefined);
+        setEditValues(undefined);
+        setIsNew(false);
     }
 
     const checkPrimary = useCallback(() => {
@@ -109,7 +112,7 @@ export default function PersonContacts() {
     return (
         <article className="mt-3">
             <Row as="header">
-                <Col as="h3">Contacts <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2}>New</AppButton></Col>
+                <Col as="h3">Contacts <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton></Col>
             </Row>
             {fields.map((flds,index)=>(
                 <section key={flds.id} className="border rounded p-2 mb-2">
@@ -287,10 +290,10 @@ export default function PersonContacts() {
                     </Form.Group>
                     <Row>
                         <Col className="button-group-sm">
-                            {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)}>Edit</AppButton>}
-                            {editIndex==index && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)}>Save</AppButton>}
-                            {(editIndex==index&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary">Cancel</AppButton>}
-                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)}>Remove</AppButton>
+                            {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
+                            {editIndex==index && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
+                            {(editIndex==index&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
+                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
                         </Col>
                     </Row>
                     <Row>
@@ -305,7 +308,7 @@ export default function PersonContacts() {
             ))}
             {fields.length>0 &&
                 <Row>
-                    <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2}>New Contact</AppButton></Col>
+                    <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Contact</AppButton></Col>
                 </Row>
             }
         </article>

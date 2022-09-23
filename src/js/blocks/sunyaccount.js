@@ -90,12 +90,19 @@ export default function SUNYAccount(props) {
 }
 
 export function SingleSUNYAccount(props) {
-    const {control} = useFormContext();
+    const {control, getValues, setValue } = useFormContext();
 
     const {getListData} = useAppQueries();
     const accounts = getListData('accounts',{select:d=>{
         return d.map(a=>{return {id:a.ACCOUNT_CODE,label:`${a.ACCOUNT_CODE} - ${a.ACCOUNT_DESCRIPTION}`}});
     }});
+
+    const handleBlur = (field,e) => {
+        field.onBlur(e);
+        if (e.target.value != getValues(`${props.name}[0].label`)) {
+            setValue(`${props.name}.0`,{id:'new-id-0',label:e.target.value});
+        }
+    }
 
     return (
         <>
@@ -113,6 +120,7 @@ export function SingleSUNYAccount(props) {
                         flip={true} 
                         minLength={2} 
                         allowNew={true} 
+                        onBlur={e=>handleBlur(field,e)}
                         selected={field.value} 
                         disabled={props.disabled}
                     />}

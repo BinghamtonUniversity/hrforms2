@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Row, Col, Form } from "react-bootstrap";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import { useFormContext, Controller } from "react-hook-form";
-import { useAppQueries } from "../../queries";
 import useFormQueries from "../../queries/forms";
+import { DepartmentSelector } from "../components";
 
 const name = 'employment.appointment';
 
@@ -42,8 +42,20 @@ export default function EmploymentAppointment() {
                     />
                 </Col>
             </Form.Group>
+
             <AppointmentSupervisor/>
-            <AppointmentDepartment/>
+
+            <Form.Group as={Row}>
+                <Form.Label column md={2}>Department:</Form.Label>
+                <Col xs="auto">
+                    <Controller
+                        name={`${name}.department`}
+                        control={control}
+                        defaultValue=""
+                        render={({field}) => <DepartmentSelector field={field}/>}
+                    />
+                </Col>
+            </Form.Group>
         </article>
     );
 }
@@ -52,9 +64,17 @@ function AppointmentSupervisor() {
     const [searchFilter,setSearchFilter] = useState('');
     const { getSupervisorNames } = useFormQueries();
     const supervisors = getSupervisorNames(searchFilter,{enabled:false});
+
     const handleSearch = query => {
         setSearchFilter(query);
     }
+    const handleBlur = (field,e) => {
+        field.onBlur(e);
+        if (e.target.value != getValues(`${name}.${index}.supervisor[0].label`)) {
+            setValue(`${name}.${index}.supervisor.0`,{id:`new-id-${index}`,label:e.target.value});
+        }
+    }
+
     useEffect(() => {
         if (!searchFilter) return;
         supervisors.refetch();
@@ -74,34 +94,12 @@ function AppointmentSupervisor() {
                         isLoading={supervisors.isLoading}
                         minLength={2}
                         flip={true} 
-                        addNew={true}
+                        allowNew={true}
                         onSearch={handleSearch}
+                        onBlur={e=>handleBlur(field,e)}
                         options={supervisors.data}
                         placeholder="Search for supervisor..."
                     />}
-                />
-            </Col>
-        </Form.Group>
-    );
-}
-function AppointmentDepartment() {
-    const { control } = useFormContext();
-    const { getListData } = useAppQueries();
-    const departments = getListData('deptOrgs');
-    return (
-        <Form.Group as={Row}>
-            <Form.Label column md={2}>Department:</Form.Label>
-            <Col xs="auto">
-                <Controller
-                    name={`${name}.department`}
-                    control={control}
-                    defaultValue=""
-                    render={({field}) => (
-                        <Form.Control {...field} as="select">
-                            <option></option>
-                            {departments.data&&departments.data.map(d=><option key={d.DEPARTMENT_CODE} value={d.DEPARTMENT_CODE}>{d.DEPARTMENT_DESC}</option>)}
-                        </Form.Control>
-                    )}
                 />
             </Col>
         </Form.Group>

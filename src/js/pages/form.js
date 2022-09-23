@@ -165,9 +165,7 @@ function FormWrapper({formId,isDraft,isNew}) {
                 leaveEndDate:"",
                 justification:""
             },
-            pay: {
-                
-            }
+            pay: []
         },
     }
     const testRecord = {
