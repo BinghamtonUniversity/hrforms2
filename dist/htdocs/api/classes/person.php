@@ -63,7 +63,7 @@ class Person extends HRForms2 {
             WHERE pers.role_type <> 'STSCH' ";
 		switch($this->req[0]) {
             case "bnumber":
-                $qry .= "AND upper(pers.local_campus_id) = :bnumber";
+                $qry .= "AND upper(pers.local_campus_id) = upper(:bnumber)";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":bnumber", $this->req[1]);
                 break;

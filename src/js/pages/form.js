@@ -1,14 +1,15 @@
-import React, { useState, useEffect, lazy } from "react";
+import React, { useState, useEffect, lazy, useCallback } from "react";
 import { UserContext } from "../app";
 import { useParams, useHistory, Prompt, Redirect, useLocation } from "react-router-dom";
 import { currentUser, NotFound } from "../app";
 import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
 import { AppButton, DateFormat } from "../blocks/components";
+import get from "lodash/get";
 
 /* TABS */
 const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
-const PersonInfo = lazy(()=>import("../blocks/form/person-info"));
+const PersonInformation = lazy(()=>import("../blocks/form/person-information"));
 const PersonDemographics = lazy(()=>import("../blocks/form/person-demographics"));
 const PersonDirectory = lazy(()=>import("../blocks/form/person-directory"));
 const PersonEducation = lazy(()=>import("../blocks/form/person-education"));
@@ -19,27 +20,32 @@ const EmploymentSalary = lazy(()=>import("../blocks/form/employment-salary"));
 const EmploymentSeparation = lazy(()=>import("../blocks/form/employment-separation"));
 const EmploymentLeave = lazy(()=>import("../blocks/form/employment-leave"));
 const EmploymentPay = lazy(()=>import("../blocks/form/employment-pay"));
+const EmploymentVolunteer = lazy(()=>import("../blocks/form/employment-volunteer"));
+const Comments = lazy(()=>import("../blocks/form/comments"));
+const Review = lazy(()=>import("../blocks/form/review"));
 
 const allTabs = [
-    {id:'basic-info',title:'Basic Info'},
-    {id:'person-tab',title:'Person Info',subTabs:[
-        {id:'person-info',title:'Information'},
-        {id:'person-demographics',title:'Demographics'},
-        {id:'person-directory',title:'Directory'},
-        {id:'person-education',title:'Education'},
-        {id:'person-contacts',title:'Contacts'},
+    {value:'basic-info',label:'Basic Info'},
+    {value:'person',label:'Person',children:[
+        {value:'person-information',label:'Information'},
+        {value:'person-demographics',label:'Demographics'},
+        {value:'person-directory',label:'Directory'},
+        {value:'person-education',label:'Education'},
+        {value:'person-contacts',label:'Contacts'},
     ]},
-    {id:'employment-tab',title:'Employment Info',subTabs:[
-        {id:'employment-position',title:'Position'},
-        {id:'employment-appointment',title:'Appointment'},
-        {id:'employment-salary',title:'Salary'},
-        {id:'employment-separation',title:'Separation'},
-        {id:'employment-leave',title:'Leave'},
-        {id:'employment-pay',title:'Pay'},
+    {value:'employment',label:'Employment',children:[
+        {value:'employment-appointment',label:'Appointment'},
+        {value:'employment-leave',label:'Leave'},
+        {value:'employment-pay',label:'Pay'},
+        {value:'employment-position',label:'Position'},
+        {value:'employment-salary',label:'Salary'},
+        {value:'employment-separation',label:'Separation'},
+        {value:'employment-volunteer',label:'Volunteer'}
     ]},
-    {id:'comments-tab',title:'Comments'},
-    {id:'review-tab',title:'Review'}
+    {value:'comments',label:'Comments'},
+    {value:'review',label:'Review'}
 ];
+export {allTabs}; //used on paytrans
 
 export default function HRForm() {
     const [formId,setFormId] = useState('');
@@ -73,16 +79,15 @@ function FormWrapper({formId,isDraft,isNew}) {
     const [basicInfoComplete,setBasicInfoComplete] = useState(false);
 
     //TODO: probably need to change to useReducer
-    //const [tabList,setTabList] = useState(allTabs.filter(t=>t.id=='basic-info'));
-    const [tabList,setTabList] = useState(allTabs);
+    const [tabList,setTabList] = useState(allTabs.filter(t=>t.value=='basic-info'));
+    const [payTransTabs,setPayTransTabs] = useState();
+    //const [tabList,setTabList] = useState(allTabs);
 
     const [activeTab,setActiveTab] = useState('basic-info');
     const [activeNav,setActiveNav] = useState('');
 
     const defaults = {
         formId:formId,
-        isDraft:isDraft,
-        isNew:isNew,
         lookup:{
             type:"bNumber",
             values:{
@@ -108,14 +113,22 @@ function FormWrapper({formId,isDraft,isNew}) {
                 lastName:"",
                 suffix:"",
                 volFFEMT:"No",
-                rehireRetiree:"No"
+                rehireRetiree:"No",
+                retiredDate:"",
+                retiredFrom:""
             },
             demographics: {
                 DOB:"",
                 citizen:"Yes",
+                citizenType:"",
+                empAuthCardOnly:"No",
+                citizenCountry:"",
+                visaType:"",
                 gender:{id:"",value:""},
+                militaryStatus:[],
                 veteran:"No",
-                military_status:["N"]
+                protectedVetStatus:[''],
+                militarySepDate:""                
             },
             directory: {
                 address:[],
@@ -167,11 +180,10 @@ function FormWrapper({formId,isDraft,isNew}) {
             },
             pay: []
         },
+        comment:""
     }
     const testRecord = {
         formId:formId,
-        isDraft:isDraft,
-        isNew:false, //isNew
         lookup:{
             type:"lastNameDOB",
             values:{
@@ -213,9 +225,11 @@ function FormWrapper({formId,isDraft,isNew}) {
 
     const navigate = tab => {
         //TODO: can we maintain last tab/sub-tab?  or should we use routing? so that it remembers when you switch
-        const idx = tabList.findIndex(t=>t.id==tab);
+        const idx = tabList.findIndex(t=>t.value==tab);
         let aNav = '';
-        if (Object.keys(tabList[idx]).includes('subTabs')) aNav = tabList[idx].subTabs[0].id;
+        if (Object.keys(tabList[idx]).includes('children')) aNav = tabList[idx].children[0].value;
+        //methods.setValue('isNew',false);
+        setIsNew(false);
         setActiveNav(aNav);
         setActiveTab(tab);
     }
@@ -231,7 +245,7 @@ function FormWrapper({formId,isDraft,isNew}) {
             // get tabs and set...
             setTabList(allTabs);
             setActiveTab('person-tab');
-            setActiveNav('person-info');
+            setActiveNav('person-information');
 
         }*/
     }
@@ -247,17 +261,51 @@ function FormWrapper({formId,isDraft,isNew}) {
         */
         methods.reset();
         //setBasicInfoComplete(false);
-        setTabList(allTabs.filter(t=>t.id=='basic-info'));
+        setTabList(allTabs.filter(t=>t.value=='basic-info'));
     }
     const handleNext = () => {
         //should validate before
-        console.debug('Basic Info Complete');
-        methods.setValue('isNew',false);
-        // get tabs and set...
-        setTabList(allTabs);
-        setActiveTab('person-tab');
-        setActiveNav('person-info');
+        if (activeTab == 'basic-info') {
+            console.debug('Basic Info Complete');
+            //methods.setValue('isNew',false);
+            setIsNew(false);
+            /*const tabs = [allTabs.find(t=>t.value=='basic-info')];
+            ['person','employment'].forEach(t=>{
+                if (payTransTabs.filter(v=>v.startsWith(t)).length>0) {
+                    const subTabs = allTabs.find(v=>v.value==t);
+                    subTabs.children = subTabs.children.filter(s=>payTransTabs.includes(s.value));
+                    tabs.push(subTabs);
+                }
+            });
+            tabs.push(...allTabs.filter(t=>['comments','review'].includes(t.value)));
+            console.debug(tabs);
+            setTabList(tabs);
+            // get first tab/nav and set
+            setActiveTab(get(tabs,'1.value'));
+            setActiveNav(get(tabs,'1.children.0.value'));*/
+        } else {
+            console.log('find next tab/nav');
+        }
     }
+
+    const handleTabs = useCallback(tabs => {
+        if (!tabs) {
+            setTabList(allTabs.filter(t=>t.value=='basic-info'));
+        } else {
+            const tablist = [allTabs.find(t=>t.value=='basic-info')];
+            ['person','employment'].forEach(t=>{
+                if (tabs.filter(v=>v.startsWith(t)).length>0) {
+                    const subTabs = allTabs.find(v=>v.value==t);
+                    subTabs.children = subTabs.children.filter(s=>tabs.includes(s.value));
+                    tablist.push(subTabs);
+                }
+            });
+            tablist.push(...allTabs.filter(t=>['comments','review'].includes(t.value)));
+            console.debug(tablist);
+            setTabList(tablist);
+        }
+    },[setTabList,allTabs]);
+
     return(
         <>
             <header>
@@ -268,20 +316,20 @@ function FormWrapper({formId,isDraft,isNew}) {
                     </Col>
                 </Row>
             </header>
-            <FormProvider {...methods} isDraft={isDraft}>
+            <FormProvider {...methods} isDraft={isDraft} isNew={isNew} handleTabs={handleTabs}>
                 <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)} onReset={handleReset}>
                     <Tabs activeKey={activeTab} onSelect={navigate} id="hr-forms-tabs">
                         {tabList.map(t => (
-                            <Tab key={t.id} eventKey={t.id} title={t.title}>
+                            <Tab key={t.value} eventKey={t.value} title={t.label}>
                                 <Container as="section" className="px-0" fluid>
-                                    {t.subTabs && 
+                                    {t.children && 
                                         <Row as="header" className="border-bottom mb-3 ml-0">
                                             <Nav activeKey={activeNav} onSelect={navigate2}>
-                                                {t.subTabs.map(s=>(
-                                                    <Nav.Item key={s.id}>
-                                                        {s.id==activeNav?
-                                                            <p className="px-2 pt-2 pb-1 m-0 active">{s.title}</p>:
-                                                            <Nav.Link eventKey={s.id} className="px-2 pt-2 pb-1">{s.title}</Nav.Link>
+                                                {t.children.map(s=>(
+                                                    <Nav.Item key={s.value}>
+                                                        {s.value==activeNav?
+                                                            <p className="px-2 pt-2 pb-1 m-0 active">{s.label}</p>:
+                                                            <Nav.Link eventKey={s.value} className="px-2 pt-2 pb-1">{s.label}</Nav.Link>
                                                         }
                                                     </Nav.Item>
                                                 ))}
@@ -291,7 +339,7 @@ function FormWrapper({formId,isDraft,isNew}) {
                                     {activeTab != 'basic-info' && <FormInfoBox/>}
                                     {(activeTab == 'employment-tab'&&['employment-appointment','employment-salary'].includes(activeNav)) && <EmploymentPositionInfoBox/>}
                                     <div className="px-2">
-                                        <FormTabRouter tab={t.id} activeTab={activeTab} subTab={activeNav} setTabList={setTabList}/>
+                                        <FormTabRouter tab={t.value} activeTab={activeTab} subTab={activeNav} setPayTransTabs={setPayTransTabs}/>
                                     </div>
                                     <Row as="footer" className="mt-3">
                                         <Col className="button-group justify-content-end">
@@ -321,18 +369,21 @@ function FormTabRouter({tab,activeTab,subTab,...props}) {
     if (tab != activeTab) return null;
     const r = tab + ((subTab)?'.'+subTab:'');
     switch(r) {
-        case "basic-info": return <BasicInfo/>;
-        case "person-tab.person-info": return <PersonInfo/>;
-        case "person-tab.person-demographics": return <PersonDemographics/>;
-        case "person-tab.person-directory": return <PersonDirectory/>;
-        case "person-tab.person-education": return <PersonEducation/>;
-        case "person-tab.person-contacts": return <PersonContacts/>;
-        case "employment-tab.employment-position": return <EmploymentPosition/>;
-        case "employment-tab.employment-appointment": return <EmploymentAppointment/>;
-        case "employment-tab.employment-salary": return <EmploymentSalary/>;
-        case "employment-tab.employment-separation": return <EmploymentSeparation/>;
-        case "employment-tab.employment-leave": return <EmploymentLeave/>;
-        case "employment-tab.employment-pay": return <EmploymentPay/>;
+        case "basic-info": return <BasicInfo setPayTransTabs={props.setPayTransTabs}/>;
+        case "person.person-information": return <PersonInformation/>;
+        case "person.person-demographics": return <PersonDemographics/>;
+        case "person.person-directory": return <PersonDirectory/>;
+        case "person.person-education": return <PersonEducation/>;
+        case "person.person-contacts": return <PersonContacts/>;
+        case "employment.employment-position": return <EmploymentPosition/>;
+        case "employment.employment-appointment": return <EmploymentAppointment/>;
+        case "employment.employment-salary": return <EmploymentSalary/>;
+        case "employment.employment-separation": return <EmploymentSeparation/>;
+        case "employment.employment-leave": return <EmploymentLeave/>;
+        case "employment.employment-pay": return <EmploymentPay/>;
+        case "employment.employment-volunteer": return <EmploymentVolunteer/>;
+        case "comments": return <Comments/>;
+        case "review": return <Review/>;
         default: return <p>Not Found</p>;
     }
 }

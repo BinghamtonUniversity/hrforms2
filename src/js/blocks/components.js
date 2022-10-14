@@ -19,7 +19,9 @@ import CheckboxTree from 'react-checkbox-tree';
  * errorToast
  * ErrorToastComponent
  * CheckboxTreeComponent
- * 
+ * StateSelector
+ * CountrySelector
+ * DepartmentSelector
  */
 
 /* formats for AppButton */
@@ -211,10 +213,16 @@ const StateSelector = ({field,...props}) => {
     const { getListData } = useAppQueries();
     const states = getListData('states');
     return (
-        <Form.Control {...field} as="select" {...props}>
-            <option></option>
-            {states.data&&states.data.map(s=><option key={s.abbr} value={s.abbr}>{s.abbr} - {s.name}</option>)}
-        </Form.Control>
+        <>
+            {states.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
+            {states.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
+            {states.data && 
+                <Form.Control {...field} as="select" {...props}>
+                    <option></option>
+                    {states.data.map(s=><option key={s.abbr} value={s.abbr}>{s.abbr} - {s.name}</option>)}
+                </Form.Control>
+            }
+        </>
     );
 }
 
@@ -222,10 +230,16 @@ const CountrySelector = ({field,...props}) => {
     const { getListData } = useAppQueries();
     const countryCodes = getListData('countryCodes');
     return (
-        <Form.Control {...field} as="select" {...props}>
-            <option></option>
-            {countryCodes.data&&countryCodes.data.map(c=><option key={c.COUNTRY_CODE} value={c.COUNTRY_CODE}>{c.COUNTRY_SHORT_DESC}</option>)}
-        </Form.Control>
+        <>
+            {countryCodes.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
+            {countryCodes.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
+            {countryCodes.data && 
+                <Form.Control {...field} as="select" {...props}>
+                    <option></option>
+                    {countryCodes.data.map(c=><option key={c.COUNTRY_CODE} value={c.COUNTRY_CODE}>{c.COUNTRY_SHORT_DESC}</option>)}
+                </Form.Control>
+            }
+        </>
     );
 }
 
@@ -233,10 +247,16 @@ const DepartmentSelector = ({field,...props}) => {
     const { getListData } = useAppQueries();
     const departments = getListData('deptOrgs');
     return (
-        <Form.Control {...field} as="select" {...props}>
-            <option></option>
-            {departments.data&&departments.data.map(d=><option key={d.DEPARTMENT_CODE} value={d.DEPARTMENT_CODE}>{d.DEPARTMENT_DESC}</option>)}
-        </Form.Control>
+        <>
+            {departments.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
+            {departments.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
+            {departments.data && 
+                <Form.Control {...field} as="select" {...props}>
+                    <option></option>
+                    {departments.data.map(d=><option key={d.DEPARTMENT_CODE} value={d.DEPARTMENT_CODE}>{d.DEPARTMENT_DESC}</option>)}
+                </Form.Control>
+            }
+        </>
     );
 }
 

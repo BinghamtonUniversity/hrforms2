@@ -30,7 +30,6 @@ export default function PersonContacts() {
     const [editValues,setEditValues] = useState();
 
     const {getListData} = useAppQueries();
-    //const countryCodes = getListData('countryCodes');
     const relationships = getListData('contactRelationships');
 
     const handleNew = () => {

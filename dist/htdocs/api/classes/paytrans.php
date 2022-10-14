@@ -37,7 +37,7 @@ class PayTrans extends HRForms2 {
 			pt.form_code, f.form_title, f.form_description,
 			pt.action_code, a.action_title, a.action_description,
 			pt.transaction_code, t.transaction_title, t.transaction_description,
-			pt.active,pt.available_for
+			pt.active,pt.available_for,pt.tabs
 			FROM HRFORMS2_PAYROLL_TRANSACTIONS pt
 			join (select PAYROLL_CODE, PAYROLL_TITLE, PAYROLL_DESCRIPTION from HRFORMS2_PAYROLL_CODES) p on (pt.PAYROLL_CODE = p.PAYROLL_CODE)
 			join (select FORM_CODE, FORM_TITLE, FORM_DESCRIPTION from HRFORMS2_FORM_CODES) f on (pt.FORM_CODE = f.FORM_CODE)
@@ -52,16 +52,22 @@ class PayTrans extends HRForms2 {
 		if (isset($this->req[2])) oci_bind_by_name($stmt,":action_code", $this->req[2]);
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
-        oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
+		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+            $tabs = (is_object($row['TABS']))?$row['TABS']->load():"";
+            unset($row['TABS']);
+            $row['TABS'] = json_decode($tabs);
+			$this->_arr[] = $row;
+		}
         $this->returnData = $this->_arr;
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
 
     function POST() {
         $qry = "INSERT INTO HRFORMS2_PAYROLL_TRANSACTIONS 
-            values(HRFORMS2_PAYTRANS_ID_SEQ.nextval,:payroll_code,:form_code,:action_code,:transaction_code,:active,:available_for)
-            RETURNING PAYTRANS_ID into :paytrans_id";
+            values(HRFORMS2_PAYTRANS_ID_SEQ.nextval,:payroll_code,:form_code,:action_code,:transaction_code,:active,:available_for,EMPTY_CLOB())
+            RETURNING PAYTRANS_ID,TABS into :paytrans_id,:tabs";
 		$stmt = oci_parse($this->db,$qry);
+		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
 		oci_bind_by_name($stmt,":payroll_code", $this->POSTvars['PAYROLL_CODE']);
 		oci_bind_by_name($stmt,":form_code", $this->POSTvars['FORM_CODE']);
 		oci_bind_by_name($stmt,":action_code", $this->POSTvars['ACTION_CODE']);
@@ -69,8 +75,11 @@ class PayTrans extends HRForms2 {
 		oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
 		oci_bind_by_name($stmt,":available_for", $this->POSTvars['AVAILABLE_FOR']);
         oci_bind_by_name($stmt,":paytrans_id", $PAYTRANS_ID,-1,SQLT_INT);
-		$r = oci_execute($stmt);
+		oci_bind_by_name($stmt,":tabs", $clob, -1, OCI_B_CLOB);
+		$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
 		if (!$r) $this->raiseError();
+		$clob->save(json_encode($this->POSTvars['TABS']));
+		oci_commit($this->db);
 		oci_free_statement($stmt);
 		$this->toJSON(array("PAYTRANS_ID"=>$PAYTRANS_ID));
     }
@@ -78,14 +87,19 @@ class PayTrans extends HRForms2 {
 		/* cannot update codes, only active and tabs [TBD] */
 		$qry = "UPDATE HRFORMS2_PAYROLL_TRANSACTIONS
 			SET active = :active,
-			available_for = :available_for
-			WHERE paytrans_id = :paytrans_id";
+			available_for = :available_for,
+			tabs = EMPTY_CLOB()
+			WHERE paytrans_id = :paytrans_id
+			RETURNING TABS into :tabs";
 		$stmt = oci_parse($this->db,$qry);
+		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
 		oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
 		oci_bind_by_name($stmt,":available_for", $this->POSTvars['AVAILABLE_FOR']);
 		oci_bind_by_name($stmt,":paytrans_id", $this->req[0]);
-		$r = oci_execute($stmt);
+		oci_bind_by_name($stmt,":tabs", $clob, -1, OCI_B_CLOB);
+		$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
 		if (!$r) $this->raiseError();
+		$clob->save(json_encode($this->POSTvars['TABS']));
 		oci_commit($this->db);
 		oci_free_statement($stmt);
 		$this->done();

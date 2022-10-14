@@ -29,6 +29,9 @@ class ListData extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
+		//if ($this->req[0] == 'nonUsCitizenType') sleep(3); //FOR TESTING
+		//if ($this->req[0] == 'nonUsCitizenType') $this->raiseError(400); //FOR TESTING
+
         $qry = "select LIST_TYPE,LIST_DATA from HRFORMS2_LISTS where ";
 		$qry .= (is_numeric($this->req[0])) ? "LIST_ID = :req" : "LIST_SLUG = :req";
         $stmt = oci_parse($this->db,$qry);

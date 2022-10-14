@@ -30,11 +30,9 @@ export default function Comments() {
 function CommentsHistory({reqId}) {
     return (
         <section className="my-3">
-            <header>
-                <Row>
-                    <Col><h3>Comment History</h3></Col>
-                </Row>
-            </header>
+            <Row as="header">
+                <Col as="h3">Comment History</Col>
+            </Row>
             <CommentsTable reqId={reqId}/>
         </section>
     );

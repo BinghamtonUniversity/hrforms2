@@ -1,30 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState, useReducer } from "react";
 import { Row, Col, Modal, Form, Tabs, Tab, Container, Alert, OverlayTrigger, Popover } from "react-bootstrap";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, FormProvider, Controller, useFormContext } from "react-hook-form";
 import { AppButton, CheckboxTreeComponent, errorToast, ModalConfirm } from "../../components";
 import { useTransactionQueries, useCodesQueries } from "../../../queries/codes";
 import DataTable from "react-data-table-component";
 import { toast } from "react-toastify";
 import { useQueryClient } from "react-query";
-
-const tabs = [
-    {value:'person',label:'Person',children:[
-        {value:'person-contacts',label:'Contacts'},
-        {value:'person-demographic',label:'Demographics'},
-        {value:'person-directory',label:'Directory'},
-        {value:'person-education',label:'Education'}
-    ]},
-    {value:'employment',label:'Employment',children:[
-        {value:'employment-appointment',label:'Appointment'},
-        {value:'employment-leave',label:'Leave'},
-        {value:'employment-pay',label:'Pay'},
-        {value:'employment-position',label:'Position'},
-        {value:'employment-salary',label:'Salary'},
-        {value:'employment-separation',label:'Separation'},
-        {value:'employment-volunteer',label:'Volunteer'}
-    ]},
-    {value:'comments',label:'Comments'}
-];
+import { allTabs } from "../../../pages/form";
 
 export default function PayrollTransactionsTab() {
     const [isNew,setIsNew] = useState(false);
@@ -66,10 +48,11 @@ export default function PayrollTransactionsTab() {
             return (
                 <div className="button-group">
                     <AppButton format="copy" size="sm" name="copy" title="Copy" onClick={()=>handleCopyRow(row)}/>
+                    <AppButton format="edit" size="sm" name="edit" title="Edit" onClick={()=>setSelectedRow(row)}/>
                     <AppButton format="delete" size="sm" name="delete" title="Delete" onClick={()=>handleRowAction('delete',row)}/>
                 </div>
             );
-        },ignoreRowClick:true,width:'100px'},
+        },ignoreRowClick:true,width:'150px'},
         {name:"Payroll Code",selector:row=>(
             <OverlayTrigger trigger={['focus','hover']} placement="auto" overlay={
                 <Popover id={`${row.PAYTRANS_ID}_payroll_description`}>
@@ -215,7 +198,7 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
         return Object.assign({},state,presets,args);
     },defaultStatus);
 
-    const { handleSubmit, control, setFocus, setError, formState: { errors }} = useForm({
+    const methods = useForm({
         defaultValues:{
             PAYROLL_CODE:selectedRow.PAYROLL_CODE||'',
             FORM_CODE:selectedRow.FORM_CODE||'',
@@ -226,7 +209,8 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
                 newEmpl:(selectedRow?.AVAILABLE_FOR)?selectedRow.AVAILABLE_FOR[0]:0,
                 newRole:(selectedRow?.AVAILABLE_FOR)?selectedRow.AVAILABLE_FOR[1]:0,
                 curEmpl:(selectedRow?.AVAILABLE_FOR)?selectedRow.AVAILABLE_FOR[2]:0,
-            }
+            },
+            TABS:selectedRow.TABS||[]
         }
     });
 
@@ -245,12 +229,12 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
                 p.ACTION_CODE==data.ACTION_CODE&&
                 p.TRANSACTION_CODE==data.TRANSACTION_CODE);
             if (test) {
-                setError('PAYROLL_CODE',{type:'custom',message:'Duplicate Payroll Transaction'});
-                setError('FORM_CODE',{type:'custom',message:'Duplicate Payroll Transaction'});
-                setError('ACTION_CODE',{type:'custom',message:'Duplicate Payroll Transaction'});
-                setError('TRANSACTION_CODE',{type:'custom',message:'Duplicate Payroll Transaction'});
-                setFocus('PAYROLL_CODE');
-                setStatus({state:'error',message:'A Payroll Transaction with these values already exists.'});
+                methods.setError('PAYROLL_CODE',{type:'custom',message:'Duplicate Payroll Transaction'});
+                methods.setError('FORM_CODE',{type:'custom',message:'Duplicate Payroll Transaction'});
+                methods.setError('ACTION_CODE',{type:'custom',message:'Duplicate Payroll Transaction'});
+                methods.setError('TRANSACTION_CODE',{type:'custom',message:'Duplicate Payroll Transaction'});
+                methods.setFocus('PAYROLL_CODE');
+                methods.setStatus({state:'error',message:'A Payroll Transaction with these values already exists.'});
                 return;
             }
         }
@@ -258,6 +242,7 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
         d.ACTIVE = (data.ACTIVE)?1:0;
         d.AVAILABLE_FOR = Object.values(data.for).map(a=>(a==1)?'1':(a==0)?'0':(!!a)?'1':'0').join('');
         delete d['for'];
+        delete d['tabs'];
         setStatus({state:'saving',message:''});
         if (isNew||selectedRow.isCopy) {
             createPayTrans.mutateAsync(d).then(()=>{
@@ -298,49 +283,50 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
 
     return (
         <Modal show={true} onHide={closeModal} backdrop="static" size="lg">
-            <Form onSubmit={handleSubmit(handleFormSubmit,handleError)}>
-                <Modal.Header closeButton>
-                    <Modal.Title>{selectedRow.isCopy&&<span>Copy </span>}Payroll Transaction</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Tabs activeKey={activeTab} onSelect={navigate} id="payroll-transaction-tabs">
-                        <Tab eventKey="paytrans-info" title="Information">
-                            <Container className="mt-3" fluid>
-                                <Row>
-                                    <Col>
-                                        {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
-                                    </Col>
-                                </Row>
-                                <PayTransInfoTab 
-                                    selectedRow={selectedRow} 
-                                    control={control}
-                                    errors={errors} 
-                                    payrollcodes={payrollcodes} 
-                                    formcodes={formcodes}
-                                    actioncodes={actioncodes}
-                                    transactioncodes={transactioncodes}
-                                    isEditable={isNew||selectedRow.isCopy}
-                                />
-                            </Container>
-                        </Tab>
-                        <Tab eventKey="paytrans-tabs" title="Tabs">
-                            <PayTransTabs/>
-                        </Tab>
-                    </Tabs>
-                </Modal.Body>
-                <Modal.Footer>
-                    <AppButton format="cancel" variant="secondary" onClick={closeModal}>Cancel</AppButton>
-                    {(status.state=='saving')?
-                        <AppButton format="saving" variant="danger" disabled>Saving...</AppButton>:
-                        <AppButton type="submit" variant="danger" format="save">Save</AppButton>
-                    }
-                </Modal.Footer>
-            </Form>
+            <FormProvider {...methods}>
+                <Form onSubmit={methods.handleSubmit(handleFormSubmit,handleError)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>{selectedRow.isCopy&&<span>Copy </span>}Payroll Transaction</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <Tabs activeKey={activeTab} onSelect={navigate} id="payroll-transaction-tabs">
+                            <Tab eventKey="paytrans-info" title="Information">
+                                <Container className="mt-3" fluid>
+                                    <Row>
+                                        <Col>
+                                            {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
+                                        </Col>
+                                    </Row>
+                                    <PayTransInfoTab 
+                                        selectedRow={selectedRow} 
+                                        payrollcodes={payrollcodes} 
+                                        formcodes={formcodes}
+                                        actioncodes={actioncodes}
+                                        transactioncodes={transactioncodes}
+                                        isEditable={isNew||selectedRow.isCopy}
+                                    />
+                                </Container>
+                            </Tab>
+                            <Tab eventKey="paytrans-tabs" title="Tabs">
+                                <PayTransTabs selectedTabs={selectedRow?.TABS}/>
+                            </Tab>
+                        </Tabs>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <AppButton format="cancel" variant="secondary" onClick={closeModal}>Cancel</AppButton>
+                        {(status.state=='saving')?
+                            <AppButton format="saving" variant="danger" disabled>Saving...</AppButton>:
+                            <AppButton type="submit" variant="danger" format="save">Save</AppButton>
+                        }
+                    </Modal.Footer>
+                </Form>
+            </FormProvider>
         </Modal>
     );
 }
 
-function PayTransInfoTab({selectedRow,control,errors,payrollcodes,formcodes,actioncodes,transactioncodes,isEditable}) {
+function PayTransInfoTab({selectedRow,payrollcodes,formcodes,actioncodes,transactioncodes,isEditable}) {
+    const { control, formState: { errors }} = useFormContext();
     return (
         <>
             <Form.Group as={Row} controlId="PAYROLL_CODE">
@@ -445,22 +431,21 @@ function PayTransInfoTab({selectedRow,control,errors,payrollcodes,formcodes,acti
     );
 }
 
-function PayTransTabs() {
-    const [tabsSelected,setTabsSelected] = useState([]);
-    const [tabsExpanded,setTabsExpanded] = useState([]);
+function PayTransTabs({selectedTabs}) {
+    const { setValue } = useFormContext();
 
-    const handleCheck = useCallback(checked => {
-        console.log('checked:',checked);
+    const [tabsSelected,setTabsSelected] = useState(selectedTabs);
+    const [tabsExpanded,setTabsExpanded] = useState(['person','employment']);
+
+    const handleCheck = useCallback(checked=>{
         setTabsSelected(checked);
+        setValue('TABS',checked);
     },[]);
-    const handleExpand = useCallback(expanded=>{
-        console.log('expanded:',expanded);
-        setTabsExpanded(expanded);
-    },[]);
+    const handleExpand = useCallback(expanded=>setTabsExpanded(expanded),[]);
     return (
         <CheckboxTreeComponent
             id="paytrans-tab-tree"
-            nodes={tabs}
+            nodes={allTabs.filter(t=>!['basic-info','comments','review'].includes(t.value))}
             checked={tabsSelected}
             expanded={tabsExpanded}
             onCheck={handleCheck}
