@@ -13,7 +13,7 @@ import { useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
 
 export default function FormBasicInfo() {
-    const { control, isNew } = useFormContext();
+    const { control, getValues, isNew } = useFormContext();
 
     const watchLookup = useWatch({name:'lookup'});
 
@@ -75,14 +75,11 @@ export default function FormBasicInfo() {
             <PersonLookup results={results}/>
             {results.isLoading && <Loading type="alert" className="mt-2">Searching....</Loading>}
             {results.isError && <Loading type="alert" className="mt-2" isError>Error Searching</Loading>}
-            {results.data && <LookupResults data={results.data}/>}
+            {results.data && <LookupResults data={results.data} isNew={isNew}/>}
 
         </>
     ):(
-        <>
-            <p>Not New</p>
-            <p>pass selectedRow data to LookupResults</p>
-        </>
+        <LookupResults data={[getValues('selectedRow')]} isNew={isNew}/>
     );
 }
 
@@ -97,7 +94,8 @@ function PersonLookup({results}) {
         console.debug('resetLookup');
         clearErrors();
         queryclient.resetQueries(['personLookup']);
-        ['lookup.values.bNumber','lookup.values.lastName','lookup.values.dob','payroll','effDate','formCode','actionCode','transactionCode','person.info.sunyId','person.info.bNumber','person.info.firstName','person.info.middleName','person.info.lastName','person.demographics.DOB'].forEach(f=>setValue(f,''));
+        //TODO: need to reset all of the formAction properties
+        ['lookup.values.bNumber','lookup.values.lastName','lookup.values.dob','payroll','effDate','formActions.formCode','formActions.actionCode','formActions.transactionCode','person.info.sunyId','person.info.bNumber','person.info.firstName','person.info.middleName','person.info.lastName','person.demographics.DOB'].forEach(f=>setValue(f,''));
         setValue('lookup.type','bNumber');
         setValue('selectedRow',{});
         setFocus('lookup.values.bNumber');
@@ -231,20 +229,24 @@ function PersonLookup({results}) {
     );
 }
 
-function LookupResults({data}) {
-    const { setValue, isNew } = useFormContext();
+function LookupResults({data,isNew}) {
+    const { getValues, setValue } = useFormContext();
 
-    const [selectedId,setSelectedId] = useState();
-    const [selectedPayroll,setSelectedPayroll] = useState();
+    const [selectedId,setSelectedId] = useState((!isNew)?data[0].HR_PERSON_ID:'');
+    const [selectedRow,setSelectedRow] = useState({});
 
     const handleRowClick = useCallback(row => {
+        if (!isNew) return false;
         setSelectedId((selectedId==row.HR_PERSON_ID)?undefined:row.HR_PERSON_ID);
     },[selectedId]);
     const handleSelectedRowChange = args => {
-        setSelectedId((args.selectedCount)?args.selectedRows[0]?.HR_PERSON_ID:undefined);
-        setSelectedPayroll((args.selectedCount)?args.selectedRows[0]?.PAYROLL_AGENCY_CODE:undefined);
+        const id = (args.selectedCount)?args.selectedRows[0]?.HR_PERSON_ID:undefined;
+        if (selectedRow?.HR_PERSON_ID === id) return false;
+        setSelectedId(id);
+        setSelectedRow((args.selectedCount)?args.selectedRows[0]:{});
         setValue('selectedRow',(args.selectedCount)?args.selectedRows[0]:{});
         setValue('payroll',(args.selectedCount)?args.selectedRows[0]?.PAYROLL_AGENCY_CODE:"");
+        ['formActions.formCode','formActions.actionCode','formActions.transactionCode'].forEach(f=>setValue(f,''));
     }
 
     const rowSelectCritera = row => {
@@ -270,6 +272,7 @@ function LookupResults({data}) {
             onClick={onClick}
             onKeyDown={handleKeyDown}
             {...rest}
+            disabled={!isNew}
         />
     ));
 
@@ -294,7 +297,7 @@ function LookupResults({data}) {
         <>
             <article className="mt-3">
                 <Row as="header">
-                    <Col as="h3">Results</Col>
+                    <Col as="h3">{(isNew)?'Results':'Selected Record'}</Col>
                 </Row>
                 <Row>
                     <Col>
@@ -304,8 +307,8 @@ function LookupResults({data}) {
                             data={data}
                             striped 
                             responsive
-                            pointerOnHover
-                            highlightOnHover
+                            pointerOnHover={isNew}
+                            highlightOnHover={isNew}
                             onRowClicked={handleRowClick}
                             selectableRows
                             selectableRowsHighlight
@@ -317,19 +320,17 @@ function LookupResults({data}) {
                     </Col>
                 </Row>
             </article>
-            {selectedId&&<PayrollDate selectedPayroll={selectedPayroll}/>}
+            {selectedId&&<PayrollDate selectedPayroll={selectedRow?.PAYROLL_AGENCY_CODE} selectedRoleType={selectedRow?.EMPLOYMENT_ROLE_TYPE}/>}
         </>
     );
 }
 
-function PayrollDate({selectedPayroll}) {
-    const { control, formState: { errors }} = useFormContext();
+function PayrollDate({selectedPayroll,selectedRoleType}) {
+    const { control, setValue, formState: { errors }} = useFormContext();
 
     const watchPayrollDate = useWatch({name:['payroll','effDate']});
 
-    const payrollRef = useRef();
     const effDateRef = useRef();
-    const [payroll,setPayroll] = useState(selectedPayroll);
 
     const {getCodes} = useCodesQueries('payroll');
     const payrollcodes = getCodes({refetchOnMount:false,select:d=>d.filter(p=>p.ACTIVE==1)});
@@ -339,9 +340,8 @@ function PayrollDate({selectedPayroll}) {
     }
     const handlePayrollChange = (e,field) => {
         field.onChange(e);
-        setPayroll(e.target.value);
+        ['formActions.formCode','formActions.actionCode','formActions.transactionCode'].forEach(f=>setValue(f,''));
     }
-    useEffect(()=>setPayroll(selectedPayroll),[selectedPayroll]);
     return (
         <>
             <article className="mt-3" onKeyDown={handleKeyDown}>
@@ -357,9 +357,10 @@ function PayrollDate({selectedPayroll}) {
                             <Controller
                                 name="payroll"
                                 control={control}
+                                defaultValue={selectedPayroll}
                                 rules={{required:{value:true,message:'Payroll is required'}}}
                                 render={({field}) => (
-                                    <Form.Control {...field} as="select" ref={payrollRef} onChange={e=>handlePayrollChange(e,field)} isInvalid={errors.payroll} disabled={selectedPayroll!=''} aria-describedby="payrollDescription">
+                                    <Form.Control {...field} as="select" onChange={e=>handlePayrollChange(e,field)} isInvalid={errors.payroll} disabled={selectedPayroll!=''} aria-describedby="payrollDescription">
                                         <option></option>
                                         {payrollcodes.data.map(p=><option key={p.PAYROLL_CODE} value={p.PAYROLL_CODE}>{p.PAYROLL_TITLE}</option>)}
                                     </Form.Control>
@@ -370,7 +371,7 @@ function PayrollDate({selectedPayroll}) {
                     </Col>
                     {payrollcodes.data && 
                         <Col xs="auto">
-                            <Form.Text id="payrollDescription" muted>{payrollcodes.data.find(p=>p.PAYROLL_CODE==payroll)?.PAYROLL_DESCRIPTION}</Form.Text>
+                            <Form.Text id="payrollDescription" muted>{payrollcodes.data.find(p=>p.PAYROLL_CODE==watchPayrollDate[0])?.PAYROLL_DESCRIPTION}</Form.Text>
                         </Col>
                     }
                 </Form.Group>
@@ -403,7 +404,7 @@ function PayrollDate({selectedPayroll}) {
                     </Col>
                 </Form.Group>
             </article>
-            {watchPayrollDate.every(v=>!!v) && <FormActions payroll={watchPayrollDate[0]} roleType="test"/>}
+            {watchPayrollDate.every(v=>!!v) && <FormActions payroll={watchPayrollDate[0]} roleType={selectedRoleType}/>}
         </>
     );
 }
@@ -411,67 +412,84 @@ function PayrollDate({selectedPayroll}) {
 function FormActions({payroll,roleType}) {
     const filter = (roleType=="New Employee")?"100":(roleType=="New Role")?"010":"001";
 
-    const { control, setValue, formState: { errors }} = useFormContext();
+    const { control, getValues, setValue, handleTabs, isNew, formState: { errors }} = useFormContext();
 
     const {getPayTrans} = useTransactionQueries(payroll);
     const paytrans = getPayTrans();
 
-    const [formCode,setFormCode] = useState('');
-    const [formCodeDescription,setFormCodeDescription] = useState('');
-    const [actionCode,setActionCode] = useState('');
-    const [actionCodeDescription,setActionCodeDescription] = useState('');
-    const [transactionCode,setTransactionCode] = useState('');
-    const [transactionCodeDescription,setTransactionCodeDescription] = useState('');
-
-    const formCodes = useMemo(()=>{
-        if (!paytrans.data) return [];
-        const formCodesMap = new Map(paytrans.data.filter(p=>filter&p.AVAILABLE_FOR).map(f=>[f.FORM_CODE,[f.FORM_TITLE,f.FORM_DESCRIPTION]]));
-        return formCodesMap;
-    },[paytrans.data]);
-    
-    const actionCodes = useMemo(()=>{
-        if (!paytrans.data) return [];
-        if (!formCode) return 'Select a Form Code';
-        const actionCodesMap = new Map(paytrans.data.filter(p=>(filter&p.AVAILABLE_FOR)&&p.FORM_CODE==formCode&&p.ACTION_CODE).map(a=>[a.ACTION_CODE,[a.ACTION_TITLE,a.ACTION_DESCRIPTION]]));
-        return actionCodesMap;
-    },[paytrans.data,formCode]);
-
-    const transactionCodes = useMemo(()=>{
-        if (!paytrans.data) return [];
-        if (!formCode) return 'Select a Form Code';
-        if (!actionCode && actionCodes.size > 0) return 'Select an Action Code';
-        const transactionCodesMap = new Map(paytrans.data.filter(p=>(filter&p.AVAILABLE_FOR)&&(p.FORM_CODE==formCode&&p.ACTION_CODE==actionCode&&p.TRANSACTION_CODE)).map(t=>[t.TRANSACTION_CODE,[t.TRANSACTION_TITLE,t.TRANSACTION_DESCRIPTION]]));
-        return transactionCodesMap;
-    },[paytrans.data,formCode,actionCodes,actionCode]);
-
-    const handleChange = (e,field) => {
-        field.onChange(e);
+    const initCodes = () => {
+        if (!isNew) {
+            const formActions = getValues('formActions');
+            formActions.formCodes = new Map(formActions.formCodes);
+            formActions.actionCodes = new Map(formActions.actionCodes);
+            formActions.transactionCodes = new Map(formActions.transactionCodes);
+            return formActions;
+        }
+        return {
+            formCodes:new Map(),formCode:'',formCodeDescription:'',
+            actionCodes:new Map(),actionCode:'',actionCodeDescription:'',
+            transactionCodes:new Map(),transactionCode:'',transactionCodeDescription:'',
+            paytransId:''
+        };
+    }
+    const [codes,setCodes] = useReducer((state,action) => {
+        if (!paytrans.data) return state;
+        if (action[0] == 'init') {
+            const newState = initCodes();
+            newState.formCodes = new Map(paytrans.data.filter(p=>filter&p.AVAILABLE_FOR).map(f=>[f.FORM_CODE,[f.FORM_TITLE,f.FORM_DESCRIPTION]]));
+            return newState;
+        }
+        const [e,field] = action;
+        const value = e.target.value;
+        const newState = {...state};
         switch(field.name) {
-            case "formCode":
-                setFormCode(e.target.value);
-                setFormCodeDescription(formCodes.get(e.target.value)?.at(1));
-                setActionCode('');
-                setActionCodeDescription('');
-                setValue('actionCode','');
-                setTransactionCode('');
-                setTransactionCodeDescription('');
-                setValue('transactionCode','');
+            case "formActions.formCode":
+                newState.formCode = value;
+                newState.formCodeDescription = (value)?newState.formCodes.get(value)?.at(1):'';
+                newState.actionCodes = (value)?new Map(paytrans.data.filter(p=>(filter&p.AVAILABLE_FOR)&&p.FORM_CODE==newState.formCode&&p.ACTION_CODE).map(a=>[a.ACTION_CODE,[a.ACTION_TITLE,a.ACTION_DESCRIPTION]])):new Map();
+                newState.actionCode = (value&&!newState.actionCodes.size)?'N/A':'';
+                newState.transactionCode = (value&&!newState.actionCodes.size)?'N/A':'';
+                newState.paytransId = (value&&!newState.actionCodes.size)?paytrans.data.filter(p=>(filter&p.AVAILABLE_FOR)&&p.FORM_CODE==newState.formCode)?.at(0)?.PAYTRANS_ID:'';
+                if (!value) {
+                    newState.actionCodeDescription = '';
+                    newState.transactionCodes = new Map();
+                    newState.transactionCodeDescription = '';
+                }
                 break;
-            case "actionCode":
-                setActionCodeDescription(actionCodes.get(e.target.value)?.at(1));
-                setActionCode(e.target.value);
-                setTransactionCode('');
-                setTransactionCodeDescription('');
-                setValue('transactionCode','');
+            case "formActions.actionCode":
+                newState.actionCode = value;
+                newState.actionCodeDescription = (value)?newState.actionCodes.get(value)?.at(1):'';
+                newState.transactionCodes = (value)?new Map(paytrans.data.filter(p=>p.FORM_CODE==newState.formCode&&p.ACTION_CODE==newState.actionCode&&p.TRANSACTION_CODE).map(t=>[t.TRANSACTION_CODE,[t.TRANSACTION_TITLE,t.TRANSACTION_DESCRIPTION]])):new Map();
+                newState.transactionCode = (value&&!newState.transactionCodes.size)?'N/A':'';
+                newState.paytransId = (value&&!newState.transactionCodes.size)?paytrans.data.filter(p=>p.FORM_CODE==newState.formCode&&p.ACTION_CODE==newState.actionCode)?.at(0)?.PAYTRANS_ID:'';
+                if (!value) newState.transactionCodeDescription = '';
                 break;
-            case "transactionCode":
-                setTransactionCodeDescription(transactionCodes.get(e.target.value)?.at(1));
-                setTransactionCode(e.target.value);
+            case "formActions.transactionCode":
+                newState.transactionCode = value;
+                newState.transactionCodeDescription = (value)?newState.transactionCodes.get(value)?.at(1):'';
+                newState.paytransId = (value)?paytrans.data.filter(p=>p.FORM_CODE==newState.formCode&&p.ACTION_CODE==newState.actionCode&&p.TRANSACTION_CODE==newState.transactionCode)?.at(0)?.PAYTRANS_ID:''
                 break;
         }
-        //if (actionCodes.size == 0) setValue('basicInfoComplete',true);
-        //setValue('basicInfoComplete',!!e.target.value);
-    }
+        return newState;
+    },null,initCodes);
+
+    useEffect(()=>paytrans.data&&setCodes(['init']),[paytrans.data,payroll,roleType]);
+
+    useEffect(()=>{
+        const c = {...codes};
+        c.formCodes = Array.from(codes.formCodes.entries());
+        c.actionCodes = Array.from(codes.actionCodes.entries());
+        c.transactionCodes = Array.from(codes.transactionCodes.entries());
+        setValue('formActions',c);
+        if ([codes.formCode,codes.actionCode,codes.transactionCode].every(v=>!!v)) {
+            //TODO: check if change?
+            const tabs = paytrans.data.filter(p=>p.PAYTRANS_ID==codes.paytransId)?.at(0)?.TABS;
+            //console.debug('Setting Tabs: ',tabs);
+            handleTabs(tabs);
+        } else {
+            handleTabs(undefined);
+        }
+    },[codes]);
 
     return (
         <article className="mt-3">
@@ -482,67 +500,62 @@ function FormActions({payroll,roleType}) {
                 <Form.Label column md={2}>Form Code:</Form.Label>
                 <Col xs="auto">
                     <Controller
-                        name="formCode"
+                        name="formActions.formCode"
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleChange(e,field)} isInvalid={errors.formCode} aria-describedby="formCodeDescription">
+                            <Form.Control {...field} as="select" onChange={e=>{field.onChange(e);setCodes([e,field]);}} aria-describedby="formCodeDescription">
                                 <option></option>
-                                {Array.from(formCodes.entries()).map(c=><option key={c[0]} value={c[0]}>{c[1][0]}</option>)}
+                                {Array.from(codes.formCodes.entries()).map(c=><option key={c[0]} value={c[0]}>{c[1][0]}</option>)}
                             </Form.Control>
                         )}
                     />
-                    <Form.Control.Feedback type="invalid">{errors.formCode?.message}</Form.Control.Feedback>
                 </Col>
-                {formCodeDescription && <Col xs="auto">
-                    <Form.Text id="formCodeDescription" className="mt-2" muted>{formCodeDescription}</Form.Text>
+                {codes.formCodeDescription && <Col xs="auto">
+                    <Form.Text id="formCodeDescription" className="mt-2" muted>{codes.formCodeDescription}</Form.Text>
                 </Col>}
             </Form.Group>
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Action Code:</Form.Label>
                 <Col xs="auto">
-                    {(typeof actionCodes == 'string')?<p className="mb-0 pt-2">{actionCodes}</p>:
-                        (actionCodes.size == 0)?<p className="mb-0 pt-2">N/A</p>:
-                        <>
-                            <Controller
-                                name="actionCode"
-                                control={control}
-                                render={({field}) => (
-                                    <Form.Control {...field} as="select" onChange={e=>handleChange(e,field)} isInvalid={errors.formCode} aria-describedby="formCodeDescription">
-                                        <option></option>
-                                        {Array.from(actionCodes.entries()).map(c=><option key={c[0]} value={c[0]}>{c[1][0]}</option>)}
-                                    </Form.Control>
-                                )}
-                            />
-                            <Form.Control.Feedback type="invalid">{errors.actionCode?.message}</Form.Control.Feedback>
-                        </>
-                    }
+                    <Controller
+                        name="formActions.actionCode"
+                        control={control}
+                        render={({field}) => (codes.actionCode=='N/A')?
+                        (
+                            <Form.Control {...field} plaintext readOnly value="N/A"/>
+                        ):
+                        (
+                            <Form.Control {...field} as="select" onChange={e=>{field.onChange(e);setCodes([e,field]);}} aria-describedby="actionCodeDescription">
+                                <option></option>
+                                {Array.from(codes.actionCodes.entries()).map(c=><option key={c[0]} value={c[0]}>{c[1][0]}</option>)}
+                            </Form.Control>
+                        )}
+                    />
                 </Col>
-                {actionCodeDescription && <Col xs="auto">
-                    <Form.Text id="actionCodeDescription" className="mt-2" muted>{actionCodeDescription}</Form.Text>
+                {codes.actionCodeDescription && <Col xs="auto">
+                    <Form.Text id="actionCodeDescription" className="mt-2" muted>{codes.actionCodeDescription}</Form.Text>
                 </Col>}
             </Form.Group>
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Transaction Code:</Form.Label>
                 <Col xs="auto">
-                    {(typeof transactionCodes == 'string')?<p className="mb-0 pt-2">{transactionCodes}</p>:
-                        (transactionCodes.size == 0)?<p className="mb-0 pt-2">N/A</p>:
-                        <>
-                            <Controller
-                                name="transactionCode"
-                                control={control}
-                                render={({field}) => (
-                                    <Form.Control {...field} as="select" onChange={e=>handleChange(e,field)} isInvalid={errors.formCode} aria-describedby="formCodeDescription">
-                                        <option></option>
-                                        {Array.from(transactionCodes.entries()).map(c=><option key={c[0]} value={c[0]}>{c[1][0]}</option>)}
-                                    </Form.Control>
-                                )}
-                            />
-                            <Form.Control.Feedback type="invalid">{errors.transactionCode?.message}</Form.Control.Feedback>
-                        </>
-                    }
+                    <Controller
+                        name="formActions.transactionCode"
+                        control={control}
+                        render={({field}) => (codes.transactionCode=='N/A')?
+                        (
+                            <Form.Control plaintext readOnly value="N/A"/>
+                        ):
+                        (
+                            <Form.Control {...field} as="select" onChange={e=>{field.onChange(e);setCodes([e,field]);}} aria-describedby="transactionCodeDescription">
+                                <option></option>
+                                {Array.from(codes.transactionCodes.entries()).map(c=><option key={c[0]} value={c[0]}>{c[1][0]}</option>)}
+                            </Form.Control>
+                        )}
+                    />
                 </Col>
-                {transactionCodeDescription && <Col xs="auto">
-                    <Form.Text id="transactionCodeDescription" className="mt-2" muted>{transactionCodeDescription}</Form.Text>
+                {codes.transactionCodeDescription && <Col xs="auto">
+                    <Form.Text id="actionCodeDescription" className="mt-2" muted>{codes.transactionCodeDescription}</Form.Text>
                 </Col>}
             </Form.Group>
         </article>

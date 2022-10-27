@@ -67,16 +67,15 @@ export default function HRForm() {
     },[id,sunyid,ts]);
     if (!formId) return null;
     return(
-        <FormWrapper formId={formId} isDraft={isDraft} isNew={isNew}/>
+        <FormWrapper formId={formId} isDraft={isDraft} isNew={isNew} setIsNew={setIsNew}/>
     );
 }
 
-function FormWrapper({formId,isDraft,isNew}) {
+function FormWrapper({formId,isDraft,isNew,setIsNew}) {
     const { search } = useLocation();
     const qstr = new URLSearchParams(search);
 
     const [isBlocking,setIsBlocking] = useState(false);
-    const [basicInfoComplete,setBasicInfoComplete] = useState(false);
 
     //TODO: probably need to change to useReducer
     const [tabList,setTabList] = useState(allTabs.filter(t=>t.value=='basic-info'));
@@ -99,10 +98,18 @@ function FormWrapper({formId,isDraft,isNew}) {
         selectedRow:{},
         payroll:"",
         effDate:"",
+        formActions:{
+            paytransId:"",
+            formCode:"",
+            formCodeDescription:"",
+            actionCode:"",
+            actionCodeDescription:"",
+            transactionCode:"",
+            transactionCodeDescription:""
+        },
         formCode:"",
         actionCode:"",
         transactionCode:"",
-        basicInfoComplete: false,
         person: {
             info: {
                 sunyId:"",
@@ -214,21 +221,19 @@ function FormWrapper({formId,isDraft,isNew}) {
         effDate:new Date(),
         formCode:"EF",
         actionCode:"CCH",
-        transactionCode:"AJT",
-        basicInfoComplete: true
+        transactionCode:"AJT"
     }
     const methods = useForm({
         defaultValues: (qstr.has('test'))?testRecord:defaults
     });
 
-    const watchBasicInfoComplete = useWatch({name:'basicInfoComplete',control:methods.control});
+    const watchFormActions = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode'],control:methods.control});
 
     const navigate = tab => {
         //TODO: can we maintain last tab/sub-tab?  or should we use routing? so that it remembers when you switch
         const idx = tabList.findIndex(t=>t.value==tab);
         let aNav = '';
         if (Object.keys(tabList[idx]).includes('children')) aNav = tabList[idx].children[0].value;
-        //methods.setValue('isNew',false);
         setIsNew(false);
         setActiveNav(aNav);
         setActiveTab(tab);
@@ -260,15 +265,14 @@ function FormWrapper({formId,isDraft,isNew}) {
         queryclient.resetQueries('paytrans');
         */
         methods.reset();
-        //setBasicInfoComplete(false);
         setTabList(allTabs.filter(t=>t.value=='basic-info'));
     }
     const handleNext = () => {
         //should validate before
         if (activeTab == 'basic-info') {
             console.debug('Basic Info Complete');
-            //methods.setValue('isNew',false);
             setIsNew(false);
+            
             /*const tabs = [allTabs.find(t=>t.value=='basic-info')];
             ['person','employment'].forEach(t=>{
                 if (payTransTabs.filter(v=>v.startsWith(t)).length>0) {
@@ -344,9 +348,9 @@ function FormWrapper({formId,isDraft,isNew}) {
                                     <Row as="footer" className="mt-3">
                                         <Col className="button-group justify-content-end">
                                             <AppButton type="reset" format="delete" onClick={handleReset}>Discard</AppButton>
-                                            <AppButton id="next" format="next" onClick={handleNext} disabled={!watchBasicInfoComplete}>Next</AppButton>
-                                            <AppButton id="submit" type="submit" format="submit" disabled={!watchBasicInfoComplete}>Submit</AppButton>
-                                            <AppButton id="submit" type="submit" format="submit">Test Submit</AppButton>
+                                            <AppButton id="next" format="next" onClick={handleNext} disabled={!watchFormActions.every(v=>!!v)}>Next</AppButton>
+                                            <AppButton id="submit" type="submit" format="submit" disabled={!watchFormActions.every(v=>!!v)}>Submit</AppButton>
+                                            <AppButton id="submit" type="submit" format="submit" variant="danger">Test Submit</AppButton>
                                         </Col>
                                     </Row>
                                     <SubmitterInfoBox/>
