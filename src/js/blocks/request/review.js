@@ -1,8 +1,8 @@
 import React from "react";
-import { Row, Col, Alert } from "react-bootstrap";
+import { Row, Col } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
-import { format } from "date-fns";
 import { Icon } from '@iconify/react';
+import { DateFormat } from "../components";
 
 export default function Review({isNew}) {
     const {getValues} = useFormContext();
@@ -21,7 +21,7 @@ export default function Review({isNew}) {
                     <Col as="dt" md={2} className="mb-0">Request ID:</Col>
                     <Col as="dd" md={4} className="mb-0">{formValues.reqId} {isNew && <span className="text-warning">[<Icon className="iconify-inline" icon="mdi:alert"/>not saved]</span>}</Col>
                     <Col as="dt" md={2} className="mb-0">Effective Date:</Col>
-                    <Col as="dd" md={4} className="mb-0">{formValues.effDate && format(formValues.effDate,'M/d/yyyy')}</Col>
+                    <Col as="dd" md={4} className="mb-0"><DateFormat>{formValues.effDate}</DateFormat></Col>
                     <Col as="dt" md={2} className="mb-0">Position Type:</Col>
                     <Col as="dd" md={4} className="mb-0">{formValues.posType.id} - {formValues.posType.title}</Col>
                     <Col as="dt" md={2} className="mb-0">Request Type:</Col>
@@ -74,7 +74,7 @@ export default function Review({isNew}) {
                     <Col as="dt" md={2} className="mb-0">Appointment Duration:</Col>
                     <Col as="dd" md={4} className="mb-0">{formValues.apptDuration} {formValues.apptPeriod}</Col>
                     <Col as="dt" md={2} className="mb-0">Tentative End Date:</Col>
-                    <Col as="dd" md={4} className="mb-0">{formValues.tentativeEndDate && format(formValues.tentativeEndDate,'M/d/yyyy')}</Col>
+                    <Col as="dd" md={4} className="mb-0"><DateFormat>{formValues.tentativeEndDate}</DateFormat></Col>
                 </Row>
             </section>
             <section className="mb-4">

@@ -9,13 +9,16 @@ import { Loading, CountrySelector } from "../components";
 const name = 'person.demographics';
 
 export default function PersonDemographics() {
-    const { control, setValue } = useFormContext();
+    const { control, getValues, setValue } = useFormContext();
 
     const watchCitizen = useWatch({name:`${name}.citizen`});
     const watchVeteran = useWatch({name:`${name}.veteran`});
 
     const {getListData} = useAppQueries();
-    const gender = getListData('gender');
+    const gender = getListData('gender',{onSuccess:d=>{
+        const gender = getValues('person.demographics.gender.id');
+        if (gender) setValue('person.demographics.gender.value',d.find(g=>g[0]==gender)?.at(1)||'');
+    }});
 
     const handleChangeGender = (e,field) => {
         field.onChange(e);

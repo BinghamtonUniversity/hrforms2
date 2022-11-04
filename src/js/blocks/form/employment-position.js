@@ -13,7 +13,7 @@ const name = 'employment.position';
 
 export default function EmploymentPosition() {
     const { control, getValues } = useFormContext();
-    const watchLookupFields = useWatch({name:['payroll',`${name}.lineNumber`,'effDate'],control:control});
+    const watchLookupFields = useWatch({name:['payroll.code',`${name}.lineNumber`,'effDate'],control:control});
 
     const [showResults,setShowResults] = useState(!!getValues(`${name}.lineNumberDetails.POSITION_ID`));
 
@@ -29,7 +29,7 @@ export default function EmploymentPosition() {
 }
 
 function EmploymentPositionSearch({setShowResults}) {
-    const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext();
+    const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const handleSearch = () => {
         setShowResults(true);
     }
@@ -101,7 +101,7 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
 
 function EmploymentAppointmentInformation() {
     const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext();
-    const watchPayroll = useWatch({name:'payroll',control:control});
+    const watchPayroll = useWatch({name:'payroll.code',control:control});
     const watchEffectiveDate = useWatch({name:'effDate',control:control});
     const watchApptPercent = useWatch({name:`${name}.apptPercent`,control:control})||100;
     const handleRangeChange = e => setValue(`${name}.apptPercent`,e.target.value);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, useCallback } from "react";
+import React, { useState, useEffect, lazy, useCallback, useMemo } from "react";
 import { UserContext } from "../app";
 import { useParams, useHistory, Prompt, Redirect, useLocation } from "react-router-dom";
 import { currentUser, NotFound } from "../app";
@@ -6,6 +6,8 @@ import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal, Nav } from 
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
 import { AppButton, DateFormat } from "../blocks/components";
 import get from "lodash/get";
+import has from "lodash/has";
+import zip from "lodash/zip";
 
 /* TABS */
 const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
@@ -46,6 +48,20 @@ const allTabs = [
     {value:'review',label:'Review'}
 ];
 export {allTabs}; //used on paytrans
+
+const defaultFormActions = {
+    paytransId:"",
+    formCode:"",
+    formCodes:[],
+    formCodeDescription:"",
+    actionCode:"",
+    actionCodes:[],
+    actionCodeDescription:"",
+    transactionCode:"",
+    transactionCodes:[],
+    transactionCodeDescription:""
+};
+export {defaultFormActions}; //used on basic_info
 
 export default function HRForm() {
     const [formId,setFormId] = useState('');
@@ -96,20 +112,9 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             },
         },
         selectedRow:{},
-        payroll:"",
+        payroll:{code:"",title:"",description:""},
         effDate:"",
-        formActions:{
-            paytransId:"",
-            formCode:"",
-            formCodeDescription:"",
-            actionCode:"",
-            actionCodeDescription:"",
-            transactionCode:"",
-            transactionCodeDescription:""
-        },
-        formCode:"",
-        actionCode:"",
-        transactionCode:"",
+        formActions:defaultFormActions,
         person: {
             info: {
                 sunyId:"",
@@ -217,7 +222,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             "TITLE_DESCRIPTION": "",
             "DPT_CMP_DSC": ""
         },
-        payroll:"28020",
+        payroll:{code:"28020",title:"",description:""},
         effDate:new Date(),
         formCode:"EF",
         actionCode:"CCH",
@@ -269,27 +274,24 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
     }
     const handleNext = () => {
         //should validate before
-        if (activeTab == 'basic-info') {
-            console.debug('Basic Info Complete');
-            setIsNew(false);
-            
-            /*const tabs = [allTabs.find(t=>t.value=='basic-info')];
-            ['person','employment'].forEach(t=>{
-                if (payTransTabs.filter(v=>v.startsWith(t)).length>0) {
-                    const subTabs = allTabs.find(v=>v.value==t);
-                    subTabs.children = subTabs.children.filter(s=>payTransTabs.includes(s.value));
-                    tabs.push(subTabs);
-                }
-            });
-            tabs.push(...allTabs.filter(t=>['comments','review'].includes(t.value)));
-            console.debug(tabs);
-            setTabList(tabs);
-            // get first tab/nav and set
-            setActiveTab(get(tabs,'1.value'));
-            setActiveNav(get(tabs,'1.children.0.value'));*/
-        } else {
-            console.log('find next tab/nav');
-        }
+        console.log('find next tab/nav');
+        const aTabIdx = tabList.findIndex(t=>t.value==activeTab);
+        const tabListLen = tabList.length;
+        const children = get(tabList,`${aTabIdx}.children`);
+        const childrenLen = (children)?children.length:undefined;
+        const aNavIdx = (children)?children.findIndex(t=>t.value==activeNav):undefined;
+                    
+        let nextNavIdx = (aNavIdx<childrenLen-1)?aNavIdx+1:aNavIdx;
+        let nextTabIdx = (aNavIdx==childrenLen-1)?aTabIdx+1:aTabIdx;
+        if (!children) nextTabIdx++;
+        if (nextTabIdx != aTabIdx && has(tabList,`${nextTabIdx}.children`)) nextNavIdx = 0;
+        if (nextTabIdx == tabListLen-1) nextTabIdx = aTabIdx; //don't allow tab index to exceed array length
+        
+        const nextTab = get(tabList,`${nextTabIdx}.value`);
+        const nextNav = get(tabList,`${nextTabIdx}.children.${nextNavIdx}.value`);
+        if (!nextTab) return;
+        setActiveTab(nextTab);
+        setActiveNav(nextNav);
     }
 
     const handleTabs = useCallback(tabs => {
@@ -305,7 +307,6 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                 }
             });
             tablist.push(...allTabs.filter(t=>['comments','review'].includes(t.value)));
-            console.debug(tablist);
             setTabList(tablist);
         }
     },[setTabList,allTabs]);
@@ -348,8 +349,8 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                                     <Row as="footer" className="mt-3">
                                         <Col className="button-group justify-content-end">
                                             <AppButton type="reset" format="delete" onClick={handleReset}>Discard</AppButton>
-                                            <AppButton id="next" format="next" onClick={handleNext} disabled={!watchFormActions.every(v=>!!v)}>Next</AppButton>
-                                            <AppButton id="submit" type="submit" format="submit" disabled={!watchFormActions.every(v=>!!v)}>Submit</AppButton>
+                                            {(activeTab!='review')&&<AppButton id="next" format="next" onClick={handleNext} disabled={!watchFormActions.every(v=>!!v)}>Next</AppButton>}
+                                            {(activeTab=='review')&&<AppButton id="submit" type="submit" format="submit" disabled={!watchFormActions.every(v=>!!v)}>Submit</AppButton>}
                                             <AppButton id="submit" type="submit" format="submit" variant="danger">Test Submit</AppButton>
                                         </Col>
                                     </Row>
@@ -400,11 +401,11 @@ function FormInfoBox () {
                 <Col as="dt" sm={2} className="mb-0">Form ID:</Col>
                 <Col as="dd" sm={10} className="mb-0">{getValues('formId')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Payroll:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues('payroll')}</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('payroll.title')}</Col>
                 <Col as="dt" sm={2} className="mb-0">SUNY ID:</Col>
                 <Col as="dd" sm={4} className="mb-0">{getValues('person.info.sunyId')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Form Type:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues('formCode')} - {getValues('actionCode')} - {getValues('transactionCode')}</Col>
+                <Col as="dd" sm={4} className="mb-0"><FormTypeDisplay/></Col>
                 <Col as="dt" sm={2} className="mb-0">B-Number:</Col>
                 <Col as="dd" sm={4} className="mb-0">{getValues('person.info.bNumber')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Effective Date:</Col>
@@ -414,6 +415,60 @@ function FormInfoBox () {
             </Row>
         </Alert>
     );
+}
+/*
+Parameters:
+    - variant=[null|code|title|both]
+        - null|code: displays codes; e.g. 
+                DF - - 
+                EF - CCH - 641
+        - title: displays titles; e.g. 
+                Data Form - - 
+                Employment Form - Concurrent Hire - S64.1C
+        - both: displays [code]:title; e.g. 
+                [DF]:Data Form - - 
+                [EF]:Employment Form - [CCH]:Concurrent Hire - [641]:S64.1C
+        - list: displays [codes] titles; e.g. 
+                [DF//] Data Form - - 
+                [EF/CCH/641] Employment Form - Concurrent Hire - S64.1C
+    - separator: space padded character(s) to separate the elements
+    - showNA: when set/true display 'N/A' if the value of the code is 'N/A' else display ''
+*/
+export function FormTypeDisplay({variant,separator,showNA}) {
+    const { getValues } = useFormContext();
+    const formActions = getValues('formActions');
+    const display = useMemo(() => {
+        const formCodesMap = new Map(formActions.formCodes);
+        const actionCodesMap = new Map(formActions.actionCodes);
+        const transactionCodesMap = new Map(formActions.transactionCodes);
+        const sep = (separator)?` ${separator} `:' - ';
+        const codes = [
+            formActions.formCode,
+            (formActions.actionCode=='N/A'&&!showNA)?'':formActions.actionCode,
+            (formActions.transactionCode=='N/A'&&!showNA)?'':formActions.transactionCode
+        ];
+        const titles = [
+            formCodesMap.get(formActions.formCode)?.at(0)||((formActions.formCode=='N/A'&&showNA)?'N/A':''),
+            actionCodesMap.get(formActions.actionCode)?.at(0)||((formActions.actionCode=='N/A'&&showNA)?'N/A':''),
+            transactionCodesMap.get(formActions.transactionCode)?.at(0)||((formActions.transactionCode=='N/A'&&showNA)?'N/A':'')
+        ];
+        switch(variant) {
+            case "title":
+                return titles.join(sep);
+            case "both":
+                const codeTitles = zip(codes,titles);
+                return codeTitles.map(c=>{
+                    if (!c[0]) return null;
+                    if (c[0]=='N/A'&&showNA) return 'N/A';
+                    return `[${c[0]}]:${c[1]}`;
+                }).join(sep);
+            case "list":
+                return '['+codes.join('/')+'] '+titles.join(sep);
+            default:
+                return codes.join(sep);
+        }
+    },[variant,formActions,separator]);
+    return <>{display}</>
 }
 export function EmploymentPositionInfoBox() {
     const name = 'employment.position.lineNumberDetails';

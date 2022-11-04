@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, useReducer } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
-import { Row, Col, Form, Collapse, InputGroup } from "react-bootstrap";
+import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import sub from "date-fns/sub";
 import { assign, keyBy, orderBy } from "lodash";
@@ -9,11 +9,11 @@ import usePersonQueries from "../../queries/person";
 import { useCodesQueries, useTransactionQueries } from "../../queries/codes";
 import DataTable from 'react-data-table-component';
 import { useQueryClient } from "react-query";
-import { useLocation } from "react-router-dom";
 import { Icon } from "@iconify/react";
+import { defaultFormActions } from "../../pages/form";
 
 export default function FormBasicInfo() {
-    const { control, getValues, isNew } = useFormContext();
+    const { getValues, isNew } = useFormContext();
 
     const watchLookup = useWatch({name:'lookup'});
 
@@ -22,50 +22,41 @@ export default function FormBasicInfo() {
         enabled:false,
         select:d=>{
             // Add "New Employee" option
-            if (!d.find(e=>e.HR_PERSON_ID=="0")) d.unshift({
-                "HR_PERSON_ID": "0",
-                "LINE_ITEM_NUMBER": "",
-                "SUNY_ID": "",
-                "NYS_EMPLID": "",
-                "EMPLOYMENT_ROLE_TYPE": "New Employee",
-                "DATA_STATUS_EMP": "",
-                "STATUS_TYPE": "",
-                "APPOINTMENT_EFFECTIVE_DATE": "",
-                "APPOINTMENT_END_DATE": null,
-                "BIRTH_DATE": "",
-                "LEGAL_FIRST_NAME": "",
-                "LEGAL_MIDDLE_NAME": "",
-                "LEGAL_LAST_NAME": "New Employee",
-                "LOCAL_CAMPUS_ID": "",
-                "PAYROLL_AGENCY_CODE": "",
-                "TITLE_DESCRIPTION": "",
-                "DPT_CMP_DSC": ""
-            });
+            if (!d.results.find(e=>e.HR_PERSON_ID=="0")) {
+                const newEmp = {};
+                d.fields.forEach(k=>newEmp[k]='');
+                newEmp.HR_PERSON_ID = '0';
+                newEmp.EMPLOYMENT_ROLE_TYPE = 'New Employee';
+                newEmp.LEGAL_LAST_NAME = 'New Employee';
+                d.results.unshift(newEmp);
+            }
             //Add "New Role" option for each employee in the list
             const nr = [];
-            d.forEach(e => {
+            d.results.forEach(e => {
                 if (e.HR_PERSON_ID == "0") return;
-                nr.push({
-                    "HR_PERSON_ID": `0_${e.HR_PERSON_ID}_NR`, // prefix 0_ for sorting purposes; new role before existing record
-                    "LINE_ITEM_NUMBER": "",
-                    "SUNY_ID": e.SUNY_ID,
-                    "NYS_EMPLID": e.NYS_EMPLID,
-                    "EMPLOYMENT_ROLE_TYPE": "New Role",
-                    "DATA_STATUS_EMP": "",
-                    "STATUS_TYPE": "",
-                    "APPOINTMENT_EFFECTIVE_DATE": "",
-                    "APPOINTMENT_END_DATE": null,
-                    "BIRTH_DATE": e.BRITH_DATE,
-                    "LEGAL_FIRST_NAME": e.LEGAL_FIRST_NAME,
-                    "LEGAL_MIDDLE_NAME": e.LEGAL_MIDDLE_NAME,
-                    "LEGAL_LAST_NAME": e.LEGAL_LAST_NAME,
-                    "LOCAL_CAMPUS_ID": e.LOCAL_CAMPUS_ID,
-                    "PAYROLL_AGENCY_CODE": "",
-                    "TITLE_DESCRIPTION": "",
-                    "DPT_CMP_DSC": ""
-                });
+                const newRole = {...e};
+                newRole.HR_PERSON_ID = `0_${e.HR_PERSON_ID}_NR`;
+                [
+                    "LINE_ITEM_NUMBER",
+                    "EMPLOYMENT_ROLE_TYPE",
+                    "DATA_STATUS_EMP",
+                    "STATUS_TYPE",
+                    "APPOINTMENT_EFFECTIVE_DATE",
+                    "APPOINTMENT_END_DATE",
+                    "PAYROLL_AGENCY_CODE",
+                    "TITLE_DESCRIPTION",
+                    "DPT_CMP_DSC",
+                    "APPOINTMENT_TYPE",
+                    "APPOINTMENT_PERCENT",
+                    "PAY_BASIS",
+                    "effectiveDate",
+                    "effectiveDateFmt",
+                    "endDate",
+                    "endDateFmt"
+                ].forEach(k=>newRole[k]='');
+                nr.push(newRole);
             });
-            const result = assign(keyBy(d,'HR_PERSON_ID'),keyBy(nr,'HR_PERSON_ID'));
+            const result = assign(keyBy(d.results,'HR_PERSON_ID'),keyBy(nr,'HR_PERSON_ID'));
             return orderBy(Object.values(result),['HR_PERSON_ID']);
         }
     });
@@ -84,9 +75,9 @@ export default function FormBasicInfo() {
 }
 
 function PersonLookup({results}) {
-    const dobRef = useRef();
+    const bNumberRef = useRef();
 
-    const { control, getValues, setValue, setFocus, setError, clearErrors, formState:{ errors }} = useFormContext();
+    const { control, getValues, setValue, setFocus, setError, clearErrors, reset, formState:{ errors }} = useFormContext();
 
     const queryclient = useQueryClient();
 
@@ -94,11 +85,8 @@ function PersonLookup({results}) {
         console.debug('resetLookup');
         clearErrors();
         queryclient.resetQueries(['personLookup']);
-        //TODO: need to reset all of the formAction properties
-        ['lookup.values.bNumber','lookup.values.lastName','lookup.values.dob','payroll','effDate','formActions.formCode','formActions.actionCode','formActions.transactionCode','person.info.sunyId','person.info.bNumber','person.info.firstName','person.info.middleName','person.info.lastName','person.demographics.DOB'].forEach(f=>setValue(f,''));
-        setValue('lookup.type','bNumber');
-        setValue('selectedRow',{});
-        setFocus('lookup.values.bNumber');
+        reset();
+        bNumberRef.current.focus();
     }
     const handleLookup = () => {
         console.debug('handleLookup');
@@ -166,7 +154,7 @@ function PersonLookup({results}) {
                     <Controller
                         name="lookup.values.bNumber"
                         control={control}
-                        render={({field})=><Form.Control {...field} type="text" onFocus={handleFocus}  onKeyDown={handleLookupKeyDown} isInvalid={errors.lookup?.values?.bNumber} autoFocus/>}
+                        render={({field})=><Form.Control {...field} ref={bNumberRef} type="text" onFocus={handleFocus}  onKeyDown={handleLookupKeyDown} isInvalid={errors.lookup?.values?.bNumber} autoFocus/>}
                     />
                     <Form.Control.Feedback type="invalid">{errors.lookup?.values?.bNumber?.message}</Form.Control.Feedback>
                 </Col>
@@ -198,7 +186,6 @@ function PersonLookup({results}) {
                             control={control}
                             render={({field})=><Form.Control 
                                 as={DatePicker} 
-                                ref={dobRef}
                                 name={field.name}
                                 closeOnScroll={true} 
                                 maxDate={sub(new Date(),{years:15})} 
@@ -230,7 +217,7 @@ function PersonLookup({results}) {
 }
 
 function LookupResults({data,isNew}) {
-    const { getValues, setValue } = useFormContext();
+    const { setValue } = useFormContext();
 
     const [selectedId,setSelectedId] = useState((!isNew)?data[0].HR_PERSON_ID:'');
     const [selectedRow,setSelectedRow] = useState({});
@@ -242,11 +229,26 @@ function LookupResults({data,isNew}) {
     const handleSelectedRowChange = args => {
         const id = (args.selectedCount)?args.selectedRows[0]?.HR_PERSON_ID:undefined;
         if (selectedRow?.HR_PERSON_ID === id) return false;
+        console.debug('handleSelectedRowChange: ',id);
         setSelectedId(id);
         setSelectedRow((args.selectedCount)?args.selectedRows[0]:{});
         setValue('selectedRow',(args.selectedCount)?args.selectedRows[0]:{});
-        setValue('payroll',(args.selectedCount)?args.selectedRows[0]?.PAYROLL_AGENCY_CODE:"");
-        ['formActions.formCode','formActions.actionCode','formActions.transactionCode'].forEach(f=>setValue(f,''));
+        setValue('payroll.code',(args.selectedCount)?args.selectedRows[0]?.PAYROLL_AGENCY_CODE:"");
+        setValue('payroll.title','');
+        setValue('payroll.description','');
+        setValue('formActions',defaultFormActions);
+        //TODO: map selectedRow data to form data; if not args.selectedCount reset?
+        setValue('person.info.sunyId',(args.selectedCount)?args.selectedRows[0]?.SUNY_ID:"");
+        setValue('person.info.bNumber',(args.selectedCount)?args.selectedRows[0]?.LOCAL_CAMPUS_ID:"");
+        setValue('person.info.salutation',(args.selectedCount)?args.selectedRows[0]?.SALUTATION_CODE:"");
+        setValue('person.info.firstName',(args.selectedCount)?args.selectedRows[0]?.LEGAL_FIRST_NAME:"");
+        setValue('person.info.middleName',(args.selectedCount)?args.selectedRows[0]?.LEGAL_MIDDLE_NAME:"");
+        setValue('person.info.lastName',(args.selectedCount)?args.selectedRows[0]?.LEGAL_LAST_NAME:"");
+        setValue('person.demographics.DOB',(args.selectedCount)?args.selectedRows[0]?.birthDate:"");
+        setValue('person.demographics.gender.id',(args.selectedCount)?args.selectedRows[0]?.GENDER:"");
+        setValue('person.demographics.citizen',(args.selectedCount)?(args.selectedRows[0]?.CITIZENSHIP_COUNTRY_CODE=='USA')?"Yes":"No":"Yes");
+        setValue('employment.position.lineNumber',(args.selectedCount)?args.selectedRows[0]?.LINE_ITEM_NUMBER:"");
+        setValue('employment.position.lineNumberDetails.POSITION_ID',(args.selectedCount)?args.selectedRows[0]?.LINE_ITEM_NUMBER:"");
     }
 
     const rowSelectCritera = row => {
@@ -320,28 +322,60 @@ function LookupResults({data,isNew}) {
                     </Col>
                 </Row>
             </article>
-            {selectedId&&<PayrollDate selectedPayroll={selectedRow?.PAYROLL_AGENCY_CODE} selectedRoleType={selectedRow?.EMPLOYMENT_ROLE_TYPE}/>}
+            {selectedId&&<PayrollDate selectedId={selectedId} selectedPayroll={selectedRow?.PAYROLL_AGENCY_CODE} selectedRoleType={selectedRow?.EMPLOYMENT_ROLE_TYPE}/>}
         </>
     );
 }
 
-function PayrollDate({selectedPayroll,selectedRoleType}) {
-    const { control, setValue, formState: { errors }} = useFormContext();
+function PayrollDate({selectedId,selectedPayroll,selectedRoleType}) {
+    const { control, setValue, isNew, formState: { errors }} = useFormContext();
 
-    const watchPayrollDate = useWatch({name:['payroll','effDate']});
+    const watchPayrollDate = useWatch({name:['payroll.code','effDate']});
 
-    const effDateRef = useRef();
+    //const effDateRef = useRef();
+    const [payrollDescription,setPayrollDescription] = useState('');
 
     const {getCodes} = useCodesQueries('payroll');
-    const payrollcodes = getCodes({refetchOnMount:false,select:d=>d.filter(p=>p.ACTIVE==1)});
+    const payrollcodes = getCodes({
+        
+        refetchOnMount:false,
+        select:d=>d.filter(p=>p.ACTIVE==1),
+        onSuccess:d=>{
+            if(selectedPayroll) {
+                const payroll = d.find(p=>p.PAYROLL_CODE==selectedPayroll);
+                setValue('payroll.title',payroll?.PAYROLL_TITLE);
+                setValue('payroll.description',payroll?.PAYROLL_DESCRIPTION);
+                setPayrollDescription(payroll?.PAYROLL_DESCRIPTION);
+            }
+        }
+    });
 
     const handleKeyDown = e => {
         console.log('handlekeyDown');
     }
     const handlePayrollChange = (e,field) => {
         field.onChange(e);
-        ['formActions.formCode','formActions.actionCode','formActions.transactionCode'].forEach(f=>setValue(f,''));
+        const title = (payrollcodes.data)?payrollcodes.data.find(p=>p.PAYROLL_CODE==e.target.value)?.PAYROLL_TITLE:'';
+        const description = (payrollcodes.data)?payrollcodes.data.find(p=>p.PAYROLL_CODE==e.target.value)?.PAYROLL_DESCRIPTION:'';
+        setValue('payroll.title',title);
+        setValue('payroll.description',description);
+        setValue('formActions',defaultFormActions);
+        setPayrollDescription(description);
     }
+    useEffect(()=>{
+        //TODO: can this be consolidated or moved to a function?
+        if (!payrollcodes.data) {
+            setValue('payroll.title','');
+            setValue('payroll.description','');
+            setPayrollDescription('');
+        } else {
+            if (!isNew) return;
+            const payroll = payrollcodes.data.find(p=>p.PAYROLL_CODE==selectedPayroll);
+            setValue('payroll.title',payroll?.PAYROLL_TITLE);
+            setValue('payroll.description',payroll?.PAYROLL_DESCRIPTION);
+            setPayrollDescription(payroll?.PAYROLL_DESCRIPTION);
+        }
+    },[payrollcodes.data,selectedId,selectedPayroll]);
     return (
         <>
             <article className="mt-3" onKeyDown={handleKeyDown}>
@@ -355,7 +389,7 @@ function PayrollDate({selectedPayroll,selectedRoleType}) {
                         {payrollcodes.isLoading && <Loading>Loading Payrolls...</Loading>}
                         {payrollcodes.data &&
                             <Controller
-                                name="payroll"
+                                name="payroll.code"
                                 control={control}
                                 defaultValue={selectedPayroll}
                                 rules={{required:{value:true,message:'Payroll is required'}}}
@@ -369,9 +403,9 @@ function PayrollDate({selectedPayroll,selectedRoleType}) {
                         }
                         <Form.Control.Feedback type="invalid">{errors.payroll?.message}</Form.Control.Feedback>
                     </Col>
-                    {payrollcodes.data && 
+                    {payrollDescription && 
                         <Col xs="auto">
-                            <Form.Text id="payrollDescription" muted>{payrollcodes.data.find(p=>p.PAYROLL_CODE==watchPayrollDate[0])?.PAYROLL_DESCRIPTION}</Form.Text>
+                            <Form.Text id="payrollDescription" muted>{payrollDescription}</Form.Text>
                         </Col>
                     }
                 </Form.Group>
@@ -385,7 +419,6 @@ function PayrollDate({selectedPayroll,selectedRoleType}) {
                                 rules={{required:{value:true,message:'Effective Date is required'}}}
                                 render={({field}) => <Form.Control
                                     as={DatePicker}
-                                    ref={effDateRef}
                                     name={field.name}
                                     selected={field.value}
                                     closeOnScroll={true}
@@ -415,11 +448,11 @@ function FormActions({payroll,roleType}) {
     const { control, getValues, setValue, handleTabs, isNew, formState: { errors }} = useFormContext();
 
     const {getPayTrans} = useTransactionQueries(payroll);
-    const paytrans = getPayTrans();
+    const paytrans = getPayTrans({enabled:isNew});
 
     const initCodes = () => {
         if (!isNew) {
-            const formActions = getValues('formActions');
+            const formActions = {...getValues('formActions')};
             formActions.formCodes = new Map(formActions.formCodes);
             formActions.actionCodes = new Map(formActions.actionCodes);
             formActions.transactionCodes = new Map(formActions.transactionCodes);
@@ -448,21 +481,19 @@ function FormActions({payroll,roleType}) {
                 newState.formCodeDescription = (value)?newState.formCodes.get(value)?.at(1):'';
                 newState.actionCodes = (value)?new Map(paytrans.data.filter(p=>(filter&p.AVAILABLE_FOR)&&p.FORM_CODE==newState.formCode&&p.ACTION_CODE).map(a=>[a.ACTION_CODE,[a.ACTION_TITLE,a.ACTION_DESCRIPTION]])):new Map();
                 newState.actionCode = (value&&!newState.actionCodes.size)?'N/A':'';
+                newState.actionCodeDescription = '';
+                newState.transactionCodes = new Map();
                 newState.transactionCode = (value&&!newState.actionCodes.size)?'N/A':'';
+                newState.transactionCodeDescription = '';
                 newState.paytransId = (value&&!newState.actionCodes.size)?paytrans.data.filter(p=>(filter&p.AVAILABLE_FOR)&&p.FORM_CODE==newState.formCode)?.at(0)?.PAYTRANS_ID:'';
-                if (!value) {
-                    newState.actionCodeDescription = '';
-                    newState.transactionCodes = new Map();
-                    newState.transactionCodeDescription = '';
-                }
                 break;
             case "formActions.actionCode":
                 newState.actionCode = value;
                 newState.actionCodeDescription = (value)?newState.actionCodes.get(value)?.at(1):'';
                 newState.transactionCodes = (value)?new Map(paytrans.data.filter(p=>p.FORM_CODE==newState.formCode&&p.ACTION_CODE==newState.actionCode&&p.TRANSACTION_CODE).map(t=>[t.TRANSACTION_CODE,[t.TRANSACTION_TITLE,t.TRANSACTION_DESCRIPTION]])):new Map();
                 newState.transactionCode = (value&&!newState.transactionCodes.size)?'N/A':'';
+                newState.transactionCodeDescription = '';
                 newState.paytransId = (value&&!newState.transactionCodes.size)?paytrans.data.filter(p=>p.FORM_CODE==newState.formCode&&p.ACTION_CODE==newState.actionCode)?.at(0)?.PAYTRANS_ID:'';
-                if (!value) newState.transactionCodeDescription = '';
                 break;
             case "formActions.transactionCode":
                 newState.transactionCode = value;
@@ -476,19 +507,19 @@ function FormActions({payroll,roleType}) {
     useEffect(()=>paytrans.data&&setCodes(['init']),[paytrans.data,payroll,roleType]);
 
     useEffect(()=>{
+        if (!paytrans.data) return;
+        if (codes.paytransId == getValues('formActions.paytransId')) return;
+
         const c = {...codes};
         c.formCodes = Array.from(codes.formCodes.entries());
         c.actionCodes = Array.from(codes.actionCodes.entries());
         c.transactionCodes = Array.from(codes.transactionCodes.entries());
         setValue('formActions',c);
-        if ([codes.formCode,codes.actionCode,codes.transactionCode].every(v=>!!v)) {
-            //TODO: check if change?
-            const tabs = paytrans.data.filter(p=>p.PAYTRANS_ID==codes.paytransId)?.at(0)?.TABS;
-            //console.debug('Setting Tabs: ',tabs);
-            handleTabs(tabs);
-        } else {
-            handleTabs(undefined);
-        }
+
+        const tabs = paytrans.data.filter(p=>p.PAYTRANS_ID==codes.paytransId)?.at(0)?.TABS;
+        console.debug('Tabs: ',tabs);
+        handleTabs(tabs);
+
     },[codes]);
 
     return (

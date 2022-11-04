@@ -9,7 +9,7 @@ import { Loading } from "../components";
 const name = 'person.info';
 
 export default function PersonInfo() {
-    const { control, setValue } = useFormContext();
+    const { control, getValues, setValue } = useFormContext();
 
     const watchRehireRetiree = useWatch({name:`${name}.rehireRetiree`});
 

@@ -61,6 +61,7 @@ class Person extends HRForms2 {
                 title_description, dpt_cmp_dsc
                 FROM buhr.buhr_person_empl_mv@banner.cc.binghamton.edu) pemp on (pers.hr_person_id = pemp.hr_person_id)
             WHERE pers.role_type <> 'STSCH' ";
+            //$qry = $base_qry;
 		switch($this->req[0]) {
             case "bnumber":
                 $qry .= "AND upper(pers.local_campus_id) = upper(:bnumber)";
@@ -77,9 +78,16 @@ class Person extends HRForms2 {
                 //should not get here, just in case.
                 $this->raiseError(400);
         }
+        // Generate list of field names; used by JS to generate New Employee option
+        oci_execute($stmt,OCI_DESCRIBE_ONLY);
+        $ncols = oci_num_fields($stmt);
+        for ($i = 1; $i <= $ncols; $i++) {
+            $this->_arr['fields'][] = oci_field_name($stmt,$i);
+        }
+        // Get results
         $r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
-        oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
+        oci_fetch_all($stmt,$this->_arr['results'],null,null,OCI_FETCHSTATEMENT_BY_ROW);
         $this->returnData = $this->_arr;
         if ($this->retJSON) $this->toJSON($this->returnData);
 	}

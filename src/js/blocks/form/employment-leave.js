@@ -18,7 +18,7 @@ export default function EmploymentLeave() {
     const { control, getValues, setValue } = useFormContext();
     const watchFields = useWatch({name:['selectedRow','effDate'],control:control});
     const watchLeavePercent = useWatch({name:`${name}.leavePercent`,control:control})||0;
-    const watchPayroll = useWatch({name:'payroll',control:control});
+    const watchPayroll = useWatch({name:'payroll.code',control:control});
 
     const handleRangeChange = e => setValue(`${name}.leavePercent`,e.target.value);
 

@@ -65,9 +65,7 @@ function AppointmentSupervisor() {
     const { getSupervisorNames } = useFormQueries();
     const supervisors = getSupervisorNames(searchFilter,{enabled:false});
 
-    const handleSearch = query => {
-        setSearchFilter(query);
-    }
+    const handleSearch = query => setSearchFilter(query);
     const handleBlur = (field,e) => {
         field.onBlur(e);
         if (e.target.value != getValues(`${name}.${index}.supervisor[0].label`)) {

@@ -25,7 +25,7 @@ export default function usePersonQueries() {
         if(options.select) options.select2 = options.select;
         options.select = data => {
             if (!data) return;
-            data.forEach(d=>{
+            data.results.forEach(d=>{
                 d.fullName = `${d.LEGAL_FIRST_NAME} ${d.LEGAL_LAST_NAME}`;
                 d.sortName = `${d.LEGAL_LAST_NAME}, ${d.LEGAL_FIRST_NAME}`;
                 d.birthDate = d.BIRTH_DATE && parse(d.BIRTH_DATE,'dd-MMM-yy',new Date());
@@ -39,6 +39,13 @@ export default function usePersonQueries() {
         };
         return useQuery(['personLookup',path],q(`person/${data.type.toLowerCase()}/${path.join('/')}`),options);
     }
-    //const getPerson?? or getUser?
-    return {lookupPerson}; 
+    
+    const getDirectoryInfo = (...args) => {
+        const SUNY_ID = args[0]?.SUNY_ID||args[0]||'';
+        const options = args[0]?.options||args[1]||{}
+        if (!SUNY_ID&&!dirType) return qErr('Bad Data');
+        return useQuery(['personDirectoryInfo',SUNY_ID],q(`directoryinfo/${SUNY_ID}`),options);
+    }
+
+    return {lookupPerson,getDirectoryInfo}; 
 }
