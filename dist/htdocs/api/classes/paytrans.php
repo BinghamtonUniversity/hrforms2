@@ -106,6 +106,23 @@ class PayTrans extends HRForms2 {
 	}
 	function PATCH() {
 		if (isset($this->POSTvars['ACTIVE'])) {
+			//make sure the codes are all active
+			$qry = "select count(*)
+			from hrforms2_payroll_transactions p
+			left join (select form_code, active from hrforms2_form_codes) f on (f.form_code = p.form_code)
+			left join (select action_code, active from hrforms2_action_codes) a on (a.action_code = p.action_code)
+			left join (select transaction_code, active from hrforms2_transaction_codes) t on (t.transaction_code = p.transaction_code)
+			where p.paytrans_id = :paytrans_id
+			and nvl(f.active,1) = 1
+			and nvl(a.active,1) = 1
+			and nvl(t.active,1) = 1";
+			$stmt = oci_parse($this->db,$qry);
+			oci_bind_by_name($stmt,":paytrans_id", $this->req[0]);
+			$r = oci_execute($stmt);
+			if (!$r) $this->raiseError();
+			$row = oci_fetch_array($stmt,OCI_RETURN_NULLS);
+			if ($row[0] == 0) $this->raiseError(400,array("errMsg"=>"Dependency is not Active, cannot activate"));
+	
 			$qry = "UPDATE HRFORMS2_PAYROLL_TRANSACTIONS SET active = :active WHERE paytrans_id = :paytrans_id";
 			$stmt = oci_parse($this->db,$qry);
 			oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);

@@ -187,9 +187,7 @@ function AddEditCode({tab,vars,codes,selectedRow,setSelectedRow,isNew,setIsNew,n
     }
     const addlInfoDefaults = useMemo(()=>{
         switch (tab) {
-            case "payroll": return {
-                hasBenefits:false
-            }
+            case "payroll": return selectedRow.ADDITIONAL_INFO;
             default: return {}
         }
     },[tab]);
@@ -286,7 +284,7 @@ function AddEditCode({tab,vars,codes,selectedRow,setSelectedRow,isNew,setIsNew,n
                                         control={methods.control}
                                         defaultValue={selectedRow[vars.code.upper]}
                                         rules={{required:{value:true,message:`${vars.code.start} is required`}}}
-                                        render={({field}) => <Form.Control {...field} type="text" maxLength="10" placeholder={`Enter ${vars.code.start}`} isInvalid={methods.formState.errors.code}/>}
+                                        render={({field}) => <Form.Control {...field} type="text" maxLength="10" placeholder={`Enter ${vars.code.start}`} isInvalid={methods.formState.errors.code} disabled={!isNew}/>}
                                     />
                                     <Form.Control.Feedback type="invalid">{methods.formState.errors.code?.message}</Form.Control.Feedback>
                                 </Form.Group>

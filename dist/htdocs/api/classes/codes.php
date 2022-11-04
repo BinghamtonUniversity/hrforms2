@@ -121,6 +121,16 @@ class Codes extends HRForms2 {
 			if (!$r) $this->raiseError();
 			oci_commit($this->db);
 			oci_free_statement($stmt);
+            //If there are active paytrans with code and code is being deactivated, deactivate paytrans
+            if ($this->POSTvars['ACTIVE'] == 0) {
+                $qry = "UPDATE HRFORMS2_PAYROLL_TRANSACTIONS set active = 0 WHERE ".$this->req[0]."_code = :code";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":code", $this->req[1]);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
+                oci_commit($this->db);
+                oci_free_statement($stmt);    
+            }
         }
         //update orderby
         if (isset($this->POSTvars['ORDERBY'])) {
