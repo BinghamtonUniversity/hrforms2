@@ -1,14 +1,15 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Row, Col, Form } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { get, cloneDeep } from "lodash";
 import { AppButton, CountrySelector, DateFormat, StateSelector } from "../components";
 import { useAppQueries } from "../../queries";
+import usePersonQueries from "../../queries/person";
 import PhoneInput from 'react-phone-input-2';
 
 import 'react-phone-input-2/lib/style.css'
 
-const name = 'person.contact';
+const name = 'person.contact.contacts';
 
 const phoneTypes = [
     {id:'day',title:'Day Phone'},
@@ -17,10 +18,17 @@ const phoneTypes = [
 ];
 
 export default function PersonContacts() {
-    const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext();
-    const { fields, append, remove, move, update } = useFieldArray({
+    const { control, getValues, setValue, clearErrors, trigger, sunyId, formState: { errors } } = useFormContext();
+    const { fields, append, replace, remove, update } = useFieldArray({
         control:control,
         name:name
+    });
+
+    const {getPersonInfo} = usePersonQueries();
+    //TODO: only fetch if not saved; saved data comes HRF2 table.
+    const contactinfo = getPersonInfo(sunyId,'contact',{
+        refetchOnMount:false,
+        enabled:!!sunyId
     });
 
     const watchContact = useWatch({name:name,control});
@@ -54,7 +62,7 @@ export default function PersonContacts() {
             },
             email: "",
             relationship: "",
-            created:new Date
+            created:new Date()
         });
         setEditIndex(fields.length);
         setIsNew(true);
@@ -107,6 +115,39 @@ export default function PersonContacts() {
         if (watchContact.map(c=>c['primary']).filter(v=>v=='yes').length>1) return true;
         return false;
     },[watchContact]);
+
+    useEffect(() => {
+        if (!contactinfo.data) return;
+        if (getValues('person.contact.loadDate')) return;
+        console.debug('setting contact data...');
+        const dataMap = [];
+        contactinfo.data.forEach(d=>{
+            dataMap.push({
+                primary: (d.EMR_CTC_RANK=="0")?'yes':'no',
+                name: {
+                    first: d.EMR_CTC_FIRST_NAME,
+                    last: d.EMR_CTC_LAST_NAME
+                },
+                line1: d.EMR_CTC_ADDRESS_1,
+                line2: d.EMR_CTC_ADDRESS_2,
+                city: d.EMR_CTC_CITY,
+                state: d.EMR_CTC_STATE_CODE,
+                zipcode: d.EMR_CTC_ZIP,
+                country: d.EMR_CTC_COUNTRY_CODE,
+                phone: {
+                    day: d.EMR_CTC_DAY_PHONE,
+                    night: d.EMR_CTC_NIGHT_PHONE,
+                    cell: d.EMR_CTC_CELL_PHONE,
+                    intl: d.EMR_CTC_INTERNATIONAL_PHONE
+                },
+                email: d.EMR_CTC_EMAIL,
+                relationship: d.EMR_CTC_RELATIONSHIP,
+                created:new Date(d.CREATE_DATE)||new Date()
+            });
+        });
+        replace(dataMap);
+        setValue('person.contact.loadDate',new Date());
+    },[contactinfo.data]);
 
     return (
         <article className="mt-3">
@@ -224,7 +265,7 @@ export default function PersonContacts() {
                             <Form.Label column md={2}>{p.title}:</Form.Label>
                             <Col xs="auto">
                                 <Controller
-                                    name={`${name}.phone.${index}.${p.id}`}
+                                    name={`${name}.${index}.phone.${p.id}`}
                                     defaultValue=""
                                     control={control}
                                     render={({field}) => <PhoneInput 

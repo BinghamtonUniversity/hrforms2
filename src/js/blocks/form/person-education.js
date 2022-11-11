@@ -1,8 +1,9 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { useAppQueries } from "../../queries";
 import useFormQueries from "../../queries/forms";
+import usePersonQueries from "../../queries/person";
 import { get, cloneDeep } from "lodash";
 import { AppButton, CountrySelector, DateFormat, StateSelector } from "../components";
 import DatePicker from "react-datepicker";
@@ -10,7 +11,7 @@ import { addDays } from "date-fns";
 import { Typeahead } from "react-bootstrap-typeahead";
 import { Icon } from "@iconify/react";
 
-const name = 'person.education';
+const name = 'person.education.institutions';
 
 const yesNoOptions = [
     {id:'highest',title:'Highest Degree',unique:true},
@@ -19,10 +20,17 @@ const yesNoOptions = [
 ];
 
 export default function PersonEducation() {
-    const { control, getValues, setValue, trigger, clearErrors, formState: { errors } } = useFormContext();
-    const { fields, append, remove, move, update } = useFieldArray({
+    const { control, getValues, setValue, trigger, clearErrors, sunyId, formState: { errors } } = useFormContext();
+    const { fields, append, replace, remove, update } = useFieldArray({
         control:control,
         name:name
+    });
+
+    const {getPersonInfo} = usePersonQueries();
+    //TODO: only fetch if not saved; saved data comes HRF2 table.
+    const educationinfo = getPersonInfo(sunyId,'education',{
+        refetchOnMount:false,
+        enabled:!!sunyId
     });
 
     const watchEducation = useWatch({name:name,control});
@@ -50,7 +58,7 @@ export default function PersonEducation() {
             highest:"no",
             terminal:"no",
             verified:"no",
-            created:new Date
+            created:new Date()
         });
         setEditIndex(fields.length);
         setIsNew(true);
@@ -112,6 +120,32 @@ export default function PersonEducation() {
         return false;
     },[watchEducation,yesNoOptions]);
 
+    useEffect(() => {
+        if (!educationinfo.data||!degreeTypes.data) return;
+        if (getValues('person.education.loadDate')) return;
+        console.debug('setting education data...');
+        const dataMap = [];
+        educationinfo.data.forEach(d=>{
+            const degree = degreeTypes.data.find(a=>a.id==d.DEGREE_TYPE);
+            dataMap.push({
+                awardDate:new Date(d.DEGREE_YEAR,(d.DEGREE_MONTH||1)-1),
+                pending:d.ENDING_DEGREE_FLAG=='Y',
+                type:[degree],
+                specialization:"",
+                country:d.COUNTRY_CODE,
+                state:d.INSTITUTION_STATE,
+                city:[d.INSTITUTION_CITY],
+                name:[{id:d.INSTITUTION_ID,label:d.INSTITUTION}],
+                highest:(d.HIGHEST_DEGREE_FLAG=='Y')?'yes':'no',
+                terminal:(d.TERMINAL_DEGREE_FLAG=='Y')?'yes':'no',
+                verified:(d.DEGREE_VERIFIED=='Y')?'yes':'no',
+                created:new Date(d.CREATE_DATE)||new Date()
+            });
+        });
+        replace(dataMap);
+        setValue('person.education.loadDate',new Date());
+    },[educationinfo.data,degreeTypes.data]);
+
     return (
         <article className="mt-3">
             <Row as="header">
@@ -134,9 +168,9 @@ export default function PersonEducation() {
                                         closeOnScroll={true}
                                         selected={field.value}
                                         onChange={field.onChange}
+                                        minDate={get(watchEducation,`${index}.pending`,false)&&addDays(new Date(),1)}
+                                        maxDate={!get(watchEducation,`${index}.pending`,false)&&new Date()}
                                         disabled={editIndex!=index}
-                                        minDate={get(watchEducation,`[${index}].pending`,false)&&addDays(new Date(),1)}
-                                        maxDate={!get(watchEducation,`[${index}].pending`,false)&&new Date()}
                                         isInvalid={get(errors,field.name,false)}
                                         autoComplete="off"
                                     />}
@@ -331,7 +365,11 @@ function UniversityNameComponent({editIndex,index}) {
     const { getEducationInstitutions } = useFormQueries();
     const institutionName = getEducationInstitutions({country:watchFields[0],state:watchFields[1],options:{
         select: d => {
-            return [...new Set(d.map(i=>i.INSTITUTION).sort())];
+            const instMap = new Map(); //used to ensure there are no duplicate, which will break typeahead
+            d.forEach(i=>instMap.set(i.ID,i.INSTITUTION));
+            const instArray = new Array();
+            for (const[id,label] of instMap) {instArray.push({id:id,label:label});}
+            return instArray;
         }
     }});
     return (

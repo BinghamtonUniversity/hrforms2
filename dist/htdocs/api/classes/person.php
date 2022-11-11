@@ -52,7 +52,6 @@ class Person extends HRForms2 {
             nvl(pemp.appointment_end_date, pers.role_end_date) as appointment_end_date,
             pers.birth_date, pers.salutation_code, pers.legal_first_name, pers.legal_middle_name, pers.legal_last_name, pers.suffix_code,
             pers.local_campus_id, pemp.payroll_agency_code, pemp.title_description, pemp.dpt_cmp_dsc,
-            pers.gender, pers.citizenship_country_code, pers.veteran_indicator, pers.military_status_code,
             pemp.negotiating_unit, pemp.appointment_type, pemp.appointment_percent, pemp.pay_basis
             FROM buhr.buhr_person_mv@banner.cc.binghamton.edu pers
             JOIN (SELECT hr_person_id, payroll_agency_code, line_item_number, pay_basis,
@@ -87,7 +86,7 @@ class Person extends HRForms2 {
         // Get results
         $r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
-        oci_fetch_all($stmt,$this->_arr['results'],null,null,OCI_FETCHSTATEMENT_BY_ROW);
+        oci_fetch_all($stmt,$this->_arr['results'],null,null,OCI_FETCHSTATEMENT_BY_ROW);        
         $this->returnData = $this->_arr;
         if ($this->retJSON) $this->toJSON($this->returnData);
 	}

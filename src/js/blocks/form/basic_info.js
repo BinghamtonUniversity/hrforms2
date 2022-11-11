@@ -245,8 +245,8 @@ function LookupResults({data,isNew}) {
         setValue('person.info.middleName',(args.selectedCount)?args.selectedRows[0]?.LEGAL_MIDDLE_NAME:"");
         setValue('person.info.lastName',(args.selectedCount)?args.selectedRows[0]?.LEGAL_LAST_NAME:"");
         setValue('person.demographics.DOB',(args.selectedCount)?args.selectedRows[0]?.birthDate:"");
-        setValue('person.demographics.gender.id',(args.selectedCount)?args.selectedRows[0]?.GENDER:"");
-        setValue('person.demographics.citizen',(args.selectedCount)?(args.selectedRows[0]?.CITIZENSHIP_COUNTRY_CODE=='USA')?"Yes":"No":"Yes");
+        //setValue('person.demographics.gender.id',(args.selectedCount)?args.selectedRows[0]?.GENDER:"");
+        //setValue('person.demographics.citizen',(args.selectedCount)?(args.selectedRows[0]?.CITIZENSHIP_COUNTRY_CODE=='USA')?"Yes":"No":"Yes");
         setValue('employment.position.lineNumber',(args.selectedCount)?args.selectedRows[0]?.LINE_ITEM_NUMBER:"");
         setValue('employment.position.lineNumberDetails.POSITION_ID',(args.selectedCount)?args.selectedRows[0]?.LINE_ITEM_NUMBER:"");
     }

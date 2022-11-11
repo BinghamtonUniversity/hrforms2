@@ -25,7 +25,7 @@ export default function AppNav() {
                         {['requests','forms'].map(c =>{
                             const single = c.slice(0,-1);
                             return (
-                                <NavDropdown key={`${single}-menu`} title={capitalize(c)} id="request-nav-dropdown" alignRight>
+                                <NavDropdown key={`${single}-menu`} title={capitalize(c)} id="request-nav-dropdown">
                                     <MenuCounts menu={c} showOn="menu" showNew/>
                                     <NavDropdown.Divider/>
                                     <NavDropdown.Item as={Link} to={`/${single}/list`}>My {capitalize(c)}</NavDropdown.Item>
@@ -34,7 +34,7 @@ export default function AppNav() {
                             );
                         })}
                         {(isAdmin && !OVR_SUNY_ID) &&
-                        <NavDropdown title="Admin" id="admin-nav-dropdown" alignRight>
+                        <NavDropdown title="Admin" id="admin-nav-dropdown">
                             <NavDropdown.Item as={Link} to="/admin/news">News</NavDropdown.Item>
                             <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/admin/users">Users</NavDropdown.Item>

@@ -145,10 +145,17 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             directory: {
                 address:[],
                 phone:[],
-                email:[]
+                email:[],
+                loadDate:{address:"",phone:"",email:""}
             },
-            education:[],
-            contact:[]
+            education:{
+                institutions:[],
+                loadDate:""
+            },
+            contact:{
+                contacts:[],
+                loadDate:""
+            }
         },
         employment: {
             position: {
@@ -321,7 +328,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                     </Col>
                 </Row>
             </header>
-            <FormProvider {...methods} isDraft={isDraft} isNew={isNew} handleTabs={handleTabs}>
+            <FormProvider {...methods} isDraft={isDraft} isNew={isNew} sunyId={methods.getValues('person.info.sunyId')} handleTabs={handleTabs}>
                 <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)} onReset={handleReset}>
                     <Tabs activeKey={activeTab} onSelect={navigate} id="hr-forms-tabs">
                         {tabList.map(t => (
@@ -394,7 +401,7 @@ function FormTabRouter({tab,activeTab,subTab,...props}) {
 }
 
 function FormInfoBox () {
-    const { getValues } = useFormContext();
+    const { getValues, sunyId } = useFormContext();
     return (
         <Alert variant="secondary" className="mb-3">
             <Row as="dl" className="mb-0">
@@ -403,7 +410,7 @@ function FormInfoBox () {
                 <Col as="dt" sm={2} className="mb-0">Payroll:</Col>
                 <Col as="dd" sm={4} className="mb-0">{getValues('payroll.title')}</Col>
                 <Col as="dt" sm={2} className="mb-0">SUNY ID:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues('person.info.sunyId')}</Col>
+                <Col as="dd" sm={4} className="mb-0">{sunyId}</Col>
                 <Col as="dt" sm={2} className="mb-0">Form Type:</Col>
                 <Col as="dd" sm={4} className="mb-0"><FormTypeDisplay/></Col>
                 <Col as="dt" sm={2} className="mb-0">B-Number:</Col>

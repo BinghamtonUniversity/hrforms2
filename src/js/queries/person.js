@@ -40,12 +40,13 @@ export default function usePersonQueries() {
         return useQuery(['personLookup',path],q(`person/${data.type.toLowerCase()}/${path.join('/')}`),options);
     }
     
-    const getDirectoryInfo = (...args) => {
+    const getPersonInfo = (...args) => {
         const SUNY_ID = args[0]?.SUNY_ID||args[0]||'';
-        const options = args[0]?.options||args[1]||{}
-        if (!SUNY_ID&&!dirType) return qErr('Bad Data');
-        return useQuery(['personDirectoryInfo',SUNY_ID],q(`directoryinfo/${SUNY_ID}`),options);
+        const infoType = args[0]?.infoType||args[1]||'';
+        const options = args[0]?.options||args[2]||{}
+        if (!SUNY_ID&&!infoType) return qErr('Bad Data');
+        return useQuery(['personInfo',SUNY_ID,infoType],q(`personinfo/${SUNY_ID}/${infoType}`),options);
     }
 
-    return {lookupPerson,getDirectoryInfo}; 
+    return {lookupPerson,getPersonInfo}; 
 }

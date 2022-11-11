@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useAppQueries } from "../../queries";
+import usePersonQueries from "../../queries/person";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import DatePicker from "react-datepicker";
@@ -9,21 +10,38 @@ import { Loading, CountrySelector } from "../components";
 const name = 'person.demographics';
 
 export default function PersonDemographics() {
-    const { control, getValues, setValue } = useFormContext();
+    const { control, getValues, setValue, sunyId } = useFormContext();
 
     const watchCitizen = useWatch({name:`${name}.citizen`});
     const watchVeteran = useWatch({name:`${name}.veteran`});
 
+    const {getPersonInfo} = usePersonQueries();
+    //TODO: only fetch if not saved; saved data comes HRF2 table.
+    const demographicsinfo = getPersonInfo(sunyId,'demographics',{
+        refetchOnMount:false,
+        enabled:!!sunyId
+    });
+
     const {getListData} = useAppQueries();
     const gender = getListData('gender',{onSuccess:d=>{
-        const gender = getValues('person.demographics.gender.id');
-        if (gender) setValue('person.demographics.gender.value',d.find(g=>g[0]==gender)?.at(1)||'');
+        //const gender = getValues('person.demographics.gender.id');
+        //if (gender) setValue('person.demographics.gender.value',d.find(g=>g[0]==gender)?.at(1)||'');
     }});
 
     const handleChangeGender = (e,field) => {
         field.onChange(e);
         setValue(`${name}.gender.value`,(e.target.value)?gender.data.find(g=>g[0]==e.target.value)[1]:'');
     }
+
+    useEffect(() => {
+        if (!demographicsinfo.data||!gender.data) return;
+        //if (getValues('person.directory.loadDate.phone')) return;
+        console.debug('setting demographic data...');
+        setValue(`${name}.gender.id`,demographicsinfo.data?.at(0)?.GENDER);
+        console.log(demographicsinfo.data);
+        //setValue('person.directory.loadDate.phone',new Date());
+    },[demographicsinfo.data,gender.data]);
+
     return (
         <article className="mt-3">
             <Row as="header">

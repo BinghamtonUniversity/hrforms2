@@ -3,29 +3,26 @@ import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { get, cloneDeep } from "lodash";
 import { useAppQueries } from "../../queries";
+import usePersonQueries from "../../queries/person";
 import { AppButton, DateFormat, StateSelector } from "../components";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import PhoneInput from 'react-phone-input-2';
-import { Typeahead } from "react-bootstrap-typeahead";
-
 import 'react-phone-input-2/lib/style.css'
-import usePersonQueries from "../../queries/person";
 
 //TODO: make address form a component and pass stuff?
 //TODO: consolidate the save/edit/cancel/remove footer?
 
 export default function PersonDirectory() {
-    const { getValues } = useFormContext();
+    const { sunyId } = useFormContext();
 
-    const {getDirectoryInfo} = usePersonQueries();
-    //TODO: may need option to only fetch once; should not update
-    const directoryinfo = getDirectoryInfo(getValues('person.info.sunyId'),{enabled:false});
+    const {getPersonInfo} = usePersonQueries();
+    //TODO: only fetch if not saved; saved data comes HRF2 table.
+    const directoryinfo = getPersonInfo(sunyId,'directory',{
+        refetchOnMount:false,
+        enabled:!!sunyId
+    });
 
-    useEffect(()=>{
-        console.log('refetch');
-        directoryinfo.refetch();
-    },[]);
     return (
         <>
             <article className="mt-3">
@@ -38,9 +35,13 @@ export default function PersonDirectory() {
                     </Col>
                 </Row>
             </article>
-            <PersonDirectoryAddresses data={directoryinfo.data?.address}/>
-            <PersonDirectoryPhone/>
-            <PersonDirectoryEmail/>
+            {(directoryinfo.data||!sunyId) &&
+                <>
+                    <PersonDirectoryAddresses data={directoryinfo.data?.address}/>
+                    <PersonDirectoryPhone data={directoryinfo.data?.phone}/>
+                    <PersonDirectoryEmail data={directoryinfo.data?.email}/>
+                </>
+            }
         </>
     );
 }
@@ -60,9 +61,7 @@ function PersonDirectoryAddresses({data}) {
 
     const {getListData} = useAppQueries();
     const addressCodes = getListData('addressCodes');
-    const buildings = getListData('buildings',{select:d=>{
-        return d.map(building=>{return {id:building[0],label:building[1]}});
-    }});
+    const buildings = getListData('buildings');
     const depts = getListData('deptOrgs');
 
     const testField = useCallback((index,fld) => {
@@ -74,18 +73,24 @@ function PersonDirectoryAddresses({data}) {
         if (!addressCodes.data) return true;
         return addressCodes.data.find(c=>c.id==watchAddress?.[index]?.type)?.edit;
     },[addressCodes.data,watchAddress]);
-
+    
+    //TODO: will need to get field.name
+    const disableText = useCallback(field => {
+        const fieldName = field.name.split('.').slice(-3,-1).join('.');
+        return !!get(watchAddress,`${fieldName}.code`);
+    },[watchAddress]);
     const handleSelectChange = (e,field,index) => {
         field.onChange(e);
-        setValue(`${name}.${index}.department.desc`,e.target.selectedOptions[0].label);
-        setValue(`${name}.${index}.department.text`,e.target.selectedOptions[0].label);
+        const fieldName = field.name.split('.').slice(0,-1).join('.');
+        setValue(`${fieldName}.desc`,e.target.selectedOptions[0].label);
+        setValue(`${fieldName}.text`,e.target.selectedOptions[0].label);
     }
     const handleNew = () => {
         if (fields.length > 2) return;
         append({
             type:"",
-            department:"",
-            building:[],
+            department:{code:"",desc:"",text:""},
+            building:{code:"",desc:"",text:""},
             room:"",
             line1:"",
             line2:"",
@@ -129,14 +134,17 @@ function PersonDirectoryAddresses({data}) {
     }
 
     useEffect(() => {
-        console.log(data,depts.data,buildings.data);
-        if (!data) return;
+        if (!data||!depts.data||!buildings.data) return;
+        if (getValues('person.directory.loadDate.address')) return;
+        console.debug('setting address data...');
         const dataMap = [];
         data.forEach(d=>{
+            const dept = depts.data.find(a=>a.DEPARTMENT_DESC.startsWith(d.ADDRESS_1));
+            const bldg = buildings.data.find(b=>b[1]?.toLowerCase()==d.ADDRESS_2?.toLowerCase());
             dataMap.push({
                 type:d.ADDRESS_CODE,
-                department:d.ADDRESS_1||'',//lookup value
-                building:[], //lookup value
+                department:{code:dept?.DEPARTMENT_CODE,desc:dept?.DEPARTMENT_DESC,text:d.ADDRESS_1},
+                building:{code:bldg?.at(0),desc:(bldg?.at(0))?`${bldg?.at(0)} - ${bldg?.at(1)}`:'',text:d.ADDRESS_2},
                 room:d.ADDRESS_3||'',
                 line1:d.ADDRESS_1||'',
                 line2:d.ADDRESS_2||'',
@@ -147,19 +155,8 @@ function PersonDirectoryAddresses({data}) {
             });
         });
         replace(dataMap);
-        /* map:
-            type:"",
-            department:"",
-            building:"",
-            room:"",
-            line1:"",
-            line2:"",
-            city:"",
-            state:"",
-            zipcode:"",
-            created:new Date
-        */
-    },[data]);
+        setValue('person.directory.loadDate.address',new Date());
+    },[data,buildings.data,depts.data]);
 
     return (
         <article className="py-3">
@@ -221,7 +218,8 @@ function PersonDirectoryAddresses({data}) {
                                     name={`${name}.${index}.department.text`}
                                     defaultValue=""
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)}/>}
+                                    rules={{required:{value:true,message:'Department is Required'}}}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(field)} isInvalid={get(errors,field.name,false)}/>}
                                 />
                             </Col>
                             <Col xs="auto">
@@ -230,41 +228,41 @@ function PersonDirectoryAddresses({data}) {
                                     defaultValue=""
                                     control={control}
                                     render={({field}) => (
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field,index)} disabled={editIndex!=index||!editableType(index)}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field,index)} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,`${name}.${index}.department.text`,false)}>
                                             <option></option>
                                             {depts.data&&depts.data.map(d=><option key={d.DEPARTMENT_CODE} value={d.DEPARTMENT_CODE}>{d.DEPARTMENT_DESC}</option>)}
                                         </Form.Control>
                                     )}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].department.message`,'')}</Form.Control.Feedback>
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.department.text.message`,'')}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>
                     }
                     {testField(index,'building') &&
                         <Form.Group as={Row} className="mb-1">
-                            <Form.Label column md={2}>Building*:</Form.Label>
+                            <Form.Label column md={2}>Buidling*:</Form.Label>
                             <Col xs="auto">
-                                {buildings.isLoading && <p>Loading...</p>}
-                                {buildings.isError && <p>Error Loading</p>}
-                                {buildings.data &&
-                                    <Controller
-                                        name={`${name}.${index}.building`}
-                                        defaultValue=""
-                                        control={control}
-                                        render={({field}) => <Typeahead 
-                                            {...field} 
-                                            id={`building-${index}`}
-                                            options={buildings.data} 
-                                            flip={true} 
-                                            minLength={2} 
-                                            allowNew={true} 
-                                            selected={field.value}
-                                            disabled={editIndex!=index}
-                                            isInvalid={typeof get(errors,field.name,false) == 'object'}
-                                        />}
-                                    />
-                                }
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].building.message`,'')}</Form.Control.Feedback>
+                                <Controller
+                                    name={`${name}.${index}.building.text`}
+                                    defaultValue=""
+                                    control={control}
+                                    rules={{required:{value:true,message:'Building is Required'}}}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(field)} isInvalid={get(errors,field.name,false)}/>}
+                                />
+                            </Col>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.${index}.building.code`}
+                                    defaultValue=""
+                                    control={control}
+                                    render={({field}) => (
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field,index)} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,`${name}.${index}.building.text`,false)}>
+                                            <option></option>
+                                            {buildings.data&&buildings.data.map(b=><option key={b[0]} value={b[0]}>{b[0]} - {b[1]}</option>)}
+                                        </Form.Control>
+                                    )}
+                                />
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.building.text.message`,'')}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>
                     }
@@ -343,10 +341,10 @@ function PersonDirectoryAddresses({data}) {
     );
 }
 
-function PersonDirectoryPhone() {
+function PersonDirectoryPhone({data}) {
     const name = 'person.directory.phone'
     const { control, getValues, setValue, trigger, clearErrors, formState: { errors } } = useFormContext();
-    const { fields, append, remove, move, update } = useFieldArray({
+    const { fields, append, replace, remove, update } = useFieldArray({
         control:control,
         name:name
     });
@@ -416,6 +414,24 @@ function PersonDirectoryPhone() {
         setEditValues(undefined);
         setIsNew(false);
     }
+
+    useEffect(() => {
+        if (!data) return;
+        if (getValues('person.directory.loadDate.phone')) return;
+        console.debug('setting phone data...');
+        const dataMap = [];
+        data.forEach(d=>{
+            dataMap.push({
+                type:d.PHONE_TYPE,
+                number:(d.PHONE_NUMBER.startsWith('+'))?d.PHONE_NUMBER:`+1${d.PHONE_NUMBER}`,
+                effDate:new Date(d.CREATE_DATE)||new Date(),
+                created:new Date(d.CREATE_DATE)||new Date()
+            });
+        });
+        replace(dataMap);
+        setValue('person.directory.loadDate.phone',new Date());
+    },[data]);
+
     return (
         <article className="py-3">
             <Row as="header">
@@ -518,10 +534,10 @@ function PersonDirectoryPhone() {
     );
 }
 
-function PersonDirectoryEmail() {
+function PersonDirectoryEmail({data}) {
     const name = 'person.directory.email';
-    const { control, getValues, trigger, clearErrors, formState: { errors } } = useFormContext();
-    const { fields, append, remove, move, update } = useFieldArray({
+    const { control, getValues, setValue, trigger, clearErrors, formState: { errors } } = useFormContext();
+    const { fields, append, replace, remove,  update } = useFieldArray({
         control:control,
         name:name
     });
@@ -580,6 +596,24 @@ function PersonDirectoryEmail() {
         setEditValues(undefined);
         setIsNew(false);
     }
+
+    useEffect(() => {
+        if (!data) return;
+        if (getValues('person.directory.loadDate.email')) return;
+        console.debug('setting email data...');
+        const dataMap = [];
+        data.forEach(d=>{
+            dataMap.push({
+                type:d.EMAIL_TYPE,
+                email:d.EMAIL_ADDRESS,
+                effDate:new Date(d.CREATE_DATE)||new Date(),
+                created:new Date(d.CREATE_DATE)||new Date()
+            });
+        });
+        replace(dataMap);
+        setValue('person.directory.loadDate.email',new Date());
+    },[data,setValue]);
+
     return (
         <article className="py-3">
             <Row as="header">
