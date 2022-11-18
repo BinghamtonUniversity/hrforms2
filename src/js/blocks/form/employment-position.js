@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Row, Col, Form, Alert, InputGroup } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { AppButton, DateFormat, Loading } from "../components";
 import { useAppQueries } from "../../queries";
 import useFormQueries from "../../queries/forms";
+import useEmploymentQueries from "../../queries/employment";
 import DatePicker from "react-datepicker";
 import { addDays } from "date-fns";
 import { EmploymentPositionInfoBox } from "../../pages/form";
@@ -12,10 +13,30 @@ import { Icon } from "@iconify/react";
 const name = 'employment.position';
 
 export default function EmploymentPosition() {
-    const { control, getValues } = useFormContext();
+    const { control, getValues, setValue, hrPersonId } = useFormContext();
     const watchLookupFields = useWatch({name:['payroll.code',`${name}.lineNumber`,'effDate'],control:control});
 
     const [showResults,setShowResults] = useState(!!getValues(`${name}.lineNumberDetails.POSITION_ID`));
+
+    const {getEmploymentInfo} = useEmploymentQueries();
+    //TODO: only fetch if not saved; saved data comes HRF2 table.
+    const positioninfo = getEmploymentInfo(hrPersonId,'position',{
+        refetchOnMount:false,
+        enabled:!!hrPersonId
+    });
+
+    useEffect(() => {
+        if (!positioninfo.data) return;
+        //if (getValues(`${name}.loadDate`)) return;
+        setValue(`${name}.lineNumber`,positioninfo.data?.LINE_ITEM_NUMBER);
+        setValue(`${name}.lineNumberDetails.POSITION_ID`,positioninfo.data?.LINE_ITEM_NUMBER);
+        setValue(`${name}.apptType`,positioninfo.data?.APPOINTMENT_TYPE);
+        setValue(`${name}.apptPercent`,positioninfo.data?.APPOINTMENT_PERCENT);
+        setValue(`${name}.checkSortCode`,positioninfo.data?.PAYROLL_MAIL_DROP_ID);
+        setValue(`${name}.benefitsFlag`,positioninfo.data?.BENEFIT_FLAG);
+        setShowResults(true);
+        //setValue(`${name}.loadDate`,new Date());
+    },[positioninfo.data]);
 
     return (
         <article className="mt-3">
@@ -29,7 +50,7 @@ export default function EmploymentPosition() {
 }
 
 function EmploymentPositionSearch({setShowResults}) {
-    const { control, getValues, setValue, formState: { errors } } = useFormContext();
+    const { control, setValue, formState: { errors } } = useFormContext();
     const handleSearch = () => {
         setShowResults(true);
     }
@@ -220,7 +241,7 @@ function BenefitsFlag() {
             <Form.Label column md={2}>Benefits Flag:</Form.Label>
             <Col xs="auto">
                 <Controller
-                    name={`${name}.apptType`}
+                    name={`${name}.benefitsFlag`}
                     control={control}
                     defaultValue="9"
                     render={({field}) => (

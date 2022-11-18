@@ -6,27 +6,18 @@ import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import { Loading, CountrySelector } from "../components";
+import { isValid } from "date-fns";
 
 const name = 'person.demographics';
 
 export default function PersonDemographics() {
-    const { control, getValues, setValue, sunyId } = useFormContext();
+    const { control, getValues, setValue } = useFormContext();
 
-    const watchCitizen = useWatch({name:`${name}.citizen`});
-    const watchVeteran = useWatch({name:`${name}.veteran`});
-
-    const {getPersonInfo} = usePersonQueries();
-    //TODO: only fetch if not saved; saved data comes HRF2 table.
-    const demographicsinfo = getPersonInfo(sunyId,'demographics',{
-        refetchOnMount:false,
-        enabled:!!sunyId
-    });
+    const watchCitizen = useWatch({name:`${name}.US_CITIZEN_INDICATOR`});
+    const watchVeteran = useWatch({name:`${name}.VETERAN_INDICATOR`});
 
     const {getListData} = useAppQueries();
-    const gender = getListData('gender',{onSuccess:d=>{
-        //const gender = getValues('person.demographics.gender.id');
-        //if (gender) setValue('person.demographics.gender.value',d.find(g=>g[0]==gender)?.at(1)||'');
-    }});
+    const gender = getListData('gender');
 
     const handleChangeGender = (e,field) => {
         field.onChange(e);
@@ -35,11 +26,18 @@ export default function PersonDemographics() {
 
     useEffect(() => {
         if (!demographicsinfo.data||!gender.data) return;
-        //if (getValues('person.directory.loadDate.phone')) return;
+        if (getValues(`${name}.loadDate.demo`)) return;
         console.debug('setting demographic data...');
-        setValue(`${name}.gender.id`,demographicsinfo.data?.at(0)?.GENDER);
-        console.log(demographicsinfo.data);
-        //setValue('person.directory.loadDate.phone',new Date());
+        const dob = new Date(demographicsinfo.data?.BIRTH_DATE);
+        setValue(`${name}.DOB`,isValid(dob)?dob:"");
+        setValue(`${name}.gender.id`,demographicsinfo.data?.GENDER);
+        setValue(`${name}.citizen`,(demographicsinfo.data?.US_CITIZEN_INDICATOR=="Y")?"Yes":"No");
+        setValue(`${name}.empAuthCardOnly`,(demographicsinfo.data?.EMP_AUTHORIZE_CARD_INDICATOR=="Y")?"Yes":"No");
+        setValue(`${name}.citizenCountry`,demographicsinfo.data?.CITIZENSHIP_COUNTRY_CODE);
+        setValue(`${name}.citizenType`,demographicsinfo.data?.NON_CITIZEN_TYPE);
+        setValue(`${name}.visaType`,demographicsinfo.data?.VISA_CODE);
+        setValue(`${name}.veteran`,(demographicsinfo.data?.VETERAN_INDICATOR=="Y")?"Yes":"No");
+        setValue(`${name}.loadDate.demo`,new Date());
     },[demographicsinfo.data,gender.data]);
 
     return (
@@ -52,7 +50,7 @@ export default function PersonDemographics() {
                 <Col xs="auto">
                     <InputGroup>
                         <Controller
-                            name={`${name}.DOB`}
+                            name={`${name}.birthDate`}
                             control={control}
                             render={({field}) => <Form.Control
                                 as={DatePicker}
@@ -96,13 +94,13 @@ export default function PersonDemographics() {
                 <Form.Label column md={2}>US Citizen:</Form.Label>
                 <Col xs="auto" className="pt-2">
                     <Controller
-                        name={`${name}.citizen`}
+                        name={`${name}.US_CITIZEN_INDICATOR`}
                         defaultValue="Yes"
                         control={control}
                         render={({field}) => (
                             <>
-                                <Form.Check {...field} inline type="radio" label="Yes" value='Yes' checked={field.value=='Yes'}/>
-                                <Form.Check {...field} inline type="radio" label="No" value='No' checked={field.value=='No'}/>
+                                <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'}/>
+                                <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'}/>
                             </>
                         )}
                     />
@@ -111,32 +109,32 @@ export default function PersonDemographics() {
 
             {watchCitizen == 'No' && <PersonDemographicsNonUSCitizen/>}
             
-            <PersonDemographicsMilitaryStatus/>
+            <PersonDemographicsMilitaryStatus data={demographicsinfo.data}/>
 
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Veteran:</Form.Label>
                 <Col xs="auto" className="pt-2">
                     <Controller
-                        name={`${name}.veteran`}
+                        name={`${name}.VETERAN_INDICATOR`}
                         defaultValue="Yes"
                         control={control}
                         render={({field}) => (
                             <>
-                                <Form.Check {...field} inline type="radio" label="Yes" value='Yes' checked={field.value=='Yes'}/>
-                                <Form.Check {...field} inline type="radio" label="No" value='No' checked={field.value=='No'}/>
+                                <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'}/>
+                                <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'}/>
                             </>
                         )}
                     />
                 </Col>
             </Form.Group>
 
-            {watchVeteran == 'Yes' && <PersonDemographicsVeteranDetails/>}
+            {watchVeteran == 'Yes' && <PersonDemographicsVeteranDetails data={demographicsinfo.data}/>}
         </article>
     );
 }
 
-function PersonDemographicsMilitaryStatus() {
-    const { control } = useFormContext();
+function PersonDemographicsMilitaryStatus({data}) {
+    const { control, getValues, setValue } = useFormContext();
 
     const {getListData} = useAppQueries();
     const milstatus = getListData('militaryStatus');
@@ -152,6 +150,16 @@ function PersonDemographicsMilitaryStatus() {
             field.onChange(field.value.filter(v=>v!==e.target.value))
         }
     }
+    useEffect(() => {
+        if (!data || !milstatus.data) return;
+        if (getValues(`${name}.loadDate.milStatus`)) return;
+        const milStatusArray = [];
+        const milStatusCode = data?.MILITARY_STATUS_CODE;
+        if (milStatusCode) milStatusCode.split('').forEach((c,i)=>c==1&&milStatusArray.push(milstatus.data?.at(i)?.at(0)));
+        if (!milStatusArray.length) milStatusArray.push('N'); // add "N":"None" if no option is selected
+        setValue(`${name}.militaryStatus`,milStatusArray);
+        setValue(`${name}.loadDate.milStatus`,new Date());
+    },[data,milstatus.data]);
 
     return (
         <Form.Group as={Row}>
@@ -164,7 +172,7 @@ function PersonDemographicsMilitaryStatus() {
                     name={`${name}.militaryStatus`}
                     defaultValue="Yes"
                     control={control}
-                    render={({field}) => milstatus.data.map((s,i)=><Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.includes(s[0])} onChange={e=>handleChange(e,field)}/>)}
+                    render={({field}) => milstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.includes(s[0])} onChange={e=>handleChange(e,field)}/>)}
                 />}
             </Col>
         </Form.Group>
@@ -174,10 +182,10 @@ function PersonDemographicsMilitaryStatus() {
 function PersonDemographicsNonUSCitizen() {
     const { control } = useFormContext();
 
-    const watchCitizenType = useWatch({name:`${name}.citizenType`});
+    const watchCitizenType = useWatch({name:`${name}.NON_CITIZEN_TYPE`});
 
     const { getListData } = useAppQueries();
-    const citizentype = getListData('nonUsCitizenType');
+    const citizentype = getListData('NON_CITIZEN_TYPE');
     const visatype = getListData('visaTypes');
 
     return (
@@ -186,7 +194,7 @@ function PersonDemographicsNonUSCitizen() {
                 <Form.Label column md={2}>Non-US Citizen Type:</Form.Label>
                 <Col xs="auto">
                     <Controller
-                        name={`${name}.citizenType`}
+                        name={`${name}.NON_CITIZEN_TYPE`}
                         control={control}
                         render={({field})=>(
                             <>
@@ -208,13 +216,12 @@ function PersonDemographicsNonUSCitizen() {
                     <Form.Label column md={2}>Employment Authorization Card Only:</Form.Label>
                     <Col xs="auto" className="pt-2">
                         <Controller
-                            name={`${name}.empAuthCardOnly`}
-                            defaultValue="Yes"
+                            name={`${name}.EMP_AUTHORIZE_CARD_INDICATOR`}
                             control={control}
                             render={({field}) => (
                                 <>
-                                    <Form.Check {...field} inline type="radio" label="Yes" value='Yes' checked={field.value=='Yes'}/>
-                                    <Form.Check {...field} inline type="radio" label="No" value='No' checked={field.value=='No'}/>
+                                    <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'}/>
+                                    <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'}/>
                                 </>
                             )}
                         />
@@ -225,7 +232,7 @@ function PersonDemographicsNonUSCitizen() {
                 <Form.Label column md={2}>Country of Citizenship:</Form.Label>
                 <Col xs="auto">
                     <Controller
-                        name={`${name}.citizenCountry`}
+                        name={`${name}.CITIZENSHIP_COUNTRY_CODE`}
                         defaultValue=""
                         control={control}
                         render={({field}) => <CountrySelector field={field}/>}
@@ -236,7 +243,7 @@ function PersonDemographicsNonUSCitizen() {
                 <Form.Label column md={2}>Visa Type:</Form.Label>
                 <Col xs="auto">
                     <Controller
-                        name={`${name}.visaType`}
+                        name={`${name}.VISA_CODE`}
                         control={control}
                         render={({field})=>(
                         <>
@@ -256,8 +263,8 @@ function PersonDemographicsNonUSCitizen() {
     );
 }
 
-function PersonDemographicsVeteranDetails() {
-    const { control } = useFormContext();
+function PersonDemographicsVeteranDetails({data}) {
+    const { control, getValues, setValue } = useFormContext();
 
     const { getListData } = useAppQueries();
     const vetstatus = getListData('protectedVeteranStatus');
@@ -273,6 +280,19 @@ function PersonDemographicsVeteranDetails() {
             field.onChange(field.value.filter(v=>v!==e.target.value))
         }
     }
+    
+    useEffect(() => {
+        if (!data || !vetstatus.data) return;
+        if (getValues(`${name}.loadDate.vetStatus`)) return;
+        const vetStatusArray = [];
+        const vetStatusCode = data?.PROTECTED_VET_STATUS_CODE;
+        if (vetStatusCode) vetStatusCode.split('').forEach((c,i)=>c==1&&vetStatusArray.push(vetstatus.data?.at(i)?.at(0)));
+        if (!vetStatusArray.length) vetStatusArray.push('N'); // add "N":"Not a Proteced Veteran" if no other option is selected
+        setValue(`${name}.protectedVetStatus`,vetStatusArray);
+        const milSepDate = new Date(data?.MILITARY_SEPARATION_DATE);
+        setValue(`${name}.militarySepDate`,isValid(milSepDate)?milSepDate:"");
+        setValue(`${name}.loadDate.vetStatus`,new Date());
+    },[data,vetstatus.data]);
 
     return (
         <>
@@ -285,7 +305,7 @@ function PersonDemographicsVeteranDetails() {
                     <Controller
                         name={`${name}.protectedVetStatus`}
                         control={control}
-                        render={({field}) => vetstatus.data.map(s=><Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.includes(s[0])} onChange={e=>handleChange(e,field)}/>)}
+                        render={({field}) => vetstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.includes(s[0])} onChange={e=>handleChange(e,field)}/>)}
                     />}
                 </Col>
             </Form.Group>

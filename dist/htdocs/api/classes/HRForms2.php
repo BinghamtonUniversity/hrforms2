@@ -206,6 +206,33 @@ Class HRForms2 {
 	}
 
 	/* CUSTOM APPLICATION FUNCTIONS */	
+
+	/**
+	* Helper function to convert null values in an array to empty strings
+	*/
+	protected function null2Empty($array) {
+		foreach($array as &$row) {
+			if (is_array($row)) {
+				$row = $this->null2Empty($row);
+			} else {
+				$row = (is_null($row))?"":$row;
+			}
+		}
+		return $array;
+	}
+	
+	protected function nullToEmpty(&$array) {
+		foreach($array as &$row) {
+			if (is_array($row)) {
+				foreach($row as $key=>$value) {
+					if (is_null($value)) $row[$key] = "";
+				}
+			} else {
+				var_dump($row);
+			}
+		}
+	}
+
 	/**
 	* Returns true/false if the SUNY ID is in the local admin table
 	* @param {number} $id - SUNY ID to check

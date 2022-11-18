@@ -30,15 +30,15 @@ class Position extends HRForms2 {
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
         $qry = "select hr_pos_id as position_id, lin_itm_nbr as line_number, pr_agy_cd as payroll, 
-            pos_eff_dt as effective_date, seg_cd as segment_code, ttl_shr_dsc as title, nu_cd as negotiating_unit, 
-            sal_grd_pre || sal_grd_suf as salary_grade, pos_pct as position_percent, pay_bas_cd as pay_basis, 
-            dpt_cmp_dsc as position_department, data_sts as position_status
-                from BUHR_POSITION_MV@banner.cc.binghamton.edu
-                where pr_agy_cd = :payroll
-                and lin_itm_nbr = :line_number
-                and pos_eff_dt <= :eff_date
-                and data_sts <> 'H'
-                order by pos_eff_dt desc, data_sts, decode(data_sts,'C',1,'F',2,3) asc";
+				pos_eff_dt as effective_date, seg_cd as segment_code, ttl_shr_dsc as title, nu_cd as negotiating_unit, 
+				sal_grd_pre || sal_grd_suf as salary_grade, pos_pct as position_percent, pay_bas_cd as pay_basis, 
+				dpt_cmp_dsc as position_department, data_sts as position_status
+			from BUHR_POSITION_MV@banner.cc.binghamton.edu
+			where pr_agy_cd = :payroll
+			and lin_itm_nbr = :line_number
+			and pos_eff_dt <= :eff_date
+			and data_sts <> 'H'
+			order by pos_eff_dt desc, data_sts, decode(data_sts,'C',1,'F',2,3) asc";
         $stmt = oci_parse($this->db,$qry);
         $eff_date = (!isset($this->req[2]))?date('d-M-Y'):$this->req[2];
         oci_bind_by_name($stmt,":payroll", $this->req[0]);

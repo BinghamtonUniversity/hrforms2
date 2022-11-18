@@ -50,7 +50,8 @@ class Person extends HRForms2 {
             nvl(pemp.data_status_emp, pers.role_status) as data_status_emp, pemp.status_type,
             nvl(pemp.appointment_effective_date, pers.role_effective_date) as appointment_effective_date,
             nvl(pemp.appointment_end_date, pers.role_end_date) as appointment_end_date,
-            pers.birth_date, pers.salutation_code, pers.legal_first_name, pers.legal_middle_name, pers.legal_last_name, pers.suffix_code,
+            pers.birth_date, nvl(pers.alias_first_name,pers.legal_first_name) as first_name,
+            pers.legal_middle_name, pers.legal_last_name, pers.suffix_code, 
             pers.local_campus_id, pemp.payroll_agency_code, pemp.title_description, pemp.dpt_cmp_dsc,
             pemp.negotiating_unit, pemp.appointment_type, pemp.appointment_percent, pemp.pay_basis
             FROM buhr.buhr_person_mv@banner.cc.binghamton.edu pers
@@ -86,7 +87,9 @@ class Person extends HRForms2 {
         // Get results
         $r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
-        oci_fetch_all($stmt,$this->_arr['results'],null,null,OCI_FETCHSTATEMENT_BY_ROW);        
+        oci_fetch_all($stmt,$results,null,null,OCI_FETCHSTATEMENT_BY_ROW);
+        $this->nullToEmpty($results);
+        $this->_arr['results'] = $results;
         $this->returnData = $this->_arr;
         if ($this->retJSON) $this->toJSON($this->returnData);
 	}

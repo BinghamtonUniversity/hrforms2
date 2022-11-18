@@ -5,6 +5,7 @@ import { get, cloneDeep } from "lodash";
 import { AppButton, CountrySelector, DateFormat, StateSelector } from "../components";
 import { useAppQueries } from "../../queries";
 import usePersonQueries from "../../queries/person";
+import { isValid } from "date-fns";
 import PhoneInput from 'react-phone-input-2';
 
 import 'react-phone-input-2/lib/style.css'
@@ -122,27 +123,28 @@ export default function PersonContacts() {
         console.debug('setting contact data...');
         const dataMap = [];
         contactinfo.data.forEach(d=>{
+            const createdDate = new Date(d?.CREATED_DATE);
             dataMap.push({
-                primary: (d.EMR_CTC_RANK=="0")?'yes':'no',
+                primary: d?.IS_PRIMARY,
                 name: {
-                    first: d.EMR_CTC_FIRST_NAME,
-                    last: d.EMR_CTC_LAST_NAME
+                    first: d?.EMR_CTC_FIRST_NAME,
+                    last: d?.EMR_CTC_LAST_NAME
                 },
-                line1: d.EMR_CTC_ADDRESS_1,
-                line2: d.EMR_CTC_ADDRESS_2,
-                city: d.EMR_CTC_CITY,
-                state: d.EMR_CTC_STATE_CODE,
-                zipcode: d.EMR_CTC_ZIP,
-                country: d.EMR_CTC_COUNTRY_CODE,
+                line1: d?.EMR_CTC_ADDRESS_1,
+                line2: d?.EMR_CTC_ADDRESS_2,
+                city: d?.EMR_CTC_CITY,
+                state: d?.EMR_CTC_STATE_CODE,
+                zipcode: d?.EMR_CTC_ZIP,
+                country: d?.EMR_CTC_COUNTRY_CODE,
                 phone: {
-                    day: d.EMR_CTC_DAY_PHONE,
-                    night: d.EMR_CTC_NIGHT_PHONE,
-                    cell: d.EMR_CTC_CELL_PHONE,
-                    intl: d.EMR_CTC_INTERNATIONAL_PHONE
+                    day: d?.EMR_CTC_DAY_PHONE,
+                    night: d?.EMR_CTC_NIGHT_PHONE,
+                    cell: d?.EMR_CTC_CELL_PHONE,
+                    intl: d?.EMR_CTC_INTERNATIONAL_PHONE
                 },
-                email: d.EMR_CTC_EMAIL,
-                relationship: d.EMR_CTC_RELATIONSHIP,
-                created:new Date(d.CREATE_DATE)||new Date()
+                email: d?.EMR_CTC_EMAIL,
+                relationship: d?.EMR_CTC_RELATIONSHIP,
+                created:(isValid(createdDate))?createdDate:new Date()
             });
         });
         replace(dataMap);

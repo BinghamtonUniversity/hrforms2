@@ -8,6 +8,7 @@ import { AppButton, DateFormat, StateSelector } from "../components";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import PhoneInput from 'react-phone-input-2';
+import { isValid } from "date-fns";
 import 'react-phone-input-2/lib/style.css'
 
 //TODO: make address form a component and pass stuff?
@@ -141,17 +142,18 @@ function PersonDirectoryAddresses({data}) {
         data.forEach(d=>{
             const dept = depts.data.find(a=>a.DEPARTMENT_DESC.startsWith(d.ADDRESS_1));
             const bldg = buildings.data.find(b=>b[1]?.toLowerCase()==d.ADDRESS_2?.toLowerCase());
+            const createdDate = new Date(d?.CREATE_DATE);
             dataMap.push({
-                type:d.ADDRESS_CODE,
-                department:{code:dept?.DEPARTMENT_CODE,desc:dept?.DEPARTMENT_DESC,text:d.ADDRESS_1},
-                building:{code:bldg?.at(0),desc:(bldg?.at(0))?`${bldg?.at(0)} - ${bldg?.at(1)}`:'',text:d.ADDRESS_2},
-                room:d.ADDRESS_3||'',
-                line1:d.ADDRESS_1||'',
-                line2:d.ADDRESS_2||'',
-                city:d.ADDRESS_CITY||'',
-                state:d.STATE_CODE||'',
+                type:d?.ADDRESS_CODE,
+                department:{code:dept?.DEPARTMENT_CODE,desc:dept?.DEPARTMENT_DESC,text:d?.ADDRESS_1},
+                building:{code:bldg?.at(0),desc:(bldg?.at(0))?`${bldg?.at(0)} - ${bldg?.at(1)}`:'',text:d?.ADDRESS_2},
+                room:d?.ADDRESS_3,
+                line1:d?.ADDRESS_1,
+                line2:d?.ADDRESS_2,
+                city:d?.ADDRESS_CITY,
+                state:d?.STATE_CODE,
                 zipcode:d.ADDRESS_POSTAL_CODE||'',
-                created:new Date(d.CREATE_DATE)||new Date()
+                created:(isValid(createdDate))?createdDate:new Date()
             });
         });
         replace(dataMap);
@@ -421,11 +423,12 @@ function PersonDirectoryPhone({data}) {
         console.debug('setting phone data...');
         const dataMap = [];
         data.forEach(d=>{
+            const createdDate = new Date(d?.CREATE_DATE);
             dataMap.push({
-                type:d.PHONE_TYPE,
-                number:(d.PHONE_NUMBER.startsWith('+'))?d.PHONE_NUMBER:`+1${d.PHONE_NUMBER}`,
-                effDate:new Date(d.CREATE_DATE)||new Date(),
-                created:new Date(d.CREATE_DATE)||new Date()
+                type:d?.PHONE_TYPE,
+                number:(d.PHONE_NUMBER.startsWith('+'))?d?.PHONE_NUMBER:`+1${d?.PHONE_NUMBER}`,
+                effDate:(isValid(createdDate))?createdDate:new Date(),
+                created:(isValid(createdDate))?createdDate:new Date()
             });
         });
         replace(dataMap);
@@ -603,11 +606,12 @@ function PersonDirectoryEmail({data}) {
         console.debug('setting email data...');
         const dataMap = [];
         data.forEach(d=>{
+            const createdDate = new Date(d?.CREATE_DATE);
             dataMap.push({
-                type:d.EMAIL_TYPE,
-                email:d.EMAIL_ADDRESS,
-                effDate:new Date(d.CREATE_DATE)||new Date(),
-                created:new Date(d.CREATE_DATE)||new Date()
+                type:d?.EMAIL_TYPE,
+                email:d?.EMAIL_ADDRESS,
+                effDate:(isValid(createdDate))?createdDate:new Date(),
+                created:(isValid(createdDate))?createdDate:new Date()
             });
         });
         replace(dataMap);

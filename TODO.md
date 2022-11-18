@@ -13,6 +13,7 @@ Bug fixes, enhancements and things still to complete.
  * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
 
 ## Tasks: 
+ * Ability to download user list for auditing
  * Admin Lists: 
    * invalidate queries when list data in changed
    * make list data an l/v pair

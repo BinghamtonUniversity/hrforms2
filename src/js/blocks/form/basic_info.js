@@ -237,18 +237,7 @@ function LookupResults({data,isNew}) {
         setValue('payroll.title','');
         setValue('payroll.description','');
         setValue('formActions',defaultFormActions);
-        //TODO: map selectedRow data to form data; if not args.selectedCount reset?
-        setValue('person.info.sunyId',(args.selectedCount)?args.selectedRows[0]?.SUNY_ID:"");
-        setValue('person.info.bNumber',(args.selectedCount)?args.selectedRows[0]?.LOCAL_CAMPUS_ID:"");
-        setValue('person.info.salutation',(args.selectedCount)?args.selectedRows[0]?.SALUTATION_CODE:"");
-        setValue('person.info.firstName',(args.selectedCount)?args.selectedRows[0]?.LEGAL_FIRST_NAME:"");
-        setValue('person.info.middleName',(args.selectedCount)?args.selectedRows[0]?.LEGAL_MIDDLE_NAME:"");
-        setValue('person.info.lastName',(args.selectedCount)?args.selectedRows[0]?.LEGAL_LAST_NAME:"");
-        setValue('person.demographics.DOB',(args.selectedCount)?args.selectedRows[0]?.birthDate:"");
-        //setValue('person.demographics.gender.id',(args.selectedCount)?args.selectedRows[0]?.GENDER:"");
-        //setValue('person.demographics.citizen',(args.selectedCount)?(args.selectedRows[0]?.CITIZENSHIP_COUNTRY_CODE=='USA')?"Yes":"No":"Yes");
-        setValue('employment.position.lineNumber',(args.selectedCount)?args.selectedRows[0]?.LINE_ITEM_NUMBER:"");
-        setValue('employment.position.lineNumberDetails.POSITION_ID',(args.selectedCount)?args.selectedRows[0]?.LINE_ITEM_NUMBER:"");
+        setValue('person.information.SUNY_ID',(args.selectedCount)?args.selectedRows[0]?.SUNY_ID:"");
     }
 
     const rowSelectCritera = row => {
@@ -279,20 +268,20 @@ function LookupResults({data,isNew}) {
     ));
 
     const columns = useMemo(() => [
-        {name:'NYS ID',selector:row=>row.NYS_EMPLID,sortable:true},
-        {name:'B-Number',selector:row=>row.LOCAL_CAMPUS_ID,sortable:true},
-        {name:'Name',selector:row=>row.sortName,sortable:true},
-        {name:'Birth Date',selector:row=>row.birthDateFmt},
+        {name:'NYS ID',selector:row=>row.NYS_EMPLID,sortable:true,wrap:true},
+        {name:'B-Number',selector:row=>row.LOCAL_CAMPUS_ID,sortable:true,wrap:true},
+        {name:'Name',selector:row=>row.sortName,sortable:true,wrap:true},
+        {name:'Birth Date',selector:row=>row.birthDateFmt,wrap:true},
         {name:'Role',selector:row=>{
             if (!row.EMPLOYMENT_ROLE_TYPE) return "";
             if (row.EMPLOYMENT_ROLE_TYPE == 'New Role') return 'New Role';
             return `${row.EMPLOYMENT_ROLE_TYPE}/${row.DATA_STATUS_EMP}/${row.STATUS_TYPE}`;
-        },sortable:true},
-        {name:'Payroll',selector:row=>row.PAYROLL_AGENCY_CODE,sortable:true},
-        {name:'Department',selector:row=>row.DPT_CMP_DSC,sortable:true},
-        {name:'Title',selector:row=>row.TITLE_DESCRIPTION,sortable:true},
-        {name:'Effective Date',selector:row=>row.effectiveDateFmt,sortable:true},
-        {name:'End Date',selector:row=>row.endDateFmt,sortable:true}
+        },sortable:true,wrap:true},
+        {name:'Payroll',selector:row=>row.PAYROLL_AGENCY_CODE,sortable:true,wrap:true},
+        {name:'Department',selector:row=>row.DPT_CMP_DSC,sortable:true,wrap:true},
+        {name:'Title',selector:row=>row.TITLE_DESCRIPTION,sortable:true,wrap:true},
+        {name:'Effective Date',selector:row=>row.effectiveDateFmt,sortable:true,wrap:true},
+        {name:'End Date',selector:row=>row.endDateFmt,sortable:true,wrap:true}
     ]);
 
     return (
@@ -336,8 +325,7 @@ function PayrollDate({selectedId,selectedPayroll,selectedRoleType}) {
     const [payrollDescription,setPayrollDescription] = useState('');
 
     const {getCodes} = useCodesQueries('payroll');
-    const payrollcodes = getCodes({
-        
+    const payrollcodes = getCodes({    
         refetchOnMount:false,
         select:d=>d.filter(p=>p.ACTIVE==1),
         onSuccess:d=>{
@@ -346,6 +334,8 @@ function PayrollDate({selectedId,selectedPayroll,selectedRoleType}) {
                 setValue('payroll.title',payroll?.PAYROLL_TITLE);
                 setValue('payroll.description',payroll?.PAYROLL_DESCRIPTION);
                 setPayrollDescription(payroll?.PAYROLL_DESCRIPTION);
+                const hasBenefits = payroll?.ADDITIONAL_INFO?.hasBenefits;
+                setValue('employment.position.hasBenefits',!!hasBenefits);
             }
         }
     });
@@ -519,6 +509,7 @@ function FormActions({payroll,roleType}) {
         const tabs = paytrans.data.filter(p=>p.PAYTRANS_ID==codes.paytransId)?.at(0)?.TABS;
         console.debug('Tabs: ',tabs);
         handleTabs(tabs);
+//refetch here?
 
     },[codes]);
 

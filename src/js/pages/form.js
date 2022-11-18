@@ -5,9 +5,9 @@ import { currentUser, NotFound } from "../app";
 import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
 import { AppButton, DateFormat } from "../blocks/components";
-import get from "lodash/get";
-import has from "lodash/has";
-import zip from "lodash/zip";
+import { get, has, zip } from "lodash";
+import usePersonQueries from "../queries/person";
+import { isValid } from "date-fns";
 
 /* TABS */
 const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
@@ -89,14 +89,12 @@ export default function HRForm() {
 
 function FormWrapper({formId,isDraft,isNew,setIsNew}) {
     const { search } = useLocation();
-    const qstr = new URLSearchParams(search);
+    //const qstr = new URLSearchParams(search);
 
     const [isBlocking,setIsBlocking] = useState(false);
 
-    //TODO: probably need to change to useReducer
+    //TODO: probably need to change to useReducer?
     const [tabList,setTabList] = useState(allTabs.filter(t=>t.value=='basic-info'));
-    const [payTransTabs,setPayTransTabs] = useState();
-    //const [tabList,setTabList] = useState(allTabs);
 
     const [activeTab,setActiveTab] = useState('basic-info');
     const [activeNav,setActiveNav] = useState('');
@@ -116,18 +114,21 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
         effDate:"",
         formActions:defaultFormActions,
         person: {
-            info: {
-                sunyId:"",
-                bNumber:"",
-                salutation:"",
-                firstName:"",
-                middleName:"",
-                lastName:"",
-                suffix:"",
-                volFFEMT:"No",
-                rehireRetiree:"No",
-                retiredDate:"",
-                retiredFrom:""
+            information: {
+                "SUNY_ID": "",
+                "LOCAL_CAMPUS_ID": "",
+                "FIRST_NAME": "",
+                "LEGAL_MIDDLE_NAME": "",
+                "LEGAL_LAST_NAME": "",
+                "SUFFIX_CODE": "",
+                "VOLUNTEER_FIRE_FLAG": "",
+                "REHIRE_RETIREE": "",
+                "RETIREMENT_DATE": "",
+                "RETIRED_FROM": "",
+                "SALUTATION": {
+                  "id": "",
+                  "label": ""
+                }
             },
             demographics: {
                 DOB:"",
@@ -139,8 +140,24 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                 gender:{id:"",value:""},
                 militaryStatus:[],
                 veteran:"No",
-                protectedVetStatus:[''],
-                militarySepDate:""                
+                protectedVetStatus:[],
+                militarySepDate:"",
+                loadDate:{demo:"",milStatus:"",vetStatus:""},
+                "BIRTH_DATE": "",
+                "US_CITIZEN_INDICATOR": "",
+                "NON_CITIZEN_TYPE": "",
+                "EMP_AUTHORIZE_CARD_INDICATOR": "",
+                "VISA_CODE": "",
+                "CITIZENSHIP_COUNTRY_CODE": "",
+                "GENDER": "",
+                "HISPANIC_FLAG": "",
+                "ETHNICITY_MULT_CODES": "",
+                "ETHNICITY_SOURCE_DSC": "",
+                "DISABILITY_INDICATOR": "",
+                "MILITARY_STATUS_CODE": "",
+                "VETERAN_INDICATOR": "",
+                "PROTECTED_VET_STATUS_CODE": "",
+                "MILITARY_SEPARATION_DATE": ""
             },
             directory: {
                 address:[],
@@ -165,16 +182,20 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                 apptPercent:"100",
                 hasBenefits:false,
                 benefitsFlag:"9",
-                volReducton:"No",
+                volReduction:"No",
                 apptEndDate:"",
                 checkSortCode:"",
                 justification:""
             },
             appointment: {
                 isFaculty:"No",
+                tenureStatus:{id:"",label:""},
+                termDuration:"",
+                noticeDate:"",
+                contPermDate:"",
                 campusTitle:"",
                 supervisor:"",
-                department:""
+                department:{id:"",label:""}
             },
             salary:{
                 effDate:"",
@@ -200,46 +221,32 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             pay: []
         },
         comment:""
-    }
-    const testRecord = {
-        formId:formId,
-        lookup:{
-            type:"lastNameDOB",
-            values:{
-                bNumber:"",
-                lastName:"geiger",
-                dob:new Date("8/31/1973"),
-            },
-        },
-        selectedRow:{
-            "HR_PERSON_ID": "0_65998_NR",
-            "LINE_ITEM_NUMBER": "",
-            "SUNY_ID": "51645",
-            "NYS_EMPLID": "N01216708",
-            "EMPLOYMENT_ROLE_TYPE": "New Role",
-            "DATA_STATUS_EMP": "",
-            "STATUS_TYPE": "",
-            "APPOINTMENT_EFFECTIVE_DATE": "",
-            "APPOINTMENT_END_DATE": null,
-            "LEGAL_FIRST_NAME": "Scott",
-            "LEGAL_MIDDLE_NAME": "T",
-            "LEGAL_LAST_NAME": "Geiger",
-            "LOCAL_CAMPUS_ID": "B00073866",
-            "PAYROLL_AGENCY_CODE": "",
-            "TITLE_DESCRIPTION": "",
-            "DPT_CMP_DSC": ""
-        },
-        payroll:{code:"28020",title:"",description:""},
-        effDate:new Date(),
-        formCode:"EF",
-        actionCode:"CCH",
-        transactionCode:"AJT"
-    }
-    const methods = useForm({
-        defaultValues: (qstr.has('test'))?testRecord:defaults
+    };
+    const methods = useForm({defaultValues: defaults});
+    const watchFormActions = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode'],control:methods.control});
+    const watchIds = useWatch({name:['person.information.SUNY_ID','person.information.HR_PERSON_ID'],control:methods.control});
+
+    const {getPersonInfo} = usePersonQueries();
+    //TODO: only fetch if not saved; saved data comes HRF2 table.
+    const personinfo = getPersonInfo(watchIds[0],'information',{
+        refetchOnMount:false,
+        enabled:false,
+        onSuccess:d=>{
+            methods.setValue('person.information',Object.assign({},defaults.person.information,d));
+            const retireDate = new Date(d?.RETIREMENT_DATE);
+            methods.setValue('person.information.retiredDate',isValid(retireDate)?retireDate:"");
+        }
+    });
+    const demographicsinfo = getPersonInfo(watchIds[0],'demographics',{
+        refetchOnMount:false,
+        enabled:false,
+        onSuccess:d=>{
+            methods.setValue('person.demographics',Object.assign({},defaults.person.demographics,d));
+            const birthDate = new Date(d?.BIRTH_DATE);
+            methods.setValue('person.demographics.birthDate',isValid(birthDate)?birthDate:"");
+        }
     });
 
-    const watchFormActions = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode'],control:methods.control});
 
     const navigate = tab => {
         //TODO: can we maintain last tab/sub-tab?  or should we use routing? so that it remembers when you switch
@@ -315,8 +322,24 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             });
             tablist.push(...allTabs.filter(t=>['comments','review'].includes(t.value)));
             setTabList(tablist);
+            if (!!watchIds[0]) { //get info for tabs
+                // get value key from tablist and flatten
+                const tabs = tablist.map(t=>(t.hasOwnProperty('children'))?t.children.map(c=>c.value):t.value).flat();
+                tabs.forEach(tab => {
+                    switch(tab) {
+                        case "person-information":
+                            personinfo.refetch();
+                            break;
+                        case "person-demographics":
+                            demographicsinfo.refetch();
+                            break;
+                        default:
+                            console.log('TODO: Load Tab:',tab);
+                    }
+                });
+            }
         }
-    },[setTabList,allTabs]);
+    },[setTabList,allTabs,watchIds]);
 
     return(
         <>
@@ -328,7 +351,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                     </Col>
                 </Row>
             </header>
-            <FormProvider {...methods} isDraft={isDraft} isNew={isNew} sunyId={methods.getValues('person.info.sunyId')} handleTabs={handleTabs}>
+            <FormProvider {...methods} isDraft={isDraft} isNew={isNew} sunyId={methods.getValues('person.information.sunyId')} hrPersonId={methods.getValues('person.information.hrPersonId')} handleTabs={handleTabs}>
                 <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)} onReset={handleReset}>
                     <Tabs activeKey={activeTab} onSelect={navigate} id="hr-forms-tabs">
                         {tabList.map(t => (
@@ -351,7 +374,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                                     {activeTab != 'basic-info' && <FormInfoBox/>}
                                     {(activeTab == 'employment-tab'&&['employment-appointment','employment-salary'].includes(activeNav)) && <EmploymentPositionInfoBox/>}
                                     <div className="px-2">
-                                        <FormTabRouter tab={t.value} activeTab={activeTab} subTab={activeNav} setPayTransTabs={setPayTransTabs}/>
+                                        <FormTabRouter tab={t.value} activeTab={activeTab} subTab={activeNav}/>
                                     </div>
                                     <Row as="footer" className="mt-3">
                                         <Col className="button-group justify-content-end">
@@ -414,11 +437,11 @@ function FormInfoBox () {
                 <Col as="dt" sm={2} className="mb-0">Form Type:</Col>
                 <Col as="dd" sm={4} className="mb-0"><FormTypeDisplay/></Col>
                 <Col as="dt" sm={2} className="mb-0">B-Number:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues('person.info.bNumber')}</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('person.information.bNumber')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Effective Date:</Col>
                 <Col as="dd" sm={4} className="mb-0"><DateFormat>{getValues('effDate')}</DateFormat></Col>
                 <Col as="dt" sm={2} className="mb-0">Name:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues('person.info.firstName')} {getValues('person.info.lastName')}</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('person.information.firstName')} {getValues('person.information.lastName')}</Col>
             </Row>
         </Alert>
     );

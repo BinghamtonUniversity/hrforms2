@@ -7,7 +7,7 @@ import usePersonQueries from "../../queries/person";
 import { get, cloneDeep } from "lodash";
 import { AppButton, CountrySelector, DateFormat, StateSelector } from "../components";
 import DatePicker from "react-datepicker";
-import { addDays } from "date-fns";
+import { addDays, isValid } from "date-fns";
 import { Typeahead } from "react-bootstrap-typeahead";
 import { Icon } from "@iconify/react";
 
@@ -127,19 +127,21 @@ export default function PersonEducation() {
         const dataMap = [];
         educationinfo.data.forEach(d=>{
             const degree = degreeTypes.data.find(a=>a.id==d.DEGREE_TYPE);
+            const awardDate = new Date(d.DEGREE_YEAR,(d.DEGREE_MONTH||1)-1);
+            const createdDate = new Date(d?.CREATE_DATE);
             dataMap.push({
-                awardDate:new Date(d.DEGREE_YEAR,(d.DEGREE_MONTH||1)-1),
-                pending:d.ENDING_DEGREE_FLAG=='Y',
+                awardDate:(isValid(awardDate))?awardDate:"",
+                pending:d?.ENDING_DEGREE_FLAG=='Y',
                 type:[degree],
                 specialization:"",
-                country:d.COUNTRY_CODE,
-                state:d.INSTITUTION_STATE,
-                city:[d.INSTITUTION_CITY],
-                name:[{id:d.INSTITUTION_ID,label:d.INSTITUTION}],
-                highest:(d.HIGHEST_DEGREE_FLAG=='Y')?'yes':'no',
-                terminal:(d.TERMINAL_DEGREE_FLAG=='Y')?'yes':'no',
-                verified:(d.DEGREE_VERIFIED=='Y')?'yes':'no',
-                created:new Date(d.CREATE_DATE)||new Date()
+                country:d?.COUNTRY_CODE,
+                state:d?.INSTITUTION_STATE,
+                city:[d?.INSTITUTION_CITY],
+                name:[{id:d?.INSTITUTION_ID,label:d?.INSTITUTION}],
+                highest:(d?.HIGHEST_DEGREE_FLAG=='Y')?'yes':'no',
+                terminal:(d?.TERMINAL_DEGREE_FLAG=='Y')?'yes':'no',
+                verified:(d?.DEGREE_VERIFIED=='Y')?'yes':'no',
+                created:(isValid(createdDate))?createdDate:new Date()
             });
         });
         replace(dataMap);

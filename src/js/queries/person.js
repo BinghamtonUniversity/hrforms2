@@ -26,8 +26,10 @@ export default function usePersonQueries() {
         options.select = data => {
             if (!data) return;
             data.results.forEach(d=>{
-                d.fullName = `${d.LEGAL_FIRST_NAME} ${d.LEGAL_LAST_NAME}`;
-                d.sortName = `${d.LEGAL_LAST_NAME}, ${d.LEGAL_FIRST_NAME}`;
+                const suffix = (d?.SUFFIX_CODE)?` ${d.SUFFIX_CODE}`:'';
+                const mi = (d?.LEGAL_MIDDLE_NAME)?` ${d.LEGAL_MIDDLE_NAME.substr(0,1)}.`:'';
+                d.fullName = `${d.FIRST_NAME}${mi} ${d.LEGAL_LAST_NAME}${suffix}`;
+                d.sortName = `${d.LEGAL_LAST_NAME}${suffix}, ${d.FIRST_NAME}${mi}`;
                 d.birthDate = d.BIRTH_DATE && parse(d.BIRTH_DATE,'dd-MMM-yy',new Date());
                 d.birthDateFmt = d.BIRTH_DATE && format(d.birthDate,'P');
                 d.effectiveDate = d.APPOINTMENT_EFFECTIVE_DATE && parse(d.APPOINTMENT_EFFECTIVE_DATE,'dd-MMM-yy',new Date())
