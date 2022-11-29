@@ -19,20 +19,13 @@ export default function EmploymentAppointment() {
     const {getListData} = useAppQueries();
     const tenure = getListData('tenureStatus');
 
-    const {getEmploymentInfo} = useEmploymentQueries();
-    //TODO: only fetch if not saved; saved data comes HRF2 table.
-    const apptinfo = getEmploymentInfo(hrPersonId,'appointment',{
-        refetchOnMount:false,
-        enabled:!!hrPersonId
-    });
-
-    const handleChange = (e,field) => {
+    const handleSelectChange = (e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
     }
 
-    useEffect(() => {
+/*    useEffect(() => {
         if (!apptinfo.data) return;
         if (getValues(`${name}.loadDate`)) return;
         setValue(`${name}.isFaculty`,(apptinfo.data?.DERIVED_FAC_TYPE=='Y')?'Yes':'No');
@@ -45,7 +38,7 @@ export default function EmploymentAppointment() {
         setValue(`${name}.supervisor`,[{id:apptinfo.data?.SUPERVISOR_SUNY_ID,label:apptinfo.data?.SUPERVISOR_NAME}]);
         //missing: term_duration, notice_date,cont_perm_date,tenure_status
         setValue(`${name}.loadDate`,new Date());
-    },[apptinfo.data]);
+    },[apptinfo.data]);*/
     return (
         <article className="mt-3">
             <Row as="header">
@@ -80,7 +73,7 @@ export default function EmploymentAppointment() {
                                 {tenure.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
                                 {tenure.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
                                 {tenure.data &&
-                                    <Form.Control {...field} as="select" onChange={e=>handleChange(e,field)}>
+                                    <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
                                         <option></option>
                                         {tenure.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
                                     </Form.Control>
@@ -160,7 +153,7 @@ export default function EmploymentAppointment() {
                         name={`${name}.department.id`}
                         control={control}
                         defaultValue=""
-                        render={({field}) => <DepartmentSelector field={field} onChange={e=>handleChange(e,field)}/>}
+                        render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)}/>}
                     />
                 </Col>
             </Form.Group>

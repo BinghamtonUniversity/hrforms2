@@ -33,63 +33,155 @@ class PersonInfo extends HRForms2 {
 		switch($this->req[1]) {
 			case "information":
 				$salutations = (new listdata(array('salutations'),false))->returnData;
-				$qry = "select p.suny_id, p.local_campus_id, p.salutation_code, 
+				$qry = "select p.hr_person_id, p.suny_id, p.local_campus_id, p.salutation_code, 
 					nvl(p.alias_first_name,p.legal_first_name) as first_name, 
 					p.legal_middle_name, p.legal_last_name, p.suffix_code, 
 					i.volunteer_fire_flag, decode(i.retirement_date,null,0,1) as rehire_retiree, 
 					i.retirement_date, i.retired_from
 				from buhr_person_mv@banner.cc.binghamton.edu p
 				left join (select suny_id, volunteer_fire_flag, retirement_date, retired_from from buhr_general_info_mv@banner.cc.binghamton.edu) i on (i.suny_id = p.suny_id)
-				where p.suny_id = :suny_id";
+				where p.hr_person_id = :hr_person_id";
 				$stmt = oci_parse($this->db,$qry);
-				oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+				oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+
+				// Salutation Code and Description Array
 				$key = array_search($row['SALUTATION_CODE'],array_column($salutations,0));
-				$row['SALUTATION'] = array("id"=>$row['SALUTATION_CODE'],"label"=>$salutations[$key][1]);
-				unset($row['SALUTATION_CODE']);
+				$row['salutation'] = array("id"=>$row['SALUTATION_CODE'],"label"=>($key!==false)?$salutations[$key][1]:"");
+				
 				$this->_arr = $this->null2Empty($row);
 				oci_free_statement($stmt);
 
 				break;
 			case "demographics":
 				$gender = (new listdata(array('gender'),false))->returnData;
-				$qry = "select distinct birth_date, us_citizen_indicator, non_citizen_type, emp_authorize_card_indicator, visa_code, citizenship_country_code, gender, hispanic_flag, ethnicity_mult_codes, ethnicity_source_dsc, disability_indicator, military_status_code, veteran_indicator, protected_vet_status_code, military_separation_date
+				$countryCodes = (new listdata(array('countryCodes'),false))->returnData;
+				$militaryStatus = (new listdata(array('militaryStatus'),false))->returnData;
+				$protectedVeteranStatus = (new listdata(array('protectedVeteranStatus'),false))->returnData;
+			
+				// hispanic_flag, ethnicity_mult_codes, ethnicity_source_dsc, disability_indicator - not currently using
+				$qry = "select distinct birth_date, gender, 
+						us_citizen_indicator, non_citizen_type, emp_authorize_card_indicator, visa_code, citizenship_country_code, 
+						--hispanic_flag, ethnicity_mult_codes, ethnicity_source_dsc, disability_indicator, 
+						military_status_code, veteran_indicator, protected_vet_status_code, military_separation_date
 					from buhr_person_mv@banner.cc.binghamton.edu
-					where suny_id = :suny_id
+					where hr_person_id = :hr_person_id
 					and role_type <> 'STSCH' and nvl(role_end_date,sysdate) >= sysdate";
 				$stmt = oci_parse($this->db,$qry);
-				oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+				oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+
+				// Gender Code and Description
 				$key = array_search($row['GENDER'],array_column($gender,0));
-				$row['GENDER'] = array("id"=>$row['GENDER'],"label"=>$gender[$key][1]);
+				$row['GENDER'] = array("id"=>$row['GENDER'],"label"=>($key!==false)?$gender[$key][1]:"");
+
+				// Country Code
+				$fields = array_keys($countryCodes[0]);
+				$key = array_search($row['CITIZENSHIP_COUNTRY_CODE'],array_column($countryCodes,$fields[0]));
+				$row['CITIZENSHIP_COUNTRY_CODE'] = array("id"=>$row['CITIZENSHIP_COUNTRY_CODE'],label=>($key!==false)?$countryCodes[$key][$fields[1]]:"");
+
+				// Non-US Citizen
+				if ($row['US_CITIZEN_INDICATOR'] != 'Y') {
+					$nonUsCitizenType = (new listdata(array('nonUsCitizenType'),false))->returnData;
+					$visaTypes = (new listdata(array('visaTypes'),false))->returnData;
+					// Non-US Citizen Type
+					$key = array_search($row['NON_CITIZEN_TYPE'],array_column($nonUsCitizenType,0));
+					$row['NON_CITIZEN_TYPE'] = array("id"=>$row['NON_CITIZEN_TYPE'],label=>($key!==false)?$nonUsCitizenType[$key][1]:"");
+					// VISA Type
+					$key = array_search($row['VISA_CODE'],array_column($visaTypes,0));
+					$row['VISA_CODE'] = array("id"=>$row['VISA_CODE'],label=>($key!==false)?$visaTypes[$key][1]:"");
+				}
+
+				// Military Status Array
+				$row['militaryStatus'] = array();
+				if ($row['MILITARY_STATUS_CODE'] == '00000') {
+					$key = array_search('N',array_column($militaryStatus,0));
+					if ($key) array_push($row['militaryStatus'],$militaryStatus[$key]);
+				} else {
+					foreach(str_split($row['MILITARY_STATUS_CODE']) as $i=>$v) {
+						if ($v == 1) array_push($row['militaryStatus'],$militaryStatus[$i]);
+					}
+				}
+
+				// Protected Veteran Status
+				$row['protectedVetStatus'] = array();
+				if ($row['PROTECTED_VET_STATUS_CODE'] == '0000000') {
+					$key = array_search('N',array_column($protectedVeteranStatus,0));
+					if ($key) array_push($row['protectedVetStatus'],$protectedVeteranStatus[$key]);
+				} else {
+					foreach(str_split($row['PROTECTED_VET_STATUS_CODE']) as $i=>$v) {
+						if ($v == 1) array_push($row['protectedVetStatus'],$protectedVeteranStatus[$i]);
+					}
+				}
+
 				$this->_arr = $this->null2Empty($row);
 				oci_free_statement($stmt);
 	
 				break;
-			//split these?
+			
 			case "directory":
+				$addressCodes = (new listdata(array('addressCodes'),false))->returnData;
+				$deptOrgs = (new listdata(array('deptOrgs'),false))->returnData;
+				$buildings = (new listdata(array('buildings'),false))->returnData;
+
 				// Get Address
-				$qry = "select address_code, address_1, address_2, address_3, address_city, state_code, address_postal_code, create_date
-					from buhr_address_mv@banner.cc.binghamton.edu
-					where suny_id = :suny_id";
+				$qry = "select a.address_code, a.address_1, a.address_2, a.address_3, a.address_city, a.state_code, a.address_postal_code, a.create_date 
+				from buhr_address_mv@banner.cc.binghamton.edu a
+				join (select hr_person_id, suny_id from buhr_person_mv@banner.cc.binghamton.edu where hr_person_id = :hr_person_id) p on (p.suny_id = a.suny_id)";
 				$stmt = oci_parse($this->db,$qry);
-				oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+				oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
-				oci_fetch_all($stmt,$address,null,null,OCI_FETCHSTATEMENT_BY_ROW);
+
+				$hasDepartment = array();
+				foreach(array_keys(array_filter(array_column($addressCodes,'fields'),function($fields) {
+					return array_search('department',$fields)!==false;
+				})) as $i) {
+					array_push($hasDepartment,$addressCodes[$i]->id);
+				}
+
+				$hasBuilding = array();
+				foreach(array_keys(array_filter(array_column($addressCodes,'fields'),function($fields) {
+					return array_search('building',$fields)!==false;
+				})) as $i) {
+					array_push($hasBuilding,$addressCodes[$i]->id);
+				}
+				
+				while($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					$row['department'] = array("id"=>"","label"=>"","text"=>"");
+					$row['building'] = array("id"=>"","label"=>"","text"=>"");
+					if (in_array($row['ADDRESS_CODE'],$hasDepartment)) {
+						foreach($deptOrgs as $d) {
+							if (strtolower($row['ADDRESS_1']) == strtolower($d['DEPARTMENT_NAME'])) {
+								$row['department'] = array("id"=>$d['DEPARTMENT_CODE'],"label"=>$d['DEPARTMENT_NAME']);
+								break;
+							}
+						}
+					}
+					if (in_array($row['ADDRESS_CODE'],$hasBuilding)) {
+						foreach($buildings as list($id,$label)) {
+							if (strtolower($row['ADDRESS_2']) == strtolower($label)) {
+								$row['building'] = array("id"=>$id,"label"=>$label);
+								break;
+							}
+						}
+					}
+					$address[] = $row;
+				}
 				$this->_arr['address'] = $this->null2Empty($address);
 				oci_free_statement($stmt);
 
 				// Get Phone
-				$qry = "select phone_type, phone_area_code || phone_exchange || phone_number as phone_number, create_date
-					from buhr_phone_mv@banner.cc.binghamton.edu
-					where suny_id = :suny_id";
+				$qry = "select a.phone_type, '+' || nvl(a.international_phone_number,'1' || a.phone_area_code || a.phone_exchange || a.phone_number) as phone_number,
+						a.cell_indicator, a.create_date
+						from buhr_phone_mv@banner.cc.binghamton.edu a
+						join (select hr_person_id, suny_id from buhr_person_mv@banner.cc.binghamton.edu where hr_person_id = :hr_person_id) p on (p.suny_id = a.suny_id)";
 				$stmt = oci_parse($this->db,$qry);
-				oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+				oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				oci_fetch_all($stmt,$phone,null,null,OCI_FETCHSTATEMENT_BY_ROW);
@@ -98,10 +190,10 @@ class PersonInfo extends HRForms2 {
 
 				// Get Email
 				$qry = "select email_type, email_address, create_date
-				from buhr_email_mv@banner.cc.binghamton.edu
-				where suny_id = :suny_id";
+						from buhr_email_mv@banner.cc.binghamton.edu a
+						join (select hr_person_id, suny_id from buhr_person_mv@banner.cc.binghamton.edu where hr_person_id = :hr_person_id) p on (p.suny_id = a.suny_id)";
 				$stmt = oci_parse($this->db,$qry);
-				oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+				oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				oci_fetch_all($stmt,$email,null,null,OCI_FETCHSTATEMENT_BY_ROW);
@@ -110,6 +202,8 @@ class PersonInfo extends HRForms2 {
 
 				break;
 			case "education":
+				$degreeTypes = (new listdata(array('degreeTypes'),false))->returnData;
+
 				$qry = "select e.degree_year, e.degree_month, e.pending_degree_flag, e.degree_type,
 				i.country_code, i.institution_state, i.institution_city, i.institution_id, i.institution, 
 				e.highest_degree_flag, e.terminal_degree_flag, e.degree_verified, e.create_date
@@ -119,31 +213,41 @@ class PersonInfo extends HRForms2 {
 					union
 					select 'F' || f.fgn_dgr_instn_id, f.country_code, null, null, f.institution
 					from sunyhr.foreign_degree_institutions@banner.cc.binghamton.edu f) i on (i.institution_id = nvl(e.unit_id,'F'||e.foreign_degree_instn_id))
-				where suny_id = :suny_id";
+				join (select hr_person_id, suny_id from buhr_person_mv@banner.cc.binghamton.edu where hr_person_id = :hr_person_id) p on (p.suny_id = e.suny_id)";
 				$stmt = oci_parse($this->db,$qry);
-				oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+				oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
-				oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
-				$this->nullToEmpty($this->_arr);	
+				while($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					$key = array_search($row['DEGREE_TYPE'],array_column($degreeTypes,'DEGREE_TYPE_CODE'));
+					$row['degreeType'] = array(array("id"=>$row['DEGREE_TYPE'],"label"=>($key!==false)?$degreeTypes[$key]['DEGREE_TYPE_DESC']:""));
+					$this->_arr[] = $row;
+				}
+				$this->_arr = $this->null2Empty($this->_arr);
 				oci_free_statement($stmt);
 
 				break;
 			case "contact":
-				$qry = "select emr_ctc_rank, decode(emr_ctc_rank,1,'yes','no') as is_primary,
+				$relationships = (new listdata(array('contactRelationships'),false))->returnData;
+
+				$qry = "select emr_ctc_rank,
 					emr_ctc_first_name, emr_ctc_last_name, emr_ctc_address_1, emr_ctc_address_2,
 					emr_ctc_city, emr_ctc_state_code, emr_ctc_zip, emr_ctc_country_code, emr_ctc_day_phone,
 					emr_ctc_night_phone, emr_ctc_cell_phone, emr_ctc_international_phone, emr_ctc_email,
 					emr_ctc_relationship, create_date
 				from  BUHR.BUHR_EMERGENCY_CONTACT_MV@banner.cc.binghamton.edu e
-				where suny_id = :suny_id
+				join (select hr_person_id, suny_id from buhr_person_mv@banner.cc.binghamton.edu where hr_person_id = :hr_person_id) p on (p.suny_id = e.suny_id)
 				order by emr_ctc_rank";
 				$stmt = oci_parse($this->db,$qry);
-				oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+				oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
-				oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
-				$this->nullToEmpty($this->_arr);
+				while($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					$key = array_search($row['EMR_CTC_RELATIONSHIP'],array_column($relationships,0));
+					$row['relationship'] = array("id"=>$row['EMR_CTC_RELATIONSHIP'],"label"=>($key!==false)?$relationships[$key][1]:"");
+					$this->_arr[] = $row;
+				}
+				$this->_arr = $this->null2Empty($this->_arr);
 				oci_free_statement($stmt);
 		}
 

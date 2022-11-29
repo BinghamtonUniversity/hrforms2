@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Row, Col, Form, Alert, InputGroup } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { AppButton, DateFormat, Loading } from "../components";
 import { useAppQueries } from "../../queries";
 import useFormQueries from "../../queries/forms";
-import useEmploymentQueries from "../../queries/employment";
 import DatePicker from "react-datepicker";
 import { addDays } from "date-fns";
 import { EmploymentPositionInfoBox } from "../../pages/form";
@@ -13,30 +12,10 @@ import { Icon } from "@iconify/react";
 const name = 'employment.position';
 
 export default function EmploymentPosition() {
-    const { control, getValues, setValue, hrPersonId } = useFormContext();
-    const watchLookupFields = useWatch({name:['payroll.code',`${name}.lineNumber`,'effDate'],control:control});
+    const { control, getValues } = useFormContext();
+    const watchLookupFields = useWatch({name:['payroll.code',`${name}.LINE_ITEM_NUMBER`,'effDate'],control:control});
 
-    const [showResults,setShowResults] = useState(!!getValues(`${name}.lineNumberDetails.POSITION_ID`));
-
-    const {getEmploymentInfo} = useEmploymentQueries();
-    //TODO: only fetch if not saved; saved data comes HRF2 table.
-    const positioninfo = getEmploymentInfo(hrPersonId,'position',{
-        refetchOnMount:false,
-        enabled:!!hrPersonId
-    });
-
-    useEffect(() => {
-        if (!positioninfo.data) return;
-        //if (getValues(`${name}.loadDate`)) return;
-        setValue(`${name}.lineNumber`,positioninfo.data?.LINE_ITEM_NUMBER);
-        setValue(`${name}.lineNumberDetails.POSITION_ID`,positioninfo.data?.LINE_ITEM_NUMBER);
-        setValue(`${name}.apptType`,positioninfo.data?.APPOINTMENT_TYPE);
-        setValue(`${name}.apptPercent`,positioninfo.data?.APPOINTMENT_PERCENT);
-        setValue(`${name}.checkSortCode`,positioninfo.data?.PAYROLL_MAIL_DROP_ID);
-        setValue(`${name}.benefitsFlag`,positioninfo.data?.BENEFIT_FLAG);
-        setShowResults(true);
-        //setValue(`${name}.loadDate`,new Date());
-    },[positioninfo.data]);
+    const [showResults,setShowResults] = useState(!!getValues(`${name}.positionDetails.POSITION_ID`));
 
     return (
         <article className="mt-3">
@@ -56,8 +35,8 @@ function EmploymentPositionSearch({setShowResults}) {
     }
     const handleClear = () => {
         setShowResults(false);
-        setValue(`${name}.lineNumber`,'');
-        setValue(`${name}.lineNumberDetails`,{});
+        setValue(`${name}.LINE_ITEM_NUMBER`,'');
+        setValue(`${name}.positionDetails`,{});
     }
     const handleKeyDown = e => e.key=='Enter' && handleSearch(e);
     return (
@@ -69,7 +48,7 @@ function EmploymentPositionSearch({setShowResults}) {
                 <Form.Label column md={2}>Line Number:</Form.Label>
                 <Col xs="auto">
                     <Controller
-                        name={`${name}.lineNumber`}
+                        name={`${name}.LINE_ITEM_NUMBER`}
                         control={control}
                         render={({field})=><Form.Control {...field} type="search" onKeyDown={handleKeyDown}/>}
                     />
@@ -94,8 +73,8 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
         lineNumber: lineNumber,
         effDate: effDate,
         options: {
-            enabled:lineNumber!=getValues(`${name}.lineNumberDetails.LINE_NUMBER`),
-            onSuccess:d=>setValue(`${name}.lineNumberDetails`,d),
+            enabled:lineNumber!=getValues(`${name}.positionDetails.LINE_NUMBER`),
+            onSuccess:d=>setValue(`${name}.positionDetails`,d),
             onError:e=>console.warn(e)
         }
     });
@@ -110,7 +89,7 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
                     </Col>
                 </Row>
             }
-            {position.isSuccess&&position.data.POSITION_ID && 
+            {getValues(`${name}.positionDetails.POSITION_ID`) && 
                 <>
                     <EmploymentPositionInfoBox/>
                     <EmploymentAppointmentInformation data={position.data}/>
@@ -123,9 +102,9 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
 function EmploymentAppointmentInformation() {
     const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext();
     const watchPayroll = useWatch({name:'payroll.code',control:control});
-    const watchEffectiveDate = useWatch({name:'effDate',control:control});
-    const watchApptPercent = useWatch({name:`${name}.apptPercent`,control:control})||100;
-    const handleRangeChange = e => setValue(`${name}.apptPercent`,e.target.value);
+    const watchEffectiveDate = useWatch({name:`${name}.apptEffDate`,control:control});
+    const watchApptPercent = useWatch({name:`${name}.APPOINTMENT_PERCENT`,control:control})||100;
+    const handleRangeChange = e => setValue(`${name}.APPOINTMENT_PERCENT`,e.target.value);
     return (
         <section className="mt-3">
             <Row as="header">
@@ -138,7 +117,7 @@ function EmploymentAppointmentInformation() {
                 <Form.Label column md={2}>Apointment Percent:</Form.Label>
                 <Col xs="auto">
                     <Controller
-                        name={`${name}.apptPercent`}
+                        name={`${name}.APPOINTMENT_PERCENT`}
                         defaultValue="100"
                         control={control}
                         rules={{min:{value:1,message:'Appointment Percent cannot be less than 1%'},max:{value:100,message:'Appointment Percent cannot be greater than 100%'}}}
@@ -188,13 +167,13 @@ function EmploymentAppointmentInformation() {
                     <Form.Label column md={2}>Voluntary Reduction:</Form.Label>
                     <Col xs="auto" className="pt-2">
                         <Controller
-                            name={`${name}.volReduction`}
-                            defaultValue="No"
+                            name={`${name}.VOLUNTARY_REDUCTION`}
+                            defaultValue="N"
                             control={control}
                             render={({field}) => (
                                 <>
-                                    <Form.Check {...field} inline type="radio" label="Yes" value='Yes' checked={field.value=='Yes'}/>
-                                    <Form.Check {...field} inline type="radio" label="No" value='No' checked={field.value=='No'}/>
+                                    <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'}/>
+                                    <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'}/>
                                 </>
                             )}
                         />
@@ -210,93 +189,140 @@ function EmploymentAppointmentInformation() {
 }
 
 function AppointmentType() {
-    const { control } = useFormContext();
+    const { control, setValue } = useFormContext();
     const { getListData } = useAppQueries();
     const appttypes = getListData('appointmentTypes');
+
+    const handleSelectChange = (e,field) => {
+        field.onChange(e);
+        const nameBase = field.name.split('.').slice(0,-1).join('.');
+        setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
+    }
+
     return (
         <Form.Group as={Row}>
             <Form.Label column md={2}>Appointment Type:</Form.Label>
             <Col xs="auto">
-                <Controller
-                    name={`${name}.apptType`}
-                    control={control}
-                    render={({field}) => (
-                        <Form.Control {...field} as="select">
-                            <option></option>
-                            {appttypes.data&&appttypes.data.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
-                        </Form.Control>
-                    )}
-                />
+                {appttypes.isLoading && <Loading>Loading Data</Loading>}
+                {appttypes.isError && <Loading isError>Failed to Load</Loading>}
+                {appttypes.data &&
+                    <Controller
+                        name={`${name}.APPOINTMENT_TYPE.id`}
+                        control={control}
+                        render={({field}) => (
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
+                                <option></option>
+                                {appttypes.data.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
+                            </Form.Control>
+                        )}
+                    />
+                }
             </Col>
         </Form.Group>
     );
 }
 function BenefitsFlag() {
-    const { control } = useFormContext();
+    const { control, setValue } = useFormContext();
     const watchHasBenefits = useWatch({name:`${name}.hasBenefits`,control:control});
+    
     const { getListData } = useAppQueries();
-    const benefitCodes = getListData('benefitCodes');
+    const benefitcodes = getListData('benefitCodes');
+
+    const handleSelectChange = (e,field) => {
+        field.onChange(e);
+        const nameBase = field.name.split('.').slice(0,-1).join('.');
+        setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
+    }
+
     return (
         <Form.Group as={Row}>
             <Form.Label column md={2}>Benefits Flag:</Form.Label>
             <Col xs="auto">
-                <Controller
-                    name={`${name}.benefitsFlag`}
-                    control={control}
-                    defaultValue="9"
-                    render={({field}) => (
-                        <Form.Control {...field} as="select" disabled={!watchHasBenefits}>
-                            {benefitCodes.data&&benefitCodes.data.map(b=><option key={b[0]} value={b[0]}>{b[1]}</option>)}
-                        </Form.Control>
-                    )}
-                />
+                {benefitcodes.isLoading && <Loading>Loading Data</Loading>}
+                {benefitcodes.isError && <Loading isError>Failed to Load</Loading>}
+                {benefitcodes.data &&
+                    <Controller
+                        name={`${name}.BENEFIT_FLAG.id`}
+                        control={control}
+                        defaultValue="9"
+                        render={({field}) => (
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!watchHasBenefits}>
+                                {benefitcodes.data.map(b=><option key={b[0]} value={b[0]}>{b[1]}</option>)}
+                            </Form.Control>
+                        )}
+                    />
+                }
             </Col>
         </Form.Group>
     );
 }
 function CheckSortCode() {
-    const { control } = useFormContext();
+    const { control, setValue } = useFormContext();
+
     const { getListData } = useAppQueries();
-    const checkSortCodes = getListData('checkSortCodes');
+    const checksortcodes = getListData('checkSortCodes');
+
+    const handleSelectChange = (e,field) => {
+        field.onChange(e);
+        const nameBase = field.name.split('.').slice(0,-1).join('.');
+        setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
+    }
+
     return (
         <Form.Group as={Row}>
             <Form.Label column md={2}>Check Sort Codes:</Form.Label>
             <Col xs="auto">
-                <Controller
-                    name={`${name}.checkSortCode`}
-                    control={control}
-                    defaultValue=""
-                    render={({field}) => (
-                        <Form.Control {...field} as="select">
-                            <option></option>
-                            {checkSortCodes.data&&checkSortCodes.data.map(c=><option key={c[0]} value={c[0]}>{c[1]}</option>)}
-                        </Form.Control>
-                    )}
-                />
+                {checksortcodes.isLoading && <Loading>Loading Data</Loading>}
+                {checksortcodes.isError && <Loading isError>Failed to Load</Loading>}
+                {checksortcodes.data &&
+                    <Controller
+                        name={`${name}.PAYROLL_MAIL_DROP_ID.id`}
+                        control={control}
+                        defaultValue=""
+                        render={({field}) => (
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
+                                <option></option>
+                                {checksortcodes.data.map(c=><option key={c[0]} value={c[0]}>{c[1]}</option>)}
+                            </Form.Control>
+                        )}
+                    />
+                }
                 <Form.Text muted>Also known as Mail Drop ID</Form.Text>
             </Col>
         </Form.Group>
     );
 }
 function PositionJustification() {
-    const { control } = useFormContext();
+    const { control, setValue } = useFormContext();
+
     const { getListData } = useAppQueries();
-    const positionJustification = getListData('positionJustification');
+    const positionjustification = getListData('positionJustification');
+
+    const handleSelectChange = (e,field) => {
+        field.onChange(e);
+        const nameBase = field.name.split('.').slice(0,-1).join('.');
+        setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
+    }
+
     return (
         <Form.Group as={Row}>
             <Form.Label column md={2}>Justification:</Form.Label>
             <Col xs="auto">
-                <Controller
-                    name={`${name}.justification`}
-                    control={control}
-                    defaultValue=""
-                    render={({field}) => (
-                        <Form.Control {...field} as="select">
-                            <option></option>
-                            {positionJustification.data&&positionJustification.data.map(j=><option key={j[0]} value={j[0]}>{j[1]}</option>)}
-                        </Form.Control>
-                    )}
-                />
+                {positionjustification.isLoading && <Loading>Loading Data</Loading>}
+                {positionjustification.isError && <Loading isError>Failed to Load</Loading>}
+                {positionjustification.data &&
+                    <Controller
+                        name={`${name}.justification`}
+                        control={control}
+                        defaultValue=""
+                        render={({field}) => (
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
+                                <option></option>
+                                {positionjustification.data.map(j=><option key={j[0]} value={j[0]}>{j[1]}</option>)}
+                            </Form.Control>
+                        )}
+                    />
+                }
             </Col>
         </Form.Group>
     );

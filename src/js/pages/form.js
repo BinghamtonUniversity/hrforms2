@@ -7,6 +7,7 @@ import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form
 import { AppButton, DateFormat } from "../blocks/components";
 import { get, has, zip } from "lodash";
 import usePersonQueries from "../queries/person";
+import useEmploymentQueries from "../queries/employment";
 import { isValid } from "date-fns";
 
 /* TABS */
@@ -115,6 +116,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
         formActions:defaultFormActions,
         person: {
             information: {
+                "HR_PERSON_ID":"",
                 "SUNY_ID": "",
                 "LOCAL_CAMPUS_ID": "",
                 "FIRST_NAME": "",
@@ -125,67 +127,54 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                 "REHIRE_RETIREE": "",
                 "RETIREMENT_DATE": "",
                 "RETIRED_FROM": "",
-                "SALUTATION": {
-                  "id": "",
-                  "label": ""
-                }
+                "salutation": {"id": "","label": ""}
             },
             demographics: {
-                DOB:"",
-                citizen:"Yes",
-                citizenType:"",
-                empAuthCardOnly:"No",
-                citizenCountry:"",
-                visaType:"",
-                gender:{id:"",value:""},
-                militaryStatus:[],
-                veteran:"No",
-                protectedVetStatus:[],
-                militarySepDate:"",
-                loadDate:{demo:"",milStatus:"",vetStatus:""},
                 "BIRTH_DATE": "",
-                "US_CITIZEN_INDICATOR": "",
-                "NON_CITIZEN_TYPE": "",
+                "US_CITIZEN_INDICATOR": "Y",
+                "NON_CITIZEN_TYPE": {"id": "","label": ""},
                 "EMP_AUTHORIZE_CARD_INDICATOR": "",
-                "VISA_CODE": "",
-                "CITIZENSHIP_COUNTRY_CODE": "",
-                "GENDER": "",
-                "HISPANIC_FLAG": "",
+                "VISA_CODE": {"id": "","label": ""},
+                "CITIZENSHIP_COUNTRY_CODE": {"id": "","label": ""},
+                "GENDER": {"id": "","label": ""},
+                "HISPANIC_FLAG": "N",
                 "ETHNICITY_MULT_CODES": "",
                 "ETHNICITY_SOURCE_DSC": "",
-                "DISABILITY_INDICATOR": "",
-                "MILITARY_STATUS_CODE": "",
-                "VETERAN_INDICATOR": "",
-                "PROTECTED_VET_STATUS_CODE": "",
-                "MILITARY_SEPARATION_DATE": ""
+                "DISABILITY_INDICATOR": "N",
+                "MILITARY_STATUS_CODE": [],
+                "VETERAN_INDICATOR": "N",
+                "PROTECTED_VET_STATUS_CODE": [],
+                "MILITARY_SEPARATION_DATE": "",
+                "birthDate":"",
+                "militarySepDate":""
             },
             directory: {
                 address:[],
                 phone:[],
-                email:[],
-                loadDate:{address:"",phone:"",email:""}
+                email:[]
             },
             education:{
-                institutions:[],
-                loadDate:""
+                institutions:[]
             },
             contact:{
-                contacts:[],
-                loadDate:""
+                contacts:[]
             }
         },
         employment: {
             position: {
-                lineNumber:"",
-                lineNumberDetails:{},
-                apptType:"",
-                apptPercent:"100",
-                hasBenefits:false,
-                benefitsFlag:"9",
-                volReduction:"No",
-                apptEndDate:"",
-                checkSortCode:"",
-                justification:""
+                "LINE_ITEM_NUMBER": "",
+                "APPOINTMENT_TYPE": {"id": "","label": ""},
+                "APPOINTMENT_PERCENT": "",
+                "BENEFIT_FLAG": {"id": "","label": ""},
+                "APPOINTMENT_EFFECTIVE_DATE": "",
+                "APPOINTMENT_END_DATE": "",
+                "VOLUNTARY_REDUCTION": "",
+                "PAYROLL_MAIL_DROP_ID": {"id": "","label": ""},
+                "positionDetails": {},
+                "apptEffDate": new Date(),
+                "apptEndDate": new Date(),
+                "hasBenefits": false,
+                "justification": ""
             },
             appointment: {
                 isFaculty:"No",
@@ -224,7 +213,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
     };
     const methods = useForm({defaultValues: defaults});
     const watchFormActions = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode'],control:methods.control});
-    const watchIds = useWatch({name:['person.information.SUNY_ID','person.information.HR_PERSON_ID'],control:methods.control});
+    const watchIds = useWatch({name:['person.information.HR_PERSON_ID','person.information.SUNY_ID',],control:methods.control});
 
     const {getPersonInfo} = usePersonQueries();
     //TODO: only fetch if not saved; saved data comes HRF2 table.
@@ -232,18 +221,75 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
         refetchOnMount:false,
         enabled:false,
         onSuccess:d=>{
-            methods.setValue('person.information',Object.assign({},defaults.person.information,d));
             const retireDate = new Date(d?.RETIREMENT_DATE);
-            methods.setValue('person.information.retiredDate',isValid(retireDate)?retireDate:"");
+            d.retireDate = isValid(retireDate)?retireDate:"";
+            methods.setValue('person.information',Object.assign({},defaults.person.information,d));
         }
     });
-    const demographicsinfo = getPersonInfo(watchIds[0],'demographics',{
+    const persondemographics = getPersonInfo(watchIds[0],'demographics',{
         refetchOnMount:false,
         enabled:false,
         onSuccess:d=>{
-            methods.setValue('person.demographics',Object.assign({},defaults.person.demographics,d));
             const birthDate = new Date(d?.BIRTH_DATE);
-            methods.setValue('person.demographics.birthDate',isValid(birthDate)?birthDate:"");
+            d.birthDate = isValid(birthDate)?birthDate:"";
+            const milSepDate = new Date(d?.MILITARY_SEPARATION_DATE);
+            d.milSepDate = isValid(milSepDate)?milSepDate:"";
+            methods.setValue('person.demographics',Object.assign({},defaults.person.demographics,d));
+        }
+    });
+    const persondirectory = getPersonInfo(watchIds[0],'directory',{
+        refetchOnMount:false,
+        enabled:false,
+        onSuccess:d=>{
+            Object.keys(d).forEach(k => {
+                d[k].forEach(v => {
+                    if (v.hasOwnProperty('CREATE_DATE')) {
+                        const dt = new Date(v.CREATE_DATE);
+                        v.effDate = isValid(dt)?dt:"";
+                        v.createDate = isValid(dt)?dt:"";
+                    }
+                });
+            });
+            methods.setValue('person.directory',Object.assign({},defaults.person.directory,d));
+        }
+    });
+    const personeducation = getPersonInfo(watchIds[0],'education',{
+        refetchOnMount:false,
+        enabled:false,
+        onSuccess:d=>{
+            d.forEach(o => {
+                const awardDate = new Date(o.DEGREE_YEAR,(o.DEGREE_MONTH||1)-1);
+                o.awardDate = isValid(awardDate)?awardDate:"";
+                o.institutionName = [{id:o.INSTITUTION_ID,label:o.INSTITUTION}];
+                o.institutionCity = [o.INSTITUTION_CITY];
+                const createDate = new Date(o.CREATE_DATE);
+                o.createDate = isValid(createDate)?createDate:"";
+            });
+            methods.setValue('person.education.institutions',d);
+        }
+    });
+    const personcontacts = getPersonInfo(watchIds[0],'contact',{
+        refetchOnMount:false,
+        enabled:false,
+        onSuccess:d=>{
+            d.forEach(o => {
+                o.isPrimary = (o.EMR_CTC_RANK=='1')?'Y':'N';
+                const createDate = new Date(o.CREATE_DATE);
+                o.createDate = isValid(createDate)?createDate:"";
+            });
+            methods.setValue('person.contact.contacts',d);
+        }
+    });
+    const {getEmploymentInfo} = useEmploymentQueries();
+    const employmentposition = getEmploymentInfo(watchIds[0],'position',{
+        refetchOnMount:false,
+        enabled:false,
+        onSuccess:d=>{
+            const apptEffDate = new Date(d?.APPOINTMENT_EFFECTIVE_DATE);
+            d.apptEffDate = isValid(apptEffDate)?apptEffDate:"";
+            const apptEndDate = new Date(d?.APPOINTMENT_END_DATE);
+            d.apptEndDate = isValid(apptEndDate)?apptEndDate:"";
+            methods.setValue('employment.position',Object.assign({},defaults.employment.position,d));
         }
     });
 
@@ -323,16 +369,18 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             tablist.push(...allTabs.filter(t=>['comments','review'].includes(t.value)));
             setTabList(tablist);
             if (!!watchIds[0]) { //get info for tabs
+                console.log(watchIds[0]);
                 // get value key from tablist and flatten
                 const tabs = tablist.map(t=>(t.hasOwnProperty('children'))?t.children.map(c=>c.value):t.value).flat();
+                //TODO: if saved form don't refetch, pull from saved data
                 tabs.forEach(tab => {
                     switch(tab) {
-                        case "person-information":
-                            personinfo.refetch();
-                            break;
-                        case "person-demographics":
-                            demographicsinfo.refetch();
-                            break;
+                        case "person-information": personinfo.refetch(); break;
+                        case "person-demographics": persondemographics.refetch(); break;
+                        case "person-directory": persondirectory.refetch(); break;
+                        case "person-education": personeducation.refetch(); break;
+                        case "person-contacts": personcontacts.refetch(); break;
+                        case "employment-position": employmentposition.refetch(); break;
                         default:
                             console.log('TODO: Load Tab:',tab);
                     }
@@ -424,24 +472,26 @@ function FormTabRouter({tab,activeTab,subTab,...props}) {
 }
 
 function FormInfoBox () {
-    const { getValues, sunyId } = useFormContext();
+    const { getValues } = useFormContext();
     return (
         <Alert variant="secondary" className="mb-3">
             <Row as="dl" className="mb-0">
                 <Col as="dt" sm={2} className="mb-0">Form ID:</Col>
-                <Col as="dd" sm={10} className="mb-0">{getValues('formId')}</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('formId')}</Col>
+                <Col as="dt" sm={2} className="mb-0">HR Person ID:</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('selectedRow.HR_PERSON_ID')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Payroll:</Col>
                 <Col as="dd" sm={4} className="mb-0">{getValues('payroll.title')}</Col>
                 <Col as="dt" sm={2} className="mb-0">SUNY ID:</Col>
-                <Col as="dd" sm={4} className="mb-0">{sunyId}</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('selectedRow.SUNY_ID')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Form Type:</Col>
                 <Col as="dd" sm={4} className="mb-0"><FormTypeDisplay/></Col>
                 <Col as="dt" sm={2} className="mb-0">B-Number:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues('person.information.bNumber')}</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('person.information.LOCAL_CAMPUS_ID')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Effective Date:</Col>
                 <Col as="dd" sm={4} className="mb-0"><DateFormat>{getValues('effDate')}</DateFormat></Col>
                 <Col as="dt" sm={2} className="mb-0">Name:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues('person.information.firstName')} {getValues('person.information.lastName')}</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('person.information.FIRST_NAME')} {getValues('person.information.LEGAL_LAST_NAME')} {getValues('person.information.SUFFIX_CODE')}</Col>
             </Row>
         </Alert>
     );
@@ -501,34 +551,34 @@ export function FormTypeDisplay({variant,separator,showNA}) {
     return <>{display}</>
 }
 export function EmploymentPositionInfoBox() {
-    const name = 'employment.position.lineNumberDetails';
     const { control, getValues } = useFormContext();
     const watchApptPercent = useWatch({name:'employment.position.apptPercent',control:control});
+    const positionDetails = getValues('employment.position.positionDetails');
     return (
         <Alert variant="secondary" className="mt-3">
             <Row as="dl" className="mb-0">
                 <Col as="dt" sm={2} className="mb-0">Line Number:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.LINE_NUMBER`)}</Col>
+                <Col as="dd" sm={4} className="mb-0">{positionDetails?.LINE_NUMBER}</Col>
                 <Col as="dt" sm={2} className="mb-0">Pay Basis:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.PAY_BASIS`)}</Col>
+                <Col as="dd" sm={4} className="mb-0">{positionDetails?.PAY_BASIS}</Col>
                 <Col as="dt" sm={2} className="mb-0">Payroll:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.PAYROLL`)}</Col>
+                <Col as="dd" sm={4} className="mb-0">{positionDetails?.PAYROLL}</Col>
                 <Col as="dt" sm={2} className="mb-0">Negotiating Unit:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.NEGOTIATING_UNIT`)}</Col>
+                <Col as="dd" sm={4} className="mb-0">{positionDetails?.NEGOTIATING_UNIT}</Col>
                 <Col as="dt" sm={2} className="mb-0">Effective Date:</Col>
-                <Col as="dd" sm={4} className="mb-0"><DateFormat nvl="Effective Date Not Set">{getValues(`${name}.EFFECTIVE_DATE}`)}</DateFormat></Col>
+                <Col as="dd" sm={4} className="mb-0"><DateFormat nvl="Effective Date Not Set">{positionDetails?.EFFECTIVE_DATE}</DateFormat></Col>
                 <Col as="dt" sm={2} className="mb-0">Salary Grade:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.SALARY_GRADE`)}</Col>
+                <Col as="dd" sm={4} className="mb-0">{positionDetails?.SALARY_GRADE}</Col>
                 <Col as="dt" sm={2} className="mb-0">Title:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.TITLE`)}</Col>
+                <Col as="dd" sm={4} className="mb-0">{positionDetails?.TITLE}</Col>
                 <Col as="dt" sm={2} className="mb-0">Segment Code:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.SEGMENT_CODE`)}</Col>
+                <Col as="dd" sm={4} className="mb-0">{positionDetails?.SEGMENT_CODE}</Col>
                 <Col as="dt" sm={2} className="mb-0">Position Department:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.POSITION_DEPARTMENT`)}</Col>
+                <Col as="dd" sm={4} className="mb-0">{positionDetails?.POSITION_DEPARTMENT}</Col>
                 <Col as="dt" sm={2} className="mb-0">Position Percent:</Col>
                 <Col as="dd" sm={4} className="mb-0">{watchApptPercent}</Col>
                 <Col as="dt" sm={2} className="mb-0">Position Status:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues(`${name}.POSITION_STATUS`)}</Col>
+                <Col as="dd" sm={4} className="mb-0">{positionDetails?.POSITION_STATUS}</Col>
             </Row>
         </Alert>
     );

@@ -43,11 +43,11 @@ export default function usePersonQueries() {
     }
     
     const getPersonInfo = (...args) => {
-        const SUNY_ID = args[0]?.SUNY_ID||args[0]||'';
+        const HR_ID = args[0]?.HR_ID||args[0]||'';
         const infoType = args[0]?.infoType||args[1]||'';
         const options = args[0]?.options||args[2]||{}
-        if (!SUNY_ID&&!infoType) return qErr('Bad Data');
-        return useQuery(['personInfo',SUNY_ID,infoType],q(`personinfo/${SUNY_ID}/${infoType}`),options);
+        if (!HR_ID&&!infoType) return qErr('Bad Data');
+        return useQuery(['personInfo',HR_ID,infoType],q(`personinfo/${HR_ID}/${infoType}`),options);
     }
 
     return {lookupPerson,getPersonInfo}; 

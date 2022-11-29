@@ -22,10 +22,11 @@ export default function FormBasicInfo() {
         enabled:false,
         select:d=>{
             // Add "New Employee" option
-            if (!d.results.find(e=>e.HR_PERSON_ID=="0")) {
+            if (!d.results.find(e=>e.id=="")) {
                 const newEmp = {};
                 d.fields.forEach(k=>newEmp[k]='');
-                newEmp.HR_PERSON_ID = '0';
+                newEmp.id = 0;
+                newEmp.HR_PERSON_ID = '';
                 newEmp.EMPLOYMENT_ROLE_TYPE = 'New Employee';
                 newEmp.LEGAL_LAST_NAME = 'New Employee';
                 d.results.unshift(newEmp);
@@ -33,9 +34,10 @@ export default function FormBasicInfo() {
             //Add "New Role" option for each employee in the list
             const nr = [];
             d.results.forEach(e => {
-                if (e.HR_PERSON_ID == "0") return;
+                if (e.id == "0") return;
                 const newRole = {...e};
-                newRole.HR_PERSON_ID = `0_${e.HR_PERSON_ID}_NR`;
+                e.id = e.HR_PERSON_ID;
+                newRole.id = `0_${e.HR_PERSON_ID}_NR`;
                 [
                     "LINE_ITEM_NUMBER",
                     "EMPLOYMENT_ROLE_TYPE",
@@ -56,8 +58,8 @@ export default function FormBasicInfo() {
                 ].forEach(k=>newRole[k]='');
                 nr.push(newRole);
             });
-            const result = assign(keyBy(d.results,'HR_PERSON_ID'),keyBy(nr,'HR_PERSON_ID'));
-            return orderBy(Object.values(result),['HR_PERSON_ID']);
+            const result = assign(keyBy(d.results,'id'),keyBy(nr,'id'));
+            return orderBy(Object.values(result),['id']);
         }
     });
 
@@ -219,16 +221,16 @@ function PersonLookup({results}) {
 function LookupResults({data,isNew}) {
     const { setValue } = useFormContext();
 
-    const [selectedId,setSelectedId] = useState((!isNew)?data[0].HR_PERSON_ID:'');
+    const [selectedId,setSelectedId] = useState((!isNew)?data[0].id:undefined);
     const [selectedRow,setSelectedRow] = useState({});
 
     const handleRowClick = useCallback(row => {
         if (!isNew) return false;
-        setSelectedId((selectedId==row.HR_PERSON_ID)?undefined:row.HR_PERSON_ID);
+        setSelectedId((selectedId==row.id)?undefined:row.id);
     },[selectedId]);
     const handleSelectedRowChange = args => {
-        const id = (args.selectedCount)?args.selectedRows[0]?.HR_PERSON_ID:undefined;
-        if (selectedRow?.HR_PERSON_ID === id) return false;
+        const id = (args.selectedCount)?args.selectedRows[0]?.id:undefined;
+        if (selectedRow?.id === id) return false;
         console.debug('handleSelectedRowChange: ',id);
         setSelectedId(id);
         setSelectedRow((args.selectedCount)?args.selectedRows[0]:{});
@@ -237,12 +239,13 @@ function LookupResults({data,isNew}) {
         setValue('payroll.title','');
         setValue('payroll.description','');
         setValue('formActions',defaultFormActions);
+        setValue('person.information.HR_PERSON_ID',(args.selectedCount)?args.selectedRows[0]?.HR_PERSON_ID:"");
         setValue('person.information.SUNY_ID',(args.selectedCount)?args.selectedRows[0]?.SUNY_ID:"");
     }
 
     const rowSelectCritera = row => {
         if (!isNew) return false;
-        return row.HR_PERSON_ID==selectedId;
+        return row.id==selectedId;
     }
 
     const handleKeyDown = useCallback(e => { 
@@ -293,7 +296,7 @@ function LookupResults({data,isNew}) {
                 <Row>
                     <Col>
                         <DataTable 
-                            keyField="HR_PERSON_ID"
+                            keyField="id"
                             columns={columns} 
                             data={data}
                             striped 
@@ -311,7 +314,7 @@ function LookupResults({data,isNew}) {
                     </Col>
                 </Row>
             </article>
-            {selectedId&&<PayrollDate selectedId={selectedId} selectedPayroll={selectedRow?.PAYROLL_AGENCY_CODE} selectedRoleType={selectedRow?.EMPLOYMENT_ROLE_TYPE}/>}
+            {selectedId!=undefined&&<PayrollDate selectedId={selectedId} selectedPayroll={selectedRow?.PAYROLL_AGENCY_CODE} selectedRoleType={selectedRow?.EMPLOYMENT_ROLE_TYPE}/>}
         </>
     );
 }
@@ -509,8 +512,6 @@ function FormActions({payroll,roleType}) {
         const tabs = paytrans.data.filter(p=>p.PAYTRANS_ID==codes.paytransId)?.at(0)?.TABS;
         console.debug('Tabs: ',tabs);
         handleTabs(tabs);
-//refetch here?
-
     },[codes]);
 
     return (
@@ -521,16 +522,20 @@ function FormActions({payroll,roleType}) {
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Form Code:</Form.Label>
                 <Col xs="auto">
-                    <Controller
-                        name="formActions.formCode"
-                        control={control}
-                        render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>{field.onChange(e);setCodes([e,field]);}} aria-describedby="formCodeDescription">
-                                <option></option>
-                                {Array.from(codes.formCodes.entries()).map(c=><option key={c[0]} value={c[0]}>{c[1][0]}</option>)}
-                            </Form.Control>
-                        )}
-                    />
+                    {paytrans.isError && <Loading isError>Error Loading Payroll Transactions</Loading>}
+                    {paytrans.isLoading && <Loading>Loading Payroll Transactions...</Loading>}
+                    {paytrans.data &&
+                        <Controller
+                            name="formActions.formCode"
+                            control={control}
+                            render={({field}) => (
+                                <Form.Control {...field} as="select" onChange={e=>{field.onChange(e);setCodes([e,field]);}} aria-describedby="formCodeDescription">
+                                    <option></option>
+                                    {Array.from(codes.formCodes.entries()).map(c=><option key={c[0]} value={c[0]}>{c[1][0]}</option>)}
+                                </Form.Control>
+                            )}
+                        />
+                    }
                 </Col>
                 {codes.formCodeDescription && <Col xs="auto">
                     <Form.Text id="formCodeDescription" className="mt-2" muted>{codes.formCodeDescription}</Form.Text>
@@ -539,20 +544,22 @@ function FormActions({payroll,roleType}) {
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Action Code:</Form.Label>
                 <Col xs="auto">
-                    <Controller
-                        name="formActions.actionCode"
-                        control={control}
-                        render={({field}) => (codes.actionCode=='N/A')?
-                        (
-                            <Form.Control {...field} plaintext readOnly value="N/A"/>
-                        ):
-                        (
-                            <Form.Control {...field} as="select" onChange={e=>{field.onChange(e);setCodes([e,field]);}} aria-describedby="actionCodeDescription">
-                                <option></option>
-                                {Array.from(codes.actionCodes.entries()).map(c=><option key={c[0]} value={c[0]}>{c[1][0]}</option>)}
-                            </Form.Control>
-                        )}
-                    />
+                    {paytrans.data &&
+                        <Controller
+                            name="formActions.actionCode"
+                            control={control}
+                            render={({field}) => (codes.actionCode=='N/A')?
+                            (
+                                <Form.Control {...field} plaintext readOnly value="N/A"/>
+                            ):
+                            (
+                                <Form.Control {...field} as="select" onChange={e=>{field.onChange(e);setCodes([e,field]);}} aria-describedby="actionCodeDescription">
+                                    <option></option>
+                                    {Array.from(codes.actionCodes.entries()).map(c=><option key={c[0]} value={c[0]}>{c[1][0]}</option>)}
+                                </Form.Control>
+                            )}
+                        />
+                    }
                 </Col>
                 {codes.actionCodeDescription && <Col xs="auto">
                     <Form.Text id="actionCodeDescription" className="mt-2" muted>{codes.actionCodeDescription}</Form.Text>
@@ -561,20 +568,22 @@ function FormActions({payroll,roleType}) {
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Transaction Code:</Form.Label>
                 <Col xs="auto">
-                    <Controller
-                        name="formActions.transactionCode"
-                        control={control}
-                        render={({field}) => (codes.transactionCode=='N/A')?
-                        (
-                            <Form.Control plaintext readOnly value="N/A"/>
-                        ):
-                        (
-                            <Form.Control {...field} as="select" onChange={e=>{field.onChange(e);setCodes([e,field]);}} aria-describedby="transactionCodeDescription">
-                                <option></option>
-                                {Array.from(codes.transactionCodes.entries()).map(c=><option key={c[0]} value={c[0]}>{c[1][0]}</option>)}
-                            </Form.Control>
-                        )}
-                    />
+                    {paytrans.data &&
+                        <Controller
+                            name="formActions.transactionCode"
+                            control={control}
+                            render={({field}) => (codes.transactionCode=='N/A')?
+                            (
+                                <Form.Control plaintext readOnly value="N/A"/>
+                            ):
+                            (
+                                <Form.Control {...field} as="select" onChange={e=>{field.onChange(e);setCodes([e,field]);}} aria-describedby="transactionCodeDescription">
+                                    <option></option>
+                                    {Array.from(codes.transactionCodes.entries()).map(c=><option key={c[0]} value={c[0]}>{c[1][0]}</option>)}
+                                </Form.Control>
+                            )}
+                        />
+                    }
                 </Col>
                 {codes.transactionCodeDescription && <Col xs="auto">
                     <Form.Text id="actionCodeDescription" className="mt-2" muted>{codes.transactionCodeDescription}</Form.Text>

@@ -74,6 +74,11 @@ class Person extends HRForms2 {
                 oci_bind_by_name($stmt,":lastname", $this->req[1]);
                 oci_bind_by_name($stmt,":dob", $this->req[2]);
                 break;
+            case "sunyid":
+                $qry .= "AND upper(pers.suny_id) = upper(:suny_id)";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":suny_id", $this->req[1]);
+                break;    
             default:
                 //should not get here, just in case.
                 $this->raiseError(400);

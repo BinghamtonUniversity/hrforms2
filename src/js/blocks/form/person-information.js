@@ -35,17 +35,13 @@ export default function PersonInfo() {
                 <Row as="header">
                     <Col as="h3">Identification</Col>
                 </Row>
-                <Row>
-                    <Col md={2}><p>HR Person ID:</p></Col>
-                    <Col xs="auto"><p>{getValues('selectedRow.HR_PERSON_ID')}</p></Col>
-                </Row>
                 <Form.Group as={Row}>
                     <Form.Label column md={2}>SUNY ID:</Form.Label>
                     <Col xs="auto">
                         <Controller
                             name={`${name}.SUNY_ID`}
                             control={control}
-                            render={({field})=><Form.Control {...field} type="text"/>}
+                            render={({field})=><Form.Control {...field} type="text" disabled={getValues('selectedRow.SUNY_ID')}/>}
                         />
                     </Col>
                 </Form.Group>
@@ -68,7 +64,7 @@ export default function PersonInfo() {
                     <Form.Label column md={2}>Salutation:</Form.Label>
                     <Col xs="auto">
                         <Controller
-                            name={`${name}.SALUTATION.id`}
+                            name={`${name}.salutation.id`}
                             control={control}
                             render={({field})=>(
                                 <>

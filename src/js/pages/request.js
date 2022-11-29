@@ -320,6 +320,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
         }
     }
     const handleError = errors => {
+        console.debug(methods.getValues());
         setHasErrors(true);
         console.error('error:',errors);
     }

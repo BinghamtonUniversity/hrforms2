@@ -1,11 +1,9 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { Row, Col, Form } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { get, cloneDeep } from "lodash";
 import { AppButton, CountrySelector, DateFormat, StateSelector } from "../components";
 import { useAppQueries } from "../../queries";
-import usePersonQueries from "../../queries/person";
-import { isValid } from "date-fns";
 import PhoneInput from 'react-phone-input-2';
 
 import 'react-phone-input-2/lib/style.css'
@@ -13,23 +11,16 @@ import 'react-phone-input-2/lib/style.css'
 const name = 'person.contact.contacts';
 
 const phoneTypes = [
-    {id:'day',title:'Day Phone'},
-    {id:'night',title:'Night Phone'},
-    {id:'cell',title:'Cell Phone'},
+    {id:'EMR_CTC_DAY_PHONE',title:'Day Phone'},
+    {id:'EMR_CTC_NIGHT_PHONE',title:'Night Phone'},
+    {id:'EMR_CTC_CELL_PHONE',title:'Cell Phone'},
 ];
 
 export default function PersonContacts() {
-    const { control, getValues, setValue, clearErrors, trigger, sunyId, formState: { errors } } = useFormContext();
-    const { fields, append, replace, remove, update } = useFieldArray({
+    const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext();
+    const { fields, append, remove, update } = useFieldArray({
         control:control,
         name:name
-    });
-
-    const {getPersonInfo} = usePersonQueries();
-    //TODO: only fetch if not saved; saved data comes HRF2 table.
-    const contactinfo = getPersonInfo(sunyId,'contact',{
-        refetchOnMount:false,
-        enabled:!!sunyId
     });
 
     const watchContact = useWatch({name:name,control});
@@ -44,26 +35,25 @@ export default function PersonContacts() {
     const handleNew = () => {
         if (fields.length > 2) return;
         append({
-            primary: 'no',
-            name: {
-                first: "",
-                last: ""
-            },
-            line1: "",
-            line2: "",
-            city: "",
-            state: "",
-            zipcode: "",
-            country: "",
-            phone: {
-                day: "",
-                night: "",
-                cell: "",
-                intl: ""
-            },
-            email: "",
-            relationship: "",
-            created:new Date()
+            "EMR_CTC_RANK": "",
+            "EMR_CTC_FIRST_NAME": "",
+            "EMR_CTC_LAST_NAME": "",
+            "EMR_CTC_ADDRESS_1": "",
+            "EMR_CTC_ADDRESS_2": "",
+            "EMR_CTC_CITY": "",
+            "EMR_CTC_STATE_CODE": "",
+            "EMR_CTC_ZIP": "",
+            "EMR_CTC_COUNTRY_CODE": "",
+            "EMR_CTC_DAY_PHONE": "",
+            "EMR_CTC_NIGHT_PHONE": "",
+            "EMR_CTC_CELL_PHONE": "",
+            "EMR_CTC_INTERNATIONAL_PHONE": "",
+            "EMR_CTC_EMAIL": "",
+            "EMR_CTC_RELATIONSHIP": "",
+            "CREATE_DATE": "",
+            "isPrimary": "N",
+            "relationship": {"id": "","label": ""},
+            "createDate":new Date()
         });
         setEditIndex(fields.length);
         setIsNew(true);
@@ -87,13 +77,13 @@ export default function PersonContacts() {
                 console.log('Errors!',errors);
             } else {
                 if (watchContact.length > 1) {
-                    const m = watchContact.map(c=>c['primary']).filter(v=>v=='yes');
+                    const m = watchContact.map(c=>c['isPrimary']).filter(v=>v=='Y');
                     if (m.length > 1) {
                         m.forEach((v,i) => {
                             if (i != index) {
                                 const id = fields[i].id;
                                 console.warn(`Changing Primary for Contact index ${i} (id:${id}) to "no"`);
-                                setValue(`${name}.${i}.primary`,'no');
+                                setValue(`${name}.${i}.isPrimary`,'N');
                             }
                         });
                     }
@@ -111,45 +101,17 @@ export default function PersonContacts() {
         setIsNew(false);
     }
 
+    const handleSelectChange = (e,field) => {
+        field.onChange(e);
+        const nameBase = field.name.split('.').slice(0,-1).join('.');
+        setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
+    }
+
     const checkPrimary = useCallback(() => {
         if (watchContact.length < 2) return false;
-        if (watchContact.map(c=>c['primary']).filter(v=>v=='yes').length>1) return true;
+        if (watchContact.map(c=>c['isPrimary']).filter(v=>v=='Y').length>1) return true;
         return false;
     },[watchContact]);
-
-    useEffect(() => {
-        if (!contactinfo.data) return;
-        if (getValues('person.contact.loadDate')) return;
-        console.debug('setting contact data...');
-        const dataMap = [];
-        contactinfo.data.forEach(d=>{
-            const createdDate = new Date(d?.CREATED_DATE);
-            dataMap.push({
-                primary: d?.IS_PRIMARY,
-                name: {
-                    first: d?.EMR_CTC_FIRST_NAME,
-                    last: d?.EMR_CTC_LAST_NAME
-                },
-                line1: d?.EMR_CTC_ADDRESS_1,
-                line2: d?.EMR_CTC_ADDRESS_2,
-                city: d?.EMR_CTC_CITY,
-                state: d?.EMR_CTC_STATE_CODE,
-                zipcode: d?.EMR_CTC_ZIP,
-                country: d?.EMR_CTC_COUNTRY_CODE,
-                phone: {
-                    day: d?.EMR_CTC_DAY_PHONE,
-                    night: d?.EMR_CTC_NIGHT_PHONE,
-                    cell: d?.EMR_CTC_CELL_PHONE,
-                    intl: d?.EMR_CTC_INTERNATIONAL_PHONE
-                },
-                email: d?.EMR_CTC_EMAIL,
-                relationship: d?.EMR_CTC_RELATIONSHIP,
-                created:(isValid(createdDate))?createdDate:new Date()
-            });
-        });
-        replace(dataMap);
-        setValue('person.contact.loadDate',new Date());
-    },[contactinfo.data]);
 
     return (
         <article className="mt-3">
@@ -162,13 +124,13 @@ export default function PersonContacts() {
                         <Form.Label column md={2}>Primary:</Form.Label>
                         <Col xs="auto" className="pt-2">
                             <Controller
-                                name={`${name}.${index}.primary`}
+                                name={`${name}.${index}.isPrimary`}
                                 defaultValue={false}
                                 control={control}
                                 render={({field}) => (
                                     <>
-                                        <Form.Check {...field} inline type="radio" label="Yes" value="yes" checked={field.value=="yes"} disabled={editIndex!=index}/>
-                                        <Form.Check {...field} inline type="radio" label="No" value="no" checked={field.value=="no"} disabled={editIndex!=index}/>
+                                        <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=="Y"} disabled={editIndex!=index}/>
+                                        <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!="Y"} disabled={editIndex!=index}/>
                                     </>
                                 )}
                             />
@@ -183,7 +145,7 @@ export default function PersonContacts() {
                         <Form.Label column md={2}>Name*:</Form.Label>
                         <Col xs={6} md={4}>
                             <Controller
-                                name={`${name}.${index}.name.first`}
+                                name={`${name}.${index}.EMR_CTC_FIRST_NAME`}
                                 defaultValue=""
                                 control={control}
                                 rules={{required:{value:true,message:'First Name is Required'}}}
@@ -193,7 +155,7 @@ export default function PersonContacts() {
                         </Col>
                         <Col xs={6} md={4}>
                             <Controller
-                                name={`${name}.${index}.name.last`}
+                                name={`${name}.${index}.EMR_CTC_LAST_NAME`}
                                 defaultValue=""
                                 control={control}
                                 rules={{required:{value:true,message:'Last Name is Required'}}}
@@ -206,7 +168,7 @@ export default function PersonContacts() {
                         <Form.Label column md={2}>Address Line 1:</Form.Label>
                         <Col xs={12} md={8}>
                             <Controller
-                                name={`${name}.${index}.line1`}
+                                name={`${name}.${index}.EMR_CTC_ADDRESS_1`}
                                 defaultValue=""
                                 control={control}
                                 render={({field}) => <Form.Control {...field} disabled={editIndex!=index}/>}
@@ -217,7 +179,7 @@ export default function PersonContacts() {
                         <Form.Label column md={2}>Address Line 2:</Form.Label>
                         <Col xs={12} md={8}>
                             <Controller
-                                name={`${name}.${index}.line2`}
+                                name={`${name}.${index}.EMR_CTC_ADDRESS_2`}
                                 defaultValue=""
                                 control={control}
                                 render={({field}) => <Form.Control {...field} disabled={editIndex!=index}/>}
@@ -228,7 +190,7 @@ export default function PersonContacts() {
                         <Form.Label column md={2}>City/State/Zip:</Form.Label>
                         <Col xs="auto">
                             <Controller
-                                name={`${name}.${index}.city`}
+                                name={`${name}.${index}.EMR_CTC_CITY`}
                                 defaultValue=""
                                 control={control}
                                 render={({field}) => <Form.Control {...field} disabled={editIndex!=index}/>}
@@ -236,7 +198,7 @@ export default function PersonContacts() {
                         </Col>
                         <Col xs="auto">
                             <Controller
-                                name={`${name}.${index}.state`}
+                                name={`${name}.${index}.EMR_CTC_STATE_CODE`}
                                 defaultValue=""
                                 control={control}
                                 render={({field}) => <StateSelector field={field} disabled={editIndex!=index}/>}
@@ -244,7 +206,7 @@ export default function PersonContacts() {
                         </Col>
                         <Col xs="auto">
                             <Controller
-                                name={`${name}.${index}.zipcode`}
+                                name={`${name}.${index}.EMR_CTC_ZIP`}
                                 defaultValue=""
                                 control={control}
                                 render={({field}) => <Form.Control {...field} disabled={editIndex!=index}/>}
@@ -255,7 +217,7 @@ export default function PersonContacts() {
                         <Form.Label column md={2}>Country:</Form.Label>
                         <Col xs="auto">
                             <Controller
-                                name={`${name}.${index}.country`}
+                                name={`${name}.${index}.EMR_CTC_COUNTRY_CODE`}
                                 defaultValue=""
                                 control={control}
                                 render={({field}) => <CountrySelector field={field} disabled={editIndex!=index}/>}
@@ -267,7 +229,7 @@ export default function PersonContacts() {
                             <Form.Label column md={2}>{p.title}:</Form.Label>
                             <Col xs="auto">
                                 <Controller
-                                    name={`${name}.${index}.phone.${p.id}`}
+                                    name={`${name}.${index}.${p.id}`}
                                     defaultValue=""
                                     control={control}
                                     render={({field}) => <PhoneInput 
@@ -288,7 +250,7 @@ export default function PersonContacts() {
                         <Form.Label column md={2}>International Phone:</Form.Label>
                         <Col xs="auto">
                             <Controller
-                                name={`${name}.phone.${index}.intl`}
+                                name={`${name}.${index}.EMR_CTC_INTERNATIONAL_PHONE`}
                                 defaultValue=""
                                 control={control}
                                 render={({field}) => <PhoneInput 
@@ -305,7 +267,7 @@ export default function PersonContacts() {
                         <Form.Label column md={2}>Email Address:</Form.Label>
                         <Col xs={12} md={8}>
                             <Controller
-                                name={`${name}.${index}.email`}
+                                name={`${name}.${index}.EMR_CTC_EMAIL`}
                                 defaultValue=""
                                 control={control}
                                 render={({field}) => <Form.Control {...field} type="email" disabled={editIndex!=index}/>}
@@ -315,18 +277,22 @@ export default function PersonContacts() {
                     <Form.Group as={Row} className="mb-1">
                         <Form.Label column md={2}>Relationship*:</Form.Label>
                         <Col xs="auto">
-                            <Controller
-                                name={`${name}.${index}.relationship`}
-                                defaultValue=""
-                                control={control}
-                                rules={{required:{value:true,message:'Relationship is Required'}}}
-                                render={({field}) => (
-                                    <Form.Control {...field} as="select" disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}>
-                                        <option></option>
-                                        {relationships.data&&relationships.data.map(r=><option key={r[0]} value={r[0]}>{r[1]}</option>)}
-                                    </Form.Control>
-                                )}
-                            />
+                            {relationships.isLoading && <p>Loading...</p>}
+                            {relationships.isError && <p>Error Loading</p>}
+                            {relationships.data &&
+                                <Controller
+                                    name={`${name}.${index}.relationship.id`}
+                                    defaultValue=""
+                                    control={control}
+                                    rules={{required:{value:true,message:'Relationship is Required'}}}
+                                    render={({field}) => (
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}>
+                                            <option></option>
+                                            {relationships.data.map(r=><option key={r[0]} value={r[0]}>{r[1]}</option>)}
+                                        </Form.Control>
+                                    )}
+                                />
+                            }
                             <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].relationship.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
@@ -340,7 +306,7 @@ export default function PersonContacts() {
                     </Row>
                     <Row>
                         <Col>
-                            <small><span className="fw-bold">Created: </span><DateFormat>{flds.created}</DateFormat></small>
+                            <small><span className="fw-bold">Created: </span><DateFormat>{flds.createDate}</DateFormat></small>
                         </Col>
                         <Col className="text-right">
                             <small>{index}:{flds.id}</small>

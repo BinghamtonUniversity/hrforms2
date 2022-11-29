@@ -51,8 +51,11 @@ class EmploymentInfo extends HRForms2 {
 
 				break;
 			case "position":
-				$qry = "select p.hr_person_id, p.suny_id,
-					p.line_item_number, p.appointment_type, p.appointment_percent, p.obl_cd, p.benefit_flag,
+				$appttypes = (new listdata(array('appointmentTypes'),false))->returnData;
+				$benefitcodes = (new listdata(array('benefitCodes'),false))->returnData;
+				$checksortcodes = (new listdata(array('checkSortCodes'),false))->returnData;
+
+				$qry = "select p.line_item_number, p.payroll_agency_code, p.appointment_type, p.appointment_percent, p.benefit_flag,
 					p.appointment_effective_date, p.appointment_end_date, e.voluntary_reduction, p.payroll_mail_drop_id
 				from  BUHR.BUHR_PERSEMP_MV@banner.cc.binghamton.edu p
 				left join (select hr_employment_status_id, voluntary_reduction from BUHR.BUHR_EMPL_STATUS_MV@banner.cc.binghamton.edu) e on (e.hr_employment_status_id = p.hr_employment_status_id)
@@ -61,9 +64,35 @@ class EmploymentInfo extends HRForms2 {
 				oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
-				oci_fetch_all($stmt,$data,null,null,OCI_FETCHSTATEMENT_BY_ROW);
-				$this->nullToEmpty($data);
-				$this->_arr = $data[0];
+				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+
+				// Appointment Type:
+				$key = array_search($row['APPOINTMENT_TYPE'],array_column($appttypes,0));
+				$row['APPOINTMENT_TYPE'] = array("id"=>$row['APPOINTMENT_TYPE'],"label"=>($key!==false)?$appttypes[$key][1]:"");
+
+				// hasBenefits:
+				$payroll = (new codes(array('payroll',$row['PAYROLL_AGENCY_CODE']),false))->returnData[0];
+				if ($payroll['ADDITIONAL_INFO']->hasBenefits) {
+					$row['hasBenefits'] = true;
+					$key = array_search($row['BENEFIT_FLAG'],array_column($benefitcodes,0));
+					$row['BENEFIT_FLAG'] = array("id"=>$row['BENEFIT_FLAG'],"label"=>($key!==false)?$benefitcodes[$key][1]:"");
+				} else {
+					$row['hasBenefits'] = false;
+					$row['BENEFIT_FLAG'] = array("id"=>$benefitcodes[0][0],"label"=>$benefitcodes[0][1]);
+				}
+
+				// Benefit Flag:
+				//$key = array_search($row['BENEFIT_FLAG'],array_column($benefitcodes,0));
+				//$row['BENEFIT_FLAG'] = array("id"=>$row['BENEFIT_FLAG'],"label"=>($key!==false)?$benefitcodes[$key][1]:"");
+
+				// Mail Drop ID (aka Check Sort Code):
+				$key = array_search($row['PAYROLL_MAIL_DROP_ID'],array_column($checksortcodes,0));
+				$row['PAYROLL_MAIL_DROP_ID'] = array("id"=>$row['PAYROLL_MAIL_DROP_ID'],"label"=>($key!==false)?$checksortcodes[$key][1]:"");
+
+				// Line Item Details:
+				$row['positionDetails'] = (new position(array($row['PAYROLL_AGENCY_CODE'],$row['LINE_ITEM_NUMBER']),false))->returnData;
+
+				$this->_arr = $this->null2Empty($row);
 				oci_free_statement($stmt);
 
 				break;

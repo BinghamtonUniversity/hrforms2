@@ -1,36 +1,28 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { useAppQueries } from "../../queries";
 import useFormQueries from "../../queries/forms";
-import usePersonQueries from "../../queries/person";
 import { get, cloneDeep } from "lodash";
 import { AppButton, CountrySelector, DateFormat, StateSelector } from "../components";
 import DatePicker from "react-datepicker";
-import { addDays, isValid } from "date-fns";
+import { addDays } from "date-fns";
 import { Typeahead } from "react-bootstrap-typeahead";
 import { Icon } from "@iconify/react";
 
 const name = 'person.education.institutions';
 
 const yesNoOptions = [
-    {id:'highest',title:'Highest Degree',unique:true},
-    {id:'terminal',title:'Terminal Degree',unique:true},
-    {id:'verified',title:'Verified Degree',unique:false}
+    {id:'HIGHEST_DEGREE_FLAG',title:'Highest Degree',unique:true},
+    {id:'TERMINAL_DEGREE_FLAG',title:'Terminal Degree',unique:true},
+    {id:'DEGREE_VERIFIED',title:'Verified Degree',unique:false}
 ];
 
 export default function PersonEducation() {
-    const { control, getValues, setValue, trigger, clearErrors, sunyId, formState: { errors } } = useFormContext();
-    const { fields, append, replace, remove, update } = useFieldArray({
+    const { control, getValues, setValue, trigger, clearErrors, formState: { errors } } = useFormContext();
+    const { fields, append, remove, update } = useFieldArray({
         control:control,
         name:name
-    });
-
-    const {getPersonInfo} = usePersonQueries();
-    //TODO: only fetch if not saved; saved data comes HRF2 table.
-    const educationinfo = getPersonInfo(sunyId,'education',{
-        refetchOnMount:false,
-        enabled:!!sunyId
     });
 
     const watchEducation = useWatch({name:name,control});
@@ -47,18 +39,24 @@ export default function PersonEducation() {
     const handleNew = () => {
         if (fields.length > 2) return;
         append({
-            awardDate:"",
-            pending:false,
-            type:[],
-            specialization:"",
-            country:"",
-            state:"",
-            city:[],
-            name:[],
-            highest:"no",
-            terminal:"no",
-            verified:"no",
-            created:new Date()
+            "DEGREE_YEAR": "",
+            "DEGREE_MONTH": "",
+            "PENDING_DEGREE_FLAG": "N",
+            "DEGREE_TYPE": "",
+            "COUNTRY_CODE": "",
+            "INSTITUTION_STATE": "",
+            "INSTITUTION_CITY": "",
+            "INSTITUTION_ID": "",
+            "INSTITUTION": "",
+            "HIGHEST_DEGREE_FLAG": "N",
+            "TERMINAL_DEGREE_FLAG": "N",
+            "DEGREE_VERIFIED": "N",
+            "CREATE_DATE": "",
+            "degreeType":[],
+            "specialization":"",
+            "institutionName":[],
+            "institutionCity":[],
+            "createDate":new Date()
         });
         setEditIndex(fields.length);
         setIsNew(true);
@@ -83,14 +81,14 @@ export default function PersonEducation() {
             } else {
                 if (watchEducation.length > 1) {
                     yesNoOptions.filter(yn=>yn.unique).map(yn=>yn.id).forEach(k=>{
-                        const m = watchEducation.map(e=>e[k]).filter(v=>v=='yes');
+                        const m = watchEducation.map(e=>e[k]).filter(v=>v=='Y');
                         if (m.length > 1) {
                             m.forEach((v,i) => {
                                 if (i != index) {
                                     const title = yesNoOptions.find(yn=>yn.id==k)?.title;
                                     const id = fields[i].id;
                                     console.warn(`Changing ${title} for Education index ${i} (id:${id}) to "no"`);
-                                    setValue(`${name}.${i}.${k}`,'no');
+                                    setValue(`${name}.${i}.${k}`,'N');
                                 }
                             });
                         }
@@ -116,37 +114,9 @@ export default function PersonEducation() {
     const checkYeNoOptions = useCallback(key => {
         if (!yesNoOptions.find(yn=>yn.id==key)?.unique) return false;
         if (watchEducation.length < 2) return false;
-        if (watchEducation.map(e=>e[key]).filter(v=>v=='yes').length>1) return true;
+        if (watchEducation.map(e=>e[key]).filter(v=>v=='Y').length>1) return true;
         return false;
     },[watchEducation,yesNoOptions]);
-
-    useEffect(() => {
-        if (!educationinfo.data||!degreeTypes.data) return;
-        if (getValues('person.education.loadDate')) return;
-        console.debug('setting education data...');
-        const dataMap = [];
-        educationinfo.data.forEach(d=>{
-            const degree = degreeTypes.data.find(a=>a.id==d.DEGREE_TYPE);
-            const awardDate = new Date(d.DEGREE_YEAR,(d.DEGREE_MONTH||1)-1);
-            const createdDate = new Date(d?.CREATE_DATE);
-            dataMap.push({
-                awardDate:(isValid(awardDate))?awardDate:"",
-                pending:d?.ENDING_DEGREE_FLAG=='Y',
-                type:[degree],
-                specialization:"",
-                country:d?.COUNTRY_CODE,
-                state:d?.INSTITUTION_STATE,
-                city:[d?.INSTITUTION_CITY],
-                name:[{id:d?.INSTITUTION_ID,label:d?.INSTITUTION}],
-                highest:(d?.HIGHEST_DEGREE_FLAG=='Y')?'yes':'no',
-                terminal:(d?.TERMINAL_DEGREE_FLAG=='Y')?'yes':'no',
-                verified:(d?.DEGREE_VERIFIED=='Y')?'yes':'no',
-                created:(isValid(createdDate))?createdDate:new Date()
-            });
-        });
-        replace(dataMap);
-        setValue('person.education.loadDate',new Date());
-    },[educationinfo.data,degreeTypes.data]);
 
     return (
         <article className="mt-3">
@@ -170,8 +140,8 @@ export default function PersonEducation() {
                                         closeOnScroll={true}
                                         selected={field.value}
                                         onChange={field.onChange}
-                                        minDate={get(watchEducation,`${index}.pending`,false)&&addDays(new Date(),1)}
-                                        maxDate={!get(watchEducation,`${index}.pending`,false)&&new Date()}
+                                        minDate={get(watchEducation,`${index}.PENDING_DEGREE_FLAG`=='Y',false)&&addDays(new Date(),1)}
+                                        maxDate={!get(watchEducation,`${index}.PENDING_DEGREE_FLAG`=='Y',false)&&new Date()}
                                         disabled={editIndex!=index}
                                         isInvalid={get(errors,field.name,false)}
                                         autoComplete="off"
@@ -187,10 +157,10 @@ export default function PersonEducation() {
                         </Col>
                         <Col className="pt-2">
                             <Controller
-                                name={`${name}.${index}.pending`}
+                                name={`${name}.${index}.PENDING_DEGREE_FLAG`}
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <Form.Check {...field} label="Pending Degree" onChange={e=>handlePendingChange(e,field,index)} checked={field.value} disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Check {...field} label="Pending Degree" onChange={e=>handlePendingChange(e,field,index)} checked={field.value=='Y'} disabled={editIndex!=index}/>}
                             />
                         </Col>
                     </Form.Group>
@@ -201,7 +171,7 @@ export default function PersonEducation() {
                             {degreeTypes.isError && <p>Error Loading</p>}
                             {degreeTypes.data &&
                                 <Controller
-                                    name={`${name}.${index}.type`}
+                                    name={`${name}.${index}.degreeType`}
                                     defaultValue=""
                                     control={control}
                                     rules={{required:{value:true,message:'Degree Type Required'}}}
@@ -218,7 +188,7 @@ export default function PersonEducation() {
                                     />}
                                 />
                             }
-                            <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].type`,false)?'block':'none'}}>{get(errors,`${name}[${index}].type.message`,'')}</Form.Control.Feedback>
+                            <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].degreeType`,false)?'block':'none'}}>{get(errors,`${name}[${index}].type.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row} className="mb-1">
@@ -236,35 +206,35 @@ export default function PersonEducation() {
                         <Form.Label column md={3}>University/College Country*:</Form.Label>
                         <Col xs="auto">
                             <Controller
-                                name={`${name}.${index}.country`}
+                                name={`${name}.${index}.COUNTRY_CODE`}
                                 defaultValue=""
                                 control={control}
                                 rules={{required:{value:true,message:'University/College Country Required'}}}
                                 render={({field}) => <CountrySelector field={field} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}/>}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].country.message`,'')}</Form.Control.Feedback>
+                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].COUNTRY_CODE.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
-                    {watchEducation[index]?.country=='USA' &&
+                    {watchEducation[index]?.COUNTRY_CODE=='USA' &&
                         <>
                             <Form.Group as={Row} className="mb-1">
                                 <Form.Label column md={3}>University/College State*:</Form.Label>
                                 <Col xs="auto">
                                     <Controller
-                                        name={`${name}.${index}.state`}
+                                        name={`${name}.${index}.INSTITUTION_STATE`}
                                         defaultValue=""
                                         control={control}
                                         rules={{required:{value:true,message:'University/College State Required'}}}
                                         render={({field}) => <StateSelector field={field} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}/>}
                                     />
-                                    <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].state.message`,'')}</Form.Control.Feedback>
+                                    <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].INSTITUTION_STATE.message`,'')}</Form.Control.Feedback>
                                 </Col>
                             </Form.Group>
-                            {watchEducation[index]?.state && <UniversityCityComponent index={index} editIndex={editIndex}/>}
-                            {watchEducation[index]?.city.length!=0 && <UniversityNameComponent index={index} editIndex={editIndex}/>}
+                            {watchEducation[index]?.INSTITUTION_STATE && <UniversityCityComponent index={index} editIndex={editIndex}/>}
+                            {watchEducation[index]?.institutionCity.length!=0 && <UniversityNameComponent index={index} editIndex={editIndex}/>}
                         </>
                     }
-                    {(!!watchEducation[index]?.country&&watchEducation[index]?.country!='USA') && <UniversityNameComponent index={index} editIndex={editIndex}/>}
+                    {(!!watchEducation[index]?.country&&watchEducation[index]?.COUNTRY_CODE!='USA') && <UniversityNameComponent index={index} editIndex={editIndex}/>}
                     {yesNoOptions.map(yn => (
                         <Form.Group key={yn.id} as={Row} className="mb-1">
                             <Form.Label column md={3}>{yn.title}:</Form.Label>
@@ -275,8 +245,8 @@ export default function PersonEducation() {
                                     control={control}
                                     render={({field}) => (
                                         <>
-                                            <Form.Check {...field} inline type="radio" label="Yes" value="yes" checked={field.value=="yes"} disabled={editIndex!=index}/>
-                                            <Form.Check {...field} inline type="radio" label="No" value="no" checked={field.value=="no"} disabled={editIndex!=index}/>
+                                            <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=="Y"} disabled={editIndex!=index}/>
+                                            <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!="Y"} disabled={editIndex!=index}/>
                                         </>
                                     )}
                                 />
@@ -298,7 +268,7 @@ export default function PersonEducation() {
                     </Row>
                     <Row>
                         <Col>
-                            <small><span className="fw-bold">Created: </span><DateFormat>{flds.created}</DateFormat></small>
+                            <small><span className="fw-bold">Created: </span><DateFormat>{flds.createDate}</DateFormat></small>
                         </Col>
                         <Col className="text-right">
                             <small>{index}:{flds.id}</small>
@@ -317,7 +287,7 @@ export default function PersonEducation() {
 
 function UniversityCityComponent({editIndex,index}) {
     const { control, formState: { errors } } = useFormContext();
-    const watchState = useWatch({name:`${name}.${index}.state`,control});
+    const watchState = useWatch({name:`${name}.${index}.INSTITUTION_STATE`,control});
 
     const { getEducationInstitutions } = useFormQueries();
     const city = getEducationInstitutions({country:'USA',state:watchState,options:{
@@ -333,13 +303,13 @@ function UniversityCityComponent({editIndex,index}) {
                 {city.isError && <p>Error Loading</p>}
                 {city.data &&
                     <Controller
-                        name={`${name}.${index}.city`}
+                        name={`${name}.${index}.institutionCity`}
                         defaultValue=""
                         control={control}
                         rules={{required:{value:true,message:'University/College City Required'}}}
                         render={({field}) => <Typeahead 
                             {...field} 
-                            id={`city-${index}`}
+                            id={`institutionCity-${index}`}
                             options={city.data} 
                             flip={true} 
                             minLength={2} 
@@ -350,7 +320,7 @@ function UniversityCityComponent({editIndex,index}) {
                         />}
                     />
                 }
-                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].city`,false)?'block':'none'}}>{get(errors,`${name}[${index}].city.message`,'')}</Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].institutionCity`,false)?'block':'none'}}>{get(errors,`${name}[${index}].city.message`,'')}</Form.Control.Feedback>
             </Col>
         </Form.Group>
     );
@@ -359,9 +329,8 @@ function UniversityCityComponent({editIndex,index}) {
 function UniversityNameComponent({editIndex,index}) {
     const { control, formState: { errors } } = useFormContext();
     const watchFields = useWatch({name:[
-        `${name}.${index}.country`,
-        `${name}.${index}.state`,
-        `${name}.${index}.city`
+        `${name}.${index}.COUNTRY_CODE`,
+        `${name}.${index}.INSTITUTION_STATE`
     ],control});
 
     const { getEducationInstitutions } = useFormQueries();
@@ -382,13 +351,13 @@ function UniversityNameComponent({editIndex,index}) {
                 {institutionName.isError && <p>Error Loading</p>}
                 {institutionName.data &&
                     <Controller
-                        name={`${name}.${index}.name`}
+                        name={`${name}.${index}.institutionName`}
                         defaultValue=""
                         control={control}
                         rules={{required:{value:true,message:'University/College Name Required'}}}
                         render={({field}) => <Typeahead 
                             {...field} 
-                            id={`name-${index}`}
+                            id={`institutionName-${index}`}
                             options={institutionName.data} 
                             flip={true} 
                             minLength={2} 
@@ -399,7 +368,7 @@ function UniversityNameComponent({editIndex,index}) {
                         />}
                     />
                 }
-                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].name`,false)?'block':'none'}}>{get(errors,`${name}[${index}].name.message`,'')}</Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].institutionName`,false)?'block':'none'}}>{get(errors,`${name}[${index}].name.message`,'')}</Form.Control.Feedback>
             </Col>
         </Form.Group>
     );

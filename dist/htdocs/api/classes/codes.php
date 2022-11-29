@@ -35,8 +35,11 @@ class Codes extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		$qry = "SELECT * FROM HRFORMS2_".$this->req[0]."_CODES ORDER BY ORDERBY,".$this->req[0]."_TITLE";
+		$qry = "SELECT * FROM HRFORMS2_".$this->req[0]."_CODES ";
+        if (isset($this->req[1])) $qry .= "WHERE ".$this->req[0]."_CODE=:code ";
+        $qry .= "ORDER BY ORDERBY,".$this->req[0]."_TITLE";
         $stmt = oci_parse($this->db,$qry);
+        if (isset($this->req[1])) oci_bind_by_name($stmt,":code", $this->req[1]);
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
         //oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);

@@ -34,9 +34,7 @@ export default function Information() {
                 <Col xs="auto">
                     <Controller
                         name="posType.id"
-                        defaultValue=""
                         control={control}
-                        rules={{required:{value:true,message:'You must select a Position Type'}}}
                         render={({field})=>Object.keys(posTypes).map(k=><Form.Check key={k} {...field} inline id={`posType-${k}`} type="radio" label={posTypes[k].title} value={k} checked={k==field.value} onChange={e=>handlePosTypeChange(field,e)} disabled={!isDraft}/>) }
                     />
                 </Col>
@@ -46,7 +44,6 @@ export default function Information() {
                 <Col sm={9} md={6} lg={5} xl={4}>
                     <Controller
                         name="reqType.id"
-                        defaultValue=""
                         control={control}
                         rules={{required:{value:true,message:'Request Type is required'}}}
                         render={({field}) => (
