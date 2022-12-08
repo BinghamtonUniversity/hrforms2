@@ -1,20 +1,29 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
-import { useFormContext, Controller } from "react-hook-form";
+import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { useAppQueries } from "../../queries";
 import useFormQueries from "../../queries/forms";
-import useEmploymentQueries from "../../queries/employment";
 import { Loading, DepartmentSelector } from "../components";
 import { Icon } from "@iconify/react";
 import DatePicker from "react-datepicker";
 
-const name = 'employment.appointment';
+const baseName = 'employment.appointment';
 
 export default function EmploymentAppointment() {
-    const { control, getValues, setValue, hrPersonId, formState: { errors } } = useFormContext();
+    const { control, getValues, setValue, formState: { errors }, testHighlight, showInTest } = useFormContext();
 
-    const [showFac,setShowFac] = useState(true);
+    const watchPayroll = useWatch({name:['payroll.code','selectedRow.PAYROLL_AGENCY_CODE'],control:control});
+    const watchFaculty = useWatch({name:`${baseName}.DERIVED_FAC_TYPE`,control:control});
+    const watchTermDuration = useWatch({name:`${baseName}.TERM_DURATION`,control:control,defaultValue:0});
+    const watchFields = useWatch({name:[
+        'payroll.code',
+        'employment.position.APPOINTMENT_TYPE.id',
+        `${baseName}.DERIVED_FAC_TYPE`,
+        `${baseName}.TENURE_STATUS.id`,
+    ],contorl:control});
+
+    const handleRangeChange = e => setValue(`${baseName}.TERM_DURATION`,e.target.value);
 
     const {getListData} = useAppQueries();
     const tenure = getListData('tenureStatus');
@@ -25,119 +34,135 @@ export default function EmploymentAppointment() {
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
     }
 
-/*    useEffect(() => {
-        if (!apptinfo.data) return;
-        if (getValues(`${name}.loadDate`)) return;
-        setValue(`${name}.isFaculty`,(apptinfo.data?.DERIVED_FAC_TYPE=='Y')?'Yes':'No');
-        if (apptinfo.data?.DERIVED_FAC_TYPE!='Y') setShowFac(false);
-        setValue(`${name}.tenureStatus.id`,apptinfo.data?.TENURE_STATUS);
-        setValue(`${name}.campusTitle`,apptinfo.data?.CAMPUS_TITLE);
-        setValue(`${name}.department.id`,apptinfo.data?.REPORTING_DEPARTMENT_CODE);
-        //NB: this doesn't work all the time, as suspected
-        //setValue(`${name}.department.label`,document.querySelector(`[name="${name}.deartment.id"]`)?.selectedOptions?.item(0)?.label);
-        setValue(`${name}.supervisor`,[{id:apptinfo.data?.SUPERVISOR_SUNY_ID,label:apptinfo.data?.SUPERVISOR_NAME}]);
-        //missing: term_duration, notice_date,cont_perm_date,tenure_status
-        setValue(`${name}.loadDate`,new Date());
-    },[apptinfo.data]);*/
+    const displayTermDuration = useMemo(() => {
+        if (watchFields[0] == '28020'&&['TEMP','TERM'].includes(watchFields[1])) {
+            if (watchFields[2]=='Y'&&['R','N'].includes(watchFields[3])) return true;
+            if (watchFields[2]!='Y') return true;
+        }
+        return false;
+    },[watchFields]);
     return (
         <article className="mt-3">
             <Row as="header">
                 <Col as="h3">Appointment Details</Col>
             </Row>
-            {showFac &&
-                <Form.Group as={Row}>
+            {((watchPayroll[0]=='28020'&&watchPayroll[1]=='')||showInTest) &&
+                <Form.Group as={Row} className={testHighlight((watchPayroll[0]=='28020'&&watchPayroll[1]==''))}>
                     <Form.Label column md={2}>Faculty:</Form.Label>
                     <Col xs="auto" className="pt-2">
                         <Controller
-                            name={`${name}.isFaculty`}
+                            name={`${baseName}.DERIVED_FAC_TYPE`}
                             defaultValue={false}
                             control={control}
                             render={({field}) => (
                                 <>
-                                    <Form.Check {...field} inline type="radio" label="Yes" value="Yes" checked={field.value=='Yes'}/>
-                                    <Form.Check {...field} inline type="radio" label="No" value="No" checked={field.value=='No'}/>
+                                    <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'}/>
+                                    <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!='Y'}/>
                                 </>
                             )}
                         />
                     </Col>
                 </Form.Group>
             }
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>Tenure Status:</Form.Label>
-                <Col xs="auto">
-                    <Controller
-                        name={`${name}.tenureStatus.id`}
-                        control={control}
-                        render={({field}) => (
-                            <>
-                                {tenure.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
-                                {tenure.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
-                                {tenure.data &&
-                                    <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
-                                        <option></option>
-                                        {tenure.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
-                                    </Form.Control>
-                                }
-                            </>
-                        )}
-                    />
-                </Col>
-            </Form.Group>
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>Notice Date:</Form.Label>
-                <Col xs="auto">
-                    <InputGroup>
+            {(watchFaculty=='Y'||showInTest) &&
+                <Form.Group as={Row} className={testHighlight(watchFaculty=='Y')}>
+                    <Form.Label column md={2}>Tenure Status:</Form.Label>
+                    <Col xs="auto">
+                        {tenure.isLoading && <Loading>Loading Data</Loading>}
+                        {tenure.isError && <Loading isError>Failed to Load</Loading>}
+                        {tenure.data &&
+                            <Controller
+                                name={`${baseName}.TENURE_STATUS.id`}
+                                control={control}
+                                render={({field}) => (
+                                    <>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
+                                            <option></option>
+                                            {tenure.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
+                                        </Form.Control>
+                                    </>
+                                )}
+                            />
+                        }
+                    </Col>
+                </Form.Group>
+            }
+            {displayTermDuration && 
+                <Form.Group as={Row} className={testHighlight(displayTermDuration)}>
+                    <Form.Label column md={2}>Term Duration:</Form.Label>
+                    <Col xs="auto">
                         <Controller
-                            name={`${name}.noticeDate`}
+                            name={`${baseName}.TERM_DURATION`}
+                            defaultValue=""
                             control={control}
-                            render={({field}) => <Form.Control
-                                as={DatePicker}
-                                name={field.name}
-                                selected={field.value}
-                                closeOnScroll={true}
-                                onChange={field.onChange}
-                                isInvalid={errors.effDate}
-                                autoComplete="off"
-                            />}
+                            rules={{min:{value:1,message:'Term Duration cannot be less than 0'},max:{value:5,message:'Term Duration cannot be greater than 5'}}}
+                            render={({field}) => <Form.Control {...field} type="number" min={1} max={5}/>}
                         />
-                        <InputGroup.Append>
-                            <InputGroup.Text>
-                                <Icon icon="mdi:calendar-blank"/>
-                            </InputGroup.Text>
-                        </InputGroup.Append>
-                    </InputGroup>
-                </Col>
-            </Form.Group>
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>Continuing/Permanency Date:</Form.Label>
-                <Col xs="auto">
-                    <InputGroup>
-                        <Controller
-                            name={`${name}.contPermDate`}
-                            control={control}
-                            render={({field}) => <Form.Control
-                                as={DatePicker}
-                                name={field.name}
-                                selected={field.value}
-                                closeOnScroll={true}
-                                onChange={field.onChange}
-                                isInvalid={errors.effDate}
-                                autoComplete="off"
-                            />}
-                        />
-                        <InputGroup.Append>
-                            <InputGroup.Text>
-                                <Icon icon="mdi:calendar-blank"/>
-                            </InputGroup.Text>
-                        </InputGroup.Append>
-                    </InputGroup>
-                </Col>
-            </Form.Group>
+                    </Col>
+                    <Col sm={8} md={6} className="pt-2">
+                        <Form.Control type="range" name="termDurationRange" id="termDurationRange" min={1} max={5} value={watchTermDuration} onChange={handleRangeChange}/>
+                    </Col>
+                </Form.Group>
+            }
+            {(getValues(`${baseName}.noticeDate`)||showInTest) && 
+                <>
+                    <Form.Group as={Row} className={testHighlight(getValues(`${baseName}.noticeDate`))}>
+                        <Form.Label column md={2}>Notice Date:</Form.Label>
+                        <Col xs="auto">
+                            <InputGroup>
+                                <Controller
+                                    name={`${baseName}.noticeDate`}
+                                    control={control}
+                                    render={({field}) => <Form.Control
+                                        as={DatePicker}
+                                        name={field.name}
+                                        selected={field.value}
+                                        closeOnScroll={true}
+                                        onChange={field.onChange}
+                                        isInvalid={errors.effDate}
+                                        autoComplete="off"
+                                    />}
+                                />
+                                <InputGroup.Append>
+                                    <InputGroup.Text>
+                                        <Icon icon="mdi:calendar-blank"/>
+                                    </InputGroup.Text>
+                                </InputGroup.Append>
+                            </InputGroup>
+                        </Col>
+                    </Form.Group>
+                    <Form.Group as={Row} className={testHighlight(getValues(`${baseName}.noticeDate`))}>
+                        <Form.Label column md={2}>Continuing/Permanency Date:</Form.Label>
+                        <Col xs="auto">
+                            <InputGroup>
+                                <Controller
+                                    name={`${baseName}.contPermDate`}
+                                    control={control}
+                                    render={({field}) => <Form.Control
+                                        as={DatePicker}
+                                        name={field.name}
+                                        selected={field.value}
+                                        closeOnScroll={true}
+                                        onChange={field.onChange}
+                                        isInvalid={errors.effDate}
+                                        autoComplete="off"
+                                    />}
+                                />
+                                <InputGroup.Append>
+                                    <InputGroup.Text>
+                                        <Icon icon="mdi:calendar-blank"/>
+                                    </InputGroup.Text>
+                                </InputGroup.Append>
+                            </InputGroup>
+                        </Col>
+                    </Form.Group>
+                </>
+            }
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Campus Title:</Form.Label>
                 <Col xs={10} sm={9} md={8} lg={6} xl={5}>
                     <Controller
-                        name={`${name}.campusTitle`}
+                        name={`${baseName}.CAMPUS_TITLE`}
                         control={control}
                         render={({field})=><Form.Control {...field} type="text"/>}
                     />
@@ -150,13 +175,17 @@ export default function EmploymentAppointment() {
                 <Form.Label column md={2}>Department:</Form.Label>
                 <Col xs="auto">
                     <Controller
-                        name={`${name}.department.id`}
+                        name={`${baseName}.REPORTING_DEPARTMENT_CODE.id`}
                         control={control}
                         defaultValue=""
                         render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)}/>}
                     />
                 </Col>
             </Form.Group>
+
+            {(watchFaculty=='Y'||showInTest)&&<FacultyDetails watchFaculty={watchFaculty}/>}
+
+            {(watchPayroll[0]=='28029'||showInTest)&&<StudentDetails watchPayroll={watchPayroll} handleSelectChange={handleSelectChange}/>}
         </article>
     );
 }
@@ -169,8 +198,8 @@ function AppointmentSupervisor() {
     const handleSearch = query => setSearchFilter(query);
     const handleBlur = (field,e) => {
         field.onBlur(e);
-        if (e.target.value != getValues(`${name}.supervisor[0].label`)) {
-            setValue(`${name}.supervisor.0`,{id:'new-id-0',label:e.target.value});
+        if (e.target.value != getValues(`${baseName}.supervisor[0].label`)) {
+            setValue(`${baseName}.supervisor.0`,{id:'new-id-0',label:e.target.value});
         }
     }
     useEffect(() => searchFilter&&supervisors.refetch(),[searchFilter]);
@@ -179,7 +208,7 @@ function AppointmentSupervisor() {
             <Form.Label column md={2}>Supervisor:</Form.Label>
             <Col xs={10} sm={8} md={6} lg={5} xl={4}>
                 <Controller
-                    name={`${name}.supervisor`}
+                    name={`${baseName}.supervisor`}
                     control={control}
                     render={({field}) => <AsyncTypeahead
                         {...field}
@@ -193,10 +222,174 @@ function AppointmentSupervisor() {
                         onBlur={e=>handleBlur(field,e)}
                         options={supervisors.data}
                         placeholder="Search for supervisor..."
-                        selected={field.value||[]}
+                        selected={field.value}
                     />}
                 />
             </Col>
         </Form.Group>
     );
+}
+
+function FacultyDetails({watchFaculty}) {
+    const name = `${baseName}.facultyDetails`;
+    const { control, setValue, testHighlight } = useFormContext();
+    const watchCourses = useWatch({name:[`${name}.fallCourses`,`${name}.springCourses`,],control:control})||0;
+
+    const handleRangeChange = (e,fieldName) => setValue(fieldName,e.target.value);
+
+    return (
+        <section className={`mt-4 ${testHighlight(watchFaculty=='Y')}`}>
+            <Row as="header">
+                <Col as="h4">Faculty Details</Col>
+            </Row>
+            {[
+                {id:'fallCourses',label:'Fall Courses'},
+                {id:'springCourses',label:'Spring Courses'}
+            ].map((c,i) => (
+                <div key={c.id} id={c.id}>
+                    <Form.Group as={Row}>
+                        <Form.Label column md={2}>{c.label}:</Form.Label>
+                        <Col xs="auto">
+                            <Controller
+                                name={`${name}.${c.id}.count`}
+                                defaultValue=""
+                                control={control}
+                                rules={{min:{value:0,message:`${c.label} cannot be less than 0`},max:{value:20,message:`${c.label} cannot be greater than 20`}}}
+                                render={({field}) => <Form.Control {...field} type="number" min={0} max={20}/>}
+                            />
+                        </Col>
+                        <Col sm={8} md={6} className="pt-2">
+                            <Form.Control type="range" name={`${c.id}Range`} id={`${c.id}Range`} min={0} max={20} value={watchCourses[i].count} onChange={e=>handleRangeChange(e,`${name}.${c.id}.count`)}/>
+                        </Col>
+                    </Form.Group>
+                    <Form.Group as={Row}>
+                        <Form.Label column md={2}>{c.label} Lists:</Form.Label>
+                        <Col md={9}>
+                            <Controller
+                                name={`${name}.${c.id}.list`}
+                                defaultValue=""
+                                control={control}
+                                render={({field}) => <Form.Control {...field} as="textarea" rows={5}/>}
+                            />
+                        </Col>
+                    </Form.Group>
+                </div>
+            ))}
+        </section>
+    );
+}
+
+function StudentDetails({watchPayroll,handleSelectChange}) {
+    const name = `${baseName}.studentDetails`;
+
+    const { control, getValues, setValue, testHighlight } = useFormContext();
+    const watchCredits = useWatch({name:[`${name}.fall.credits`,`${name}.spring.credits`,],control:control})||0;
+    const watchFellowship = useWatch({name:`${name}.fellowship`,control:control});
+    const data = getValues(name);
+
+    const handleRangeChange = (e,fieldName) => setValue(fieldName,e.target.value);
+
+    const {getListData} = useAppQueries();
+    const fellowshipsources = getListData('fellowshipSources');
+
+    useEffect(()=>watchFellowship=='N' && setValue(`${name}.fellowshipSource`,{"id":"","label":""}),[watchFellowship]);
+    return (
+        <section className={`mt-4 ${testHighlight(watchPayroll[0]=='28029')}`}>
+            <Row as="header">
+                <Col as="h4">Student Details</Col>
+            </Row>
+            <Row as="dl">
+                <Col as="dt" sm={2} className="mb-0">GPA:</Col>
+                <Col as="dd" sm={4} className="mb-0">{Number.parseFloat(data.SHRLGPA_GPA).toFixed(2)}</Col>
+                <Col as="dt" sm={2} className="mb-0">Incompletes:</Col>
+                <Col as="dd" sm={4} className="mb-0">{data.INCOMPLETES}</Col>
+                <Col as="dt" sm={2} className="mb-0">Missing Grades:</Col>
+                <Col as="dd" sm={4} className="mb-0">{data.MISSING_GRADES}</Col>
+                <Col as="dt" sm={2} className="mb-0">Grade Level</Col>
+                <Col as="dd" sm={4} className="mb-0">{data.STVCLAS_CODE} - {data.STVCLAS_DESC}</Col>
+                <Col as="dt" sm={2} className="mb-0">Last Term:</Col>
+                <Col as="dd" sm={4} className="mb-0">{data.STVTERM_DESC} ({data.SGBSTDN_TERM_CODE_EFF})</Col>
+                <Col as="dt" sm={2} className="mb-0">Program:</Col>
+                <Col as="dd" sm={4} className="mb-0">{data.SMRPRLE_PROGRAM_DESC}</Col>
+                <Col as="dt" sm={2} className="mb-0">Major:</Col>
+                <Col as="dd" sm={4} className="mb-0">{data.STVMAJR_DESC}</Col>
+                <Col as="dt" sm={2} className="mb-0">Academic History:</Col>
+                <Col as="dd" sm={4} className="mb-0">{data.ACAD_HIST}</Col>
+                <Col as="dt" sm={2} className="mb-0">Residency:</Col>
+                <Col as="dd" sm={4} className="mb-0">{data.STVRESD_DESC} / {data.STVRESD_IN_STATE_DESC}</Col>
+            </Row>
+            {[
+                {id:'fall',label:'Fall'},
+                {id:'spring',label:'Spring'}
+            ].map((c,i) => (
+                <div key={c.id} id={c.id}>
+                    <Form.Group as={Row}>
+                        <Form.Label column md={2}>{c.label} Tuition:</Form.Label>
+                        <Col xs={12} sm={6} md={4} lg={3}>
+                            <Controller
+                                name={`${name}.${c.id}.tuition`}
+                                defaultValue=""
+                                control={control}
+                                render={({field}) => <Form.Control {...field} type="text"/>}
+                            />
+                        </Col>
+                    </Form.Group>
+                    <Form.Group as={Row}>
+                        <Form.Label column md={2}>{c.label} Credits:</Form.Label>
+                        <Col xs="auto">
+                            <Controller
+                                name={`${name}.${c.id}.credits`}
+                                defaultValue={0}
+                                control={control}
+                                rules={{min:{value:0,message:`${c.label} cannot be less than 0`},max:{value:30,message:`${c.label} cannot be greater than 30`}}}
+                                render={({field}) => <Form.Control {...field} type="number" min={0} max={30}/>}
+                            />
+                        </Col>
+                        <Col sm={8} md={6} className="pt-2">
+                            <Form.Control type="range" name={`${c.id}CreditsRange`} id={`${c.id}CreditsRange`} min={0} max={30} value={watchCredits[i]} onChange={e=>handleRangeChange(e,`${name}.${c.id}.credits`)}/>
+                        </Col>
+                    </Form.Group>
+                </div>
+            ))}
+            <Form.Group as={Row}>
+                <Form.Label column md={2}>Receiving Fellowship:</Form.Label>
+                <Col xs="auto" className="pt-2">
+                    <Controller
+                        name={`${name}.fellowship`}
+                        defaultValue={false}
+                        control={control}
+                        render={({field}) => (
+                            <>
+                                <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'}/>
+                                <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!='Y'}/>
+                            </>
+                        )}
+                    />
+                </Col>
+            </Form.Group>
+            {watchFellowship=='Y' && 
+                <Form.Group as={Row}>
+                    <Form.Label column md={2}>Source of Fellowship:</Form.Label>
+                    <Col xs="auto">
+                        {fellowshipsources.isLoading && <Loading>Loading Data</Loading>}
+                        {fellowshipsources.isError && <Loading isError>Failed to Load</Loading>}
+                        {fellowshipsources.data &&
+                            <Controller
+                                name={`${name}.fellowshipSource.id`}
+                                control={control}
+                                render={({field}) => (
+                                    <>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
+                                            <option></option>
+                                            {fellowshipsources.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
+                                        </Form.Control>
+                                    </>
+                                )}
+                            />
+                        }
+                    </Col>
+                </Form.Group>
+            }
+        </section>
+    )
 }

@@ -11,12 +11,24 @@ import { useAppQueries } from "../../queries";
 const name = 'employment.salary';
 
 export default function EmploymentAppointment() {
-    const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext();
-    const watchFTERate = useWatch({name:`${name}.FTERate`,control:control});
-    const watchApptPercent = useWatch({name:'employment.position.apptPercent',control:control});
+    const { control, getValues, setValue, formState: { errors }, showInTest, testHighlight } = useFormContext();
+    const watchRateAmount = useWatch({name:`${name}.RateAmount`,control:control,defaultValue:0});
+    const watchPayBasis = useWatch({name:'employment.position.positionDetails.PAY_BASIS',control:control});
+    const watchApptPercent = useWatch({name:'employment.position.APPOINTMENT_PERCENT',control:control,defaultValue:100});
+    const rateAmountLabel = useMemo(() => {
+        switch(watchPayBasis) {
+            case "BIW":
+            case "FEE":
+                return "Biweekly";
+            case "HRY":
+                return "Hourly";
+            default:
+                return "Full-Time";
+        }
+    },[watchPayBasis]);
     const calcTotalSalary = useMemo(() => {
-        return (+watchFTERate * (+watchApptPercent/100)).toFixed(2);
-    },[watchApptPercent,watchFTERate]);
+        return (+watchRateAmount * (+watchApptPercent/100)).toFixed(2);
+    },[watchApptPercent,watchRateAmount]);
     return (
         <article>
             <section className="mt-3">
@@ -50,20 +62,35 @@ export default function EmploymentAppointment() {
                 <Form.Group as={Row}>
                     <Form.Label column md={2}>Pay Basis:</Form.Label>
                     <Col xs="auto" className="pt-2">
-                        <p className="mb-0">{getValues('employment.position.lineNumberDetails.PAY_BASIS')}</p>
+                        <p className="mb-0">{watchPayBasis}</p>
                     </Col>
                 </Form.Group>
+                {(!['HRY','BIW','FEE'].includes(watchPayBasis)||showInTest) && 
+                    <Form.Group as={Row} className={testHighlight(!['HRY','BIW','FEE'].includes(watchPayBasis))}>
+                        <Form.Label column md={2}>Appointment Percent:</Form.Label>
+                        <Col xs="auto" className="pt-2">
+                            <p className="mb-0">{watchApptPercent}%</p>
+                        </Col>
+                    </Form.Group>
+                }
+                {(['BIW','FEE'].includes(watchPayBasis)||showInTest) && 
+                    <Form.Group as={Row} className={testHighlight(['BIW','FEE'].includes(watchPayBasis))}>
+                        <Form.Label column md={2}># Payments:</Form.Label>
+                        <Col xs="auto">
+                            <Controller
+                                name={`${name}.numPayments`}
+                                defaultValue=""
+                                control={control}
+                                render={({field}) => <Form.Control {...field} type="text"/>}
+                            />
+                        </Col>
+                    </Form.Group>
+                }
                 <Form.Group as={Row}>
-                    <Form.Label column md={2}>Appointment Percent:</Form.Label>
-                    <Col xs="auto" className="pt-2">
-                        <p className="mb-0">{getValues('employment.position.apptPercent')}%</p>
-                    </Col>
-                </Form.Group>
-                <Form.Group as={Row}>
-                    <Form.Label column md={2}>Full-Time Rate:</Form.Label>
+                    <Form.Label column md={2}>{rateAmountLabel} Rate:</Form.Label>
                     <Col xs="auto">
                         <Controller
-                            name={`${name}.FTERate`}
+                            name={`${name}.RateAmount`}
                             defaultValue=""
                             control={control}
                             render={({field}) => <Form.Control {...field} type="text"/>}
@@ -88,7 +115,7 @@ function AdditionalSalary() {
     const blockName = `${name}.additionalSalary`;
 
     const { control, getValues, setValue, clearErrors } = useFormContext();
-    const { fields, append, remove, move, update } = useFieldArray({
+    const { fields, append, remove, update } = useFieldArray({
         control:control,
         name:blockName
     });

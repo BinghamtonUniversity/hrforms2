@@ -61,6 +61,13 @@ pre {
   background: repeating-linear-gradient(-45deg,#ccc,#ccc 5px,#fff 5px,#fff 10px);
 }
 
+/* highlight hidden field; shown in test mode */
+.test-highlight {
+  background: repeating-linear-gradient(-45deg,#d4d4d4,#d4d4d4 5px,#efefef 5px,#efefef 10px);
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
 /* hover effect on nav-links */
 .navbar-dark .navbar-nav .nav-link:hover, 
 .navbar-dark .navbar-nav .nav-link:focus { color: #fff }

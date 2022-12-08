@@ -30,6 +30,7 @@ class Person extends HRForms2 {
         if ($this->method == "GET") {
             switch($this->req[0]) {
                 case "bnumber":
+                case "sunyid":
                     if (sizeof($this->req)!=2) $this->raiseError(400);
                     break;
                 case "lastnamedob":

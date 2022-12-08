@@ -139,7 +139,7 @@ function PersonDirectoryAddresses() {
                 <section key={field.id} className="border rounded p-2 mb-2">
                     <Form.Group as={Row} className="mb-0">
                         <Form.Label column md={2}>Type*:</Form.Label>
-                        <Col xs="auto">
+                        <Col xs="auto" className="pt-1">
                             {addressCodes.data && 
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_CODE`}
@@ -386,7 +386,7 @@ function PersonDirectoryPhone() {
                 <section key={field.id} className="border rounded p-2 mb-2">
                     <Form.Group as={Row} className="mb-0">
                         <Form.Label column md={2}>Type:</Form.Label>
-                        <Col xs="auto">
+                        <Col xs="auto" className="pt-1">
                             {phoneTypes.data && 
                                 <Controller
                                     name={`${name}.${index}.PHONE_TYPE`}
@@ -551,7 +551,7 @@ function PersonDirectoryEmail() {
                 <section key={field.id} className="border rounded p-2 mb-2">
                     <Form.Group as={Row} className="mb-0">
                         <Form.Label column md={2}>Type:</Form.Label>
-                        <Col xs="auto">
+                        <Col xs="auto" className="pt-1">
                             {emailTypes.data && 
                                 <Controller
                                     name={`${name}.${index}.EMAIL_TYPE`}

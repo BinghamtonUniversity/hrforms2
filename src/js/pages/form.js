@@ -37,12 +37,12 @@ const allTabs = [
         {value:'person-contacts',label:'Contacts'},
     ]},
     {value:'employment',label:'Employment',children:[
-        {value:'employment-appointment',label:'Appointment'},
-        {value:'employment-leave',label:'Leave'},
-        {value:'employment-pay',label:'Pay'},
         {value:'employment-position',label:'Position'},
+        {value:'employment-appointment',label:'Appointment'},
         {value:'employment-salary',label:'Salary'},
         {value:'employment-separation',label:'Separation'},
+        {value:'employment-leave',label:'Leave'},
+        {value:'employment-pay',label:'Pay'},
         {value:'employment-volunteer',label:'Volunteer'}
     ]},
     {value:'comments',label:'Comments'},
@@ -99,6 +99,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
 
     const [activeTab,setActiveTab] = useState('basic-info');
     const [activeNav,setActiveNav] = useState('');
+    const [showHidden,setShowHidden] = useState(true);
 
     const defaults = {
         formId:formId,
@@ -177,14 +178,34 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                 "justification": ""
             },
             appointment: {
-                isFaculty:"No",
-                tenureStatus:{id:"",label:""},
-                termDuration:"",
-                noticeDate:"",
-                contPermDate:"",
-                campusTitle:"",
-                supervisor:"",
-                department:{id:"",label:""}
+                "TERM_DURATION": "",
+                "NOTICE_DATE": "",
+                "CONTINUING_PERMANENCY_DATE": "",
+                "TENURE_STATUS": {"id": "", "label": ""},
+                "CAMPUS_TITLE": "",
+                "SUPERVISOR_SUNY_ID": "",
+                "SUPERVISOR_NAME": "",
+                "REPORTING_DEPARTMENT_CODE": {"id": "", "label": ""},
+                "DERIVED_FAC_TYPE": "N",
+                "supervisor": [],
+                "noticeDate": "",
+                "contPermDate": "",
+                "facultyDetails": {
+                    "fallCourses":{count:0,list:""},
+                    "springCourses":{count:0,list:""}
+                },
+                "studentDetails": {
+                    "fall":{
+                        "tuition":"",
+                        "credits":"0"
+                    },
+                    "spring":{
+                        "tuition":"",
+                        "credits":"0"
+                    },
+                    "fellowship":"N",
+                    "fellowshipSource":{"id":"","label":""}
+                }
             },
             salary:{
                 effDate:"",
@@ -213,9 +234,10 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
     };
     const methods = useForm({defaultValues: defaults});
     const watchFormActions = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode'],control:methods.control});
-    const watchIds = useWatch({name:['person.information.HR_PERSON_ID','person.information.SUNY_ID',],control:methods.control});
+    const watchIds = useWatch({name:['person.information.HR_PERSON_ID','person.information.SUNY_ID','person.information.LOCAL_CAMPUS_ID'],control:methods.control});
 
     const {getPersonInfo} = usePersonQueries();
+    const {getEmploymentInfo} = useEmploymentQueries();
     //TODO: only fetch if not saved; saved data comes HRF2 table.
     const personinfo = getPersonInfo(watchIds[0],'information',{
         refetchOnMount:false,
@@ -280,7 +302,25 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             methods.setValue('person.contact.contacts',d);
         }
     });
-    const {getEmploymentInfo} = useEmploymentQueries();
+    const employmentappointment = getEmploymentInfo(watchIds[0],'appointment',{
+        refetchOnMount:false,
+        enabled:false,
+        onSuccess:d=>{
+            const noticeDate = new Date(d?.NOTICE_DATE);
+            d.noticeDate = isValid(noticeDate)?noticeDate:"";
+            const contPermDate = new Date(d?.CONTINUING_PERMANENCY_DATE);
+            d.contPermDate = isValid(contPermDate)?contPermDate:"";
+            console.log(d);
+            methods.setValue('employment.appointment',Object.assign({},defaults.employment.appointment,d));
+        }
+    });
+    const studentinformation = getEmploymentInfo(watchIds[2],'studentinfo',{
+        refetchOnMount:false,
+        enabled:false,
+        onSuccess:d=>{
+            methods.setValue('employment.appointment.studentDetails',Object.assign({},defaults.employment.appointment.studentDetails,d));
+        }
+    });
     const employmentposition = getEmploymentInfo(watchIds[0],'position',{
         refetchOnMount:false,
         enabled:false,
@@ -380,7 +420,13 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                         case "person-directory": persondirectory.refetch(); break;
                         case "person-education": personeducation.refetch(); break;
                         case "person-contacts": personcontacts.refetch(); break;
-                        case "employment-position": employmentposition.refetch(); break;
+                        case "employment-appointment": employmentappointment.refetch(); break;
+                        case "employment-position": 
+                            employmentposition.refetch().then(() =>{
+                                //if payroll == 28029 get student data
+                                methods.getValues('payroll.code')=='28029' && studentinformation.refetch();
+                            }); 
+                            break;
                         default:
                             console.log('TODO: Load Tab:',tab);
                     }
@@ -388,6 +434,9 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             }
         }
     },[setTabList,allTabs,watchIds]);
+
+    const testHighlight = useCallback(testCondition=>(testCondition)?'':'test-highlight',[]);
+    const showInTest = useMemo(()=>watchFormActions[0]=='TEST'&&showHidden,[watchFormActions,showHidden]);
 
     return(
         <>
@@ -399,7 +448,16 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                     </Col>
                 </Row>
             </header>
-            <FormProvider {...methods} isDraft={isDraft} isNew={isNew} sunyId={methods.getValues('person.information.sunyId')} hrPersonId={methods.getValues('person.information.hrPersonId')} handleTabs={handleTabs}>
+            <FormProvider {...methods} 
+                isDraft={isDraft} 
+                isNew={isNew} 
+                isTest={methods.getValues('formActions.formCode')=='TEST'} 
+                sunyId={methods.getValues('person.information.sunyId')} 
+                hrPersonId={methods.getValues('person.information.hrPersonId')} 
+                handleTabs={handleTabs}
+                testHighlight={testHighlight}
+                showInTest={showInTest}
+            >
                 <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)} onReset={handleReset}>
                     <Tabs activeKey={activeTab} onSelect={navigate} id="hr-forms-tabs">
                         {tabList.map(t => (
@@ -419,8 +477,8 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                                             </Nav>
                                         </Row>
                                     }
-                                    {activeTab != 'basic-info' && <FormInfoBox/>}
-                                    {(activeTab == 'employment-tab'&&['employment-appointment','employment-salary'].includes(activeNav)) && <EmploymentPositionInfoBox/>}
+                                    {!['basic-info','review'].includes(activeTab) && <FormInfoBox/>}
+                                    {(activeTab == 'employment'&&['employment-appointment','employment-salary'].includes(activeNav)) && <EmploymentPositionInfoBox/>}
                                     <div className="px-2">
                                         <FormTabRouter tab={t.value} activeTab={activeTab} subTab={activeNav}/>
                                     </div>
@@ -437,6 +495,11 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                                         <Col>
                                             <p>{activeTab}.{activeNav}</p>
                                         </Col>
+                                        {methods.getValues('formActions.formCode')=='TEST' &&
+                                            <Col className="d-flex justify-content-end">
+                                                <Form.Check type="switch" id="showHiddenToggle" className="custom-switch-lg" label="Hide/Show Fields In Test Mode" checked={showHidden} onChange={()=>setShowHidden(!showHidden)}/>
+                                            </Col>
+                                        }
                                     </Row>
                                 </Container>
                             </Tab>

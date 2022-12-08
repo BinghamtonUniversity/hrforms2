@@ -9,7 +9,7 @@ import { Loading, CountrySelector } from "../components";
 const name = 'person.demographics';
 
 export default function PersonDemographics() {
-    const { control, setValue } = useFormContext();
+    const { control, setValue, showInTest } = useFormContext();
 
     const watchCitizen = useWatch({name:`${name}.US_CITIZEN_INDICATOR`});
     const watchVeteran = useWatch({name:`${name}.VETERAN_INDICATOR`});
@@ -88,7 +88,7 @@ export default function PersonDemographics() {
                 </Col>
             </Form.Group>
 
-            {watchCitizen != 'Y' && <PersonDemographicsNonUSCitizen handleSelectChange={handleSelectChange}/>}
+            {(watchCitizen!='Y'||showInTest) && <PersonDemographicsNonUSCitizen handleSelectChange={handleSelectChange} watchCitizen={watchCitizen}/>}
             
             <PersonDemographicsMilitaryStatus/>
 
@@ -109,7 +109,7 @@ export default function PersonDemographics() {
                 </Col>
             </Form.Group>
 
-            {watchVeteran == 'Y' && <PersonDemographicsVeteranDetails/>}
+            {(watchVeteran=='Y'||showInTest) && <PersonDemographicsVeteranDetails watchVeteran={watchVeteran}/>}
         </article>
     );
 }
@@ -150,8 +150,8 @@ function PersonDemographicsMilitaryStatus() {
     );
 }
 
-function PersonDemographicsNonUSCitizen({handleSelectChange}) {
-    const { control } = useFormContext();
+function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
+    const { control, showInTest, testHighlight } = useFormContext();
 
     const watchCitizenType = useWatch({name:`${name}.NON_CITIZEN_TYPE`});
 
@@ -161,7 +161,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange}) {
 
     return (
         <>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
                 <Form.Label column md={2}>Non-US Citizen Type:</Form.Label>
                 <Col xs="auto">
                     <Controller
@@ -182,8 +182,8 @@ function PersonDemographicsNonUSCitizen({handleSelectChange}) {
                     />
                 </Col>
             </Form.Group>
-            {watchCitizenType == 'OT' && 
-                <Form.Group as={Row}>
+            {(watchCitizenType=='OT'||showInTest) && 
+                <Form.Group as={Row} className={testHighlight(watchCitizen!='Y'&&watchCitizenType=='OT')}>
                     <Form.Label column md={2}>Employment Authorization Card Only:</Form.Label>
                     <Col xs="auto" className="pt-2">
                         <Controller
@@ -199,7 +199,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange}) {
                     </Col>
                 </Form.Group>
             }
-            <Form.Group as={Row}>
+            <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
                 <Form.Label column md={2}>Country of Citizenship:</Form.Label>
                 <Col xs="auto">
                     <Controller
@@ -210,7 +210,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange}) {
                     />
                 </Col>
             </Form.Group>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
                 <Form.Label column md={2}>Visa Type:</Form.Label>
                 <Col xs="auto">
                     <Controller
@@ -234,8 +234,8 @@ function PersonDemographicsNonUSCitizen({handleSelectChange}) {
     );
 }
 
-function PersonDemographicsVeteranDetails({data}) {
-    const { control } = useFormContext();
+function PersonDemographicsVeteranDetails({watchVeteran}) {
+    const { control, testHighlight } = useFormContext();
 
     const { getListData } = useAppQueries();
     const vetstatus = getListData('protectedVeteranStatus');
@@ -254,7 +254,7 @@ function PersonDemographicsVeteranDetails({data}) {
     }
     return (
         <>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} className={testHighlight(watchVeteran=='Y')}>
                 <Form.Label column md={2}>Protected Veteran Status:</Form.Label>
                 <Col xs="auto" className="pt-2">
                     {vetstatus.isLoading && <Loading>Loading Data</Loading>}
@@ -267,7 +267,7 @@ function PersonDemographicsVeteranDetails({data}) {
                     />}
                 </Col>
             </Form.Group>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} className={testHighlight(watchVeteran=='Y')}>
                 <Form.Label column md={2}>Military Separation Date:</Form.Label>
                 <Col xs="auto">
                     <InputGroup>
@@ -292,5 +292,5 @@ function PersonDemographicsVeteranDetails({data}) {
                 </Col>
             </Form.Group>
         </>
-    )
+    );
 }

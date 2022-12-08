@@ -9,9 +9,9 @@ import { Loading } from "../components";
 const name = 'person.information';
 
 export default function PersonInfo() {
-    const { control, getValues, setValue } = useFormContext();
+    const { control, getValues, setValue, showInTest, testHighlight } = useFormContext();
 
-    const watchRehireRetiree = useWatch({name:`${name}.rehireRetiree`});
+    const watchRehireRetiree = useWatch({name:`${name}.REHIRE_RETIREE`});
 
     const {getListData} = useAppQueries();
     const salutations = getListData('salutations');
@@ -128,7 +128,7 @@ export default function PersonInfo() {
                 </Row>
                 <Form.Group as={Row}>
                     <Form.Label column md={2}>Volunteer Firefighter/EMT:</Form.Label>
-                    <Col xs="auto">
+                    <Col xs="auto" className="pt-2">
                         <Controller
                             name={`${name}.VOLUNTEER_FIRE_FLAG`}
                             defaultValue="0"
@@ -144,7 +144,7 @@ export default function PersonInfo() {
                 </Form.Group>
                 <Form.Group as={Row}>
                     <Form.Label column md={2}>Rehire Retiree:</Form.Label>
-                    <Col xs="auto">
+                    <Col xs="auto" className="pt-2">
                         <Controller
                             name={`${name}.REHIRE_RETIREE`}
                             defaultValue="0"
@@ -158,9 +158,9 @@ export default function PersonInfo() {
                         />
                     </Col>
                 </Form.Group>
-                {watchRehireRetiree=='Yes' &&
+                {(watchRehireRetiree=='1'||showInTest) &&
                     <>
-                        <Form.Group as={Row}>
+                        <Form.Group as={Row} className={testHighlight(watchRehireRetiree=='1')}>
                             <Form.Label column md={2}>Retired Date:</Form.Label>
                             <Col xs="auto">
                                 <InputGroup>
@@ -185,7 +185,7 @@ export default function PersonInfo() {
                                 </InputGroup>
                             </Col>
                         </Form.Group>
-                        <Form.Group as={Row}>
+                        <Form.Group as={Row} className={testHighlight(watchRehireRetiree=='1')}>
                             <Form.Label column md={2}>Retired From:</Form.Label>
                             <Col xs="auto">
                                 <Controller

@@ -5,6 +5,7 @@ Bug fixes, enhancements and things still to complete.
  * TabRouters are wrong; need to use React.memo and send ACTIVE tab, not tab.  If tab is sent all tabs are generated on load rather than only the active one.
  * Add "id" key for all DataTables or use keyField parameter on table
  * SGRIILLS showing as "ERR: DUPLICATE IDs" on email notification in old HR Forms PR request.
+ * When no member of a group has email notifications approving PR will error.
 
 ## In Progress Tasks:
  * Add progressPending to DataTables
@@ -42,3 +43,6 @@ Bug fixes, enhancements and things still to complete.
  * Lists should use useFormContext() - need to clean up page.
  * Add ability to selectively search columns on the hierarchy. (e.g. only show specific PosType), Only show specific WFIDs)
 
+## New Banner Grants Needed:
+  * STVCLAS
+  * STVTERM
