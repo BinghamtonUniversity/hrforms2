@@ -208,8 +208,15 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                 }
             },
             salary:{
-                effDate:"",
-                FTERate:"",
+                "APPOINTMENT_PERCENT": "",
+                "PAY_BASIS": "",
+                "RATE_EFFECTIVE_DATE": "",
+                "RATE_AMOUNT": "",
+                "NUMBER_OF_PAYMENTS":"1",
+                "SUNY_ACCOUNTS": [],
+                "EXISTING_ADDITIONAL_SALARY": [],
+                "ADDITIONAL_SALARY": [],
+                "SPLIT_ASSIGNMENTS":[],
                 "SUNYAccountsSplit":false,
                 "SUNYAccounts": [
                     {
@@ -217,7 +224,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                         pct:'100'
                     }
                 ],
-                additionalSalary:[]
+                "totalSalary": ""
             },
             separation: {
                 lastDateWorked:""
@@ -310,7 +317,6 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             d.noticeDate = isValid(noticeDate)?noticeDate:"";
             const contPermDate = new Date(d?.CONTINUING_PERMANENCY_DATE);
             d.contPermDate = isValid(contPermDate)?contPermDate:"";
-            console.log(d);
             methods.setValue('employment.appointment',Object.assign({},defaults.employment.appointment,d));
         }
     });
@@ -330,6 +336,25 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             const apptEndDate = new Date(d?.APPOINTMENT_END_DATE);
             d.apptEndDate = isValid(apptEndDate)?apptEndDate:"";
             methods.setValue('employment.position',Object.assign({},defaults.employment.position,d));
+        }
+    });
+    const employmentsalary = getEmploymentInfo(watchIds[0],'salary',{
+        refetchOnMount:false,
+        enabled:false,
+        onSuccess:d=>{
+            const effDate = new Date(d?.RATE_EFFECTIVE_DATE);
+            d.effDate = isValid(effDate)?effDate:methods.getValues('effDate');
+            d.SPLIT_ASSIGNMENTS.map(a => {
+                const commitmentEffDate = new Date(a?.COMMITMENT_EFFECTIVE_DATE);
+                a.commitmentEffDate = isValid(commitmentEffDate)?commitmentEffDate:"";
+                const commitmentEndDate = new Date(a?.COMMITMENT_END_DATE);
+                a.commitmentEndDate = isValid(commitmentEndDate)?commitmentEndDate:"";
+                const createDate = new Date(a?.CREATE_DATE);
+                a.createDate = isValid(createDate)?createDate:"";
+            });
+            d.totalSalary = ((+d.RATE_AMOUNT*+d.NUMBER_OF_PAYMENTS) * (+d.APPOINTMENT_PERCENT/100)).toFixed(2);
+            console.log(d);
+            methods.setValue('employment.salary',Object.assign({},defaults.employment.salary,d));
         }
     });
 
@@ -427,6 +452,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                                 methods.getValues('payroll.code')=='28029' && studentinformation.refetch();
                             }); 
                             break;
+                        case "employment-salary": employmentsalary.refetch(); break;
                         default:
                             console.log('TODO: Load Tab:',tab);
                     }
@@ -615,7 +641,7 @@ export function FormTypeDisplay({variant,separator,showNA}) {
 }
 export function EmploymentPositionInfoBox() {
     const { control, getValues } = useFormContext();
-    const watchApptPercent = useWatch({name:'employment.position.apptPercent',control:control});
+    const watchApptPercent = useWatch({name:'employment.position.APPOINTMENT_PERCENT',control:control});
     const positionDetails = getValues('employment.position.positionDetails');
     return (
         <Alert variant="secondary" className="mt-3">

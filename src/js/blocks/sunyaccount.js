@@ -106,8 +106,6 @@ export function SingleSUNYAccount(props) {
 
     return (
         <>
-            {accounts.isLoading && <Loading>Loading SUNY Accounts</Loading>}
-            {accounts.isError && <Loading isError>Error Loading SUNY Accounts</Loading>}
             {accounts.data && 
                 <Controller
                     name={props.name}

@@ -286,3 +286,9 @@ button.btn-sm.no-label svg.iconify {
 
 /* styles for react-slidedown */
 .react-slidedown.transitioning { overflow: hidden; }
+
+/* large checkbox input */
+div.form-check-input-lg input[type="checkbox"].form-check-input {
+  width: 20px;
+  height: 20px;
+}

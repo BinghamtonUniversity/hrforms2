@@ -37,7 +37,7 @@ class EmploymentInfo extends HRForms2 {
 					p.campus_title, s.*,
 					p.reporting_department_code, p.derived_fac_type
 				from buhr.buhr_persemp_mv@banner.cc.binghamton.edu p
-				left join (select suny_id as supervisor_suny_id, 
+				left join (select distinct suny_id as supervisor_suny_id, 
 					legal_last_name || decode(suffix_code,null,'',' ' || suffix_code) || ', ' || nvl(alias_first_name,legal_first_name) || ' ' || substr(legal_middle_name,0,1) as supervisor_name
 					from buhr.buhr_person_mv@banner.cc.binghamton.edu) s on (p.supervisor_suny_id = s.supervisor_suny_id)
 				where p.hr_person_id = :hr_person_id";
@@ -165,6 +165,107 @@ class EmploymentInfo extends HRForms2 {
 				oci_free_statement($stmt);
 
 				break;
+			case "salary":
+				$qry = "select p.suny_id, p.line_item_number, p.payroll_agency_code, 
+				p.appointment_percent, p.appointment_effective_date, p.appointment_end_date
+				from  BUHR.BUHR_PERSEMP_MV@banner.cc.binghamton.edu p
+				where hr_person_id = :hr_person_id";
+				$stmt = oci_parse($this->db,$qry);
+				oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
+				$r = oci_execute($stmt);
+				if (!$r) $this->raiseError();
+				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+
+				// Line Item Details:
+				$pos = (new position(array($row['PAYROLL_AGENCY_CODE'],$row['LINE_ITEM_NUMBER']),false))->returnData;
+				$row = array_merge($row,$pos);
+
+				if ($row['PAY_BASIS'] == 'FEE') {
+					$qry = "select commitment_effective_date as rate_effective_date, commitment_rate as rate_amount, number_of_payments
+						from buhr.buhr_commitment_mv@banner.cc.binghamton.edu 
+						where data_status <> 'H'
+						and suny_id = :suny_id
+						and commitment_effective_date <= :effective_date
+						order by commitment_effective_date desc";
+				} else {
+					$qry = "select salary_effective_date as rate_effective_date, fta_rate as rate_amount, 1 as number_of_payments
+						from buhr.buhr_salary_mv@banner.cc.binghamton.edu
+						where data_status <> 'H'
+						and suny_id = :suny_id
+						and salary_effective_date >= : effective_date
+						order by salary_effective_date desc";
+				}
+				$stmt = oci_parse($this->db,$qry);
+				oci_bind_by_name($stmt,":suny_id", $row['SUNY_ID']);
+				oci_bind_by_name($stmt,":effective_date", $row['EFFECTIVE_DATE']);
+				$r = oci_execute($stmt);
+				if (!$r) $this->raiseError();
+				$pay = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+				$row = array_merge($row,$pay);
+
+				//TODO: add suny account info
+				$row['SUNY_ACCOUNTS'] = array();
+
+				// Existing Additional Salary Data:
+				$additionalSalaryTypes = (new listdata(array('additionalSalaryTypes'),false))->returnData;
+				$qry = "select hr_additional_salary_id, addl_salary_earning_code, addl_salary_effective_date, addl_salary_end_date, addl_salary_amount
+					from BUHR.BUHR_ADDITIONAL_SALARY_MV@banner.cc.binghamton.edu
+					where nvl(addl_salary_end_date,sysdate) >= sysdate
+					and suny_id = :suny_id";
+				$stmt = oci_parse($this->db,$qry);
+				oci_bind_by_name($stmt,":suny_id", $row['SUNY_ID']);
+				$r = oci_execute($stmt);
+				if (!$r) $this->raiseError();
+				while($addSalary = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					$key = array_search($addSalary['ADDL_SALARY_EARNING_CODE'],array_column($additionalSalaryTypes,0));
+					$addSalary['ADDL_SALARY_EARNING_CODE'] = array("id"=>$addSalary['ADDL_SALARY_EARNING_CODE'],"label"=>($key!==false)?$additionalSalaryTypes[$key][1]:"");
+					$row['EXISTING_ADDITIONAL_SALARY'][] = $addSalary;
+				}
+
+				// Split Assignment Data
+				$deptOrgs = (new listdata(array('deptOrgs'),false))->returnData;
+				$workAllocation = (new listdata(array('workAllocation'),false))->returnData;
+				$qry = "select c.hr_commitment_id, c.commitment_primary_flag, c.commitment_stack_id, c.commitment_effective_date,
+  							c.commitment_end_date, c.campus_title, c.reporting_department_code, c.supervisor_suny_id,
+  							s.supervisor_name, c.work_allocation, c.work_percent, c.duties, c.create_date
+  							from buhr_commitment_mv@banner.cc.binghamton.edu c
+							left join (select distinct suny_id as supervisor_suny_id, 
+							    legal_last_name || decode(suffix_code,null,'',' ' || suffix_code) || ', ' || nvl(alias_first_name,legal_first_name) || ' ' || substr(legal_middle_name,0,1) as supervisor_name
+    							from buhr.buhr_person_mv@banner.cc.binghamton.edu) s on (c.supervisor_suny_id = s.supervisor_suny_id)
+  							where suny_id = :suny_id
+  							and payroll_agency_code = :payroll
+  							and nvl(c.commitment_end_date,sysdate) >= sysdate
+  							order by c.commitment_stack_id";
+				$stmt = oci_parse($this->db,$qry);
+				oci_bind_by_name($stmt,":suny_id", $row['SUNY_ID']);
+				oci_bind_by_name($stmt,":payroll", $row['PAYROLL_AGENCY_CODE']);
+				$r = oci_execute($stmt);
+				if (!$r) $this->raiseError();
+				while($splitAssignment = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					$key = array_search($splitAssignment['REPORTING_DEPARTMENT_CODE'],array_column($deptOrgs,'DEPARTMENT_CODE'));
+					$splitAssignment['REPORTING_DEPARTMENT_CODE'] = array("id"=>$splitAssignment['REPORTING_DEPARTMENT_CODE'],"label"=>$deptOrgs[$key]['DEPARTMENT_NAME']);
+					$splitAssignment['supervisor'] = array(array("id"=>$splitAssignment['SUPERVISOR_SUNY_ID'],"label"=>$splitAssignment['SUPERVISOR_NAME']));
+					$key2 = array_search($splitAssignment['WORK_ALLOCATION'],array_column($workAllocation,0));
+					$splitAssignment['WORK_ALLOCATION'] = array("id"=>$splitAssignment['WORK_ALLOCATION'],"label"=>$workAllocation[$key2][1]);
+					$row['SPLIT_ASSIGNMENTS'][] = $splitAssignment;
+				}
+				
+				// Reduce data set
+				$row = array_intersect_key($row,array(
+					"SUNY_ID"=>"",
+					"RATE_EFFECTIVE_DATE"=>"",
+					"PAY_BASIS"=>"",
+					"APPOINTMENT_PERCENT"=>"",
+					"RATE_AMOUNT"=>"",
+					"NUMBER_OF_PAYMENTS"=>"",
+					"SUNY_ACCOUNTS"=>array(),
+					"ADDITIONAL_SALARY"=>array(),
+					"EXISTING_ADDITIONAL_SALARY"=>array(),
+					"SPLIT_ASSIGNMENTS"=>array()
+				));
+
+				$this->_arr = $this->null2Empty($row);
+				oci_free_statement($stmt);
 		}
         $this->returnData = $this->_arr;
 		if ($this->retJSON) $this->toJSON($this->returnData);
