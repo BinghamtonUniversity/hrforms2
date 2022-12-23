@@ -474,7 +474,7 @@ function FormActions({payroll,roleType}) {
                 newState.formCodeDescription = (value)?newState.formCodes.get(value)?.at(1):'';
                 newState.actionCodes = (value)?new Map(paytrans.data.filter(p=>(filter&p.AVAILABLE_FOR)&&p.FORM_CODE==newState.formCode&&p.ACTION_CODE).map(a=>[a.ACTION_CODE,[a.ACTION_TITLE,a.ACTION_DESCRIPTION]])):new Map();
                 newState.actionCode = (value&&!newState.actionCodes.size)?'N/A':'';
-                newState.actionCodeDescription = '';
+                newState.actionCodeDescription = (value&&!newState.actionCodes.size)?'No Action Available':'';
                 newState.transactionCodes = new Map();
                 newState.transactionCode = (value&&!newState.actionCodes.size)?'N/A':'';
                 newState.transactionCodeDescription = '';

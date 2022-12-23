@@ -11,6 +11,7 @@ import useFormQueries from "../../queries/forms";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 
 const name = 'employment.salary';
+const splitAssignFormTypes = ['EF-PAY-1'];
 
 export default function EmploymentAppointment() {
     const { control, setValue, formState: { errors }, showInTest, testHighlight } = useFormContext();
@@ -20,6 +21,7 @@ export default function EmploymentAppointment() {
         'employment.position.APPOINTMENT_PERCENT'
     ],control:control});
     const watchPayBasis = useWatch({name:'employment.position.positionDetails.PAY_BASIS',control:control});
+    const watchFormType = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode'],control:control});
     const rateAmountLabel = useMemo(() => {
         switch(watchPayBasis) {
             case "BIW":
@@ -34,6 +36,9 @@ export default function EmploymentAppointment() {
     useEffect(() => {
         setValue(`${name}.totalSalary`,((+watchAmounts[0]*+watchAmounts[1]) * (+watchAmounts[2]/100)).toFixed(2));
     },[watchAmounts]);
+    useEffect(()=>{
+        console.log(watchFormType);
+    },[watchFormType]);
     return (
         <article>
             <section className="mt-3">
@@ -118,7 +123,9 @@ export default function EmploymentAppointment() {
             
             <AdditionalSalary/>
 
+            {watchFormType.join('-')=='TEST--'&&<p>testing</p>}
             <SplitAssignments/>
+
 
         </article>
     );
