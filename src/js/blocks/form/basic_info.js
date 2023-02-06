@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, useReducer } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
+import { useIsFetching } from 'react-query';
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import sub from "date-fns/sub";
@@ -11,6 +12,7 @@ import DataTable from 'react-data-table-component';
 import { useQueryClient } from "react-query";
 import { Icon } from "@iconify/react";
 import { defaultFormActions } from "../../pages/form";
+import { Modal } from "react-bootstrap";
 
 export default function FormBasicInfo() {
     const { getValues, isNew } = useFormContext();
@@ -589,6 +591,21 @@ function FormActions({payroll,roleType}) {
                     <Form.Text id="actionCodeDescription" className="mt-2" muted>{codes.transactionCodeDescription}</Form.Text>
                 </Col>}
             </Form.Group>
+            <LoadingFormTabs/>
         </article>
+    );
+}
+
+function LoadingFormTabs() {
+    const isFetchingPerson = useIsFetching(['personInfo']);
+    const isFetchingEmployment = useIsFetching(['employmentInfo']);
+    return (
+        <Modal show={(isFetchingPerson+isFetchingEmployment)>0}>
+            <Row>
+                <Col>
+                    <p className="m-0 p-4 lead"><Icon icon="mdi:loading" className="spin iconify-inline"/> Loading Form Data...</p>
+                </Col>
+            </Row>
+        </Modal>
     );
 }

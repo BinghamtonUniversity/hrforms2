@@ -10,6 +10,10 @@ import usePersonQueries from "../queries/person";
 import useEmploymentQueries from "../queries/employment";
 import { isValid } from "date-fns";
 
+/* CONTEXT */
+export const HRFormContext = React.createContext();
+HRFormContext.displayName = 'HRFormContext';
+
 /* TABS */
 const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
 const PersonInformation = lazy(()=>import("../blocks/form/person-information"));
@@ -100,6 +104,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
     const [activeTab,setActiveTab] = useState('basic-info');
     const [activeNav,setActiveNav] = useState('');
     const [showHidden,setShowHidden] = useState(true);
+    const [showLoading,setShowLoading] = useState(false);
 
     const defaults = {
         formId:formId,
@@ -456,7 +461,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                         default:
                             console.log('TODO: Load Tab:',tab);
                     }
-                });
+                });                
             }
         }
     },[setTabList,allTabs,watchIds]);
@@ -474,6 +479,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                     </Col>
                 </Row>
             </header>
+            {/* TODO: can we/should we pass form type composit and payrol through the form provider, or create our own provider?*/}
             <FormProvider {...methods} 
                 isDraft={isDraft} 
                 isNew={isNew} 
@@ -484,6 +490,12 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                 testHighlight={testHighlight}
                 showInTest={showInTest}
             >
+            <HRFormContext.Provider value={{
+                isDraft:isDraft,
+                isNew:isNew,
+                isTest:methods.getValues('formActions.formCode')=='TEST',
+                formActions:methods.getValues('formActions')
+            }}>
                 <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)} onReset={handleReset}>
                     <Tabs activeKey={activeTab} onSelect={navigate} id="hr-forms-tabs">
                         {tabList.map(t => (
@@ -532,6 +544,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                         ))}
                     </Tabs>
                 </Form>
+            </HRFormContext.Provider>
             </FormProvider>
         </>
     );
@@ -644,7 +657,7 @@ export function EmploymentPositionInfoBox() {
     const watchApptPercent = useWatch({name:'employment.position.APPOINTMENT_PERCENT',control:control});
     const positionDetails = getValues('employment.position.positionDetails');
     return (
-        <Alert variant="secondary" className="mt-3">
+        <Alert variant="info" className="mt-3">
             <Row as="dl" className="mb-0">
                 <Col as="dt" sm={2} className="mb-0">Line Number:</Col>
                 <Col as="dd" sm={4} className="mb-0">{positionDetails?.LINE_NUMBER}</Col>

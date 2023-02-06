@@ -47,6 +47,10 @@ export function useAppQueries() {
         const options = args[0]?.options||args[0]||{};
         return useQuery('settings',q('settings'),{staleTime:Infinity,cacheTime:Infinity,retry:false,...options});
     }
+    const prefetchIcons = () => {
+        //TODO: 
+        //useQuery(key,promise,options)
+    }
     const getNews = (...args) => {
         const options = args[0]?.options||args[0]||{};
         if(options.select) options.select2 = options.select;

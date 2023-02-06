@@ -6,7 +6,7 @@ import { ToastContainer } from "react-toastify";
 import {useScrollPosition} from "@n8tb1t/use-scroll-position";
 import { ErrorBoundary } from "react-error-boundary";
 import head from "lodash/head";
-import { Icon } from '@iconify/react';
+import { Icon, loadIcons } from '@iconify/react';
 import {useAppQueries,useUserQueries} from "./queries";
 import AppNav from "./blocks/appnav";
 import Footer from "./blocks/footer";
@@ -31,10 +31,22 @@ SettingsContext.displayName = 'SettingsContext';
 export function getAuthInfo() { return useContext(AuthContext); }
 export function currentUser() { return useContext(UserContext); }
 export function getSettings() { return useContext(SettingsContext); }
-export function getNavContext() { return useContext(NavContext); } // do we need this?  can't we import useContext from react and import NavContext from app?
+//export function getNavContext() { return useContext(NavContext); } // do we need this?  can't we import useContext from react and import NavContext from app?
 
 /* QUERIES */
 //const {getSession,getUser,deleteSession} = useAppQueries();
+
+/* Pre-Load Iconify Icons */
+function loadAppIcons(icons) {
+    return new Promise((resolve,reject) => {
+        loadIcons(icons,(loaded,missing,pending,unsubscribe) => {
+            console.log(loaded,missing,pending);
+            if (pending.length) return;
+            if (missing.length) reject({loaded,missing});
+            resolve({loaded});
+        });
+    });
+}
 
 /* App Banners */
 const CenterPage = ({children}) => <div className="center-page">{children}</div>;
@@ -63,7 +75,15 @@ export default function StartApp() {
     const {getSession,getSettings} = useAppQueries();
 
     const session = getSession();
-    const settings = getSettings({enabled:session.isSuccess});
+    const settings = getSettings({
+        enabled:session.isSuccess,
+        onSettled:() => {
+            console.log('settings loaded, load icons?');
+            loadAppIcons(['mdi:chevron-right','mdi:chevron-down']).then(()=>{
+                console.log('icons loaded');
+            });
+        }
+    });
 
     useEffect(() => {
         if (session.data) console.debug('Session Data:',session.data);

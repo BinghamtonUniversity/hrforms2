@@ -1,4 +1,5 @@
 /* App Styles */
+/* TODO: move to SCSS file? */
 main { margin-top: 5rem }
 
 /* center on page */
@@ -24,6 +25,7 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
 .font-size-80 { font-size: 80% }
 
 /* make pre text wrap - see: https://css-tricks.com/snippets/css/make-pre-text-wrap/*/
+/* TODO: this is really old, update? */
 pre {
   white-space: pre-wrap;       /* css-3 */
   white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */

@@ -1,5 +1,6 @@
 import React, { useEffect, useCallback } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
+import { HRFormContext } from "../../pages/form";
 import { Row, Col, Form, InputGroup} from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
@@ -15,10 +16,11 @@ const name = 'employment.leave';
 // Only show Leave Percent and Calculated Salary if transaction is partial leave
 
 export default function EmploymentLeave() {
-    const { control, getValues, setValue } = useFormContext();
+    const { control, getValues, setValue, showInTest, testHighlight } = useFormContext();
     const watchFields = useWatch({name:['selectedRow','effDate'],control:control});
     const watchLeavePercent = useWatch({name:`${name}.leavePercent`,control:control})||0;
     const watchPayroll = useWatch({name:'payroll.code',control:control});
+    const watchFormType = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode'],control:control});
 
     const handleRangeChange = e => setValue(`${name}.leavePercent`,e.target.value);
 
@@ -60,6 +62,12 @@ export default function EmploymentLeave() {
                 </Col>
             </Form.Group>
 
+            {/* on show Leave Pct and Leave Sal for EF-L-7 and EF-L-9 */}
+            <HRFormContext.Consumer>
+                {({formActions}) => (
+                    <p>{formActions.formCode}</p>
+                )}
+            </HRFormContext.Consumer>
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Leave Percent:</Form.Label>
                 <Col xs="auto">

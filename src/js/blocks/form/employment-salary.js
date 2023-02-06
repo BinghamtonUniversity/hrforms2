@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { Row, Col, Form, InputGroup, Table } from "react-bootstrap";
+import { Row, Col, Form, InputGroup, Table, Alert } from "react-bootstrap";
 import { useFormContext, Controller, useWatch, useFieldArray } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import SUNYAccount, { SingleSUNYAccount } from "../sunyaccount";
 import { AppButton, CurrencyFormat, DateFormat, DepartmentSelector } from "../components";
 import { Icon } from "@iconify/react";
-import { cloneDeep } from "lodash";
+import { cloneDeep, get } from "lodash";
 import { useAppQueries } from "../../queries";
 import useFormQueries from "../../queries/forms";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
@@ -36,9 +36,6 @@ export default function EmploymentAppointment() {
     useEffect(() => {
         setValue(`${name}.totalSalary`,((+watchAmounts[0]*+watchAmounts[1]) * (+watchAmounts[2]/100)).toFixed(2));
     },[watchAmounts]);
-    useEffect(()=>{
-        console.log(watchFormType);
-    },[watchFormType]);
     return (
         <article>
             <section className="mt-3">
@@ -124,8 +121,8 @@ export default function EmploymentAppointment() {
             <AdditionalSalary/>
 
             {watchFormType.join('-')=='TEST--'&&<p>testing</p>}
+            <p>{watchFormType.join('-')}</p>
             <SplitAssignments/>
-
 
         </article>
     );
@@ -152,11 +149,11 @@ function AdditionalSalary() {
     const handleNew = () => {
         append({
             type:{id:"",label:""},
-            startDate:"",
+            startDate:new Date(),
             endDate:"",
             account:[],
-            payments:"",
-            amount:"",
+            payments:1,
+            amount:0,
             total: 0,
             created:new Date()
         });
@@ -204,7 +201,12 @@ function AdditionalSalary() {
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
     }
 
-    const calcTotal = useCallback(index=>(!watchFieldArray[index]) ? 0 : (+watchFieldArray[index].payments*+watchFieldArray[index].amount),[watchFieldArray]);
+    const calcTotal = useCallback(index=>{
+        if (!watchFieldArray) return 0;
+        const payments = get(watchFieldArray,`${index}.payments`,1);
+        const amount = get(watchFieldArray,`${index}.amount`,0);
+        return +payments*+amount;
+    },[watchFieldArray]);
 
     useEffect(() => {
         if (editIndex == undefined) return;
@@ -350,7 +352,7 @@ function ExistingAdditionalSalary() {
             <Col>
                 <Table striped bordered size="sm" responsive>
                     <thead>
-                        <tr>
+                        <tr className="bg-main text-white">
                             <th scope="col">Type</th>
                             <th scope="col">Start Date</th>
                             <th scope="col">End Date</th>
@@ -376,10 +378,17 @@ function ExistingAdditionalSalary() {
 function SplitAssignments() {
     const blockName = `${name}.SPLIT_ASSIGNMENTS`;
 
-    const { control, getValues, setValue, clearErrors } = useFormContext();
+    const { control, getValues, setValue, trigger, clearErrors, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
-        name:blockName
+        name:blockName,
+        rules: {
+            validate: fieldArray => {
+                if (fieldArray.length == 0) return true;
+                const pct = fieldArray.map(s=>s.WORK_PERCENT).reduce((a,b)=>parseFloat(a)+parseFloat(b));
+                return (pct!=100)?'Split Assignment Total Work Percent must equal 100%':true;
+            }
+        }
     });
 
     const watchFieldArray = useWatch({name:blockName,control:control});
@@ -389,6 +398,7 @@ function SplitAssignments() {
     const [editValues,setEditValues] = useState();
     const [searchFilter,setSearchFilter] = useState('');
     const [changePrimary,setChangePrimary] = useState(false);
+    const [totalPct,setTotalPct] = useState(0);
 
     const {getListData} = useAppQueries();
     const workAllocation = getListData('workAllocation');
@@ -400,8 +410,6 @@ function SplitAssignments() {
             "HR_COMMITMENT_ID": "",
             "COMMITMENT_PRIMARY_FLAG": "N",
             "COMMITMENT_STACK_ID": "",
-            "COMMITMENT_EFFECTIVE_DATE": "",
-            "COMMITMENT_END_DATE": "",
             "CAMPUS_TITLE": "",
             "REPORTING_DEPARTMENT_CODE": {"id": "","label": ""},
             "SUPERVISOR_SUNY_ID": "",
@@ -410,6 +418,8 @@ function SplitAssignments() {
             "WORK_PERCENT": "100",
             "DUTIES": "",
             "supervisor": [],
+            "commitmentEffDate":"",
+            "commitmentEndDate":"",
             "createDate":new Date()
         });
         setEditIndex(fields.length);
@@ -429,29 +439,26 @@ function SplitAssignments() {
         setChangePrimary(false);
     }
     const handleSave = index => {
-        /*const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
+        const checkFields = Object.keys(fields[index]).map(f=>`${blockName}.${index}.${f}`);
         trigger(checkFields).then(valid => {
             if (!valid) {
                 console.log('Errors!',errors);
             } else {
-                console.log
+                console.log('ok');
+                if (changePrimary) {
+                    watchFieldArray.forEach((a,i) => {
+                        if (index!=i&&a.COMMITMENT_PRIMARY_FLAG=='Y') {
+                            console.warn(`Changing Primary Flag for index ${i} to "No"`);
+                            setValue(`${blockName}.${i}.COMMITMENT_PRIMARY_FLAG`,'N');
+                        }
+                    });
+                }
                 setEditIndex(undefined);
                 setEditValues(undefined);
                 setIsNew(false);
+                setChangePrimary(false);
             }
-        }).catch(e=>console.error(e));*/
-        if (changePrimary) {
-            watchFieldArray.forEach((a,i) => {
-                if (index!=i&&a.COMMITMENT_PRIMARY_FLAG=='Y') {
-                    console.warn(`Changing Primary Flag for index ${i} to "No"`);
-                    setValue(`${blockName}.${i}.COMMITMENT_PRIMARY_FLAG`,'N');
-                }
-            });
-        }
-        setEditIndex(undefined);
-        setEditValues(undefined);
-        setIsNew(false);
-        setChangePrimary(false);
+        }).catch(e=>console.error(e));
     }
     const handleRemove = index => {
         remove(index);
@@ -492,19 +499,42 @@ function SplitAssignments() {
         if (editIndex == undefined) return;
         //document.querySelector(`[name="${blockName}.${editIndex}.type.id"]`).focus();
     },[editIndex]);
+    useEffect(()=>{
+        if (watchFieldArray.length==0) return;
+        const pct = watchFieldArray.map(s=>s.WORK_PERCENT).reduce((a,b)=>parseFloat(a)+parseFloat(b));
+        setTotalPct(pct);
+    },[watchFieldArray]);
 
     return (
         <section className="mt-4 border-top pt-2">
-            <Row as="header">
-                <Col as="h3">
-                    Split Assignments
-                </Col>
-            </Row>
+            <header>
+                <Row>
+                    <Col as="h3">Split Assignments</Col>
+                </Row>
+                <Row>
+                    <Col>
+                        <Alert variant={(editIndex!=undefined)?"info":(totalPct==100)?"success":"danger"}>
+                            <p className="m-0">Total Work Percent: {(editIndex!=undefined)?"updating...":totalPct+"%"} {editIndex==undefined&&totalPct!=100&&<strong className="font-size-85">(Must be 100%)</strong>}</p>
+                        </Alert>
+                    </Col>
+                </Row>
+            </header>
             {fields.map((fld,index)=>(
                 <section key={fld.id} className="border rounded p-2 mb-2">
-                    {(editIndex==index&&changePrimary)&&<Row>
-                        <Col><span className="text-warning">Warning: You are changing the primary flag to this assignment.  Saving will uncheck all other assigments.</span></Col>
-                    </Row>}
+                    {(editIndex==index&&Object.keys(errors).length!=0) && 
+                        <Row>
+                            <Col>
+                                <Alert variant="danger"><p className="m-0">Split Assignment has errors - Cannot Save!</p></Alert>
+                            </Col>
+                        </Row>
+                    }
+                    {(editIndex==index&&changePrimary) &&
+                        <Row>
+                            <Col>
+                                <Alert variant="warning"><p className="m-0">Warning: You are changing the primary flag to this assignment.  Saving will uncheck all other assigments.</p></Alert>
+                            </Col>
+                        </Row>
+                    }
                     <Form.Row>
                         <Col xs="auto" className="mb-2">
                             <Form.Label>Primary:</Form.Label>
@@ -515,11 +545,13 @@ function SplitAssignments() {
                             />
                         </Col>
                         <Col xs="auto" className="mb-2">
-                            <Form.Label>Start Date:</Form.Label>
+                            <Form.Label>Start Date*:</Form.Label>
                             <InputGroup>
                                 <Controller
                                     name={`${blockName}.${index}.commitmentEffDate`}
+                                    defaultValue=""
                                     control={control}
+                                    rules={{required:{value:true,message:'Start Date is Required'}}}
                                     render={({field}) => <Form.Control 
                                         as={DatePicker} 
                                         name={field.name}
@@ -528,6 +560,7 @@ function SplitAssignments() {
                                         onChange={field.onChange}
                                         autoComplete="off"
                                         disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""}
+                                        isInvalid={get(errors,field.name,false)}
                                         maxDate={()=>{
                                             console.log(watchFieldArray);
                                             return new Date();
@@ -540,6 +573,7 @@ function SplitAssignments() {
                                     </InputGroup.Text>
                                 </InputGroup.Append>
                             </InputGroup>
+                            <Form.Control.Feedback type="invalid" style={{display:get(errors,`${blockName}.${index}.commitmentEffDate`,false)?'block':'none'}}>{get(errors,`${blockName}.${index}.commitmentEffDate.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col xs="auto" className="mb-2">
                             <Form.Label>End Date:</Form.Label>
@@ -565,22 +599,26 @@ function SplitAssignments() {
                             </InputGroup>
                         </Col>
                         <Col xs="auto" className="mb-2">
-                            <Form.Label>Title:</Form.Label>
+                            <Form.Label>Title*:</Form.Label>
                             <Controller
                                 name={`${blockName}.${index}.CAMPUS_TITLE`}
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""}/>}
+                                rules={{required:{value:true,message:'Title is Required'}}}
+                                render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={get(errors,field.name,false)}/>}
                             />
+                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.CAMPUS_TITLE.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col xs="auto" className="mb-2">
-                            <Form.Label>Department:</Form.Label>
+                            <Form.Label>Department*:</Form.Label>
                             <Controller
                                 name={`${blockName}.${index}.REPORTING_DEPARTMENT_CODE.id`}
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""}/>}
+                                rules={{required:{value:true,message:'Department is Required'}}}
+                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={get(errors,field.name,false)}/>}
                             />
+                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.REPORTING_DEPARTMENT_CODE.id.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col xs={12} sm={8} md={6} lg={5} xl={4} className="mb-2">
                             <Form.Label>Supervisor:</Form.Label>
@@ -605,26 +643,45 @@ function SplitAssignments() {
                             />
                         </Col>
                         <Col xs="auto" className="mb-2">
-                            <Form.Label>Allocation:</Form.Label>
+                            <Form.Label>Allocation*:</Form.Label>
                             <Controller
                                 name={`${blockName}.${index}.WORK_ALLOCATION.id`}
                                 defaultValue=""
                                 control={control}
+                                rules={{required:{value:true,message:'Work Allocation is Required'}}}
                                 render={({field}) => (
-                                    <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""}>
+                                    <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={get(errors,field.name,false)}>
                                         <option></option>
                                         {workAllocation.data && workAllocation.data.map(a=><option key={a[0]} value={a[0]}>{a[1]}</option>)}
                                     </Form.Control>
                                 )}
                             />
+                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.WORK_ALLOCATION.id.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col xs="auto" className="mb-2">
-                            <Form.Label>Work %:</Form.Label>
+                            <Form.Label>Work %*:</Form.Label>
                             <Controller
                                 name={`${blockName}.${index}.WORK_PERCENT`}
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <Form.Control {...field} type="number" min={1} max={100} disabled={editIndex!=index}/>}
+                                rules={{
+                                    required:{value:true,message:'Work % is Required'},
+                                    min:{value:1,message:'Work % cannot be less than 1%'},
+                                    max:{value:100,message:'Work % cannot be greater than 100%'}
+                                }}
+                                render={({field}) => <Form.Control {...field} type="number" min={1} max={100} disabled={editIndex!=index} isInvalid={(editIndex==undefined&&totalPct!=100)||get(errors,field.name,false)}/>}
+                            />
+                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.WORK_PERCENT.message`,'')}</Form.Control.Feedback>
+                        </Col>
+                    </Form.Row>
+                    <Form.Row>
+                        <Col xs={12} sm={10} md={8} lg={6} className="mb-2">
+                            <Form.Label>Duties:</Form.Label>
+                            <Controller
+                                name={`${blockName}.${index}.DUTIES`}
+                                defaultValue=""
+                                control={control}
+                                render={({field}) => <Form.Control {...field} as="textarea" rows={2} disabled={editIndex!=index}/>}
                             />
                         </Col>
                     </Form.Row>

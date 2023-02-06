@@ -47,7 +47,7 @@ $box-shadow-lg: 0 1rem 3rem rgba($black, .40);
 
 @import "../../node_modules/bootstrap/scss/bootstrap";
 
-/* DataTables Formatting */
+/* DataTables Formatting (n.b.: placed here to make use of SCSS variables)*/
 .rdt_Table {
   border: 2px solid $main;
   border-radius: 3px

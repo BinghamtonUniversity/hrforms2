@@ -4,10 +4,6 @@ import {HashRouter} from "react-router-dom";
 import {QueryClient,QueryClientProvider} from "react-query";
 import { ReactQueryDevtools } from 'react-query/devtools'
 import { CookiesProvider } from 'react-cookie';
-/*import {library} from "@fortawesome/fontawesome-svg-core";
-import {faExclamationCircle,faExclamationTriangle,faSync,faChevronUp,faChevronDown,faBell,faPeopleArrows,
-        faTrash,faTrashRestore,faCircleNotch,faSearch,faCheck,faUser,faUserSlash,faUsers,faUsersSlash,
-        faPlusSquare,faMinusSquare} from "@fortawesome/free-solid-svg-icons";*/
 
 import "react-datepicker/dist/react-datepicker.css";
 import 'react-bootstrap-typeahead/css/Typeahead.css';
@@ -30,10 +26,6 @@ const queryClient = new QueryClient({
         }
     }
 });
-
-/*library.add(faExclamationCircle,faExclamationTriangle,faSync,faChevronUp,faChevronDown,faBell,faPeopleArrows,
-            faTrash,faTrashRestore,faCircleNotch,faSearch,faCheck,faUser,faUserSlash,faUsers,faUsersSlash,
-            faPlusSquare,faMinusSquare);*/
 
 ReactDOM.render(
     <HashRouter>

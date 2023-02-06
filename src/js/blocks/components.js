@@ -25,7 +25,7 @@ import CheckboxTree from 'react-checkbox-tree';
  */
 
 /* formats for AppButton */
-const formats = {
+export const formats = {
     'add':{icon:'mdi:plus',variant:'success'},
     'add-group':{icon:'mdi:account-multiple-plus',variant:'success'},
     'add-list':{icon:'mdi:playlist-plus',variant:'success'},
@@ -35,11 +35,13 @@ const formats = {
     'cancel':{icon:'mdi:close-circle',variant:'danger'},
     'clear':{icon:'mdi:eraser-variant',variant:'secondary'},
     'close':{icon:'mdi:close-circle',variant:'secondary'},
+    'collapse':{icon:'mdi:chevron-down',variant:'secondary'},
     'copy':{icon:'mdi:content-duplicate',variant:'primary'},
     'deactivate-group':{icon:'mdi:account-multiple-remove',variant:'warning'},
     'deactivate-user':{icon:'mdi:account-remove',variant:'warning'},
     'delete':{icon:'mdi:delete',variant:'danger'},
     'edit':{icon:'mdi:pencil',variant:'primary'},
+    'expand':{icon:'mdi:chevron-right',variant:'secondary'},
     'impersonate':{icon:'mdi:account-switch',variant:'primary'},
     'loading':{icon:'mdi:loading',variant:'secondary',spin:true},
     'next':{icon:'mdi:arrow-right-thick',variant:'primary'},
