@@ -93,6 +93,11 @@ export default function EmploymentPay() {
             <Row as="header">
                 <Col as="h3">Pay <AppButton format="add" size="sm" onClick={handleNew} disabled={editIndex!=undefined}>New</AppButton></Col>
             </Row>
+            <Row>
+                <Col>
+                    <p>TBD: Existing Pay</p>
+                </Col>
+            </Row>
             {fields.map((flds,index)=>(
                 <section key={flds.id} className="border rounded p-2 mb-2">
                     <Form.Row>
@@ -123,7 +128,7 @@ export default function EmploymentPay() {
                                     </InputGroup.Text>
                                 </InputGroup.Append>
                             </InputGroup>
-                            <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].startDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].startDate.message`,'')}</Form.Control.Feedback>
+                            <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].startDate`,false)?'block':'none'}}>{get(errors,`${name}.${index}.startDate.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col xs="auto" className="mb-2">
                             <Form.Label>End Date:</Form.Label>

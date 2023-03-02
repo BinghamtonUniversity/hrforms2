@@ -16,11 +16,11 @@ const name = 'employment.leave';
 // Only show Leave Percent and Calculated Salary if transaction is partial leave
 
 export default function EmploymentLeave() {
-    const { control, getValues, setValue, showInTest, testHighlight } = useFormContext();
+    const { control, getValues, setValue } = useFormContext();
     const watchFields = useWatch({name:['selectedRow','effDate'],control:control});
     const watchLeavePercent = useWatch({name:`${name}.leavePercent`,control:control})||0;
     const watchPayroll = useWatch({name:'payroll.code',control:control});
-    const watchFormType = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode'],control:control});
+    //const watchFormType = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode'],control:control});
 
     const handleRangeChange = e => setValue(`${name}.leavePercent`,e.target.value);
 
@@ -117,7 +117,7 @@ export default function EmploymentLeave() {
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
-            <Form.Label column md={2}>Justification:</Form.Label>
+                <Form.Label column md={2}>Justification:</Form.Label>
                 <Col xs="auto">
                     <Controller
                         name={`${name}.justification`}

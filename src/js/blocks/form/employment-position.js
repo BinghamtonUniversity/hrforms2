@@ -29,7 +29,7 @@ export default function EmploymentPosition() {
 }
 
 function EmploymentPositionSearch({setShowResults}) {
-    const { control, setValue, formState: { errors } } = useFormContext();
+    const { control, setValue } = useFormContext();
     const handleSearch = () => {
         setShowResults(true);
     }
@@ -91,7 +91,7 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
             }
             {getValues(`${name}.positionDetails.POSITION_ID`) && 
                 <>
-                    <EmploymentPositionInfoBox/>
+                    <EmploymentPositionInfoBox as="alert"/>
                     <EmploymentAppointmentInformation data={position.data}/>
                 </>
             }
@@ -100,7 +100,8 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
 }
 
 function EmploymentAppointmentInformation() {
-    const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext();
+    const { control, setValue } = useFormContext();
+    //TODO: get payroll and effDate from HRFormContext?
     const watchPayroll = useWatch({name:'payroll.code',control:control});
     const watchEffectiveDate = useWatch({name:`${name}.apptEffDate`,control:control});
     const watchApptPercent = useWatch({name:`${name}.APPOINTMENT_PERCENT`,control:control})||100;
@@ -142,7 +143,7 @@ function EmploymentAppointmentInformation() {
                 <Col xs="auto">
                     <InputGroup>
                         <Controller
-                            name="apptEndDate"
+                            name={`${name}.APPOINTMENT_END_DATE`}
                             control={control}
                             render={({field}) => <Form.Control
                                 as={DatePicker}
@@ -312,7 +313,7 @@ function PositionJustification() {
                 {positionjustification.isError && <Loading isError>Failed to Load</Loading>}
                 {positionjustification.data &&
                     <Controller
-                        name={`${name}.justification`}
+                        name={`${name}.justification.id`}
                         control={control}
                         defaultValue=""
                         render={({field}) => (

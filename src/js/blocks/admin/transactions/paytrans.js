@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState, useReducer } from "react";
 import { Row, Col, Modal, Form, Tabs, Tab, Container, Alert, OverlayTrigger, Popover } from "react-bootstrap";
 import { useForm, FormProvider, Controller, useFormContext } from "react-hook-form";
-import { AppButton, CheckboxTreeComponent, errorToast, ModalConfirm } from "../../components";
+import { AppButton, CheckboxTreeComponent, DescriptionPopover, errorToast, ModalConfirm } from "../../components";
 import { useTransactionQueries, useCodesQueries } from "../../../queries/codes";
 import DataTable from "react-data-table-component";
 import { toast } from "react-toastify";
@@ -54,52 +54,40 @@ export default function PayrollTransactionsTab() {
             );
         },ignoreRowClick:true,width:'150px'},
         {name:"Payroll Code",selector:row=>(
-            <OverlayTrigger trigger={['focus','hover']} placement="auto" overlay={
-                <Popover id={`${row.PAYTRANS_ID}_payroll_description`}>
-                    <Popover.Title>Payroll Description</Popover.Title>
-                    <Popover.Content>
-                        {row.PAYROLL_DESCRIPTION}
-                    </Popover.Content>
-                </Popover>
-            }>
+            <DescriptionPopover 
+                id={`${row.PAYTRANS_ID}_payroll_description`} 
+                content={row.PAYROLL_DESCRIPTION}
+                showempty
+            >
                 <p className="m-0">{row.payrollDisplay}</p>
-            </OverlayTrigger>
+            </DescriptionPopover>
         ),sortable:true},
         {name:"Form Code",selector:row=>(
-            <OverlayTrigger trigger={['focus','hover']} placement="auto" overlay={
-                <Popover id={`${row.PAYTRANS_ID}_form_description`}>
-                    <Popover.Title>Form Description</Popover.Title>
-                    <Popover.Content>
-                        {row.FORM_DESCRIPTION}
-                    </Popover.Content>
-                </Popover>
-            }>
+            <DescriptionPopover
+                id={`${row.PAYTRANS_ID}_form_description`}
+                content={row.FORM_DESCRIPTION}
+                showempty
+            >
                 <p className="m-0">{row.formDisplay}</p>
-            </OverlayTrigger>
+            </DescriptionPopover>
         ),sortable:true},
         {name:"Action Code",selector:row=>(
-            <OverlayTrigger trigger={['focus','hover']} placement="auto" overlay={
-                <Popover id={`${row.PAYTRANS_ID}_action_description`}>
-                    <Popover.Title>Action Description</Popover.Title>
-                    <Popover.Content>
-                        {row.ACTION_DESCRIPTION}
-                    </Popover.Content>
-                </Popover>
-            }>
+            <DescriptionPopover
+                id={`${row.PAYTRANS_ID}_action_description`}
+                content={row.ACTION_DESCRIPTION}
+                showempty
+            >
                 <p className="m-0">{row.actionDisplay}</p>
-            </OverlayTrigger>
+            </DescriptionPopover>
         ),sortable:true},
         {name:"Trasaction Code",selector:row=>(
-            <OverlayTrigger trigger={['focus','hover']} placement="auto" overlay={
-                <Popover id={`${row.PAYTRANS_ID}_transaction_description`}>
-                    <Popover.Title>Transaction Description</Popover.Title>
-                    <Popover.Content>
-                        {row.TRANSACTION_DESCRIPTION}
-                    </Popover.Content>
-                </Popover>
-            }>
+            <DescriptionPopover
+                id={`${row.PAYTRANS_ID}_transaction_description`}
+                content={row.TRANSACTION_DESCRIPTION}
+                showempty
+            >
                 <p className="m-0">{row.transactionDisplay}</p>
-            </OverlayTrigger>
+            </DescriptionPopover>
         ),sortable:true},
         {name:'Active',selector:row=><Form.Check aria-label="Active" name="active" value={row.ACTIVE} checked={row.ACTIVE==1} onChange={()=>handleRowAction('active',row)}/>,sortable:true,ignoreRowClick:true},
     ],[paytrans.data]);

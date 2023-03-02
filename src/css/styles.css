@@ -13,7 +13,38 @@ main { margin-top: 5rem }
 .center-page p { text-align:center }
 
 /* set font-family for heading levels */
-h1,h2,h3,h4,h5,h6 { font-family: Arvo, Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;}
+h1,h2,h3,h4,h5,h6 { 
+  color: #005a43;
+  font-family: Lora,Garamond,Georgia,"Times New Roman",serif!important;
+  font-weight: 700;
+  text-rendering: optimizeLegibility;
+  line-height: 1.4;
+  margin-top: 0;
+  margin-bottom: .5rem;
+}
+h1 { font-size: 1.5rem }
+h2 { font-size: 1.25rem }
+h3 { font-size: 1.1875rem }
+h4 { font-size: 1.125rem }
+h5 { font-size: 1.0625rem }
+h6 { font-size: 1rem }
+
+@media print,screen and (min-width: 40em) {
+  h1 { font-size: 2.25rem }
+  h2 { font-size: 1.5625rem }
+  h3 { font-size: 1.375rem }
+  h4 { font-size: 1.125rem }
+  h5 { font-size: 1.0625rem }
+  h6 { font-size: 1rem }
+}
+@media print,screen and (min-width: 64em) {
+  h1 { font-size: 2.25rem }
+  h2 { font-size: 1.875rem }
+  h3 { font-size: 1.5rem }
+  h4 { font-size: 1.25rem }
+  h5 { font-size: 1.125rem }
+  h6 { font-size: 1rem }
+}
 
 /* force white text links to be color #fff */
 a.text-white:hover,a.text-white:focus { color: #fff !important }
@@ -25,7 +56,6 @@ a.text-white:hover,a.text-white:focus { color: #fff !important }
 .font-size-80 { font-size: 80% }
 
 /* make pre text wrap - see: https://css-tricks.com/snippets/css/make-pre-text-wrap/*/
-/* TODO: this is really old, update? */
 pre {
   white-space: pre-wrap;       /* css-3 */
   white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
@@ -240,14 +270,14 @@ button.btn-sm.no-label svg.iconify {
   padding: 2px 4px 1px;
 }
 /* hide number input spinner (see: https://www.geeksforgeeks.org/how-to-disable-arrows-from-number-input/) */
-.split-account-table input::-webkit-outer-spin-button,
+/*.split-account-table input::-webkit-outer-spin-button,
 .split-account-table input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
-.split-account-table input[type=number]{
+/*.split-account-table input[type=number]{
   -moz-appearance: textfield;
-}
+}*/
 
 /* reset right padding for Wokflow form controls when invalid */
 #wfConditionsTable .is-invalid { padding-right: initial !important }
@@ -293,4 +323,9 @@ button.btn-sm.no-label svg.iconify {
 div.form-check-input-lg input[type="checkbox"].form-check-input {
   width: 20px;
   height: 20px;
+}
+
+/* Form Review Tab: Make font smaller */
+#form-review {
+  font-size: 85%
 }

@@ -227,7 +227,7 @@ class EmploymentInfo extends HRForms2 {
 				$workAllocation = (new listdata(array('workAllocation'),false))->returnData;
 				$qry = "select c.hr_commitment_id, c.commitment_primary_flag, c.commitment_stack_id, c.commitment_effective_date,
   							c.commitment_end_date, c.campus_title, c.reporting_department_code, c.supervisor_suny_id,
-  							s.supervisor_name, c.work_allocation, c.work_percent, c.duties, c.create_date
+  							s.supervisor_name, c.work_allocation, nvl(c.work_percent,'0') as WORK_PERCENT, c.duties, c.create_date
   							from buhr_commitment_mv@banner.cc.binghamton.edu c
 							left join (select distinct suny_id as supervisor_suny_id, 
 							    legal_last_name || decode(suffix_code,null,'',' ' || suffix_code) || ', ' || nvl(alias_first_name,legal_first_name) || ' ' || substr(legal_middle_name,0,1) as supervisor_name

@@ -43,16 +43,15 @@ export default function PersonContacts() {
             "EMR_CTC_CITY": "",
             "EMR_CTC_STATE_CODE": "",
             "EMR_CTC_ZIP": "",
-            "EMR_CTC_COUNTRY_CODE": "",
+            "EMR_CTC_COUNTRY_CODE": {id: "", label: ""},
             "EMR_CTC_DAY_PHONE": "",
             "EMR_CTC_NIGHT_PHONE": "",
             "EMR_CTC_CELL_PHONE": "",
             "EMR_CTC_INTERNATIONAL_PHONE": "",
             "EMR_CTC_EMAIL": "",
-            "EMR_CTC_RELATIONSHIP": "",
+            "EMR_CTC_RELATIONSHIP": {"id": "","label": ""},
             "CREATE_DATE": "",
             "isPrimary": "N",
-            "relationship": {"id": "","label": ""},
             "createDate":new Date()
         });
         setEditIndex(fields.length);
@@ -217,10 +216,10 @@ export default function PersonContacts() {
                         <Form.Label column md={2}>Country:</Form.Label>
                         <Col xs="auto">
                             <Controller
-                                name={`${name}.${index}.EMR_CTC_COUNTRY_CODE`}
+                                name={`${name}.${index}.EMR_CTC_COUNTRY_CODE.id`}
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <CountrySelector field={field} disabled={editIndex!=index}/>}
+                                render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index}/>}
                             />
                         </Col>
                     </Form.Group>
@@ -281,7 +280,7 @@ export default function PersonContacts() {
                             {relationships.isError && <p>Error Loading</p>}
                             {relationships.data &&
                                 <Controller
-                                    name={`${name}.${index}.relationship.id`}
+                                    name={`${name}.${index}.EMR_CTC_RELATIONSHIP.id`}
                                     defaultValue=""
                                     control={control}
                                     rules={{required:{value:true,message:'Relationship is Required'}}}

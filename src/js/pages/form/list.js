@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import {useParams} from "react-router-dom";
 import { useQueryClient } from "react-query";
-import useRequestQueries from "../../queries/requests";
+import useFormQueries from "../../queries/forms";
 import useGroupQueries from "../../queries/groups";
 import { useForm, Controller } from "react-hook-form";
 import { capitalize, find } from "lodash";
@@ -10,23 +10,22 @@ import { Row, Col, Button, Badge, Modal, Form } from "react-bootstrap";
 import { format } from "date-fns";
 import DataTable from 'react-data-table-component';
 import { Icon } from "@iconify/react";
-import { Loading, ModalConfirm } from "../../blocks/components";
+import { DateFormat, DescriptionPopover, Loading, ModalConfirm } from "../../blocks/components";
 import { getSettings, currentUser, getAuthInfo, SettingsContext, NotFound } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
-import { flattenObject } from "../../utility";
 
-export default function RequestList() {
+export default function FormList() {
     const {part} = useParams();
     return (
         <SettingsContext.Consumer>
-            {({requests}) => {
-                if (!((requests.menu[part]?.enabled == undefined)?true:requests.menu[part]?.enabled)) return <NotFound/>;
-                if (!Object.keys(requests.menu).includes(part)) return <NotFound/>;
+            {({forms}) => {
+                if (!((forms.menu[part]?.enabled == undefined)?true:forms.menu[part]?.enabled)) return <NotFound/>;
+                if (!Object.keys(forms.menu).includes(part)) return <NotFound/>;
                 return (
                 <>
                     <header>
                         <Row>
-                            <Col><h2>Requests List: {requests.menu[part]?.title}</h2></Col>
+                            <Col><h2>Forms List: {forms.menu[part]?.title}</h2></Col>
                         </Row>
                     </header>
                     <section>
@@ -40,9 +39,9 @@ export default function RequestList() {
 
 function ListData({list}) {
     const {getGroups} = useGroupQueries();
-    const {getRequestList} = useRequestQueries();
+    const {getFormList} = useFormQueries();
     const groups = getGroups();
-    const listdata = getRequestList(list,{enabled:!!groups.data,select:d=>{
+    const listdata = getFormList(list,{enabled:!!groups.data,select:d=>{
         return d.map(l => {
             l.STATUS_ARRAY = l.JOURNAL_STATUS.split(',');
             l.GROUPS_ARRAY = l.GROUPS.split(',').map(g => {
@@ -83,15 +82,15 @@ function ListTable({data,list}) {
     const {isAdmin} = getAuthInfo();
     const {general} = getSettings();
     const queryclient = useQueryClient();
-    const {postRequest,deleteRequest} = useRequestQueries(selectedRow?.REQUEST_ID);
-    const req = postRequest();
-    const delReq = deleteRequest();
+    const {postForm,deleteForm} = useFormQueries(selectedRow?.FORM_ID);
+    const frm = postForm();
+    const delFrm = deleteForm();
 
     const handleRowClick = row => {
         if (list=='drafts') {
-            setRedirect('/request/'+row.REQUEST_ID.replaceAll('-','/'));
+            setRedirect('/form/'+row.FORM_ID.replaceAll('-','/'));
         } else {
-            setRedirect('/request/'+row.REQUEST_ID);
+            setRedirect('/form/'+row.FORM_ID);
         }
     };
 
@@ -106,7 +105,7 @@ function ListTable({data,list}) {
             return true;
         }
         console.log(action,comment);
-        req.mutateAsync({action:action,reqId:selectedRow.REQUEST_ID,comment:comment,...selectedRow}).then(d=>{
+        frm.mutateAsync({action:action,reqId:selectedRow.FORM_ID,comment:comment,...selectedRow}).then(d=>{
             console.log(d);
             //refetch: counts and requestlist
             queryclient.refetchQueries(SUNY_ID).then(() => {
@@ -119,7 +118,7 @@ function ListTable({data,list}) {
     const confirmDeleteButtons = {
         close:{title:'Cancel',callback:()=>setAction(undefined)},
         confirm:{title:'Delete',variant:'danger',callback:()=>{
-            delReq.mutateAsync().then(()=>{
+            delFrm.mutateAsync().then(()=>{
                 queryclient.refetchQueries(SUNY_ID).then(() => {
                     setAction(undefined);
                     setSelectedRow(undefined);    
@@ -129,7 +128,7 @@ function ListTable({data,list}) {
     };
 
     const expandRow = useMemo(()=>{
-        if ((isAdmin && general.showReqWF == 'a')||general.showReqWF == 'y') {
+        if ((isAdmin && general.showFormWF == 'a')||general.showFormWF == 'y') {
             if (list !== 'drafts') return true;
         }
         return false;
@@ -157,8 +156,7 @@ function ListTable({data,list}) {
         );
     },[filterText]);
 
-    const filteredRows = rows.filter(row=>Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
-    
+    const filteredRows = rows.filter(row=>Object.values(row).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
     const columns = useMemo(() => [
         {name:'Actions',cell:row=>{
             return (
@@ -173,24 +171,32 @@ function ListTable({data,list}) {
                 </div>
             );
         },ignoreRowClick:true,maxWidth:'100px'},
-        {name:'ID',selector:row=>row.REQUEST_ID,sortable:true,sortField:'REQID'},
-        {name:'Status',selector:row=>row.STATUS,format:row=>{
-            switch(row.STATUS) {
-                case "S":
-                case "A": return "Pending Review"; break;
-                case "F": return "Pending Final Review"; break;
-                case "R": return "Rejected"; break;
-                case "Z": return "Archived"; break;
-                case "draft": return "Draft"; break;
-                default: return row.STATUS;
-            }
-        },sortable:true,sortField:'STATUS'},
+        {name:'Form ID',selector:row=>row.FORM_ID,sortable:true,sortField:'FORM_ID'},
+        {name:'Effective Date',selector:row=>row.effDateFmt},
+        {name:'Name',selector:row=>row.sortName},
+        {name:'Form',selector:row=>(
+                <DescriptionPopover
+                    id={`${row.FORM_ID}_code_description`}
+                    content={[row.FORM_CODE_TITLE,row.ACTION_CODE_TITLE,row.TRANSACTION_CODE_TITLE].join(' | ')}
+                >
+                    <p className="mb-0">{
+                        [row.FORM_CODE,row.ACTION_CODE,row.TRANSACTION_CODE].join('-')
+                    }</p>
+                </DescriptionPopover>
+        ),sortable:true},
+        {name:'Payroll',selector:row=>(
+                <DescriptionPopover 
+                    id={`${row.PAYROLL_CODE}_description`}
+                    content={row.PAYROLL_DESCRIPTION}
+                >
+                    <p className="mb-0">{row.PAYROLL_TITLE}</p>
+                </DescriptionPopover>
+        ),sortable:true},
+        {name:'Position',selector:row=>(
+            <p className="mb-0">{row.TITLE} ({row.LINE_NUMBER})</p>
+        ),sortable:true,wrap:true},
         {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortField:'UNIX_TS'},
         {name:'Submitted By',selector:row=>row.SUNY_ID,sortable:true,omit:(list=='drafts'||list=='pending'),format:row=>`${row.fullName} (${row.SUNY_ID})`},
-        {name:'Position Type',selector:row=>row.POSTYPE.id,format:row=>`${row.POSTYPE.id} - ${row.POSTYPE.title}`,sortable:true},
-        {name:'Request Type',selector:row=>row.REQTYPE.id,format:row=>`${row.REQTYPE.id} - ${row.REQTYPE.title}`,sortable:true},
-        {name:'Candidate Name',selector:row=>row.CANDIDATENAME,sortable:true},
-        {name:'Effective Date',selector:row=>row.EFFDATE,format:row=>format(new Date(row.EFFDATE),'P'),sortable:true}
     ],[data,list]);
     useEffect(()=>{
         setRedirect(undefined);
@@ -201,7 +207,7 @@ function ListTable({data,list}) {
     return (
         <>
             <DataTable 
-                keyField="REQUEST_ID"
+                keyField="FORM_ID"
                 className="compact"
                 columns={columns} 
                 data={filteredRows}
@@ -217,7 +223,7 @@ function ListTable({data,list}) {
                 expandableRows={expandRow}
                 expandableRowsComponent={ExpandedComponent}
             />
-            <ModalConfirm show={action=='delete'} title="Delete?" buttons={confirmDeleteButtons}>Are you sure you want to DELETE draft: {selectedRow?.REQUEST_ID}?</ModalConfirm>
+            <ModalConfirm show={action=='delete'} title="Delete?" buttons={confirmDeleteButtons}>Are you sure you want to DELETE draft: {selectedRow?.FORM_ID}?</ModalConfirm>
             {(action&&action!='delete') && <ActionModal action={action} modalCallback={modalCallback}/>}
         </>
     );

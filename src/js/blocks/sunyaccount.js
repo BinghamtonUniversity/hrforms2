@@ -198,7 +198,7 @@ function SplitTable({accounts,fields,splitAction,handleBlur,disabled,name}) {
                                         max:{value:100,message:'Percentage cannot be more than 100'}
                                     }}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="number" title={get(errors,`${name}.${index}.pct.message`)} isInvalid={get(errors,`${name}.${index}.pct`)} disabled={disabled}/>}
+                                    render={({field}) => <Form.Control {...field} type="text" inputMode="number" title={get(errors,`${name}.${index}.pct.message`)} isInvalid={get(errors,`${name}.${index}.pct`)} disabled={disabled}/>}
                                 />
                             </td>
                         </tr>

@@ -1,18 +1,22 @@
-import React, { useState, useEffect, lazy, useCallback, useMemo } from "react";
-import { UserContext } from "../app";
+import React, { useState, useEffect, lazy, useCallback, useMemo, useContext } from "react";
+import { ErrorFallback, UserContext } from "../app";
+import { useQueryClient } from "react-query";
 import { useParams, useHistory, Prompt, Redirect, useLocation } from "react-router-dom";
 import { currentUser, NotFound } from "../app";
 import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
-import { AppButton, DateFormat } from "../blocks/components";
+import { Loading, AppButton, DateFormat } from "../blocks/components";
 import { get, has, zip } from "lodash";
 import usePersonQueries from "../queries/person";
 import useEmploymentQueries from "../queries/employment";
 import { isValid } from "date-fns";
+import useFormQueries from "../queries/forms";
+import { Icon } from "@iconify/react";
 
 /* CONTEXT */
 export const HRFormContext = React.createContext();
 HRFormContext.displayName = 'HRFormContext';
+export function useHRFormContext() { return useContext(HRFormContext); }
 
 /* TABS */
 const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
@@ -55,16 +59,10 @@ const allTabs = [
 export {allTabs}; //used on paytrans
 
 const defaultFormActions = {
-    paytransId:"",
-    formCode:"",
-    formCodes:[],
-    formCodeDescription:"",
-    actionCode:"",
-    actionCodes:[],
-    actionCodeDescription:"",
-    transactionCode:"",
-    transactionCodes:[],
-    transactionCodeDescription:""
+    PAYTRANS_ID:"",
+    formCode:{FORM_CODE:"",FORM_TITLE:"",FORM_DESCRIPTION:""},
+    actionCode:{ACTION_CODE:"",ACTION_TITLE:"",ACTION_DESCRIPTION:""},
+    transactionCode:{TRANSACTION_CODE:"",TRANSACTION_TITLE:"",TRANSACTION_DESCRIPTION:""}
 };
 export {defaultFormActions}; //used on basic_info
 
@@ -77,6 +75,7 @@ export default function HRForm() {
     const {SUNY_ID} = currentUser();
 
     useEffect(() => {
+        console.log(id,sunyid,ts);
         if (!id) {
             setIsNew(true);
             setIsDraft(true);
@@ -88,25 +87,115 @@ export default function HRForm() {
     },[id,sunyid,ts]);
     if (!formId) return null;
     return(
-        <FormWrapper formId={formId} isDraft={isDraft} isNew={isNew} setIsNew={setIsNew}/>
+        <HRFormWrapper formId={formId} isDraft={isDraft} isNew={isNew} setIsNew={setIsNew}/>
     );
 }
 
-function FormWrapper({formId,isDraft,isNew,setIsNew}) {
-    const { search } = useLocation();
-    //const qstr = new URLSearchParams(search);
-
+function HRFormWrapper({formId,isDraft,isNew,setIsNew}) {
+    const [formData,setFormData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
 
+    const {getForm} = useFormQueries(formId);
+    const form = getForm({enabled:false});
+    useEffect(()=>{
+        if (!isNew) {
+            form.refetch({throwOnError:true,cancelRefetch:true}).then(f=>{
+                console.debug('Form Data Fetched:\n',f.data);
+                setFormData(f.data);
+            }).catch(e => {
+                console.error(e);
+            });
+        } else {
+            setFormData({});
+        }
+    },[formId]);
+    if (form.isError) return <Loading type="alert" isError>Failed To Load Form Data - <small>{form.error?.name} - {form.error?.description||form.error?.message}</small></Loading>;
+    if (!formData) return <Loading type="alert">Loading Form Data</Loading>;
+    return (
+        <section>
+            <header>
+                <Row>
+                    <Col>
+                        <h2>{isNew&&'New '}HR Form</h2>
+                    </Col>
+                </Row>
+            </header>
+            {formData && <HRFormForm formId={formId} data={formData} setIsBlocking={setIsBlocking} isDraft={isDraft} isNew={isNew}/>}
+            {formData && <BlockNav formId={formId} when={isBlocking} isDraft={isNew}/>}
+        </section>
+    );
+}
+
+function BlockNav({formId,when,isDraft}) {
+    const [showModal,setShowModal] = useState(false);
+    const [nextLocation,setNextLocation] = useState();
+    const [shouldProceed,setShouldProceed] = useState(false);
+    const {SUNY_ID} = currentUser();
+    const queryclient = useQueryClient();
+    const {deleteForm} = useFormQueries(formId);
+    const delForm = deleteForm();
+    const history = useHistory();
+    const stopNav = location => {
+        if (!shouldProceed) {
+            setShowModal(true);
+            setNextLocation(location);
+            return false;
+        }
+        return true;
+    }
+    const handleClose = () => setShowModal(false);
+    const handleDelete = () => {
+        setShowModal(false);
+        //TODO: only delete if not saved
+        delForm.mutateAsync().then(()=>{
+            queryclient.refetchQueries(SUNY_ID).then(() => {
+                handleProceed();
+            });
+        });
+    }
+    const handleProceed = () => {
+        console.debug('proceed to location: ',nextLocation);
+        setShowModal(false);
+        setShouldProceed(true);
+    }
+    useEffect(() => shouldProceed && history.push(nextLocation.pathname),[shouldProceed]);
+    return (
+        <>
+            <Prompt when={when} message={stopNav}/>
+            <Modal show={showModal} backdrop="static" onHide={handleClose}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Exit?</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    The form has not been saved.  Do you want to leave and lose your changes?
+                </Modal.Body>
+                <Modal.Footer>
+                    {isDraft&&<Button variant="danger" onClick={handleDelete}>Discard</Button>}
+                    <Button variant="primary" onClick={handleProceed}>Leave</Button>
+                    <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+                </Modal.Footer>
+            </Modal>
+        </>
+    );
+}
+
+function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
     //TODO: probably need to change to useReducer?
     const [tabList,setTabList] = useState(allTabs.filter(t=>t.value=='basic-info'));
 
     const [activeTab,setActiveTab] = useState('basic-info');
     const [activeNav,setActiveNav] = useState('');
     const [showHidden,setShowHidden] = useState(true);
-    const [showLoading,setShowLoading] = useState(false);
+    const [infoComplete,setInfoComplete] = useState(!isNew);
+    const [actionsComplete,setActionsComplete] = useState(!isNew);
+    const [lockTabs,setLockTabs] = useState(false);
+    const [isSaving,setIsSaving] = useState(false);
+    const [hasErrors,setHasErrors] = useState(false);
+    const [showDeleteModal,setShowDeleteModal] = useState(false);
+    const [redirect,setRedirect] = useState('');
+    const [dataLoadError,setDataLoadError] = useState(undefined);
 
-    const defaults = {
+    const defaultVals = {
         formId:formId,
         lookup:{
             type:"bNumber",
@@ -125,6 +214,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                 "HR_PERSON_ID":"",
                 "SUNY_ID": "",
                 "LOCAL_CAMPUS_ID": "",
+                "SALUTATION_CODE":{"id": "","label": ""},
                 "FIRST_NAME": "",
                 "LEGAL_MIDDLE_NAME": "",
                 "LEGAL_LAST_NAME": "",
@@ -133,7 +223,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                 "REHIRE_RETIREE": "",
                 "RETIREMENT_DATE": "",
                 "RETIRED_FROM": "",
-                "salutation": {"id": "","label": ""}
+                "retiredDate":""
             },
             demographics: {
                 "BIRTH_DATE": "",
@@ -180,7 +270,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                 "apptEffDate": new Date(),
                 "apptEndDate": new Date(),
                 "hasBenefits": false,
-                "justification": ""
+                "justification": {"id": "","label": ""}
             },
             appointment: {
                 "TERM_DURATION": "",
@@ -200,6 +290,22 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                     "springCourses":{count:0,list:""}
                 },
                 "studentDetails": {
+                    ACAD_HIST: "",
+                    INCOMPLETES: "0",
+                    MISSING_GRADES: "0",
+                    SGBSTDN_TERM_CODE_EFF: "",
+                    SHRLGPA_GPA: "",
+                    SMRPRLE_PROGRAM_DESC: "",
+                    SPRIDEN_ID: "",
+                    SPRIDEN_PIDM: "",
+                    STVCLAS_CODE: "",
+                    STVCLAS_DESC: "",
+                    STVMAJR_DESC: "",
+                    STVRESD_CODE: "",
+                    STVRESD_DESC: "",
+                    STVRESD_IN_STATE_DESC: "",
+                    STVRESD_IN_STATE_IND: "",
+                    STVTERM_DESC: "",
                     "fall":{
                         "tuition":"",
                         "credits":"0"
@@ -240,24 +346,40 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                 leaveEndDate:"",
                 justification:""
             },
-            pay: []
+            pay: [],
+            volunteer: {
+                subRole:{id:"",label:""},
+                startDate:"",
+                endDate:"",
+                hoursPerWeek:"",
+                subRole:{id:"",label:""},
+                department:{id:"",label:""},
+                duties:""
+            }
         },
         comment:""
     };
-    const methods = useForm({defaultValues: defaults});
-    const watchFormActions = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode'],control:methods.control});
+    const methods = useForm({defaultValues: Object.assign({},defaultVals,data)});
+    const watchFormActions = useWatch({name:['formActions.formCode','formActions.formCodeTitle','formActions.actionCodeTitle','formActions.transactionCodeTitle'],control:methods.control});
     const watchIds = useWatch({name:['person.information.HR_PERSON_ID','person.information.SUNY_ID','person.information.LOCAL_CAMPUS_ID'],control:methods.control});
+
+    const {SUNY_ID} = currentUser();
+
+    const queryclient = useQueryClient();
+    const {postForm} = useFormQueries(formId);
+    const createForm = postForm();
 
     const {getPersonInfo} = usePersonQueries();
     const {getEmploymentInfo} = useEmploymentQueries();
+
     //TODO: only fetch if not saved; saved data comes HRF2 table.
     const personinfo = getPersonInfo(watchIds[0],'information',{
         refetchOnMount:false,
         enabled:false,
         onSuccess:d=>{
-            const retireDate = new Date(d?.RETIREMENT_DATE);
-            d.retireDate = isValid(retireDate)?retireDate:"";
-            methods.setValue('person.information',Object.assign({},defaults.person.information,d));
+            const retiredDate = new Date(d?.RETIREMENT_DATE);
+            d.retiredDate = isValid(retiredDate)?retiredDate:"";
+            methods.setValue('person.information',Object.assign({},defaultVals.person.information,d));
         }
     });
     const persondemographics = getPersonInfo(watchIds[0],'demographics',{
@@ -268,7 +390,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             d.birthDate = isValid(birthDate)?birthDate:"";
             const milSepDate = new Date(d?.MILITARY_SEPARATION_DATE);
             d.milSepDate = isValid(milSepDate)?milSepDate:"";
-            methods.setValue('person.demographics',Object.assign({},defaults.person.demographics,d));
+            methods.setValue('person.demographics',Object.assign({},defaultVals.person.demographics,d));
         }
     });
     const persondirectory = getPersonInfo(watchIds[0],'directory',{
@@ -284,7 +406,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                     }
                 });
             });
-            methods.setValue('person.directory',Object.assign({},defaults.person.directory,d));
+            methods.setValue('person.directory',Object.assign({},defaultVals.person.directory,d));
         }
     });
     const personeducation = getPersonInfo(watchIds[0],'education',{
@@ -322,14 +444,14 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             d.noticeDate = isValid(noticeDate)?noticeDate:"";
             const contPermDate = new Date(d?.CONTINUING_PERMANENCY_DATE);
             d.contPermDate = isValid(contPermDate)?contPermDate:"";
-            methods.setValue('employment.appointment',Object.assign({},defaults.employment.appointment,d));
+            methods.setValue('employment.appointment',Object.assign({},defaultVals.employment.appointment,d));
         }
     });
     const studentinformation = getEmploymentInfo(watchIds[2],'studentinfo',{
         refetchOnMount:false,
         enabled:false,
         onSuccess:d=>{
-            methods.setValue('employment.appointment.studentDetails',Object.assign({},defaults.employment.appointment.studentDetails,d));
+            methods.setValue('employment.appointment.studentDetails',Object.assign({},defaultVals.employment.appointment.studentDetails,d));
         }
     });
     const employmentposition = getEmploymentInfo(watchIds[0],'position',{
@@ -340,7 +462,7 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             d.apptEffDate = isValid(apptEffDate)?apptEffDate:"";
             const apptEndDate = new Date(d?.APPOINTMENT_END_DATE);
             d.apptEndDate = isValid(apptEndDate)?apptEndDate:"";
-            methods.setValue('employment.position',Object.assign({},defaults.employment.position,d));
+            methods.setValue('employment.position',Object.assign({},defaultVals.employment.position,d));
         }
     });
     const employmentsalary = getEmploymentInfo(watchIds[0],'salary',{
@@ -358,36 +480,73 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
                 a.createDate = isValid(createDate)?createDate:"";
             });
             d.totalSalary = ((+d.RATE_AMOUNT*+d.NUMBER_OF_PAYMENTS) * (+d.APPOINTMENT_PERCENT/100)).toFixed(2);
-            console.log(d);
-            methods.setValue('employment.salary',Object.assign({},defaults.employment.salary,d));
+            methods.setValue('employment.salary',Object.assign({},defaultVals.employment.salary,d));
         }
     });
 
+    const handleRedirect = () => {
+        queryclient.refetchQueries(SUNY_ID).then(() => {
+            setShowDeleteModal(false);
+            setIsSaving(false);
+            setLockTabs(false);
+            setIsBlocking(false);
+            setRedirect('/');
+        }).catch(e => {
+            setShowDeleteModal(false);
+            setIsSaving(false);
+            setLockTabs(false);
+            console.error(e);
+        });
+    }
 
     const navigate = tab => {
         //TODO: can we maintain last tab/sub-tab?  or should we use routing? so that it remembers when you switch
         const idx = tabList.findIndex(t=>t.value==tab);
         let aNav = '';
         if (Object.keys(tabList[idx]).includes('children')) aNav = tabList[idx].children[0].value;
-        setIsNew(false);
+        //setIsNew(false);
         setActiveNav(aNav);
         setActiveTab(tab);
     }
-    const navigate2 = nav => {
-        setActiveNav(nav);
-    }
+    const navigate2 = nav => { setActiveNav(nav); }
 
     const handleSubmit = data => {
-        console.debug(data);
-        /*if (activeTab == 'basic-info') {
-            console.debug('Basic Info Complete');
-            methods.setValue('isNew',false);
-            // get tabs and set...
-            setTabList(allTabs);
-            setActiveTab('person-tab');
-            setActiveNav('person-information');
-
-        }*/
+        console.debug(data);        
+        //setHasErrors(false);
+        if (!data.action) return; // just validating the form, not saving
+        setIsSaving(true);
+        setIsBlocking(true); //TODO: when true should be full block with no prompt
+        setLockTabs(true);
+        //TODO: handle *codes better
+        delete(data.formActions.formCodes);
+        delete(data.formActions.actionCodes);
+        delete(data.formActions.transactionCodes);
+        //TODO: switch? save, submit, appove, reject?
+        if (isDraft) {
+            if (isNew || data.action=='submit') {
+                createForm.mutateAsync(data).then(d => {
+                    console.debug(d);
+                    handleRedirect();
+                }).catch(e => {
+                    //TODO: for testing
+                    //TODO: need to handle errors better
+                    setIsSaving(false);
+                    setLockTabs(false);
+                    //end testing
+                    console.error(e);
+                });
+            } else {
+                console.log('update');
+                setIsSaving(false);
+                setLockTabs(false);
+                /*updateReq.mutateAsync(data).then(() => {
+                    //handleRedirect();
+                    console.log('handleRedirect');
+                }).catch(e => {
+                    console.error(e);
+                });*/
+            }
+        }
     }
     const handleError = error => {
         console.log(error);
@@ -402,14 +561,14 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
         methods.reset();
         setTabList(allTabs.filter(t=>t.value=='basic-info'));
     }
-    const handleNext = () => {
-        //should validate before
-        console.log('find next tab/nav');
-        const aTabIdx = tabList.findIndex(t=>t.value==activeTab);
-        const tabListLen = tabList.length;
-        const children = get(tabList,`${aTabIdx}.children`);
-        const childrenLen = (children)?children.length:undefined;
-        const aNavIdx = (children)?children.findIndex(t=>t.value==activeNav):undefined;
+    const handleNext = tablist => {
+        //TODO: should validate before?
+        const tabs = (tablist instanceof Array)?tablist:tabList;
+        const aTabIdx = tabs.findIndex(t=>t.value==activeTab);
+        const tabListLen = tabs.length;
+        const children = get(tabs,`${aTabIdx}.children`);
+        const childrenLen = (children)?children.length:0;
+        const aNavIdx = (children)?children.findIndex(t=>t.value==activeNav):0;
                     
         let nextNavIdx = (aNavIdx<childrenLen-1)?aNavIdx+1:aNavIdx;
         let nextTabIdx = (aNavIdx==childrenLen-1)?aTabIdx+1:aTabIdx;
@@ -417,17 +576,27 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
         if (nextTabIdx != aTabIdx && has(tabList,`${nextTabIdx}.children`)) nextNavIdx = 0;
         if (nextTabIdx == tabListLen-1) nextTabIdx = aTabIdx; //don't allow tab index to exceed array length
         
-        const nextTab = get(tabList,`${nextTabIdx}.value`);
-        const nextNav = get(tabList,`${nextTabIdx}.children.${nextNavIdx}.value`);
+        const nextTab = get(tabs,`${nextTabIdx}.value`);
+        const nextNav = get(tabs,`${nextTabIdx}.children.${nextNavIdx}.value`);
         if (!nextTab) return;
         setActiveTab(nextTab);
         setActiveNav(nextNav);
+    }
+    const handleSave = action => {
+        console.log('DO SAVE',formId);
+        methods.setValue('action',action);
+        methods.handleSubmit(handleSubmit,handleError)();
+        //createReq.mutateAsync(data).then(d => {
     }
 
     const handleTabs = useCallback(tabs => {
         if (!tabs) {
             setTabList(allTabs.filter(t=>t.value=='basic-info'));
+            //setInfoComplete(false);
+            setActionsComplete(false);
         } else {
+            setInfoComplete(true);
+            setActionsComplete(true);
             const tablist = [allTabs.find(t=>t.value=='basic-info')];
             ['person','employment'].forEach(t=>{
                 if (tabs.filter(v=>v.startsWith(t)).length>0) {
@@ -440,28 +609,43 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
             setTabList(tablist);
             if (!!watchIds[0]) { //get info for tabs
                 console.log(watchIds[0]);
-                // get value key from tablist and flatten
-                const tabs = tablist.map(t=>(t.hasOwnProperty('children'))?t.children.map(c=>c.value):t.value).flat();
                 //TODO: if saved form don't refetch, pull from saved data
+                const promiseList = [];
                 tabs.forEach(tab => {
                     switch(tab) {
-                        case "person-information": personinfo.refetch(); break;
-                        case "person-demographics": persondemographics.refetch(); break;
-                        case "person-directory": persondirectory.refetch(); break;
-                        case "person-education": personeducation.refetch(); break;
-                        case "person-contacts": personcontacts.refetch(); break;
-                        case "employment-appointment": employmentappointment.refetch(); break;
+                        case "person-information": promiseList.push({func:personinfo.refetch}); break;
+                        case "person-demographics": promiseList.push({func:persondemographics.refetch}); break;
+                        case "person-directory": promiseList.push({func:persondirectory.refetch}); break;
+                        case "person-education": promiseList.push({func:personeducation.refetch}); break;
+                        case "person-contacts": promiseList.push({func:personcontacts.refetch}); break;
+                        case "employment-appointment": promiseList.push({func:employmentappointment.refetch}); break;
                         case "employment-position": 
-                            employmentposition.refetch().then(() =>{
+                        promiseList.push({func:employmentposition.refetch,then:() =>{
                                 //if payroll == 28029 get student data
                                 methods.getValues('payroll.code')=='28029' && studentinformation.refetch();
-                            }); 
+                            }}); 
                             break;
-                        case "employment-salary": employmentsalary.refetch(); break;
+                        case "employment-salary": promiseList.push({func:employmentsalary.refetch}); break;
+                        case "employment-separation":
+                        case "employment-leave":
+                        case "employment-pay":
+                        case "employment-volunteer":
+                        case "comments":
+                            console.log('TODO; Load Tab: ',tab);
+                            break;
+                        case "basic-info":
+                        case "review":
+                            console.debug('Tab Skipped: ',tab);
+                            break;
                         default:
-                            console.log('TODO: Load Tab:',tab);
+                            console.log('Tab Not Loaded:',tab);
                     }
-                });                
+                });
+                Promise.all(promiseList.map(prom=>prom.func().then(prom.then&&prom.then()))).then(res=>{
+                    const errors = res.find(q=>q.isError);
+                    if (errors) throw new Error(errors?.error);
+                    handleNext(tablist);
+                }).catch(e=>setDataLoadError({message:e.message}));
             }
         }
     },[setTabList,allTabs,watchIds]);
@@ -469,82 +653,80 @@ function FormWrapper({formId,isDraft,isNew,setIsNew}) {
     const testHighlight = useCallback(testCondition=>(testCondition)?'':'test-highlight',[]);
     const showInTest = useMemo(()=>watchFormActions[0]=='TEST'&&showHidden,[watchFormActions,showHidden]);
 
+    if (redirect) return <Redirect to={redirect}/>;
+    if (dataLoadError) return <ErrorFallback error={dataLoadError}/>;
     return(
         <>
-            <header>
-                <Row>
-                    <Col>
-                        <h2>{isNew&&'New '}HR Form</h2>
-                        <p>{formId}</p>
-                    </Col>
-                </Row>
-            </header>
-            {/* TODO: can we/should we pass form type composit and payrol through the form provider, or create our own provider?*/}
-            <FormProvider {...methods} 
-                isDraft={isDraft} 
-                isNew={isNew} 
-                isTest={methods.getValues('formActions.formCode')=='TEST'} 
-                sunyId={methods.getValues('person.information.sunyId')} 
-                hrPersonId={methods.getValues('person.information.hrPersonId')} 
-                handleTabs={handleTabs}
-                testHighlight={testHighlight}
-                showInTest={showInTest}
-            >
-            <HRFormContext.Provider value={{
-                isDraft:isDraft,
-                isNew:isNew,
-                isTest:methods.getValues('formActions.formCode')=='TEST',
-                formActions:methods.getValues('formActions')
-            }}>
-                <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)} onReset={handleReset}>
-                    <Tabs activeKey={activeTab} onSelect={navigate} id="hr-forms-tabs">
-                        {tabList.map(t => (
-                            <Tab key={t.value} eventKey={t.value} title={t.label}>
-                                <Container as="section" className="px-0" fluid>
-                                    {t.children && 
-                                        <Row as="header" className="border-bottom mb-3 ml-0">
-                                            <Nav activeKey={activeNav} onSelect={navigate2}>
-                                                {t.children.map(s=>(
-                                                    <Nav.Item key={s.value}>
-                                                        {s.value==activeNav?
-                                                            <p className="px-2 pt-2 pb-1 m-0 active">{s.label}</p>:
-                                                            <Nav.Link eventKey={s.value} className="px-2 pt-2 pb-1">{s.label}</Nav.Link>
-                                                        }
-                                                    </Nav.Item>
-                                                ))}
-                                            </Nav>
-                                        </Row>
-                                    }
-                                    {!['basic-info','review'].includes(activeTab) && <FormInfoBox/>}
-                                    {(activeTab == 'employment'&&['employment-appointment','employment-salary'].includes(activeNav)) && <EmploymentPositionInfoBox/>}
-                                    <div className="px-2">
-                                        <FormTabRouter tab={t.value} activeTab={activeTab} subTab={activeNav}/>
-                                    </div>
-                                    <Row as="footer" className="mt-3">
-                                        <Col className="button-group justify-content-end">
-                                            <AppButton type="reset" format="delete" onClick={handleReset}>Discard</AppButton>
-                                            {(activeTab!='review')&&<AppButton id="next" format="next" onClick={handleNext} disabled={!watchFormActions.every(v=>!!v)}>Next</AppButton>}
-                                            {(activeTab=='review')&&<AppButton id="submit" type="submit" format="submit" disabled={!watchFormActions.every(v=>!!v)}>Submit</AppButton>}
-                                            <AppButton id="submit" type="submit" format="submit" variant="danger">Test Submit</AppButton>
-                                        </Col>
-                                    </Row>
-                                    <SubmitterInfoBox/>
-                                    <Row>
-                                        <Col>
-                                            <p>{activeTab}.{activeNav}</p>
-                                        </Col>
-                                        {methods.getValues('formActions.formCode')=='TEST' &&
-                                            <Col className="d-flex justify-content-end">
-                                                <Form.Check type="switch" id="showHiddenToggle" className="custom-switch-lg" label="Hide/Show Fields In Test Mode" checked={showHidden} onChange={()=>setShowHidden(!showHidden)}/>
-                                            </Col>
+            {/* TODO: can we/should we pass form type composit and payroll through the form provider, or create our own provider?*/}
+            <FormProvider {...methods}>
+                <HRFormContext.Provider value={{
+                    tabs:tabList,
+                    isDraft:isDraft,
+                    isNew:isNew,
+                    infoComplete:infoComplete,
+                    actionsComplete:actionsComplete,
+                    setActionsComplete:setActionsComplete,
+                    isTest:methods.getValues('formActions.formCode.id')=='TEST',
+                    formActions:methods.getValues('formActions'),
+                    sunyId:methods.getValues('person.information.SUNY_ID'),
+                    hrPersonId:methods.getValues('person.information.HR_PERSON_ID'),
+                    handleTabs:handleTabs,
+                    testHighlight:testHighlight,
+                    showInTest:showInTest
+                }}>
+                    <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)} onReset={handleReset}>
+                        <Tabs activeKey={activeTab} onSelect={navigate} id="hr-forms-tabs">
+                            {tabList.map(t => (
+                                <Tab key={t.value} eventKey={t.value} title={t.label} disabled={lockTabs}>
+                                    <Container as="section" className="px-0" fluid>
+                                        {t.children && 
+                                            <Row as="header" className="border-bottom mb-3 ml-0">
+                                                <Nav activeKey={activeNav} onSelect={navigate2}>
+                                                    {t.children.map(s=>(
+                                                        <Nav.Item key={s.value}>
+                                                            {s.value==activeNav?
+                                                                <p className="px-2 pt-2 pb-1 m-0 active">{s.label}</p>:
+                                                                <Nav.Link eventKey={s.value} className="px-2 pt-2 pb-1">{s.label}</Nav.Link>
+                                                            }
+                                                        </Nav.Item>
+                                                    ))}
+                                                </Nav>
+                                            </Row>
                                         }
-                                    </Row>
-                                </Container>
-                            </Tab>
-                        ))}
-                    </Tabs>
-                </Form>
-            </HRFormContext.Provider>
+                                        {!['basic-info','review'].includes(activeTab) && <FormInfoBox/>}
+                                        {(activeTab == 'employment'&&['employment-appointment','employment-salary'].includes(activeNav)) && <EmploymentPositionInfoBox as="alert"/>}
+                                        <div className="px-2">
+                                            <FormTabRouter tab={t.value} activeTab={activeTab} subTab={activeNav}/>
+                                        </div>
+                                        <Row as="footer" className="mt-3">
+                                            <Col className="button-group justify-content-end">
+                                                {hasErrors && <div className="d-inline-flex align-items-center text-danger mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:alert"/><span>Errors</span></div>}
+                                                {isSaving && <div className="d-inline-flex align-items-center mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:loading" className="spin"/><span>Saving...</span></div>}
+
+                                                <AppButton type="reset" format="delete" onClick={handleReset} disabled={isSaving}>Discard</AppButton>
+                                                {(activeTab!='basic-info')&&<AppButton format="save" onClick={()=>handleSave('save')} disabled={isSaving}>Save &amp; Exit</AppButton>}
+                                                {(activeTab!='review')&&<AppButton id="next" format="next" onClick={handleNext} disabled={isSaving||!infoComplete}>Next</AppButton>}
+                                                {(activeTab=='review')&&<AppButton id="submit" type="submit" format="submit" disabled={isSaving||!infoComplete}>Submit</AppButton>}
+                                                <AppButton id="submit" type="submit" format="submit" variant="danger" disabled={isSaving}>Test Submit</AppButton>
+                                            </Col>
+                                        </Row>
+                                        <SubmitterInfoBox/>
+                                        <Row>
+                                            <Col>
+                                                <p>{activeTab}.{activeNav}</p>
+                                            </Col>
+                                            {methods.getValues('formActions.formCode')=='TEST' &&
+                                                <Col className="d-flex justify-content-end">
+                                                    <Form.Check type="switch" id="showHiddenToggle" className="custom-switch-lg" label="Hide/Show Fields In Test Mode" checked={showHidden} onChange={()=>setShowHidden(!showHidden)}/>
+                                                </Col>
+                                            }
+                                        </Row>
+                                    </Container>
+                                </Tab>
+                            ))}
+                        </Tabs>
+                    </Form>
+                </HRFormContext.Provider>
             </FormProvider>
         </>
     );
@@ -652,37 +834,46 @@ export function FormTypeDisplay({variant,separator,showNA}) {
     },[variant,formActions,separator]);
     return <>{display}</>
 }
-export function EmploymentPositionInfoBox() {
+export function EmploymentPositionInfoBox({as}) {
+    if (as == 'alert') {
+        return (
+            <Alert variant="info" className="mt-3">
+               <EmploymentPositionInfoBoxList/>
+            </Alert> 
+        );
+    } else {
+        return <EmploymentPositionInfoBoxList/>
+    }
+}
+function EmploymentPositionInfoBoxList() {
     const { control, getValues } = useFormContext();
     const watchApptPercent = useWatch({name:'employment.position.APPOINTMENT_PERCENT',control:control});
     const positionDetails = getValues('employment.position.positionDetails');
     return (
-        <Alert variant="info" className="mt-3">
-            <Row as="dl" className="mb-0">
-                <Col as="dt" sm={2} className="mb-0">Line Number:</Col>
-                <Col as="dd" sm={4} className="mb-0">{positionDetails?.LINE_NUMBER}</Col>
-                <Col as="dt" sm={2} className="mb-0">Pay Basis:</Col>
-                <Col as="dd" sm={4} className="mb-0">{positionDetails?.PAY_BASIS}</Col>
-                <Col as="dt" sm={2} className="mb-0">Payroll:</Col>
-                <Col as="dd" sm={4} className="mb-0">{positionDetails?.PAYROLL}</Col>
-                <Col as="dt" sm={2} className="mb-0">Negotiating Unit:</Col>
-                <Col as="dd" sm={4} className="mb-0">{positionDetails?.NEGOTIATING_UNIT}</Col>
-                <Col as="dt" sm={2} className="mb-0">Effective Date:</Col>
-                <Col as="dd" sm={4} className="mb-0"><DateFormat nvl="Effective Date Not Set">{positionDetails?.EFFECTIVE_DATE}</DateFormat></Col>
-                <Col as="dt" sm={2} className="mb-0">Salary Grade:</Col>
-                <Col as="dd" sm={4} className="mb-0">{positionDetails?.SALARY_GRADE}</Col>
-                <Col as="dt" sm={2} className="mb-0">Title:</Col>
-                <Col as="dd" sm={4} className="mb-0">{positionDetails?.TITLE}</Col>
-                <Col as="dt" sm={2} className="mb-0">Segment Code:</Col>
-                <Col as="dd" sm={4} className="mb-0">{positionDetails?.SEGMENT_CODE}</Col>
-                <Col as="dt" sm={2} className="mb-0">Position Department:</Col>
-                <Col as="dd" sm={4} className="mb-0">{positionDetails?.POSITION_DEPARTMENT}</Col>
-                <Col as="dt" sm={2} className="mb-0">Position Percent:</Col>
-                <Col as="dd" sm={4} className="mb-0">{watchApptPercent}</Col>
-                <Col as="dt" sm={2} className="mb-0">Position Status:</Col>
-                <Col as="dd" sm={4} className="mb-0">{positionDetails?.POSITION_STATUS}</Col>
-            </Row>
-        </Alert>
+        <Row as="dl" className="mb-0">
+            <Col as="dt" sm={2} className="mb-0">Line Number:</Col>
+            <Col as="dd" sm={4} className="mb-0">{positionDetails?.LINE_NUMBER}</Col>
+            <Col as="dt" sm={2} className="mb-0">Pay Basis:</Col>
+            <Col as="dd" sm={4} className="mb-0">{positionDetails?.PAY_BASIS}</Col>
+            <Col as="dt" sm={2} className="mb-0">Payroll:</Col>
+            <Col as="dd" sm={4} className="mb-0">{positionDetails?.PAYROLL}</Col>
+            <Col as="dt" sm={2} className="mb-0">Negotiating Unit:</Col>
+            <Col as="dd" sm={4} className="mb-0">{positionDetails?.NEGOTIATING_UNIT}</Col>
+            <Col as="dt" sm={2} className="mb-0">Effective Date:</Col>
+            <Col as="dd" sm={4} className="mb-0"><DateFormat nvl="Effective Date Not Set">{positionDetails?.EFFECTIVE_DATE}</DateFormat></Col>
+            <Col as="dt" sm={2} className="mb-0">Salary Grade:</Col>
+            <Col as="dd" sm={4} className="mb-0">{positionDetails?.SALARY_GRADE}</Col>
+            <Col as="dt" sm={2} className="mb-0">Title:</Col>
+            <Col as="dd" sm={4} className="mb-0">{positionDetails?.TITLE}</Col>
+            <Col as="dt" sm={2} className="mb-0">Segment Code:</Col>
+            <Col as="dd" sm={4} className="mb-0">{positionDetails?.SEGMENT_CODE}</Col>
+            <Col as="dt" sm={2} className="mb-0">Position Department:</Col>
+            <Col as="dd" sm={4} className="mb-0">{positionDetails?.POSITION_DEPARTMENT}</Col>
+            <Col as="dt" sm={2} className="mb-0">Position Percent:</Col>
+            <Col as="dd" sm={4} className="mb-0">{watchApptPercent}</Col>
+            <Col as="dt" sm={2} className="mb-0">Position Status:</Col>
+            <Col as="dd" sm={4} className="mb-0">{positionDetails?.POSITION_STATUS}</Col>
+        </Row>
     );
 }
 function SubmitterInfoBox() {

@@ -15,6 +15,7 @@ Bug fixes, enhancements and things still to complete.
   * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
 
 ## Tasks: 
+  * Consolidate "configuration" items config/ folder; e.g. config/form.js for form config.
   * Add "search" on Codes page.
   * Link list to Journal
   * Add Expand/Collapse All in Journal

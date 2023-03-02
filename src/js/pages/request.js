@@ -56,7 +56,7 @@ function RequestWrapper({reqId,isDraft,isNew}) {
     useEffect(()=>{
         if (!isNew) {
             request.refetch({throwOnError:true,cancelRefetch:true}).then(r=>{
-                console.log('refetch done');
+                console.debug('Request Data Fetched:\n',r.data);
                 setReqData(r.data);
             }).catch(e => {
                 console.error(e);

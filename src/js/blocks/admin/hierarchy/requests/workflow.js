@@ -11,6 +11,7 @@ import { useForm, FormProvider, useFormContext, useFieldArray, useWatch, Control
 import { useQueryClient } from "react-query";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { AppButton, errorToast } from "../../../components";
+import { flattenObject } from "../../../../utility";
 
 
 export default function WorkflowTab() {
@@ -63,10 +64,8 @@ export default function WorkflowTab() {
         );
     },[filterText]);
 
-    const filteredRows = rows.filter(row => {
-        const r = row.GROUPS_ARRAY.map(g=>g.GROUP_NAME).filter(g=>startsWith(g.toLowerCase(),filterText.toLowerCase()));
-        return r.length;
-    });
+    const filteredRows = rows.filter(row=>Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
+
     const columns = useMemo(() => [
         {name:'Actions',selector:row=>row.WORKFLOW_ID,cell:row=>{
             return (

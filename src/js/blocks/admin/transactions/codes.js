@@ -2,8 +2,8 @@ import React, { useState, useCallback, useMemo, useReducer, useEffect } from "re
 import { useCodesQueries } from "../../../queries/codes";
 import { startCase, toUpper } from "lodash";
 import DataTable from 'react-data-table-component';
-import { Row, Col, Form, Modal, Alert, OverlayTrigger, Popover, Tabs, Tab } from "react-bootstrap";
-import { AppButton, errorToast, ModalConfirm } from "../../components";
+import { Row, Col, Form, Modal, Alert, Tabs, Tab } from "react-bootstrap";
+import { AppButton, DescriptionPopover, errorToast, ModalConfirm } from "../../components";
 import { useQueryClient } from "react-query";
 import { toast } from "react-toastify";
 import { useForm, Controller, FormProvider, useFormContext } from "react-hook-form";
@@ -66,16 +66,13 @@ export default function CodesTab({tab,tabName}) {
         },ignoreRowClick:true,width:'100px'},
         {name:vars.code.start,selector:row=>row[vars.code.upper],sortable:true},
         {name:vars.title.start,selector:row=>(
-            <OverlayTrigger key={`${row[vars.code.upper]}_description`} trigger={['focus','hover']} placement="auto" overlay={
-                <Popover id={`${row[vars.code.upper]}_description`}>
-                    <Popover.Title>Description</Popover.Title>
-                    <Popover.Content>
-                        {row[vars.description.upper]}
-                    </Popover.Content>
-                </Popover>
-            }>
+            <DescriptionPopover 
+                id={`${row[vars.code.upper]}_description`} 
+                content={row[vars.description.upper]}
+                showempty
+            >
                 <p className="m-0">{row[vars.title.upper]}</p>
-            </OverlayTrigger>
+            </DescriptionPopover>
         ),sortable:true},
         {name:'Active',selector:row=><Form.Check aria-label="Active" name="active" id={`active_${row[vars.code.upper]}`} value={row[vars.code.upper]} checked={row.ACTIVE==1} onChange={e=>handleRowEvents(e,row)}/>,sortable:true,ignoreRowClick:true},
         {name:'Order',selector:row=><Form.Control type="number" name="orderby" defaultValue={row.ORDERBY} onBlur={e=>handleRowEvents(e,row)}/>,sortable:true,ignoreRowClick:true}

@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useForm, FormProvider, useFormContext, Controller } from "react-hook-form";
 import { useQueryClient } from "react-query";
+import { flattenObject } from "../../../../utility";
 
 const HierarchyContext = React.createContext();
 HierarchyContext.displayName = 'HierarchyContext';
@@ -93,11 +94,7 @@ function HierarchyTable() {
         );
     },[filterText]);
 
-    const filteredRows = rows.filter(row => {
-        const g = startsWith(row.GROUP_NAME.toLowerCase(),filterText.toLowerCase());
-        const r = row.GROUPS_ARRAY.map(g=>g.GROUP_NAME).filter(g=>startsWith(g.toLowerCase(),filterText.toLowerCase()));
-        return r.length||g;
-    });
+    const filteredRows = rows.filter(row => Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
 
     const columns = useMemo(() => [
         {name:'Actions',cell:row=>{

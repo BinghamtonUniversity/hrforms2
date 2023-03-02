@@ -3,7 +3,7 @@ import { useQueryClient } from "react-query";
 import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
 import {useAppQueries} from "../../queries";
-import { Loading, ModalConfirm, AppButton, errorToast } from "../../blocks/components";
+import { Loading, ModalConfirm, AppButton, errorToast, DescriptionPopover } from "../../blocks/components";
 import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert, InputGroup } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { orderBy, sortBy, difference, capitalize, startsWith } from "lodash";
@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useParams, useHistory } from "react-router-dom";
+import { pick } from "lodash";
 
 const defaultVals = {SUNYID:'',firstName:'',lastName:'',email:'',dept:'',startDate:new Date(),endDate:'',assignedGroups:[],availableGroups:[]};
 
@@ -108,13 +109,11 @@ function UsersTable({users,newUser,setNewUser}) {
     const filteredRows = rows.filter(row => {
         if (row.active && statusFilter == 'inactive') return false;
         if (!row.active && statusFilter == 'active') return false;
+
         if (startsWith(filterText,'id:')) {
             return row.SUNY_ID == filterText.split(':')[1];
         }
-        const fName = row.LEGAL_FIRST_NAME && row.LEGAL_FIRST_NAME.toLowerCase();
-        const lName = row.LEGAL_LAST_NAME && row.LEGAL_LAST_NAME.toLowerCase();
-        const filterFields = `${row.USER_SUNY_ID} ${fName} ${lName} ${row.email} ${row.startDateFmt} ${row.endDateFmt}`
-        return filterFields.includes(filterText.toLowerCase());    
+        return Object.values(pick(row,['B_NUMBER','SUNY_ID','email','endDate','endDateFmt','fullName','sortName','startDate','startDateFmt'])).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
     });
 
     const columns = useMemo(() => [
@@ -129,7 +128,27 @@ function UsersTable({users,newUser,setNewUser}) {
             );
         },ignoreRowClick:true},
         {name:'SUNY ID',selector:row=>row.USER_SUNY_ID,sortable:true,sortField:'USER_SUNY_ID'},
-        {name:'Name',selector:row=>row.sortName,sortable:true,sortField:'sortName'},
+        {name:'Name',selector:row=>(
+            <div><DescriptionPopover
+                id={`${row.SUNY_ID}_details`}
+                title="User Details"
+                width={25}
+                content={
+                    <dl>
+                        <dt className="mb-1 float-left">SUNY ID:</dt>
+                        <dd className="mb-1">{row.SUNY_ID}</dd>
+                        <dt className="mb-1 float-left">B#:</dt>
+                        <dd className="mb-1">{row.B_NUMBER}</dd>
+                        <dt className="mb-1 float-left">Name:</dt>
+                        <dd className="mb-1">{row.fullName}</dd>
+                        <dt className="mb-1 float-left">Email:</dt>
+                        <dd className="mb-1">{row.email}</dd>
+                    </dl>
+                }
+            >
+                <Icon className="iconify-inline" icon="mdi:clipboard-account" width={24} height={24}/>
+            </DescriptionPopover> {row.sortName}</div>
+        ),sortable:true,sortField:'sortName'},
         {name:'Email',selector:row=>row.email,sortable:true,sortField:'email'},
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
         {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
@@ -301,6 +320,7 @@ function AddEditUserForm(props) {
         reValidateMode:'onChange',
         defaultValues:Object.assign({},defaultVals,{
             SUNYID: props.SUNY_ID||'',
+            bNumber: props.B_NUMBER||'',
             firstName:props.LEGAL_FIRST_NAME||'',
             lastName:props.LEGAL_LAST_NAME||'',
             email:props.email||'',
@@ -391,9 +411,10 @@ function AddEditUserForm(props) {
                     const filtered = groupsData.filter(g=>!assignedIds.includes(g.GROUP_ID));
                     methods.reset({
                         SUNYID:props.SUNY_ID,
+                        bNumber:props.B_NUMBER,
                         firstName:props.LEGAL_FIRST_NAME,
                         lastName:props.LEGAL_LAST_NAME,
-                        dept:props.REPORTING_DEPARTMENT_NAME,
+                        dept:props.REPORTING_DEPARTMENT_NAME||'',
                         email:props.email,
                         startDate: props.startDate,
                         endDate: props.endDate,
@@ -501,11 +522,12 @@ function UserInfo({newUser,setStatus}) {
             setLookupState('valid');
             setStatus({save:true});
             reset(Object.assign({},defaultVals,{
-                SUNYID:userData.SUNY_ID,
-                firstName:userData.LEGAL_FIRST_NAME,
-                lastName:userData.LEGAL_LAST_NAME,
-                email:userData.EMAIL_ADDRESS_WORK,
-                dept:userData.REPORTING_DEPARTMENT_NAME
+                SUNYID:userData.SUNY_ID||'',
+                bNumber:userData.B_NUMBER||'',
+                firstName:userData.LEGAL_FIRST_NAME||'',
+                lastName:userData.LEGAL_LAST_NAME||'',
+                email:userData.EMAIL_ADDRESS_WORK||'',
+                dept:userData.REPORTING_DEPARTMENT_NAME||''
             }));
         });
     }
@@ -542,6 +564,7 @@ function UserInfo({newUser,setStatus}) {
                         <InputGroup hasValidation className="mb-3">
                             <Controller
                                 name="SUNYID"
+                                defaultValue=""
                                 control={control}
                                 render={({field}) => <Form.Control {...field} ref={ref} type="text" placeholder="Search for SUNY ID" aria-label="Search for SUNY ID" aria-describedby="basic-addon" onKeyDown={handleKeyDown} onChange={e=>handleChange(e,field)} isInvalid={errors.SUNYID}/>}
                             />
@@ -553,6 +576,7 @@ function UserInfo({newUser,setStatus}) {
                     :
                         <Controller
                             name="SUNYID"
+                            defaultValue=""
                             control={control}
                             render={({field}) => <Form.Control {...field} type="text" disabled/>}
                         />
@@ -560,10 +584,22 @@ function UserInfo({newUser,setStatus}) {
                 </Form.Group>
             </Form.Row>
             <Form.Row>
+                <Form.Group as={Col} controlId="bNumber">
+                    <Form.Label>B#:</Form.Label>
+                    <Controller
+                        name="bNumber"
+                        defaultValue=""
+                        control={control}
+                        render={({field}) => <Form.Control {...field} type="text" disabled/>}
+                    />
+                </Form.Group>
+            </Form.Row>
+            <Form.Row>
                 <Form.Group as={Col} controlId="first_name">
                     <Form.Label>First Name</Form.Label>
                     <Controller
                         name="firstName"
+                        defaultValue=""
                         control={control}
                         render={({field}) => <Form.Control {...field} type="text" disabled/>}
                     />
@@ -572,6 +608,7 @@ function UserInfo({newUser,setStatus}) {
                     <Form.Label>Last Name</Form.Label>
                     <Controller
                         name="lastName"
+                        defaultValue=""
                         control={control}
                         render={({field}) => <Form.Control {...field} type="text" disabled/>}
                     />
@@ -582,6 +619,7 @@ function UserInfo({newUser,setStatus}) {
                     <Form.Label>Email</Form.Label>
                     <Controller
                         name="email"
+                        defaultValue=""
                         control={control}
                         render={({field}) => <Form.Control {...field} type="text" disabled/>}
                     />
@@ -592,6 +630,7 @@ function UserInfo({newUser,setStatus}) {
                     <Form.Label>Department</Form.Label>
                     <Controller
                         name="dept"
+                        defaultValue=""
                         control={control}
                         render={({field}) => <Form.Control {...field} type="text" disabled/>}
                     />
@@ -600,6 +639,7 @@ function UserInfo({newUser,setStatus}) {
                     <Form.Label>Department Group</Form.Label>
                     <Controller
                         name="deptGroup"
+                        defaultValue=""
                         control={control}
                         render={({field}) => <Form.Control {...field} type="text" disabled/>}
                     />
@@ -611,6 +651,7 @@ function UserInfo({newUser,setStatus}) {
                     <InputGroup>
                         <Controller
                             name="startDate"
+                            defaultValue=""
                             control={control}
                             rules={{required:{value:true,message:'Start Date is required'}}}
                             render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.startDate}/>}
@@ -628,6 +669,7 @@ function UserInfo({newUser,setStatus}) {
                     <InputGroup>
                         <Controller
                             name="endDate"
+                            defaultValue=""
                             control={control}
                             render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} autoComplete="off"/>}
                         />

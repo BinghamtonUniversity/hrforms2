@@ -1,5 +1,5 @@
 import React from "react";
-import { Alert, Button, Modal, ListGroup, NavDropdown, Form } from "react-bootstrap";
+import { Alert, Button, Modal, ListGroup, NavDropdown, Form, OverlayTrigger, Popover } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { parse, format } from "date-fns";
 import { invoke, get, capitalize, isDate } from "lodash";
@@ -12,6 +12,7 @@ import CheckboxTree from 'react-checkbox-tree';
  * 
  * Loading
  * DateFormat
+ * CurrencyFormat
  * ModalConfirm
  * AppButton
  * MenuCounts
@@ -22,6 +23,7 @@ import CheckboxTree from 'react-checkbox-tree';
  * StateSelector
  * CountrySelector
  * DepartmentSelector
+ * DescriptionPopover
  */
 
 /* formats for AppButton */
@@ -262,5 +264,25 @@ const DepartmentSelector = ({field,...props}) => {
     );
 }
 
+const DescriptionPopover = ({title,content,showempty,children,...props}) => {
+    if (!content&&!showempty) return children;
+    const emptydisplay = (typeof(showempty)=='boolean')?"no description":showempty;
+    const s = {};
+    if (props.width) {
+        s.maxWidth = 'none';
+        s.width = `${props.width}em`;
+    }
+    return (
+        <OverlayTrigger key={props.id} trigger={props?.trigger||['focus','hover']} placement={props?.placement||"auto"} overlay={
+            <Popover id={props.id} style={s}>
+                {title&&<Popover.Title>{title}</Popover.Title>}
+                <Popover.Content>{(!content)?(<span className="font-italic">{emptydisplay}</span>):content}</Popover.Content>
+            </Popover>
+        }>
+            {children}
+        </OverlayTrigger>
+    );
+}
+
 export {Loading,ModalConfirm,AppButton,MenuCounts,errorToast,CheckboxTreeComponent,
-    StateSelector,CountrySelector,DepartmentSelector};
+    StateSelector,CountrySelector,DepartmentSelector,DescriptionPopover};

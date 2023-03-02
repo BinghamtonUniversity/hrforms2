@@ -49,7 +49,7 @@ class PersonInfo extends HRForms2 {
 
 				// Salutation Code and Description Array
 				$key = array_search($row['SALUTATION_CODE'],array_column($salutations,0));
-				$row['salutation'] = array("id"=>$row['SALUTATION_CODE'],"label"=>($key!==false)?$salutations[$key][1]:"");
+				$row['SALUTATION_CODE'] = array("id"=>$row['SALUTATION_CODE'],"label"=>($key!==false)?$salutations[$key][1]:"");
 				
 				$this->_arr = $this->null2Empty($row);
 				oci_free_statement($stmt);
@@ -203,6 +203,7 @@ class PersonInfo extends HRForms2 {
 				break;
 			case "education":
 				$degreeTypes = (new listdata(array('degreeTypes'),false))->returnData;
+				$countryCodes = (new listdata(array('countryCodes'),false))->returnData;
 
 				$qry = "select e.degree_year, e.degree_month, e.pending_degree_flag, e.degree_type,
 				i.country_code, i.institution_state, i.institution_city, i.institution_id, i.institution, 
@@ -219,8 +220,12 @@ class PersonInfo extends HRForms2 {
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				while($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					//Degree Type
 					$key = array_search($row['DEGREE_TYPE'],array_column($degreeTypes,'DEGREE_TYPE_CODE'));
-					$row['degreeType'] = array(array("id"=>$row['DEGREE_TYPE'],"label"=>($key!==false)?$degreeTypes[$key]['DEGREE_TYPE_DESC']:""));
+					$row['DEGREE_TYPE'] = array(array("id"=>$row['DEGREE_TYPE'],"label"=>($key!==false)?$degreeTypes[$key]['DEGREE_TYPE_DESC']:""));
+					//Country Code
+					$key = array_search($row['COUNTRY_CODE'],array_column($countryCodes,'COUNTRY_CODE'));
+					$row['COUNTRY_CODE'] = array("id"=>$row['COUNTRY_CODE'],"label"=>($key!==false)?$countryCodes[$key]['COUNTRY_SHORT_DESC']:"");
 					$this->_arr[] = $row;
 				}
 				$this->_arr = $this->null2Empty($this->_arr);
@@ -229,6 +234,7 @@ class PersonInfo extends HRForms2 {
 				break;
 			case "contact":
 				$relationships = (new listdata(array('contactRelationships'),false))->returnData;
+				$countryCodes = (new listdata(array('countryCodes'),false))->returnData;
 
 				$qry = "select emr_ctc_rank,
 					emr_ctc_first_name, emr_ctc_last_name, emr_ctc_address_1, emr_ctc_address_2,
@@ -243,8 +249,14 @@ class PersonInfo extends HRForms2 {
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				while($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					//Relationship Code
 					$key = array_search($row['EMR_CTC_RELATIONSHIP'],array_column($relationships,0));
-					$row['relationship'] = array("id"=>$row['EMR_CTC_RELATIONSHIP'],"label"=>($key!==false)?$relationships[$key][1]:"");
+					$row['EMR_CTC_RELATIONSHIP'] = array("id"=>$row['EMR_CTC_RELATIONSHIP'],"label"=>($key!==false)?$relationships[$key][1]:"");
+					//Country Code
+					$row['EMR_CTC_COUNTRY_CODE'] = 'USA';
+					$key = array_search($row['EMR_CTC_COUNTRY_CODE'],array_column($countryCodes,'COUNTRY_CODE'));
+					$row['EMR_CTC_COUNTRY_CODE'] = array("id"=>$row['EMR_CTC_COUNTRY_CODE'],"label"=>($key!==false)?$countryCodes[$key]['COUNTRY_SHORT_DESC']:"");
+
 					$this->_arr[] = $row;
 				}
 				$this->_arr = $this->null2Empty($this->_arr);

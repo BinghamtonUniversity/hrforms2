@@ -36,6 +36,8 @@ class Counts extends HRForms2 {
 		$request_rejections = count((new requestlist(array('rejections'),false))->returnData);
 		$request_final = count((new requestlist(array('final'),false))->returnData);
 
+		$form_drafts = count((new formlist(array('drafts'),false))->returnData);
+
 		$counts = array(
             "requests" => array(
                 "drafts"=>$request_drafts,
@@ -45,7 +47,7 @@ class Counts extends HRForms2 {
                 "final"=>$request_final
             ),
             "forms" => array(
-                "drafts"=>0,
+                "drafts"=>$form_drafts,
 				"pending"=>0,
                 "approvals"=>0,
                 "rejections"=>0,

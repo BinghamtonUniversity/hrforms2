@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Row, Col, Form, InputGroup, Table, Alert } from "react-bootstrap";
 import { useFormContext, Controller, useWatch, useFieldArray } from "react-hook-form";
+import { HRFormContext } from "../../pages/form";
 import DatePicker from "react-datepicker";
 import SUNYAccount, { SingleSUNYAccount } from "../sunyaccount";
 import { AppButton, CurrencyFormat, DateFormat, DepartmentSelector } from "../components";
@@ -14,7 +15,7 @@ const name = 'employment.salary';
 const splitAssignFormTypes = ['EF-PAY-1'];
 
 export default function EmploymentAppointment() {
-    const { control, setValue, formState: { errors }, showInTest, testHighlight } = useFormContext();
+    const { control, setValue } = useFormContext();
     const watchAmounts = useWatch({name:[
         `${name}.RATE_AMOUNT`,
         `${name}.NUMBER_OF_PAYMENTS`,
@@ -37,101 +38,105 @@ export default function EmploymentAppointment() {
         setValue(`${name}.totalSalary`,((+watchAmounts[0]*+watchAmounts[1]) * (+watchAmounts[2]/100)).toFixed(2));
     },[watchAmounts]);
     return (
-        <article>
-            <section className="mt-3">
-                <Row as="header">
-                    <Col as="h3">Salary</Col>
-                </Row>
-                <Form.Group as={Row}>
-                    <Form.Label column md={2}>Effective Date:</Form.Label>
-                    <Col xs="auto">
-                        <InputGroup>
+        <HRFormContext.Consumer>
+            {({showInTest,testHighlight}) => (
+                <article>
+                    <section className="mt-3">
+                        <Row as="header">
+                            <Col as="h3">Salary</Col>
+                        </Row>
+                        <Form.Group as={Row}>
+                            <Form.Label column md={2}>Effective Date:</Form.Label>
+                            <Col xs="auto">
+                                <InputGroup>
+                                    <Controller
+                                        name={`${name}.effDate`}
+                                        control={control}
+                                        render={({field}) => <Form.Control
+                                            as={DatePicker}
+                                            name={field.name}
+                                            selected={field.value}
+                                            closeOnScroll={true}
+                                            onChange={field.onChange}
+                                            autoComplete="off"
+                                        />}
+                                    />
+                                    <InputGroup.Append>
+                                        <InputGroup.Text>
+                                            <Icon icon="mdi:calendar-blank"/>
+                                        </InputGroup.Text>
+                                    </InputGroup.Append>
+                                </InputGroup>
+                            </Col>
+                        </Form.Group>
+                        <Form.Group as={Row}>
+                            <Form.Label column md={2}>Pay Basis:</Form.Label>
+                            <Col xs="auto" className="pt-2">
+                                <p className="mb-0">{watchPayBasis}</p>
+                            </Col>
+                        </Form.Group>
+                        {(!['HRY','BIW','FEE'].includes(watchPayBasis)||showInTest) && 
+                            <Form.Group as={Row} className={testHighlight(!['HRY','BIW','FEE'].includes(watchPayBasis))}>
+                                <Form.Label column md={2}>Appointment Percent:</Form.Label>
+                                <Col xs="auto" className="pt-2">
+                                    <p className="mb-0">{watchAmounts[2]}%</p>
+                                </Col>
+                            </Form.Group>
+                        }
+                        {(['BIW','FEE'].includes(watchPayBasis)||showInTest) && 
+                            <Form.Group as={Row} className={testHighlight(['BIW','FEE'].includes(watchPayBasis))}>
+                                <Form.Label column md={2}># Payments:</Form.Label>
+                                <Col xs="auto">
+                                    <Controller
+                                        name={`${name}.NUMBER_OF_PAYMENTS`}
+                                        defaultValue=""
+                                        control={control}
+                                        render={({field}) => <Form.Control {...field} type="number" min={1}/>}
+                                    />
+                                </Col>
+                            </Form.Group>
+                        }
+                        <Form.Group as={Row}>
+                            <Form.Label column md={2}>{rateAmountLabel} Rate:</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.RATE_AMOUNT`}
+                                    defaultValue=""
+                                    control={control}
+                                    render={({field}) => <Form.Control {...field} type="text"/>}
+                                />
+                            </Col>
+                        </Form.Group>
+                        <Form.Group as={Row}>
+                            <Form.Label column md={2}>Total Salary:</Form.Label>
+                            <Col xs="auto" className="pt-2">
                             <Controller
-                                name={`${name}.effDate`}
-                                control={control}
-                                render={({field}) => <Form.Control
-                                    as={DatePicker}
-                                    name={field.name}
-                                    selected={field.value}
-                                    closeOnScroll={true}
-                                    onChange={field.onChange}
-                                    autoComplete="off"
-                                />}
-                            />
-                            <InputGroup.Append>
-                                <InputGroup.Text>
-                                    <Icon icon="mdi:calendar-blank"/>
-                                </InputGroup.Text>
-                            </InputGroup.Append>
-                        </InputGroup>
-                    </Col>
-                </Form.Group>
-                <Form.Group as={Row}>
-                    <Form.Label column md={2}>Pay Basis:</Form.Label>
-                    <Col xs="auto" className="pt-2">
-                        <p className="mb-0">{watchPayBasis}</p>
-                    </Col>
-                </Form.Group>
-                {(!['HRY','BIW','FEE'].includes(watchPayBasis)||showInTest) && 
-                    <Form.Group as={Row} className={testHighlight(!['HRY','BIW','FEE'].includes(watchPayBasis))}>
-                        <Form.Label column md={2}>Appointment Percent:</Form.Label>
-                        <Col xs="auto" className="pt-2">
-                            <p className="mb-0">{watchAmounts[2]}%</p>
-                        </Col>
-                    </Form.Group>
-                }
-                {(['BIW','FEE'].includes(watchPayBasis)||showInTest) && 
-                    <Form.Group as={Row} className={testHighlight(['BIW','FEE'].includes(watchPayBasis))}>
-                        <Form.Label column md={2}># Payments:</Form.Label>
-                        <Col xs="auto">
-                            <Controller
-                                name={`${name}.NUMBER_OF_PAYMENTS`}
-                                defaultValue=""
-                                control={control}
-                                render={({field}) => <Form.Control {...field} type="number" min={1}/>}
-                            />
-                        </Col>
-                    </Form.Group>
-                }
-                <Form.Group as={Row}>
-                    <Form.Label column md={2}>{rateAmountLabel} Rate:</Form.Label>
-                    <Col xs="auto">
-                        <Controller
-                            name={`${name}.RATE_AMOUNT`}
-                            defaultValue=""
-                            control={control}
-                            render={({field}) => <Form.Control {...field} type="text"/>}
-                        />
-                    </Col>
-                </Form.Group>
-                <Form.Group as={Row}>
-                    <Form.Label column md={2}>Total Salary:</Form.Label>
-                    <Col xs="auto" className="pt-2">
-                    <Controller
-                            name={`${name}.totalSalary`}
-                            defaultValue=""
-                            control={control}
-                            render={({field}) => <p className="mb-0"><CurrencyFormat>{field.value}</CurrencyFormat></p>}
-                        />
-                    </Col>
-                </Form.Group>
-                <SUNYAccount name={`${name}.SUNYAccounts`}/>
-            </section>
-            
-            <AdditionalSalary/>
+                                    name={`${name}.totalSalary`}
+                                    defaultValue=""
+                                    control={control}
+                                    render={({field}) => <p className="mb-0"><CurrencyFormat>{field.value}</CurrencyFormat></p>}
+                                />
+                            </Col>
+                        </Form.Group>
+                        <SUNYAccount name={`${name}.SUNYAccounts`}/>
+                    </section>
+                    
+                    <AdditionalSalary/>
 
-            {watchFormType.join('-')=='TEST--'&&<p>testing</p>}
-            <p>{watchFormType.join('-')}</p>
-            <SplitAssignments/>
+                    {watchFormType.join('-')=='TEST--'&&<p>testing</p>}
+                    <p>{watchFormType.join('-')}</p>
+                    <SplitAssignments/>
 
-        </article>
+                </article>
+            )}
+        </HRFormContext.Consumer>
     );
 }
 
 function AdditionalSalary() {
-    const blockName = `${name}.additionalSalary`;
+    const blockName = `${name}.ADDITIONAL_SALARY`;
 
-    const { control, getValues, setValue, setFocus, clearErrors } = useFormContext();
+    const { control, getValues, setValue, clearErrors } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
         name:blockName
@@ -151,7 +156,7 @@ function AdditionalSalary() {
             type:{id:"",label:""},
             startDate:new Date(),
             endDate:"",
-            account:[],
+            account:[{id:"",label:""}],
             payments:1,
             amount:0,
             total: 0,
@@ -184,6 +189,8 @@ function AdditionalSalary() {
                 setIsNew(false);
             }
         }).catch(e=>console.error(e));*/
+        setValue(`${blockName}.${index}.total`,calcTotal(index));
+
         setEditIndex(undefined);
         setEditValues(undefined);
         setIsNew(false);
@@ -205,7 +212,7 @@ function AdditionalSalary() {
         if (!watchFieldArray) return 0;
         const payments = get(watchFieldArray,`${index}.payments`,1);
         const amount = get(watchFieldArray,`${index}.amount`,0);
-        return +payments*+amount;
+        return parseFloat(payments)*parseFloat(amount);
     },[watchFieldArray]);
 
     useEffect(() => {
@@ -312,9 +319,7 @@ function AdditionalSalary() {
                         </Col>
                         <Col xs={4} sm={3} md={2} className="mb-2">
                             <Form.Label>Total:</Form.Label>
-                            <p className="mb-0 py-2">
-                                <CurrencyFormat>{calcTotal(index)}</CurrencyFormat>
-                            </p>
+                            <p className="mb-0 py-2"><CurrencyFormat>{calcTotal(index)}</CurrencyFormat></p>
                         </Col>
                     </Form.Row>
                     <Row>
@@ -382,13 +387,13 @@ function SplitAssignments() {
     const { fields, append, remove, update } = useFieldArray({
         control:control,
         name:blockName,
-        rules: {
+/*        rules: {
             validate: fieldArray => {
                 if (fieldArray.length == 0) return true;
                 const pct = fieldArray.map(s=>s.WORK_PERCENT).reduce((a,b)=>parseFloat(a)+parseFloat(b));
                 return (pct!=100)?'Split Assignment Total Work Percent must equal 100%':true;
             }
-        }
+        }*/
     });
 
     const watchFieldArray = useWatch({name:blockName,control:control});
@@ -415,7 +420,7 @@ function SplitAssignments() {
             "SUPERVISOR_SUNY_ID": "",
             "SUPERVISOR_NAME": "",
             "WORK_ALLOCATION": {"id":"","label":""},
-            "WORK_PERCENT": "100",
+            "WORK_PERCENT": "0",
             "DUTIES": "",
             "supervisor": [],
             "commitmentEffDate":"",
@@ -484,7 +489,7 @@ function SplitAssignments() {
     }
     const handlePrimaryChange = (e,field) => {
         if (e.target.checked) {
-            // check for other primary; if any then warn.  set others to N on save
+            // check for other primary; if any then warn. Set others to N on save
             const filter = watchFieldArray.filter((p,i)=>editIndex!=i&&p.COMMITMENT_PRIMARY_FLAG=='Y');
             field.onChange('Y');
             setChangePrimary(filter?.length>0);
@@ -497,6 +502,7 @@ function SplitAssignments() {
     useEffect(() => searchFilter&&supervisors.refetch(),[searchFilter]);
     useEffect(() => {
         if (editIndex == undefined) return;
+        //TODO: focus field?
         //document.querySelector(`[name="${blockName}.${editIndex}.type.id"]`).focus();
     },[editIndex]);
     useEffect(()=>{
@@ -599,23 +605,21 @@ function SplitAssignments() {
                             </InputGroup>
                         </Col>
                         <Col xs="auto" className="mb-2">
-                            <Form.Label>Title*:</Form.Label>
+                            <Form.Label>Title:</Form.Label>
                             <Controller
                                 name={`${blockName}.${index}.CAMPUS_TITLE`}
                                 defaultValue=""
                                 control={control}
-                                rules={{required:{value:true,message:'Title is Required'}}}
                                 render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={get(errors,field.name,false)}/>}
                             />
                             <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.CAMPUS_TITLE.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col xs="auto" className="mb-2">
-                            <Form.Label>Department*:</Form.Label>
+                            <Form.Label>Department:</Form.Label>
                             <Controller
                                 name={`${blockName}.${index}.REPORTING_DEPARTMENT_CODE.id`}
                                 defaultValue=""
                                 control={control}
-                                rules={{required:{value:true,message:'Department is Required'}}}
                                 render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={get(errors,field.name,false)}/>}
                             />
                             <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.REPORTING_DEPARTMENT_CODE.id.message`,'')}</Form.Control.Feedback>
@@ -666,7 +670,7 @@ function SplitAssignments() {
                                 control={control}
                                 rules={{
                                     required:{value:true,message:'Work % is Required'},
-                                    min:{value:1,message:'Work % cannot be less than 1%'},
+                                    min:{value:0,message:'Work % cannot be less than 0%'},
                                     max:{value:100,message:'Work % cannot be greater than 100%'}
                                 }}
                                 render={({field}) => <Form.Control {...field} type="number" min={1} max={100} disabled={editIndex!=index} isInvalid={(editIndex==undefined&&totalPct!=100)||get(errors,field.name,false)}/>}

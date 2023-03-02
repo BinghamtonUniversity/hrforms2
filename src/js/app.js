@@ -17,6 +17,7 @@ const Request = lazy(()=>import("./pages/request"));
 const RequestList = lazy(()=>import("./pages/request/list"));
 const RequestJournal = lazy(()=>import("./pages/request/journal"));
 const HRForm = lazy(()=>import("./pages/form"));
+const HRFormList = lazy(()=>import("./pages/form/list"));
 const AdminPages = lazy(()=>import("./pages/admin"));
 const Testing = lazy(()=>import("./pages/testing"));
 
@@ -129,6 +130,7 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
                         <Switch>
                             <Route exact path="/" component={Home}/>
                             <Route exact path="/testing" component={Testing}/>
+
                             <Route exact path="/request/journal" component={RequestJournal}/>
                             <Route path="/request/journal/:id" component={RequestJournal}/>
                             <Route exact path="/request/list" component={RequestList}/>
@@ -136,11 +138,17 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
                             <Route path="/request/:id/:sunyid/:ts" component={Request}/>
                             <Route path="/request/:id" component={Request}/>
                             <Route path="/request" component={Request}/>
+
+                            <Route exact path="/form/list" component={HRFormList}/>
+                            <Route path="/form/list/:part" component={HRFormList}/>
+                            <Route path="/form/:id/:sunyid/:ts" component={HRForm}/>
                             <Route path="/form/:id" component={HRForm}/>
                             <Route path="/form" component={HRForm}/>
+
                             <Route path="/admin/:page/:subpage/:pagetab" component={AdminPages}/>
                             <Route path="/admin/:page/:subpage" component={AdminPages}/>
                             <Route path="/admin/:page" component={AdminPages}/>
+
                             <Route path="*"><NotFound/></Route>
                         </Switch>
                     </ErrorBoundary>
@@ -163,7 +171,7 @@ function AppErrorFallback({error}) {
     );
 }
 
-function ErrorFallback({error}) {
+export function ErrorFallback({error}) {
     //TODO: allow for reset
     return (
         <Alert variant="danger">

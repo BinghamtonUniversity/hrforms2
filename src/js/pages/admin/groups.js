@@ -118,8 +118,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
         if (startsWith(filterText,'name:')) {
             return gName.includes(filterText.split(':')[1].toLowerCase());
         }
-        const filterFields = `${row.GROUP_ID} ${gName} ${row.START_DATE} ${row.END_DATE}`;
-        return filterFields.includes(filterText.toLowerCase());
+        return Object.values(row).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
     });
 
     const columns = useMemo(() => [

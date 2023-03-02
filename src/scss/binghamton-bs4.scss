@@ -66,6 +66,18 @@ $box-shadow-lg: 0 1rem 3rem rgba($black, .40);
 .rdt_Table .rdt_TableBody .rdt_TableRow {
   font-size: 0.9rem;
 }
+/* Compact/Smaller DataTable */
+.compact .rdt_Table .rdt_TableBody .rdt_TableRow {
+  font-size: 0.8rem;
+}
+.compact .rdt_Table .rdt_TableHead .rdt_TableCol,
+.compact .rdt_Table .rdt_TableBody .rdt_TableCell {
+  padding: 0 5px;
+}
+.compact .rdt_Table .rdt_TableHeadRow .rdt_TableCol {
+  font-size: 0.9rem
+}
+
 
 /* Override DatePicker to be block */
 .react-datepicker-wrapper {

@@ -244,6 +244,8 @@ class Requests extends HRForms2 {
         }
         return;
 
+        //**** OLD CODE???
+
         //TODO: need to handle out of range on groups
         if ($this->POSTvars['action'] == 'submit') {
             $journal_array = array("S");

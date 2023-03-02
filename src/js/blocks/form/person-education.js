@@ -6,7 +6,7 @@ import useFormQueries from "../../queries/forms";
 import { get, cloneDeep } from "lodash";
 import { AppButton, CountrySelector, DateFormat, StateSelector } from "../components";
 import DatePicker from "react-datepicker";
-import { addDays } from "date-fns";
+import { addDays, addMonths, subMonths } from "date-fns";
 import { Typeahead } from "react-bootstrap-typeahead";
 import { Icon } from "@iconify/react";
 
@@ -42,8 +42,8 @@ export default function PersonEducation() {
             "DEGREE_YEAR": "",
             "DEGREE_MONTH": "",
             "PENDING_DEGREE_FLAG": "N",
-            "DEGREE_TYPE": "",
-            "COUNTRY_CODE": "",
+            "DEGREE_TYPE": [],
+            "COUNTRY_CODE": {id:"",label:""},
             "INSTITUTION_STATE": "",
             "INSTITUTION_CITY": "",
             "INSTITUTION_ID": "",
@@ -52,7 +52,6 @@ export default function PersonEducation() {
             "TERMINAL_DEGREE_FLAG": "N",
             "DEGREE_VERIFIED": "N",
             "CREATE_DATE": "",
-            "degreeType":[],
             "specialization":"",
             "institutionName":[],
             "institutionCity":[],
@@ -94,6 +93,11 @@ export default function PersonEducation() {
                         }
                     });
                 }
+                setValue(`${name}.${index}.DEGREE_YEAR`,watchEducation[index].awardDate.getFullYear());
+                setValue(`${name}.${index}.DEGREE_MONTH`,`${watchEducation[index].awardDate.getMonth()+1}`.padStart(2,'0'));
+                setValue(`${name}.${index}.INSTITUTION_ID`,watchEducation[index].institutionName[0]?.id);
+                setValue(`${name}.${index}.INSTITUTION`,watchEducation[index].institutionName[0]?.label);
+                setValue(`${name}.${index}.INSTITUTION_CITY`,watchEducation[index].institutionCity[0]);
                 setEditIndex(undefined);
                 setEditValues(undefined);
                 setIsNew(false);
@@ -107,9 +111,26 @@ export default function PersonEducation() {
         setIsNew(false);
     }
 
-    const handlePendingChange = (e,field,index) => {
+    const handleSelectChange = (e,field) => {
         field.onChange(e);
-        setValue(`${name}.${index}.awardDate`,"");
+        const nameArray = field.name.split('.');
+        let fieldName = nameArray.pop();
+        if (fieldName == 'id') fieldName = nameArray.pop();
+        const nameBase = nameArray.join('.');
+        switch (fieldName) {
+            case "COUNTRY_CODE":
+                setValue(`${nameBase}.COUNTRY_CODE.label`,e.target.selectedOptions?.item(0)?.label);
+                setValue(`${nameBase}.INSTITUTION_STATE`,"");
+            case "INSTITUTION_STATE":
+                setValue(`${nameBase}.institutionCity`,[]);
+                setValue(`${nameBase}.institutionName`,[]);
+        }
+    }
+
+    const handlePendingChange = field => {
+        const nameBase = field.name.split('.').slice(0,-1).join('.');
+        setValue(`${nameBase}.awardDate`,(field.value=='Y')?null:addDays(new Date(),1));
+        setValue(`${nameBase}.PENDING_DEGREE_FLAG`,(field.value=='Y')?"N":"Y");
     }
     const checkYeNoOptions = useCallback(key => {
         if (!yesNoOptions.find(yn=>yn.id==key)?.unique) return false;
@@ -117,6 +138,18 @@ export default function PersonEducation() {
         if (watchEducation.map(e=>e[key]).filter(v=>v=='Y').length>1) return true;
         return false;
     },[watchEducation,yesNoOptions]);
+
+    const getMinMaxDate = useCallback((index,type) => {
+        let min = null;
+        let max = null;
+        if (watchEducation[index].PENDING_DEGREE_FLAG == 'Y') {
+            min = new Date();
+        } else {
+            max = new Date();
+        }
+        if (type == 'min') return min;
+        if (type == 'max') return max;
+    },[watchEducation]);
 
     return (
         <article className="mt-3">
@@ -137,11 +170,13 @@ export default function PersonEducation() {
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
                                         name={field.name}
+                                        dateFormat="MMM yyyy"
+                                        showMonthYearPicker
                                         closeOnScroll={true}
+                                        minDate={getMinMaxDate(index,'min')}
+                                        maxDate={getMinMaxDate(index,'max')}
                                         selected={field.value}
                                         onChange={field.onChange}
-                                        minDate={get(watchEducation,`${index}.PENDING_DEGREE_FLAG`=='Y',false)&&addDays(new Date(),1)}
-                                        maxDate={!get(watchEducation,`${index}.PENDING_DEGREE_FLAG`=='Y',false)&&new Date()}
                                         disabled={editIndex!=index}
                                         isInvalid={get(errors,field.name,false)}
                                         autoComplete="off"
@@ -160,7 +195,7 @@ export default function PersonEducation() {
                                 name={`${name}.${index}.PENDING_DEGREE_FLAG`}
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <Form.Check {...field} label="Pending Degree" onChange={e=>handlePendingChange(e,field,index)} checked={field.value=='Y'} disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Check {...field} label="Pending Degree" onChange={()=>handlePendingChange(field)} checked={field.value=='Y'} disabled={editIndex!=index}/>}
                             />
                         </Col>
                     </Form.Group>
@@ -171,7 +206,7 @@ export default function PersonEducation() {
                             {degreeTypes.isError && <p>Error Loading</p>}
                             {degreeTypes.data &&
                                 <Controller
-                                    name={`${name}.${index}.degreeType`}
+                                    name={`${name}.${index}.DEGREE_TYPE`}
                                     defaultValue=""
                                     control={control}
                                     rules={{required:{value:true,message:'Degree Type Required'}}}
@@ -206,16 +241,16 @@ export default function PersonEducation() {
                         <Form.Label column md={3}>University/College Country*:</Form.Label>
                         <Col xs="auto">
                             <Controller
-                                name={`${name}.${index}.COUNTRY_CODE`}
+                                name={`${name}.${index}.COUNTRY_CODE.id`}
                                 defaultValue=""
                                 control={control}
                                 rules={{required:{value:true,message:'University/College Country Required'}}}
-                                render={({field}) => <CountrySelector field={field} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}/>}
+                                render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}/>}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].COUNTRY_CODE.message`,'')}</Form.Control.Feedback>
+                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].COUNTRY_CODE.id.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
-                    {watchEducation[index]?.COUNTRY_CODE=='USA' &&
+                    {watchEducation[index]?.COUNTRY_CODE.id=='USA' &&
                         <>
                             <Form.Group as={Row} className="mb-1">
                                 <Form.Label column md={3}>University/College State*:</Form.Label>
@@ -225,7 +260,7 @@ export default function PersonEducation() {
                                         defaultValue=""
                                         control={control}
                                         rules={{required:{value:true,message:'University/College State Required'}}}
-                                        render={({field}) => <StateSelector field={field} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}/>}
+                                        render={({field}) => <StateSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}/>}
                                     />
                                     <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].INSTITUTION_STATE.message`,'')}</Form.Control.Feedback>
                                 </Col>
@@ -234,7 +269,7 @@ export default function PersonEducation() {
                             {watchEducation[index]?.institutionCity.length!=0 && <UniversityNameComponent index={index} editIndex={editIndex}/>}
                         </>
                     }
-                    {(!!watchEducation[index]?.country&&watchEducation[index]?.COUNTRY_CODE!='USA') && <UniversityNameComponent index={index} editIndex={editIndex}/>}
+                    {(watchEducation[index]?.COUNTRY_CODE.id&&watchEducation[index]?.COUNTRY_CODE.id!='USA') && <UniversityNameComponent index={index} editIndex={editIndex}/>}
                     {yesNoOptions.map(yn => (
                         <Form.Group key={yn.id} as={Row} className="mb-1">
                             <Form.Label column md={3}>{yn.title}:</Form.Label>
@@ -286,15 +321,23 @@ export default function PersonEducation() {
 }
 
 function UniversityCityComponent({editIndex,index}) {
-    const { control, formState: { errors } } = useFormContext();
+    const { control, setValue, formState: { errors } } = useFormContext();
     const watchState = useWatch({name:`${name}.${index}.INSTITUTION_STATE`,control});
 
     const { getEducationInstitutions } = useFormQueries();
     const city = getEducationInstitutions({country:'USA',state:watchState,options:{
+        enabled:(!!watchState),
         select: d => {
             return [...new Set(d.map(i=>i.INSTITUTION_CITY).sort())];
         }
     }});
+
+    const handleChange = (e,field) => {
+        field.onChange(e);
+        const nameBase = field.name.split('.').slice(0,-1).join('.');
+        setValue(`${nameBase}.institutionName`,[]);
+    }
+
     return (
         <Form.Group as={Row} className="mb-1">
             <Form.Label column md={3}>University/College City*:</Form.Label>
@@ -315,6 +358,7 @@ function UniversityCityComponent({editIndex,index}) {
                             minLength={2} 
                             allowNew={true} 
                             selected={field.value}
+                            onChange={(e)=>handleChange(e,field)}
                             disabled={editIndex!=index}
                             isInvalid={typeof get(errors,field.name,false) == 'object'}
                         />}
@@ -329,12 +373,12 @@ function UniversityCityComponent({editIndex,index}) {
 function UniversityNameComponent({editIndex,index}) {
     const { control, formState: { errors } } = useFormContext();
     const watchFields = useWatch({name:[
-        `${name}.${index}.COUNTRY_CODE`,
+        `${name}.${index}.COUNTRY_CODE.id`,
         `${name}.${index}.INSTITUTION_STATE`
     ],control});
 
     const { getEducationInstitutions } = useFormQueries();
-    const institutionName = getEducationInstitutions({country:watchFields[0],state:watchFields[1],options:{
+    const institutionName = getEducationInstitutions({country:watchFields[0],state:(watchFields[0]=='USA')?watchFields[1]:"",options:{
         select: d => {
             const instMap = new Map(); //used to ensure there are no duplicate, which will break typeahead
             d.forEach(i=>instMap.set(i.ID,i.INSTITUTION));

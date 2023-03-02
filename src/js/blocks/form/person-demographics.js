@@ -1,6 +1,7 @@
 import React from "react";
 import { useAppQueries } from "../../queries";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
+import { HRFormContext } from "../../pages/form";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
@@ -9,7 +10,7 @@ import { Loading, CountrySelector } from "../components";
 const name = 'person.demographics';
 
 export default function PersonDemographics() {
-    const { control, setValue, showInTest } = useFormContext();
+    const { control, setValue } = useFormContext();
 
     const watchCitizen = useWatch({name:`${name}.US_CITIZEN_INDICATOR`});
     const watchVeteran = useWatch({name:`${name}.VETERAN_INDICATOR`});
@@ -24,93 +25,97 @@ export default function PersonDemographics() {
     }
 
     return (
-        <article className="mt-3">
-            <Row as="header">
-                <Col as="h3">Demographics</Col>
-            </Row>
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>Date of Birth:</Form.Label>
-                <Col xs="auto">
-                    <InputGroup>
-                        <Controller
-                            name={`${name}.birthDate`}
-                            control={control}
-                            render={({field}) => <Form.Control
-                                as={DatePicker}
-                                name={field.name}
-                                selected={field.value}
-                                closeOnScroll={true}
-                                onChange={field.onChange}
-                                autoComplete="off"
-                            />}
-                        />
-                        <InputGroup.Append>
-                            <InputGroup.Text>
-                                <Icon icon="mdi:calendar-blank"/>
-                            </InputGroup.Text>
-                        </InputGroup.Append>
-                    </InputGroup>
-                </Col>
-            </Form.Group>
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>Gender:</Form.Label>
-                <Col xs="auto">
-                    {gender.isLoading && <Loading>Loading Data</Loading>}
-                    {gender.isError && <Loading isError>Failed to Load</Loading>}
-                    {gender.data &&
-                        <Controller
-                            name={`${name}.GENDER.id`}
-                            control={control}
-                            render={({field})=>(
-                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
-                                    <option></option>
-                                    {gender.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
-                                </Form.Control>
-                            )}
-                        />
-                    }
-                </Col>
-            </Form.Group>
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>US Citizen:</Form.Label>
-                <Col xs="auto" className="pt-2">
-                    <Controller
-                        name={`${name}.US_CITIZEN_INDICATOR`}
-                        defaultValue="Yes"
-                        control={control}
-                        render={({field}) => (
-                            <>
-                                <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'}/>
-                                <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'}/>
-                            </>
-                        )}
-                    />
-                </Col>
-            </Form.Group>
+        <HRFormContext.Consumer>
+            {({showInTest}) => (
+                <article className="mt-3">
+                    <Row as="header">
+                        <Col as="h3">Demographics</Col>
+                    </Row>
+                    <Form.Group as={Row}>
+                        <Form.Label column md={2}>Date of Birth:</Form.Label>
+                        <Col xs="auto">
+                            <InputGroup>
+                                <Controller
+                                    name={`${name}.birthDate`}
+                                    control={control}
+                                    render={({field}) => <Form.Control
+                                        as={DatePicker}
+                                        name={field.name}
+                                        selected={field.value}
+                                        closeOnScroll={true}
+                                        onChange={field.onChange}
+                                        autoComplete="off"
+                                    />}
+                                />
+                                <InputGroup.Append>
+                                    <InputGroup.Text>
+                                        <Icon icon="mdi:calendar-blank"/>
+                                    </InputGroup.Text>
+                                </InputGroup.Append>
+                            </InputGroup>
+                        </Col>
+                    </Form.Group>
+                    <Form.Group as={Row}>
+                        <Form.Label column md={2}>Gender:</Form.Label>
+                        <Col xs="auto">
+                            {gender.isLoading && <Loading>Loading Data</Loading>}
+                            {gender.isError && <Loading isError>Failed to Load</Loading>}
+                            {gender.data &&
+                                <Controller
+                                    name={`${name}.GENDER.id`}
+                                    control={control}
+                                    render={({field})=>(
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
+                                            <option></option>
+                                            {gender.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
+                                        </Form.Control>
+                                    )}
+                                />
+                            }
+                        </Col>
+                    </Form.Group>
+                    <Form.Group as={Row}>
+                        <Form.Label column md={2}>US Citizen:</Form.Label>
+                        <Col xs="auto" className="pt-2">
+                            <Controller
+                                name={`${name}.US_CITIZEN_INDICATOR`}
+                                defaultValue="Yes"
+                                control={control}
+                                render={({field}) => (
+                                    <>
+                                        <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'}/>
+                                        <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'}/>
+                                    </>
+                                )}
+                            />
+                        </Col>
+                    </Form.Group>
 
-            {(watchCitizen!='Y'||showInTest) && <PersonDemographicsNonUSCitizen handleSelectChange={handleSelectChange} watchCitizen={watchCitizen}/>}
-            
-            <PersonDemographicsMilitaryStatus/>
+                    {(watchCitizen!='Y'||showInTest) && <PersonDemographicsNonUSCitizen handleSelectChange={handleSelectChange} watchCitizen={watchCitizen}/>}
+                    
+                    <PersonDemographicsMilitaryStatus/>
 
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>Veteran:</Form.Label>
-                <Col xs="auto" className="pt-2">
-                    <Controller
-                        name={`${name}.VETERAN_INDICATOR`}
-                        defaultValue="Yes"
-                        control={control}
-                        render={({field}) => (
-                            <>
-                                <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'}/>
-                                <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'}/>
-                            </>
-                        )}
-                    />
-                </Col>
-            </Form.Group>
+                    <Form.Group as={Row}>
+                        <Form.Label column md={2}>Veteran:</Form.Label>
+                        <Col xs="auto" className="pt-2">
+                            <Controller
+                                name={`${name}.VETERAN_INDICATOR`}
+                                defaultValue="Yes"
+                                control={control}
+                                render={({field}) => (
+                                    <>
+                                        <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'}/>
+                                        <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'}/>
+                                    </>
+                                )}
+                            />
+                        </Col>
+                    </Form.Group>
 
-            {(watchVeteran=='Y'||showInTest) && <PersonDemographicsVeteranDetails watchVeteran={watchVeteran}/>}
-        </article>
+                    {(watchVeteran=='Y'||showInTest) && <PersonDemographicsVeteranDetails watchVeteran={watchVeteran}/>}
+                </article>
+            )}
+        </HRFormContext.Consumer>
     );
 }
 
@@ -151,7 +156,7 @@ function PersonDemographicsMilitaryStatus() {
 }
 
 function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
-    const { control, showInTest, testHighlight } = useFormContext();
+    const { control } = useFormContext();
 
     const watchCitizenType = useWatch({name:`${name}.NON_CITIZEN_TYPE`});
 
@@ -160,82 +165,86 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
     const visatype = getListData('visaTypes');
 
     return (
-        <>
-            <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
-                <Form.Label column md={2}>Non-US Citizen Type:</Form.Label>
-                <Col xs="auto">
-                    <Controller
-                        name={`${name}.NON_CITIZEN_TYPE.id`}
-                        control={control}
-                        render={({field})=>(
-                            <>
-                                {citizentype.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
-                                {citizentype.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
-                                {citizentype.data && 
-                                    <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
-                                        <option></option>
-                                        {citizentype.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
-                                    </Form.Control>
-                                }
-                            </>
-                        )}
-                    />
-                </Col>
-            </Form.Group>
-            {(watchCitizenType=='OT'||showInTest) && 
-                <Form.Group as={Row} className={testHighlight(watchCitizen!='Y'&&watchCitizenType=='OT')}>
-                    <Form.Label column md={2}>Employment Authorization Card Only:</Form.Label>
-                    <Col xs="auto" className="pt-2">
-                        <Controller
-                            name={`${name}.EMP_AUTHORIZE_CARD_INDICATOR`}
-                            control={control}
-                            render={({field}) => (
+        <HRFormContext.Consumer>
+            {({showInTest,testHighlight}) => (
+                <>
+                    <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
+                        <Form.Label column md={2}>Non-US Citizen Type:</Form.Label>
+                        <Col xs="auto">
+                            <Controller
+                                name={`${name}.NON_CITIZEN_TYPE.id`}
+                                control={control}
+                                render={({field})=>(
+                                    <>
+                                        {citizentype.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
+                                        {citizentype.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
+                                        {citizentype.data && 
+                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
+                                                <option></option>
+                                                {citizentype.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
+                                            </Form.Control>
+                                        }
+                                    </>
+                                )}
+                            />
+                        </Col>
+                    </Form.Group>
+                    {(watchCitizenType?.id=='OT'||showInTest) && 
+                        <Form.Group as={Row} className={testHighlight(watchCitizen!='Y'&&watchCitizenType?.id=='OT')}>
+                            <Form.Label column md={2}>Employment Authorization Card Only:</Form.Label>
+                            <Col xs="auto" className="pt-2">
+                                <Controller
+                                    name={`${name}.EMP_AUTHORIZE_CARD_INDICATOR`}
+                                    control={control}
+                                    render={({field}) => (
+                                        <>
+                                            <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'}/>
+                                            <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'}/>
+                                        </>
+                                    )}
+                                />
+                            </Col>
+                        </Form.Group>
+                    }
+                    <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
+                        <Form.Label column md={2}>Country of Citizenship:</Form.Label>
+                        <Col xs="auto">
+                            <Controller
+                                name={`${name}.CITIZENSHIP_COUNTRY_CODE.id`}
+                                defaultValue=""
+                                control={control}
+                                render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)}/>}
+                            />
+                        </Col>
+                    </Form.Group>
+                    <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
+                        <Form.Label column md={2}>Visa Type:</Form.Label>
+                        <Col xs="auto">
+                            <Controller
+                                name={`${name}.VISA_CODE.id`}
+                                control={control}
+                                render={({field})=>(
                                 <>
-                                    <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'}/>
-                                    <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'}/>
-                                </>
-                            )}
-                        />
-                    </Col>
-                </Form.Group>
-            }
-            <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
-                <Form.Label column md={2}>Country of Citizenship:</Form.Label>
-                <Col xs="auto">
-                    <Controller
-                        name={`${name}.CITIZENSHIP_COUNTRY_CODE.id`}
-                        defaultValue=""
-                        control={control}
-                        render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)}/>}
-                    />
-                </Col>
-            </Form.Group>
-            <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
-                <Form.Label column md={2}>Visa Type:</Form.Label>
-                <Col xs="auto">
-                    <Controller
-                        name={`${name}.VISA_CODE.id`}
-                        control={control}
-                        render={({field})=>(
-                        <>
-                            {visatype.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
-                            {visatype.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
-                            {visatype.data &&
-                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
-                                    <option></option>
-                                    {visatype.data.map(k=><option key={k[0]} value={k[0]}>{k[0]} - {k[1]}</option>)}
-                                </Form.Control>
-                            }
-                        </>)}
-                    />
-                </Col>
-            </Form.Group>
-        </>
+                                    {visatype.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
+                                    {visatype.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
+                                    {visatype.data &&
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
+                                            <option></option>
+                                            {visatype.data.map(k=><option key={k[0]} value={k[0]}>{k[0]} - {k[1]}</option>)}
+                                        </Form.Control>
+                                    }
+                                </>)}
+                            />
+                        </Col>
+                    </Form.Group>
+                </>
+            )}
+        </HRFormContext.Consumer>
     );
 }
 
 function PersonDemographicsVeteranDetails({watchVeteran}) {
-    const { control, testHighlight } = useFormContext();
+    const { control } = useFormContext();
 
     const { getListData } = useAppQueries();
     const vetstatus = getListData('protectedVeteranStatus');
@@ -253,44 +262,48 @@ function PersonDemographicsVeteranDetails({watchVeteran}) {
         }
     }
     return (
-        <>
-            <Form.Group as={Row} className={testHighlight(watchVeteran=='Y')}>
-                <Form.Label column md={2}>Protected Veteran Status:</Form.Label>
-                <Col xs="auto" className="pt-2">
-                    {vetstatus.isLoading && <Loading>Loading Data</Loading>}
-                    {vetstatus.isError && <Loading isError>Failed to Load</Loading>}
-                    {vetstatus.data && 
-                    <Controller
-                        name={`${name}.protectedVetStatus`}
-                        control={control}
-                        render={({field}) => vetstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.findIndex(v=>v[0]==s[0])!=-1} onChange={e=>handleChange(e,field)}/>)}
-                    />}
-                </Col>
-            </Form.Group>
-            <Form.Group as={Row} className={testHighlight(watchVeteran=='Y')}>
-                <Form.Label column md={2}>Military Separation Date:</Form.Label>
-                <Col xs="auto">
-                    <InputGroup>
-                        <Controller
-                            name={`${name}.militarySepDate`}
-                            control={control}
-                            render={({field}) => <Form.Control
-                                as={DatePicker}
-                                name={field.name}
-                                selected={field.value}
-                                closeOnScroll={true}
-                                onChange={field.onChange}
-                                autoComplete="off"
+        <HRFormContext.Consumer>
+            {({testHighlight}) => (
+                <>
+                    <Form.Group as={Row} className={testHighlight(watchVeteran=='Y')}>
+                        <Form.Label column md={2}>Protected Veteran Status:</Form.Label>
+                        <Col xs="auto" className="pt-2">
+                            {vetstatus.isLoading && <Loading>Loading Data</Loading>}
+                            {vetstatus.isError && <Loading isError>Failed to Load</Loading>}
+                            {vetstatus.data && 
+                            <Controller
+                                name={`${name}.protectedVetStatus`}
+                                control={control}
+                                render={({field}) => vetstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.findIndex(v=>v[0]==s[0])!=-1} onChange={e=>handleChange(e,field)}/>)}
                             />}
-                        />
-                        <InputGroup.Append>
-                            <InputGroup.Text>
-                                <Icon icon="mdi:calendar-blank"/>
-                            </InputGroup.Text>
-                        </InputGroup.Append>
-                    </InputGroup>
-                </Col>
-            </Form.Group>
-        </>
+                        </Col>
+                    </Form.Group>
+                    <Form.Group as={Row} className={testHighlight(watchVeteran=='Y')}>
+                        <Form.Label column md={2}>Military Separation Date:</Form.Label>
+                        <Col xs="auto">
+                            <InputGroup>
+                                <Controller
+                                    name={`${name}.militarySepDate`}
+                                    control={control}
+                                    render={({field}) => <Form.Control
+                                        as={DatePicker}
+                                        name={field.name}
+                                        selected={field.value}
+                                        closeOnScroll={true}
+                                        onChange={field.onChange}
+                                        autoComplete="off"
+                                    />}
+                                />
+                                <InputGroup.Append>
+                                    <InputGroup.Text>
+                                        <Icon icon="mdi:calendar-blank"/>
+                                    </InputGroup.Text>
+                                </InputGroup.Append>
+                            </InputGroup>
+                        </Col>
+                    </Form.Group>
+                </>
+            )}
+        </HRFormContext.Consumer>
     );
 }

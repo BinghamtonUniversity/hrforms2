@@ -480,8 +480,8 @@ function PersonDirectoryPhone() {
 
 function PersonDirectoryEmail() {
     const name = 'person.directory.email';
-    const { control, getValues, setValue, trigger, clearErrors, formState: { errors } } = useFormContext();
-    const { fields, append, replace, remove,  update } = useFieldArray({
+    const { control, getValues, trigger, clearErrors, formState: { errors } } = useFormContext();
+    const { fields, append, remove,  update } = useFieldArray({
         control:control,
         name:name
     });
