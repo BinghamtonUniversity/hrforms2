@@ -10,6 +10,7 @@ const AdminLists = lazy(()=>import("./admin/lists"));
 const AdminSettings = lazy(()=>import("./admin/settings"));
 const AdminRequestHierarchy = lazy(()=>import("./admin/hierarchy/request"));
 const AdminFormTransactions = lazy(()=>import("./admin/transactions"));
+const AdminFormHierarchy = lazy(()=>import("./admin/hierarchy/form"));
 
 export default function AdminPages() {
     const {page,subpage} = useParams();
@@ -30,6 +31,7 @@ export default function AdminPages() {
         case "hierarchy":
             switch(subpage) {
                 case "request": return <AdminRequestHierarchy/>;
+                case "form": return <AdminFormHierarchy/>;
                 default: return <NotFound/>;
             }
         case "transactions": return <AdminFormTransactions/>;

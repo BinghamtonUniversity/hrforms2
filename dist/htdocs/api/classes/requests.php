@@ -70,6 +70,16 @@ class Requests extends HRForms2 {
 			$this->returnData = json_decode($this->_arr['DATA']);
 	        if ($this->retJSON) $this->toJSON($this->returnData);
         } else {
+            // Validation: Only submitter and group assigned to should view request
+            $usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
+            $journal = (new journal(array('request',$this->req[0]),false))->returnData;
+            $submitter = array_shift($journal);
+            $last_journal = (count($journal) == 0)?$submitter:array_pop($journal);
+            unset($last_journal['COMMENTS']); // We don't need commments
+            if (!(in_array($last_journal['GROUP_TO'],array_column($usergroups,'GROUP_ID'))) && 
+                !($submitter['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID'])) {
+                    $this->raiseError(403);
+            }
             $qry = "select REQUEST_DATA from HRFORMS2_REQUESTS where REQUEST_ID = :request_id";
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":request_id",$this->req[0]);
@@ -79,6 +89,8 @@ class Requests extends HRForms2 {
             $this->_arr['REQUEST_DATA'] = (is_object($row['REQUEST_DATA'])) ? $row['REQUEST_DATA']->load() : "";
             oci_free_statement($stmt);
 			$this->returnData = json_decode($this->_arr['REQUEST_DATA']);
+            //$this->returnData['lastJournal'] = $last_journal;
+            $this->returnData->lastJournal = $last_journal;
 	        if ($this->retJSON) $this->toJSON($this->returnData);		    
         }
 	}
@@ -122,25 +134,25 @@ class Requests extends HRForms2 {
                 $created_by = oci_new_descriptor($this->db, OCI_D_LOB);
                 $request_data = oci_new_descriptor($this->db, OCI_D_LOB);
                 oci_bind_by_name($stmt,":request_id", $request_id,-1,SQLT_INT);
-                oci_bind_by_name($stmt, ":created_by", $created_by, -1, OCI_B_CLOB);
-                oci_bind_by_name($stmt, ":request_data", $request_data, -1, OCI_B_CLOB);
+                oci_bind_by_name($stmt,":created_by", $created_by, -1, OCI_B_CLOB);
+                oci_bind_by_name($stmt,":request_data", $request_data, -1, OCI_B_CLOB);
                 $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
                 if (!$r) $this->raiseError();
                 $created_by->save(json_encode($user));
                 $this->POSTvars['draftReqId'] = $this->POSTvars['reqId'];
                 $this->POSTvars['reqId'] = $request_id;
-                unset($this->POSTvars['comment']);
                 $request_data->save(json_encode($this->POSTvars));
                 oci_commit($this->db);
     
+                // Handle skips
                 if (!$this->match && $this->conditions) {
                     array_unshift($journal_array,"X");
                 }
-    
-                $_SERVER['REQUEST_METHOD'] = 'POST';
-    
+
+                // Post to Journal
+                $_SERVER['REQUEST_METHOD'] = 'POST';    
                 foreach ($journal_array as $i=>$j) {
-                    $request_data = array(
+                    $journal_data = array(
                         'request_id'=>$request_id,
                         'hierarchy_id'=>$hierarchy['HIERARCHY_ID'],
                         'workflow_id'=>$hierarchy['WORKFLOW_ID'],
@@ -150,8 +162,8 @@ class Requests extends HRForms2 {
                         'group_to'=>$groups_array[$i],
                         'comment'=>($j=='X')?'':$comment
                     );
-                    $this->POSTvars['request_data'] = $request_data;
-                    $journal = (new journal(array($request_id,$j,$request_data),false))->returnData;
+                    $this->POSTvars['journal_data'] = $journal_data;
+                    $journal = (new journal(array('request',$request_id,$j,$journal_data),false))->returnData;
                 }
     
                 // delete from hrforms2_requests_drafts (call delete)
@@ -159,14 +171,14 @@ class Requests extends HRForms2 {
                 $del_draft = (new requests($this->req,false));
     
                 //TODO: should the return also have the skipped one?
-                $this->toJSON($request_data);
+                $this->toJSON($journal_data);
                 break;
 
             case "approve":
                 $journal_array = array();
 
                 $_SERVER['REQUEST_METHOD'] = 'GET';
-                $journal = (new journal(array($this->POSTvars['reqId']),false))->returnData;
+                $journal = (new journal(array('request',$this->POSTvars['reqId']),false))->returnData;
                 $last_journal = array_pop($journal);
 
                 $workflow = (new workflow(array('request',$last_journal['WORKFLOW_ID']),false))->returnData[0];
@@ -199,13 +211,14 @@ class Requests extends HRForms2 {
                         'group_to'=>$groups_array[$i],
                         'comment'=>($j=='X')?'':$this->POSTvars['comment']
                     );
-                    $journal = (new journal(array($this->POSTvars['reqId'],$j,$request_data),false))->returnData;
+                    $journal = (new journal(array('request',$this->POSTvars['reqId'],$j,$request_data),false))->returnData;
                     if ($j=='Z') $archive = (new archive(array('request',$this->POSTvars['reqId']),false))->returnData;
                 }
                 $this->toJSON($request_data);
                 break;
 
             case "reject":
+                //TODO:
                 $this->raiseError(400);
                 break;
             
@@ -244,7 +257,7 @@ class Requests extends HRForms2 {
         }
         return;
 
-        //**** OLD CODE???
+        //**** OLD CODE??? SEEMS TO BE
 
         //TODO: need to handle out of range on groups
         if ($this->POSTvars['action'] == 'submit') {
@@ -269,7 +282,7 @@ class Requests extends HRForms2 {
             // Check for skip conditions
             $wf = (new workflow(array('request',$hierarchy['WORKFLOW_ID']),false))->returnData[0];
             $conditions = array_filter($wf['CONDITIONS'],function($c) {return strval($c->seq) == "0";});
-            if (sizeof($conditions) != 0) {
+            if (count($conditions) != 0) {
                 //collect the account numbers
                 $accounts = array_map(function($account) {return $account['account'][0]['id'];},$this->POSTvars['SUNYAccounts']);
                 // for each account test against each condition
@@ -300,8 +313,8 @@ class Requests extends HRForms2 {
             $created_by = oci_new_descriptor($this->db, OCI_D_LOB);
             $request_data = oci_new_descriptor($this->db, OCI_D_LOB);
             oci_bind_by_name($stmt,":request_id", $request_id,-1,SQLT_INT);
-            oci_bind_by_name($stmt, ":created_by", $created_by, -1, OCI_B_CLOB);
-            oci_bind_by_name($stmt, ":request_data", $request_data, -1, OCI_B_CLOB);
+            oci_bind_by_name($stmt,":created_by", $created_by, -1, OCI_B_CLOB);
+            oci_bind_by_name($stmt,":request_data", $request_data, -1, OCI_B_CLOB);
             $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
             if (!$r) $this->raiseError();
             $created_by->save(json_encode($user));
@@ -447,6 +460,7 @@ class Requests extends HRForms2 {
             oci_commit($this->db);
             if ($this->retJSON) $this->done();
         } else {
+            //TODO: update after submit?
             $this->toJSON($this->req);
         }
     }

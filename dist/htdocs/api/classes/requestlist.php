@@ -36,6 +36,7 @@ class RequestList extends HRForms2 {
 				drafts.data.candidateName, 'draft' as status, '0' as sequence, ' ' as groups, ' ' as journal_status
 				from hrforms2_requests_drafts drafts where suny_id = :suny_id";
 				break;
+
 			case "approvals":
 				$qry = "select r.request_id, r.created_by.SUNY_ID, to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,

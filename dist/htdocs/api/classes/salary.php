@@ -27,6 +27,8 @@ class Salary extends HRForms2 {
 		if ($this->method == "GET" && !isset($this->req[0])) $this->raiseError(400);
 	}
 
+/***** DROP AND MOVE TO EMPLOYMENTINFO */
+
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
 		// Get PAY_BASIS first

@@ -24,7 +24,7 @@ class EmploymentInfo extends HRForms2 {
 	 * validate called from init()
 	 */
 	function validate() {
-		if (count($this->req) != 2) $this->raiseError(400);
+		//if (count($this->req) != 2) $this->raiseError(400);
 	}
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -266,6 +266,39 @@ class EmploymentInfo extends HRForms2 {
 
 				$this->_arr = $this->null2Empty($row);
 				oci_free_statement($stmt);
+				break;
+			case "leave": //needs SUNY_ID and EFFECTIVE_DATE
+				$qry = "select pay_basis from buhr.buhr_persemp_mv@banner.cc.binghamton.edu 
+					where hr_person_id = :hr_person_id";
+				$stmt = oci_parse($this->db,$qry);
+				oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
+				$r = oci_execute($stmt);
+				if (!$r) $this->raiseError();
+				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+				oci_free_statement($stmt);
+				if (in_array($row['PAY_BASIS'],array('BIW','FEE','HRY'))) break;
+				//
+				$qry = "select salary_effective_date, calculated_annual
+					from BUHR.BUHR_SALARY_MV@banner.cc.binghamton.edu
+					where data_status <> 'H' and suny_id = :suny_id and salary_effective_date <= to_date(:eff_date,'yyyymmdd')
+					order by salary_effective_date desc";
+				$stmt = oci_parse($this->db,$qry);
+				oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+				oci_bind_by_name($stmt,":eff_date", $this->req[2]);
+				$r = oci_execute($stmt);
+				if (!$r) $this->raiseError();
+				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+				$this->_arr = $this->null2Empty($row);
+				break;
+			case "volunteer"://needs suny_id and effective date
+				$qry = "select 1 from dual";
+				$stmt = oci_parse($this->db,$qry);
+				oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
+				$r = oci_execute($stmt);
+				if (!$r) $this->raiseError();
+				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+				break;
+
 		}
         $this->returnData = $this->_arr;
 		if ($this->retJSON) $this->toJSON($this->returnData);

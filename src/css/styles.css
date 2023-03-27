@@ -93,6 +93,9 @@ pre {
   background: repeating-linear-gradient(-45deg,#ccc,#ccc 5px,#fff 5px,#fff 10px);
 }
 
+/* cursor in badges */
+.badge>* {cursor: default}
+
 /* highlight hidden field; shown in test mode */
 .test-highlight {
   background: repeating-linear-gradient(-45deg,#d4d4d4,#d4d4d4 5px,#efefef 5px,#efefef 10px);
@@ -327,5 +330,5 @@ div.form-check-input-lg input[type="checkbox"].form-check-input {
 
 /* Form Review Tab: Make font smaller */
 #form-review {
-  font-size: 85%
+  font-size: 0.9em
 }

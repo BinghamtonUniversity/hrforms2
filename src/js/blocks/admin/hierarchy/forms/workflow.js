@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, useReducer } from "react";
-import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/request";
-import { useWorkflowQueries } from "../../../../queries/hierarchy";
-import { find, startsWith } from 'lodash';
-import { Row, Col, Modal, Button, Form, Alert, Tabs, Tab, Container, Table } from "react-bootstrap";
+import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/form";
+import { useHierarchyQueries, useWorkflowQueries } from "../../../../queries/hierarchy";
+import { find } from 'lodash';
+import { Row, Col, Modal, Button, Form, FormGroup, Alert, Tabs, Tab, Container, Table } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import DataTable from 'react-data-table-component';
 import { toast } from "react-toastify";
@@ -12,7 +12,6 @@ import { useQueryClient } from "react-query";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { AppButton, errorToast } from "../../../components";
 import { flattenObject } from "../../../../utility";
-
 
 export default function WorkflowTab() {
     const {workflows} = useContext(WorkflowContext);
@@ -27,7 +26,6 @@ export default function WorkflowTab() {
         e.preventDefault();
         searchRef.current.focus();
     });
-
 
     const {isNew} = useContext(WorkflowContext);
     
@@ -64,7 +62,9 @@ export default function WorkflowTab() {
         );
     },[filterText]);
 
-    const filteredRows = useMemo(()=>rows.filter(row=>Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase())),[rows,filterText]);
+    const filteredRows = useMemo(() => {
+        return rows.filter(row=>Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
+    },[rows,filterText]);
 
     const columns = useMemo(() => [
         {name:'Actions',selector:row=>row.WORKFLOW_ID,cell:row=>{
@@ -75,7 +75,7 @@ export default function WorkflowTab() {
             );
         },ignoreRowClick:true},
         {name:'Workflow ID',selector:row=>row.WORKFLOW_ID,sortable:true,sortField:'WORKFLOW_ID'},
-        {name:'Workflow Routing',selector:row=>row.GROUPS,grow:5,style:{flexWrap:'wrap'},cell:row=><HierarchyChain list={row.GROUPS_ARRAY} conditions={row.CONDITIONS}/>},
+        {name:'Workflow Routing',selector:row=>row.GROUPS,grow:5,style:{flexWrap:'wrap'},cell:row=><HierarchyChain list={row.GROUPS_ARRAY} conditions={row.CONDITIONS} sendToGroup={row.SENDTOGROUP}/>},
     ],[workflows]);
 
     const paginationComponentOptions = {
@@ -114,15 +114,21 @@ export default function WorkflowTab() {
 }
 
 function DeleteWorkflow({WORKFLOW_ID,setDeleteWorkflow}) {
+    const [inUse,setInUse] = useState(0);
     const [show,setShow] = useState(true);
     const queryclient = useQueryClient();
-    const {deleteWorkflow} = useWorkflowQueries('request',WORKFLOW_ID);
+    const {getHierarchy} = useHierarchyQueries('form');
+    const hierarchy = getHierarchy({onSuccess:d=>{
+        setInUse(d.filter(h=>h.WORKFLOW_ID==WORKFLOW_ID).length);
+    }});
+    const {deleteWorkflow} = useWorkflowQueries('form',WORKFLOW_ID);
     const del = deleteWorkflow();
     const handleDelete = () => {
+        //check for existing hierarchies
         setShow(false);
         toast.promise(new Promise((resolve,reject) => {
             del.mutateAsync().then(() => {
-                queryclient.refetchQueries(['workflow','request'],{exact:true,throwOnError:true}).then(()=>resolve()).catch(err=>reject(err));
+                queryclient.refetchQueries(['workflow','form'],{exact:true,throwOnError:true}).then(()=>resolve()).catch(err=>reject(err));
             }).catch(err=>reject(err)).finally(()=>{
                 setDeleteWorkflow({});
             });
@@ -135,16 +141,22 @@ function DeleteWorkflow({WORKFLOW_ID,setDeleteWorkflow}) {
     useEffect(()=>setShow(true),[WORKFLOW_ID]);
     return(
         <Modal show={show} onHide={()=>setDeleteWorkflow({})} backdrop="static">
-            <Modal.Header closeButton>
-                <Modal.Title>Delete?</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                <p>Are you sure?</p>
-            </Modal.Body>
-            <Modal.Footer>
-                <Button variant="secondary" onClick={()=>setDeleteWorkflow({})}>Cancel</Button>
-                <Button variant="danger" onClick={handleDelete}>Delete</Button>
-            </Modal.Footer>
+            {hierarchy.isLoading && <Loading>Checking....</Loading>}
+            {hierarchy.isSuccess && 
+                <>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Delete?</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {!!inUse&&<Alert variant="danger"><strong>Warning!</strong> The workflow you are about to delete is in use.  If you continue <em>all</em> hieararchies that use this workflow will also be <strong>deleted</strong>.</Alert>}
+                        <p>Are you sure?</p>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={()=>setDeleteWorkflow({})}>Cancel</Button>
+                        <Button variant="danger" onClick={handleDelete}>Delete</Button>
+                    </Modal.Footer>
+                </>
+            }
         </Modal>
     );
 }
@@ -169,7 +181,7 @@ function AddEditWorkflow(props) {
     const {isNew,setIsNew,workflows} = useContext(WorkflowContext);
 
     const queryclient = useQueryClient();
-    const {putWorkflow,postWorkflow} = useWorkflowQueries('request',props.WORKFLOW_ID);
+    const {putWorkflow,postWorkflow} = useWorkflowQueries('form',props.WORKFLOW_ID);
     const create = postWorkflow();
     const update = putWorkflow();
 
@@ -182,7 +194,8 @@ function AddEditWorkflow(props) {
     const methods = useForm({defaultValues:{
         workflowId:props.WORKFLOW_ID,
         assignedGroups:props.GROUPS_ARRAY||[],
-        conditions:props.CONDITIONS||[]
+        conditions:props.CONDITIONS||[],
+        sendToGroup:props.SENDTOGROUP
     }});
 
     const handleSubmit = data => {
@@ -191,6 +204,7 @@ function AddEditWorkflow(props) {
             setStatus({state:'error',message:'Workflows must have at least one group.'});
             return false;
         }
+        const mutateData = {GROUPS:newGroups,CONDITIONS:data.conditions,SENDTOGROUP:data.sendToGroup};
         if (isNew) {
             const match = find(workflows,{GROUPS:newGroups});
             if (match) {
@@ -198,10 +212,10 @@ function AddEditWorkflow(props) {
                 return false;
             }
             setStatus({state:'saving'});
-            create.mutateAsync({GROUPS:newGroups}).then(d=>{
+            create.mutateAsync(mutateData).then(d=>{
                 Promise.all([
-                    queryclient.refetchQueries(['hierarchy','request']),
-                    queryclient.refetchQueries(['workflow','request'])
+                    queryclient.refetchQueries(['hierarchy','form']),
+                    queryclient.refetchQueries(['workflow','form'])
                 ]).then(() => {
                     setStatus({state:'clear'});
                     toast.success('Workflow created successfully');
@@ -212,10 +226,10 @@ function AddEditWorkflow(props) {
             });
         } else {
             setStatus({state:'saving'});
-            update.mutateAsync({GROUPS:newGroups,CONDITIONS:data.conditions}).then(() => {
+            update.mutateAsync(mutateData).then(() => {
                 Promise.all([
-                    queryclient.refetchQueries(['hierarchy','request']),
-                    queryclient.refetchQueries(['workflow','request'])
+                    queryclient.refetchQueries(['hierarchy','form']),
+                    queryclient.refetchQueries(['workflow','form'])
                 ]).then(() => {
                     setStatus({state:'clear'});
                     toast.success('Workflow updated successfully');
@@ -245,7 +259,7 @@ function AddEditWorkflow(props) {
                     </Modal.Header>
                     <Modal.Body>
                         {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
-                        <Tabs activeKey={activeTab} onSelect={setActiveTab} id="admin-request-workflow-tabs">
+                        <Tabs activeKey={activeTab} onSelect={setActiveTab} id="admin-form-workflow-tabs">
                             {tabs.map(t=>(
                                 <Tab key={t.id} eventKey={t.id} title={t.title}>
                                     <Container className="mt-3" fluid>
@@ -275,12 +289,26 @@ function TabRouter({tab}) {
 
 // <Form.Control plaintext readOnly defaultValue="email@example.com" />
 function WorkflowForm() {
+    const { control } = useFormContext();
+    const handleCheck = (e,field)=>field.onChange((e.target.checked)?"Y":"");
     return (
-        <div className="drag-col-2">
-            <div className="dlh1">Unassigned Groups</div>
-            <div className="dlh2">Assigned Groups</div>
-            <WorkflowGroupList/>
-        </div>
+        <section>
+            <FormGroup as={Row} controlId="sendToUsersGroup">
+                <Form.Label column sm="auto">Send To User's Department Group?</Form.Label>
+                <Col className="mt-1">
+                    <Controller
+                        name="sendToGroup"
+                        control={control}
+                        render={({field}) => <Form.Check {...field} type="checkbox" className="form-check-input-lg" value="Y" onChange={e=>handleCheck(e,field)} checked={field.value=="Y"} aria-label="Send to User's Department Group"/>}
+                    />
+                </Col>
+            </FormGroup>
+            <div className="drag-col-2">
+                <div className="dlh1">Unassigned Groups</div>
+                <div className="dlh2">Assigned Groups</div>
+                <WorkflowGroupList/>
+            </div>
+        </section>
     );
 }
 

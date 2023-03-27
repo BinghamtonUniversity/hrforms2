@@ -1,17 +1,17 @@
 import React, { useState, useEffect, lazy, useCallback, useMemo, useContext } from "react";
-import { ErrorFallback, UserContext } from "../app";
+import { ErrorFallback, UserContext, useUserContext, NotFound } from "../app";
 import { useQueryClient } from "react-query";
 import { useParams, useHistory, Prompt, Redirect, useLocation } from "react-router-dom";
-import { currentUser, NotFound } from "../app";
 import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
 import { Loading, AppButton, DateFormat } from "../blocks/components";
-import { get, has, zip } from "lodash";
+import { get, set, has, zip, cloneDeep } from "lodash";
 import usePersonQueries from "../queries/person";
 import useEmploymentQueries from "../queries/employment";
 import { isValid } from "date-fns";
 import useFormQueries from "../queries/forms";
 import { Icon } from "@iconify/react";
+import { flattenObject } from "../utility";
 
 /* CONTEXT */
 export const HRFormContext = React.createContext();
@@ -70,28 +70,37 @@ export default function HRForm() {
     const [formId,setFormId] = useState('');
     const [isNew,setIsNew] = useState(false);
     const [isDraft,setIsDraft] = useState(false);
+    const [infoComplete,setInfoComplete] = useState(false);
 
     const {id,sunyid,ts} = useParams();
-    const {SUNY_ID} = currentUser();
+    const {SUNY_ID} = useUserContext();
 
     useEffect(() => {
         console.log(id,sunyid,ts);
         if (!id) {
             setIsNew(true);
             setIsDraft(true);
+            setInfoComplete(false);
             setFormId(`draft-${SUNY_ID}`);
         } else {
             setIsDraft((id=='draft'));
             setFormId((id=='draft')?`${id}-${sunyid}-${ts}`:id);
+            setInfoComplete(true);
         }
     },[id,sunyid,ts]);
     if (!formId) return null;
     return(
-        <HRFormWrapper formId={formId} isDraft={isDraft} isNew={isNew} setIsNew={setIsNew}/>
+        <HRFormWrapper 
+            formId={formId} 
+            isDraft={isDraft} 
+            isNew={isNew} 
+            infoComplete={infoComplete}
+            setInfoComplete={setInfoComplete}
+        />
     );
 }
 
-function HRFormWrapper({formId,isDraft,isNew,setIsNew}) {
+function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete}) {
     const [formData,setFormData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
 
@@ -100,15 +109,22 @@ function HRFormWrapper({formId,isDraft,isNew,setIsNew}) {
     useEffect(()=>{
         if (!isNew) {
             form.refetch({throwOnError:true,cancelRefetch:true}).then(f=>{
+                // Get all "Date" fields in employment and person and convert them to Date Objects
+                Object.keys(flattenObject(f.data)).filter(k=>k.includes('Date')).forEach(df=> {
+                    if (!df.startsWith('employment')&&!df.startsWith('person')) return;
+                    const val = get(f.data,df);
+                    if (val) set(f.data,df,new Date(val));
+                });
                 console.debug('Form Data Fetched:\n',f.data);
                 setFormData(f.data);
+                setInfoComplete(true);
             }).catch(e => {
                 console.error(e);
             });
         } else {
             setFormData({});
         }
-    },[formId]);
+    },[formId,isNew]);
     if (form.isError) return <Loading type="alert" isError>Failed To Load Form Data - <small>{form.error?.name} - {form.error?.description||form.error?.message}</small></Loading>;
     if (!formData) return <Loading type="alert">Loading Form Data</Loading>;
     return (
@@ -120,7 +136,15 @@ function HRFormWrapper({formId,isDraft,isNew,setIsNew}) {
                     </Col>
                 </Row>
             </header>
-            {formData && <HRFormForm formId={formId} data={formData} setIsBlocking={setIsBlocking} isDraft={isDraft} isNew={isNew}/>}
+            {formData && <HRFormForm 
+                formId={formId} 
+                data={formData} 
+                setIsBlocking={setIsBlocking} 
+                isDraft={isDraft} 
+                isNew={isNew}
+                infoComplete={infoComplete}
+                setInfoComplete={setInfoComplete}
+            />}
             {formData && <BlockNav formId={formId} when={isBlocking} isDraft={isNew}/>}
         </section>
     );
@@ -130,7 +154,7 @@ function BlockNav({formId,when,isDraft}) {
     const [showModal,setShowModal] = useState(false);
     const [nextLocation,setNextLocation] = useState();
     const [shouldProceed,setShouldProceed] = useState(false);
-    const {SUNY_ID} = currentUser();
+    const {SUNY_ID} = useUserContext();
     const queryclient = useQueryClient();
     const {deleteForm} = useFormQueries(formId);
     const delForm = deleteForm();
@@ -179,15 +203,13 @@ function BlockNav({formId,when,isDraft}) {
     );
 }
 
-function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
+function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInfoComplete}) {
     //TODO: probably need to change to useReducer?
     const [tabList,setTabList] = useState(allTabs.filter(t=>t.value=='basic-info'));
 
     const [activeTab,setActiveTab] = useState('basic-info');
     const [activeNav,setActiveNav] = useState('');
     const [showHidden,setShowHidden] = useState(true);
-    const [infoComplete,setInfoComplete] = useState(!isNew);
-    const [actionsComplete,setActionsComplete] = useState(!isNew);
     const [lockTabs,setLockTabs] = useState(false);
     const [isSaving,setIsSaving] = useState(false);
     const [hasErrors,setHasErrors] = useState(false);
@@ -267,8 +289,8 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
                 "VOLUNTARY_REDUCTION": "",
                 "PAYROLL_MAIL_DROP_ID": {"id": "","label": ""},
                 "positionDetails": {},
-                "apptEffDate": new Date(),
-                "apptEndDate": new Date(),
+                "apptEffDate": "",
+                "apptEndDate": "",
                 "hasBenefits": false,
                 "justification": {"id": "","label": ""}
             },
@@ -357,22 +379,27 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
                 duties:""
             }
         },
+        lastJournal:{
+            STATUS:""
+        },
         comment:""
     };
     const methods = useForm({defaultValues: Object.assign({},defaultVals,data)});
-    const watchFormActions = useWatch({name:['formActions.formCode','formActions.formCodeTitle','formActions.actionCodeTitle','formActions.transactionCodeTitle'],control:methods.control});
+    const watchFormActions = useWatch({name:'formActions.formCode',control:methods.control});
     const watchIds = useWatch({name:['person.information.HR_PERSON_ID','person.information.SUNY_ID','person.information.LOCAL_CAMPUS_ID'],control:methods.control});
 
-    const {SUNY_ID} = currentUser();
+    const {SUNY_ID} = useUserContext();
 
     const queryclient = useQueryClient();
-    const {postForm} = useFormQueries(formId);
+    const {postForm,putForm,deleteForm} = useFormQueries(formId);
     const createForm = postForm();
+    const updateForm = putForm(formId);
+    const delForm = deleteForm(formId);
 
     const {getPersonInfo} = usePersonQueries();
     const {getEmploymentInfo} = useEmploymentQueries();
 
-    //TODO: only fetch if not saved; saved data comes HRF2 table.
+    //** Data Fetch: TODO: move to separate functions/file? */
     const personinfo = getPersonInfo(watchIds[0],'information',{
         refetchOnMount:false,
         enabled:false,
@@ -436,25 +463,28 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
             methods.setValue('person.contact.contacts',d);
         }
     });
-    const employmentappointment = getEmploymentInfo(watchIds[0],'appointment',{
+    //Employment Info:
+    const employmentappointment = getEmploymentInfo([watchIds[0],'appointment'],{
         refetchOnMount:false,
         enabled:false,
         onSuccess:d=>{
             const noticeDate = new Date(d?.NOTICE_DATE);
             d.noticeDate = isValid(noticeDate)?noticeDate:"";
+            console.log(d.noticeDate);
             const contPermDate = new Date(d?.CONTINUING_PERMANENCY_DATE);
             d.contPermDate = isValid(contPermDate)?contPermDate:"";
+            console.log(d.contPermDate);
             methods.setValue('employment.appointment',Object.assign({},defaultVals.employment.appointment,d));
         }
     });
-    const studentinformation = getEmploymentInfo(watchIds[2],'studentinfo',{
+    const studentinformation = getEmploymentInfo([watchIds[2],'studentinfo'],{
         refetchOnMount:false,
         enabled:false,
         onSuccess:d=>{
             methods.setValue('employment.appointment.studentDetails',Object.assign({},defaultVals.employment.appointment.studentDetails,d));
         }
     });
-    const employmentposition = getEmploymentInfo(watchIds[0],'position',{
+    const employmentposition = getEmploymentInfo([watchIds[0],'position'],{
         refetchOnMount:false,
         enabled:false,
         onSuccess:d=>{
@@ -465,7 +495,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
             methods.setValue('employment.position',Object.assign({},defaultVals.employment.position,d));
         }
     });
-    const employmentsalary = getEmploymentInfo(watchIds[0],'salary',{
+    const employmentsalary = getEmploymentInfo([watchIds[0],'salary'],{
         refetchOnMount:false,
         enabled:false,
         onSuccess:d=>{
@@ -481,6 +511,13 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
             });
             d.totalSalary = ((+d.RATE_AMOUNT*+d.NUMBER_OF_PAYMENTS) * (+d.APPOINTMENT_PERCENT/100)).toFixed(2);
             methods.setValue('employment.salary',Object.assign({},defaultVals.employment.salary,d));
+        }
+    });
+    const employmentleave = getEmploymentInfo([watchIds[1],'leave',methods.getValues('effDate')],{
+        refetchOnMount:false,
+        enabled:false,
+        onSuccess:d=>{
+            console.log(d);
         }
     });
 
@@ -504,62 +541,74 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
         const idx = tabList.findIndex(t=>t.value==tab);
         let aNav = '';
         if (Object.keys(tabList[idx]).includes('children')) aNav = tabList[idx].children[0].value;
-        //setIsNew(false);
         setActiveNav(aNav);
         setActiveTab(tab);
     }
     const navigate2 = nav => { setActiveNav(nav); }
 
     const handleSubmit = data => {
-        console.debug(data);        
+        console.debug(data);
         //setHasErrors(false);
-        if (!data.action) return; // just validating the form, not saving
+        if (!data.action||data.action=='test') return; // just validating the form, not saving
         setIsSaving(true);
         setIsBlocking(true); //TODO: when true should be full block with no prompt
         setLockTabs(true);
-        //TODO: handle *codes better
-        delete(data.formActions.formCodes);
-        delete(data.formActions.actionCodes);
-        delete(data.formActions.transactionCodes);
         //TODO: switch? save, submit, appove, reject?
-        if (isDraft) {
-            if (isNew || data.action=='submit') {
-                createForm.mutateAsync(data).then(d => {
-                    console.debug(d);
-                    handleRedirect();
-                }).catch(e => {
-                    //TODO: for testing
-                    //TODO: need to handle errors better
-                    setIsSaving(false);
-                    setLockTabs(false);
-                    //end testing
-                    console.error(e);
-                });
-            } else {
-                console.log('update');
+        //TODO: on approve need to handle changes to form.  PUT (update)
+/*
+ (save and isNew) or submit = POST
+ (save and !isNew) or not submit = PUT
+*/
+        if (isNew || data.action=='submit') {
+            console.log('create:',data.action);
+            createForm.mutateAsync(data).then(d => {
+                console.debug(d);
+                handleRedirect();
+            }).catch(e => {
+                //TODO: for testing
+                //TODO: need to handle errors better
                 setIsSaving(false);
                 setLockTabs(false);
-                /*updateReq.mutateAsync(data).then(() => {
-                    //handleRedirect();
-                    console.log('handleRedirect');
-                }).catch(e => {
-                    console.error(e);
-                });*/
-            }
+                //end testing
+                console.error(e);
+            });
+        } else {
+            console.log('update:',data.action);
+            updateForm.mutateAsync(data).then(() => {
+                handleRedirect();
+            }).catch(e => {
+                console.error(e);
+                setIsSaving(false);
+                setLockTabs(false);    
+            });
         }
     }
     const handleError = error => {
         console.log(error);
     }
     const handleReset = () => {
-        console.warn('Resetting Form');
-        /*
-        // all queries used in the form need to be reset
+        if (!isNew&&isDraft) return; // cannot reset a saved form?
+        console.debug('Resetting Form');
+        /* TODO: maybe?
+        // all queries used in the form need to be reset?
         queryclient.resetQueries('personLookup');
         queryclient.resetQueries('paytrans');
         */
-        methods.reset();
+        methods.reset(defaultVals);
         setTabList(allTabs.filter(t=>t.value=='basic-info'));
+        setInfoComplete(false);
+        setActiveTab('basic-info');
+        setActiveNav('');
+    }
+    const handleDelete = () => {
+        if (isNew&&!isDraft) return;
+        //setIsBlocking(false);
+        delForm.mutateAsync().then(() => {
+            handleRedirect();
+        }).catch(e => {
+            setShowDeleteModal(false);
+            console.error(e);
+        });
     }
     const handleNext = tablist => {
         //TODO: should validate before?
@@ -574,7 +623,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
         let nextTabIdx = (aNavIdx==childrenLen-1)?aTabIdx+1:aTabIdx;
         if (!children) nextTabIdx++;
         if (nextTabIdx != aTabIdx && has(tabList,`${nextTabIdx}.children`)) nextNavIdx = 0;
-        if (nextTabIdx == tabListLen-1) nextTabIdx = aTabIdx; //don't allow tab index to exceed array length
+        if (nextTabIdx == tabListLen) nextTabIdx = aTabIdx; //don't allow tab index to exceed array length
         
         const nextTab = get(tabs,`${nextTabIdx}.value`);
         const nextNav = get(tabs,`${nextTabIdx}.children.${nextNavIdx}.value`);
@@ -583,94 +632,100 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
         setActiveNav(nextNav);
     }
     const handleSave = action => {
-        console.log('DO SAVE',formId);
         methods.setValue('action',action);
         methods.handleSubmit(handleSubmit,handleError)();
-        //createReq.mutateAsync(data).then(d => {
     }
 
     const handleTabs = useCallback(tabs => {
         if (!tabs) {
+            console.debug('Reset/Clear Tabs');
             setTabList(allTabs.filter(t=>t.value=='basic-info'));
-            //setInfoComplete(false);
-            setActionsComplete(false);
         } else {
+            console.debug('Display Tabs: ',tabs);
             setInfoComplete(true);
-            setActionsComplete(true);
             const tablist = [allTabs.find(t=>t.value=='basic-info')];
             ['person','employment'].forEach(t=>{
                 if (tabs.filter(v=>v.startsWith(t)).length>0) {
-                    const subTabs = allTabs.find(v=>v.value==t);
+                    const subTabs = cloneDeep(allTabs.find(v=>v.value==t));
                     subTabs.children = subTabs.children.filter(s=>tabs.includes(s.value));
                     tablist.push(subTabs);
                 }
             });
             tablist.push(...allTabs.filter(t=>['comments','review'].includes(t.value)));
             setTabList(tablist);
-            if (!!watchIds[0]) { //get info for tabs
-                console.log(watchIds[0]);
-                //TODO: if saved form don't refetch, pull from saved data
-                const promiseList = [];
-                tabs.forEach(tab => {
-                    switch(tab) {
-                        case "person-information": promiseList.push({func:personinfo.refetch}); break;
-                        case "person-demographics": promiseList.push({func:persondemographics.refetch}); break;
-                        case "person-directory": promiseList.push({func:persondirectory.refetch}); break;
-                        case "person-education": promiseList.push({func:personeducation.refetch}); break;
-                        case "person-contacts": promiseList.push({func:personcontacts.refetch}); break;
-                        case "employment-appointment": promiseList.push({func:employmentappointment.refetch}); break;
-                        case "employment-position": 
-                        promiseList.push({func:employmentposition.refetch,then:() =>{
-                                //if payroll == 28029 get student data
-                                methods.getValues('payroll.code')=='28029' && studentinformation.refetch();
-                            }}); 
-                            break;
-                        case "employment-salary": promiseList.push({func:employmentsalary.refetch}); break;
-                        case "employment-separation":
-                        case "employment-leave":
-                        case "employment-pay":
-                        case "employment-volunteer":
-                        case "comments":
-                            console.log('TODO; Load Tab: ',tab);
-                            break;
-                        case "basic-info":
-                        case "review":
-                            console.debug('Tab Skipped: ',tab);
-                            break;
-                        default:
-                            console.log('Tab Not Loaded:',tab);
-                    }
-                });
-                Promise.all(promiseList.map(prom=>prom.func().then(prom.then&&prom.then()))).then(res=>{
-                    const errors = res.find(q=>q.isError);
-                    if (errors) throw new Error(errors?.error);
+            if (isNew) {
+                if (!!watchIds[0]) { 
+                    const promiseList = [];
+                    tabs.forEach(tab => {
+                        switch(tab) {
+                            case "person-information": promiseList.push({func:personinfo.refetch}); break;
+                            case "person-demographics": promiseList.push({func:persondemographics.refetch}); break;
+                            case "person-directory": promiseList.push({func:persondirectory.refetch}); break;
+                            case "person-education": promiseList.push({func:personeducation.refetch}); break;
+                            case "person-contacts": promiseList.push({func:personcontacts.refetch}); break;
+                            case "employment-appointment": promiseList.push({func:employmentappointment.refetch}); break;
+                            case "employment-position": 
+                            promiseList.push({func:employmentposition.refetch,then:() =>{
+                                    //if payroll == 28029 get student data
+                                    methods.getValues('payroll.code')=='28029' && studentinformation.refetch();
+                                }}); 
+                                break;
+                            case "employment-salary": promiseList.push({func:employmentsalary.refetch}); break;
+                            case "employment-leave": promiseList.push({func:employmentleave.refetch}); break;
+                            case "employment-pay":
+                            case "employment-volunteer":
+                            case "comments":
+                                console.log('TODO; Load Tab: ',tab);
+                                promiseList.push({func:()=>new Promise(resolve=>resolve('done'))})
+                                break;
+                            case "basic-info":
+                            case "employment-separation":
+                            case "review":
+                                console.debug('Tab Skipped - No Data: ',tab);
+                                break;
+                            default:
+                                console.log('Tab Not Configured:',tab);
+                        }
+                    });
+                    Promise.all(promiseList.map(prom=>prom.func().then(prom.then&&prom.then()))).then(res=>{
+                        const errors = res.find(q=>q.isError);
+                        if (errors) throw new Error(errors?.error);
+                        handleNext(tablist);
+                    }).catch(e=>setDataLoadError({message:e.message}));
+                } else { // new employee; not data loaded
                     handleNext(tablist);
-                }).catch(e=>setDataLoadError({message:e.message}));
+                }
+            } else { // existing form
+                handleNext(tabList);
             }
         }
-    },[setTabList,allTabs,watchIds]);
+    },[tabList,watchIds]);
 
     const testHighlight = useCallback(testCondition=>(testCondition)?'':'test-highlight',[]);
-    const showInTest = useMemo(()=>watchFormActions[0]=='TEST'&&showHidden,[watchFormActions,showHidden]);
+    const showInTest = useMemo(()=>watchFormActions?.FORM_CODE=='TEST'&&showHidden,[watchFormActions,showHidden]);
+    const readOnly = useMemo(()=>(methods.getValues('lastJournal.STATUS')!=""&&SUNY_ID==methods.getValues('lastJournal.SUBMITTER_SUNY_ID')),[methods,SUNY_ID,formId])
+
+    useEffect(()=>!isNew && handleTabs(data.formActions.TABS),[formId]);
+    useEffect(()=>(isNew&&!data.hasOwnProperty('formId'))&&handleReset(),[isNew,data]); //reset form when "New"
 
     if (redirect) return <Redirect to={redirect}/>;
     if (dataLoadError) return <ErrorFallback error={dataLoadError}/>;
     return(
         <>
-            {/* TODO: can we/should we pass form type composit and payroll through the form provider, or create our own provider?*/}
+            {/* TODO: should we pass form type composite and payroll through HRFormsContent Provider?*/}
             <FormProvider {...methods}>
                 <HRFormContext.Provider value={{
                     tabs:tabList,
                     isDraft:isDraft,
                     isNew:isNew,
                     infoComplete:infoComplete,
-                    actionsComplete:actionsComplete,
-                    setActionsComplete:setActionsComplete,
-                    isTest:methods.getValues('formActions.formCode.id')=='TEST',
+                    journalStatus:methods.getValues('lastJournal.STATUS'),
+                    readOnly:readOnly,
                     formActions:methods.getValues('formActions'),
                     sunyId:methods.getValues('person.information.SUNY_ID'),
                     hrPersonId:methods.getValues('person.information.HR_PERSON_ID'),
                     handleTabs:handleTabs,
+                    isTest:methods.getValues('formActions.formCode.id')=='TEST',
                     testHighlight:testHighlight,
                     showInTest:showInTest
                 }}>
@@ -693,6 +748,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
                                                 </Nav>
                                             </Row>
                                         }
+                                        <PendingReviewAlert/>
                                         {!['basic-info','review'].includes(activeTab) && <FormInfoBox/>}
                                         {(activeTab == 'employment'&&['employment-appointment','employment-salary'].includes(activeNav)) && <EmploymentPositionInfoBox as="alert"/>}
                                         <div className="px-2">
@@ -702,12 +758,22 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
                                             <Col className="button-group justify-content-end">
                                                 {hasErrors && <div className="d-inline-flex align-items-center text-danger mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:alert"/><span>Errors</span></div>}
                                                 {isSaving && <div className="d-inline-flex align-items-center mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:loading" className="spin"/><span>Saving...</span></div>}
-
-                                                <AppButton type="reset" format="delete" onClick={handleReset} disabled={isSaving}>Discard</AppButton>
-                                                {(activeTab!='basic-info')&&<AppButton format="save" onClick={()=>handleSave('save')} disabled={isSaving}>Save &amp; Exit</AppButton>}
+                                                {methods.getValues('lastJournal.STATUS')=="" && 
+                                                    <>
+                                                        {!isNew && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
+                                                        {isNew && <AppButton format="undo" onClick={()=>handleReset()} disabled={isSaving}>Reset</AppButton>}
+                                                        {(activeTab!='basic-info')&&<AppButton format="save" onClick={()=>handleSave('save')} disabled={isSaving}>Save &amp; Exit</AppButton>}
+                                                    </>
+                                                }
                                                 {(activeTab!='review')&&<AppButton id="next" format="next" onClick={handleNext} disabled={isSaving||!infoComplete}>Next</AppButton>}
-                                                {(activeTab=='review')&&<AppButton id="submit" type="submit" format="submit" disabled={isSaving||!infoComplete}>Submit</AppButton>}
-                                                <AppButton id="submit" type="submit" format="submit" variant="danger" disabled={isSaving}>Test Submit</AppButton>
+                                                {(activeTab=='review'&&methods.getValues('lastJournal.STATUS')=="")&&<AppButton id="submit" format="submit" onClick={()=>handleSave('submit')} disabled={isSaving||!infoComplete}>Submit</AppButton>}
+                                                {(methods.getValues('lastJournal.STATUS')!=""&&!readOnly) && 
+                                                    <>
+                                                        {(activeTab=='review')&&<AppButton id="approve" format="approve" onClick={()=>handleSave('approve')} disabled={isSaving}>Approve</AppButton>}
+                                                        {(activeTab=='review')&&<AppButton id="reject" format="reject" onClick={()=>handleSave('reject')} disabled={isSaving}>Reject</AppButton>}
+                                                    </>
+                                                }
+                                                <AppButton id="submit" format="submit" variant="outline-danger" onClick={()=>handleSave('test')} disabled={isSaving}>Test Submit</AppButton>
                                             </Col>
                                         </Row>
                                         <SubmitterInfoBox/>
@@ -715,7 +781,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
                                             <Col>
                                                 <p>{activeTab}.{activeNav}</p>
                                             </Col>
-                                            {methods.getValues('formActions.formCode')=='TEST' &&
+                                            {methods.getValues('formActions.formCode.FORM_CODE')=='TEST' &&
                                                 <Col className="d-flex justify-content-end">
                                                     <Form.Check type="switch" id="showHiddenToggle" className="custom-switch-lg" label="Hide/Show Fields In Test Mode" checked={showHidden} onChange={()=>setShowHidden(!showHidden)}/>
                                                 </Col>
@@ -726,6 +792,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew}) {
                             ))}
                         </Tabs>
                     </Form>
+                    {showDeleteModal && <DeleteFormModal setShowDeleteModal={setShowDeleteModal} handleDelete={handleDelete}/>}
                 </HRFormContext.Provider>
             </FormProvider>
         </>
@@ -755,6 +822,21 @@ function FormTabRouter({tab,activeTab,subTab,...props}) {
     }
 }
 
+function PendingReviewAlert() {
+    return (
+        <HRFormContext.Consumer>
+            {({readOnly}) => {
+                if (!readOnly) return null;
+                return (
+                    <Alert variant="warning" className="mt-3">
+                        <p className="m-0"><strong>Pending Review:</strong> This form is currently being reviewed and cannot be modified.</p>
+                    </Alert>
+                );
+            }}
+        </HRFormContext.Consumer>
+    )
+}
+
 function FormInfoBox () {
     const { getValues } = useFormContext();
     return (
@@ -782,7 +864,7 @@ function FormInfoBox () {
 }
 /*
 Parameters:
-    - variant=[null|code|title|both]
+    - variant=[null|code|title|both|list]
         - null|code: displays codes; e.g. 
                 DF - - 
                 EF - CCH - 641
@@ -795,45 +877,39 @@ Parameters:
         - list: displays [codes] titles; e.g. 
                 [DF//] Data Form - - 
                 [EF/CCH/641] Employment Form - Concurrent Hire - S64.1C
-    - separator: space padded character(s) to separate the elements
-    - showNA: when set/true display 'N/A' if the value of the code is 'N/A' else display ''
+    - separator: character(s) to separate components
 */
-export function FormTypeDisplay({variant,separator,showNA}) {
+//TODO: add ability to pass in form data
+export function FormTypeDisplay({variant,separator}) {
     const { getValues } = useFormContext();
     const formActions = getValues('formActions');
     const display = useMemo(() => {
-        const formCodesMap = new Map(formActions.formCodes);
-        const actionCodesMap = new Map(formActions.actionCodes);
-        const transactionCodesMap = new Map(formActions.transactionCodes);
-        const sep = (separator)?` ${separator} `:' - ';
-        const codes = [
-            formActions.formCode,
-            (formActions.actionCode=='N/A'&&!showNA)?'':formActions.actionCode,
-            (formActions.transactionCode=='N/A'&&!showNA)?'':formActions.transactionCode
-        ];
-        const titles = [
-            formCodesMap.get(formActions.formCode)?.at(0)||((formActions.formCode=='N/A'&&showNA)?'N/A':''),
-            actionCodesMap.get(formActions.actionCode)?.at(0)||((formActions.actionCode=='N/A'&&showNA)?'N/A':''),
-            transactionCodesMap.get(formActions.transactionCode)?.at(0)||((formActions.transactionCode=='N/A'&&showNA)?'N/A':'')
-        ];
-        switch(variant) {
-            case "title":
-                return titles.join(sep);
-            case "both":
-                const codeTitles = zip(codes,titles);
-                return codeTitles.map(c=>{
-                    if (!c[0]) return null;
-                    if (c[0]=='N/A'&&showNA) return 'N/A';
-                    return `[${c[0]}]:${c[1]}`;
-                }).join(sep);
-            case "list":
-                return '['+codes.join('/')+'] '+titles.join(sep);
-            default:
-                return codes.join(sep);
-        }
+        const codes = [formActions.formCode.FORM_CODE,formActions.actionCode.ACTION_CODE,formActions.transactionCode.TRANSACTION_CODE];
+        const titles = [formActions.formCode.FORM_TITLE,formActions.actionCode.ACTION_TITLE,formActions.transactionCode.TRANSACTION_TITLE];
+        return displayFormCode({variant:variant,separator:separator,codes:codes,titles:titles});
     },[variant,formActions,separator]);
     return <>{display}</>
 }
+export function displayFormCode({variant,separator,codes,titles}) {
+    const _separator = separator||' - ';
+    const _codes = codes||[];
+    const _titles = titles||[];
+    switch(variant) {
+        case "title":
+            return _titles.join(_separator);
+        case "both":
+            const codeTitles = zip(_codes,_titles);
+            return codeTitles.map(c=>{
+                if (!c[0]) return null;
+                return `[${c[0]}]:${c[1]}`;
+            }).join(_separator);
+        case "list":
+            return '['+_codes.join('/')+'] '+_titles.join(_separator);
+        default:
+            return _codes.join(_separator);
+    }
+}
+
 export function EmploymentPositionInfoBox({as}) {
     if (as == 'alert') {
         return (
@@ -894,3 +970,22 @@ function SubmitterInfoBox() {
         </UserContext.Consumer>
     );
 }
+
+function DeleteFormModal({setShowDeleteModal,handleDelete}) {
+    const handleClose = () => setShowDeleteModal(false);
+    const handleConfirm = () => handleDelete();
+    return (
+        <Modal show={true} backdrop="static" onHide={handleClose}>
+            <Modal.Header closeButton>
+                <Modal.Title>Delete?</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                Are you sure?
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="danger" onClick={handleConfirm}>Confirm</Button>
+                <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+            </Modal.Footer>
+        </Modal>
+    );
+} 

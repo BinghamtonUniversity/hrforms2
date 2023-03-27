@@ -8,7 +8,6 @@ import useFormQueries from "../../queries/forms";
 import { Loading, DepartmentSelector } from "../components";
 import { Icon } from "@iconify/react";
 import DatePicker from "react-datepicker";
-import { format } from "date-fns";
 
 const baseName = 'employment.appointment';
 
@@ -107,55 +106,53 @@ export default function EmploymentAppointment() {
                             </Col>
                         </Form.Group>
                     }
-                    {(getValues(`${baseName}.noticeDate`)||showInTest) && 
+                    {(getValues(`${baseName}.NOTICE_DATE`)||showInTest) && 
                         <>
-                            <Form.Group as={Row} className={testHighlight(getValues(`${baseName}.noticeDate`))}>
+                            <Form.Group as={Row} className={testHighlight(getValues(`${baseName}.NOTICE_DATE`))}>
                                 <Form.Label column md={2}>Notice Date:</Form.Label>
                                 <Col xs="auto">
-                                    <InputGroup>
-                                        <Controller
-                                            name={`${baseName}.noticeDate`}
-                                            control={control}
-                                            render={({field}) => <Form.Control
-                                                as={DatePicker}
-                                                name={field.name}
-                                                selected={field.value}
-                                                closeOnScroll={true}
-                                                onChange={field.onChange}
-                                                isInvalid={errors.effDate}
-                                                autoComplete="off"
-                                            />}
-                                        />
-                                        <InputGroup.Append>
-                                            <InputGroup.Text>
-                                                <Icon icon="mdi:calendar-blank"/>
-                                            </InputGroup.Text>
-                                        </InputGroup.Append>
+                                <InputGroup>
+                                    <Controller
+                                        name={`${baseName}.noticeDate`}
+                                        control={control}
+                                        render={({field}) => <Form.Control
+                                            as={DatePicker}
+                                            name={field.name}
+                                            selected={field.value}
+                                            closeOnScroll={true}
+                                            onChange={field.onChange}
+                                            autoComplete="off"
+                                        />}
+                                    />
+                                    <InputGroup.Append>
+                                        <InputGroup.Text>
+                                            <Icon icon="mdi:calendar-blank"/>
+                                        </InputGroup.Text>
+                                    </InputGroup.Append>
                                     </InputGroup>
                                 </Col>
                             </Form.Group>
-                            <Form.Group as={Row} className={testHighlight(getValues(`${baseName}.noticeDate`))}>
+                            <Form.Group as={Row} className={testHighlight(getValues(`${baseName}.CONTINUING_PERMANENCY_DATE`))}>
                                 <Form.Label column md={2}>Continuing/Permanency Date:</Form.Label>
                                 <Col xs="auto">
-                                    <InputGroup>
-                                        <Controller
-                                            name={`${baseName}.contPermDate`}
-                                            control={control}
-                                            render={({field}) => <Form.Control
-                                                as={DatePicker}
-                                                name={field.name}
-                                                selected={field.value}
-                                                closeOnScroll={true}
-                                                onChange={field.onChange}
-                                                isInvalid={errors.effDate}
-                                                autoComplete="off"
-                                            />}
-                                        />
-                                        <InputGroup.Append>
-                                            <InputGroup.Text>
-                                                <Icon icon="mdi:calendar-blank"/>
-                                            </InputGroup.Text>
-                                        </InputGroup.Append>
+                                <InputGroup>
+                                    <Controller
+                                        name={`${baseName}.contPermDate`}
+                                        control={control}
+                                        render={({field}) => <Form.Control
+                                            as={DatePicker}
+                                            name={field.name}
+                                            selected={field.value}
+                                            closeOnScroll={true}
+                                            onChange={field.onChange}
+                                            autoComplete="off"
+                                        />}
+                                    />
+                                    <InputGroup.Append>
+                                        <InputGroup.Text>
+                                            <Icon icon="mdi:calendar-blank"/>
+                                        </InputGroup.Text>
+                                    </InputGroup.Append>
                                     </InputGroup>
                                 </Col>
                             </Form.Group>

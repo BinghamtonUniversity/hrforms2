@@ -18,6 +18,7 @@ const RequestList = lazy(()=>import("./pages/request/list"));
 const RequestJournal = lazy(()=>import("./pages/request/journal"));
 const HRForm = lazy(()=>import("./pages/form"));
 const HRFormList = lazy(()=>import("./pages/form/list"));
+const HRFormJournal = lazy(()=>import("./pages/form/journal"));
 const AdminPages = lazy(()=>import("./pages/admin"));
 const Testing = lazy(()=>import("./pages/testing"));
 
@@ -30,7 +31,8 @@ export const SettingsContext = React.createContext();
 SettingsContext.displayName = 'SettingsContext';
 
 export function getAuthInfo() { return useContext(AuthContext); }
-export function currentUser() { return useContext(UserContext); }
+export function currentUser() { return useContext(UserContext); } // rename to useUserContext; consistency across libraries
+export function useUserContext() { return useContext(UserContext); } 
 export function getSettings() { return useContext(SettingsContext); }
 //export function getNavContext() { return useContext(NavContext); } // do we need this?  can't we import useContext from react and import NavContext from app?
 
@@ -139,6 +141,8 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
                             <Route path="/request/:id" component={Request}/>
                             <Route path="/request" component={Request}/>
 
+                            <Route exact path="/form/journal" component={HRFormJournal}/>
+                            <Route path="/form/journal/:id" component={HRFormJournal}/>
                             <Route exact path="/form/list" component={HRFormList}/>
                             <Route path="/form/list/:part" component={HRFormList}/>
                             <Route path="/form/:id/:sunyid/:ts" component={HRForm}/>

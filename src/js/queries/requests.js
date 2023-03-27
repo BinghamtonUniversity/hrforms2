@@ -61,7 +61,7 @@ export default function useRequestQueries(REQUEST_ID) {
             });
             return (options.select2)?options.select2(data):data;
         }
-        return useQuery(['journal',REQUEST_ID],q(`journal/${REQUEST_ID}`),options);
+        return useQuery(['journal',REQUEST_ID],q(`journal/request/${REQUEST_ID}`),options);
     }
 
     return {getRequest,postRequest,putRequest,deleteRequest,getRequestList,getJournal};

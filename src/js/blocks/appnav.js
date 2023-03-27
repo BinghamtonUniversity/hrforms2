@@ -25,7 +25,7 @@ export default function AppNav() {
                         {['requests','forms'].map(c =>{
                             const single = c.slice(0,-1);
                             return (
-                                <NavDropdown key={`${single}-menu`} title={capitalize(c)} id="request-nav-dropdown">
+                                <NavDropdown key={`${single}-menu`} title={capitalize(c)} id="request-nav-dropdown" alignRight>
                                     <MenuCounts menu={c} showOn="menu" showNew/>
                                     <NavDropdown.Divider/>
                                     <NavDropdown.Item as={Link} to={`/${single}/list`}>My {capitalize(c)}</NavDropdown.Item>
@@ -34,7 +34,7 @@ export default function AppNav() {
                             );
                         })}
                         {(isAdmin && !OVR_SUNY_ID) &&
-                        <NavDropdown title="Admin" id="admin-nav-dropdown">
+                        <NavDropdown title="Admin" id="admin-nav-dropdown" alignRight>
                             <NavDropdown.Item as={Link} to="/admin/news">News</NavDropdown.Item>
                             <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/admin/users">Users</NavDropdown.Item>
@@ -42,11 +42,9 @@ export default function AppNav() {
                             <NavDropdown.Item as={Link} to="/admin/departments">Departments</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/lists">Lists</NavDropdown.Item>
                             <NavDropdown.Divider/>
-                            <NavDropdown.Item as={Link} to="/admin/journal/request">Request Journal</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/hierarchy/request">Request Hierarchy</NavDropdown.Item>
                             <NavDropdown.Divider/>
-                            <NavDropdown.Item as={Link} to="/admin/journal/form" disabled>Form Journal</NavDropdown.Item>
-                            <NavDropdown.Item as={Link} to="/admin/hierarchy/form" disabled>Form Hierarchy</NavDropdown.Item>
+                            <NavDropdown.Item as={Link} to="/admin/hierarchy/form">Form Hierarchy</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/transactions">Form Transactions</NavDropdown.Item>
                             <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/admin/settings">Settings</NavDropdown.Item>

@@ -27,7 +27,7 @@ export default function EmploymentLeave() {
     const { getListData } = useAppQueries();
     const justifcation = getListData('leaveJustification');
 
-    const { getSalary } = useFormQueries();
+    /*const { getSalary } = useFormQueries();
     const salary = getSalary({
         sunyId:watchFields[0].SUNY_ID,
         effDate:watchFields[1],
@@ -37,15 +37,12 @@ export default function EmploymentLeave() {
                 setValue(`${name}.origSalary`,d[0]?.RATE_AMOUNT);
             }
         }
-    });
+    });*/
     const calcLeaveSalary = useCallback(() => {
-        return (+getValues(`${name}.origSalary`) * (1-(+watchLeavePercent/100)));
+        return 42;
+        //return (+getValues(`${name}.origSalary`) * (1-(+watchLeavePercent/100)));
     },[watchLeavePercent,getValues]);
 
-    useEffect(() => {
-        if (!watchFields[0]?.SUNY_ID) return;
-        salary.refetch().then(()=>calcLeaveSalary());
-    },[watchFields]);
     return (
         <article>
             <Row as="header">
@@ -65,7 +62,7 @@ export default function EmploymentLeave() {
             {/* on show Leave Pct and Leave Sal for EF-L-7 and EF-L-9 */}
             <HRFormContext.Consumer>
                 {({formActions}) => (
-                    <p>{formActions.formCode}</p>
+                    <p>{formActions.formCode.FORM_CODE}</p>
                 )}
             </HRFormContext.Consumer>
             <Form.Group as={Row}>

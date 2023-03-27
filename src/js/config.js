@@ -9,3 +9,4 @@ export function editorConfig(...args) {
         disablePlugins: "video,file,preview,print,drag-and-drop,drag-and-drop-element,iframe,media,image,image-processor,image-properties"
     };
 }
+

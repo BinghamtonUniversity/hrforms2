@@ -35,9 +35,12 @@ class User extends HRForms2 {
 		if (!isset($this->req[0])) {
 			// TODO: if refresh date < 24 hours use USER_INFO field.  Otherwise fetch from HR tables and update user_info
 			// TODO: if no data from HR tables fall back to USER_INFO and do not update.
-			$qry = "select p.*, u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date
+			$qry = "select p.*, u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date,
+				d.group_id, g.group_name
 			from hrforms2_users u
-			left join (select distinct ".$this->BASE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.suny_id)";
+			left join (select distinct ".$this->BASE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.suny_id)
+			left join (select department_code, group_id from hrforms2_group_departments) d on (p.REPORTING_DEPARTMENT_CODE = d.DEPARTMENT_CODE)
+			left join (select group_id, group_name from hrforms2_groups) g on (d.group_id = g.group_id)";
 			$stmt = oci_parse($this->db,$qry);
 		} else {
 			$qry = "select ".$this->BASE_PERSEMP_FIELDS.", r.recent_campus_date

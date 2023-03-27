@@ -34,16 +34,15 @@ export default function FormBasicInfo() {
                 newEmp.LEGAL_LAST_NAME = 'New Employee';
                 d.results.unshift(newEmp);
             }
-            //Add "New Role" option for each employee in the list
+            //Add "New Role" option for each employee in the list (based on SUNY_ID)
             const nr = [];
             d.results.forEach(e => {
                 if (e.id == "0") return;
                 const newRole = {...e};
                 e.id = e.HR_PERSON_ID;
-                newRole.id = `0_${e.HR_PERSON_ID}_NR`;
+                newRole.id = `0_${e.SUNY_ID}_NR`;
                 [
                     "LINE_ITEM_NUMBER",
-                    "EMPLOYMENT_ROLE_TYPE",
                     "DATA_STATUS_EMP",
                     "STATUS_TYPE",
                     "APPOINTMENT_EFFECTIVE_DATE",
@@ -59,6 +58,8 @@ export default function FormBasicInfo() {
                     "endDate",
                     "endDateFmt"
                 ].forEach(k=>newRole[k]='');
+                newRole['EMPLOYMENT_ROLE_TYPE'] = 'New Role';
+                newRole['LEGAL_LAST_NAME'] = 'New Role';
                 nr.push(newRole);
             });
             const result = assign(keyBy(d.results,'id'),keyBy(nr,'id'));
@@ -239,8 +240,8 @@ function LookupResults({data}) {
         setSelectedRow((args.selectedCount)?args.selectedRows[0]:{});
         setValue('selectedRow',(args.selectedCount)?args.selectedRows[0]:{});
         setValue('payroll.code',(args.selectedCount)?args.selectedRows[0]?.PAYROLL_AGENCY_CODE:"");
-        setValue('payroll.title','');
-        setValue('payroll.description','');
+        //setValue('payroll.title','');
+        //setValue('payroll.description','');
         setValue('formActions',defaultFormActions);
         setValue('person.information.HR_PERSON_ID',(args.selectedCount)?args.selectedRows[0]?.HR_PERSON_ID:"");
         setValue('person.information.SUNY_ID',(args.selectedCount)?args.selectedRows[0]?.SUNY_ID:"");
@@ -318,14 +319,14 @@ function LookupResults({data}) {
                     </Col>
                 </Row>
             </article>
-            {selectedId!=undefined&&<PayrollDate selectedId={selectedId} selectedPayroll={selectedRow?.PAYROLL_AGENCY_CODE} selectedRoleType={selectedRow?.EMPLOYMENT_ROLE_TYPE}/>}
+            {selectedId!=undefined&&<PayrollDate selectedId={selectedId} selectedPayroll={selectedRow?.PAYROLL_AGENCY_CODE}/>}
         </>
     );
 }
 
-function PayrollDate({selectedId,selectedPayroll,selectedRoleType}) {
-    const { control, setValue, formState: { errors }} = useFormContext();
-    const { infoComplete } = useHRFormContext();
+function PayrollDate({selectedId,selectedPayroll}) {
+    const { control, getValues, setValue, formState: { errors }} = useFormContext();
+    const { infoComplete, journalStatus } = useHRFormContext();
 
     const watchPayrollDate = useWatch({name:['payroll.code','effDate']});
 
@@ -333,7 +334,8 @@ function PayrollDate({selectedId,selectedPayroll,selectedRoleType}) {
     const [payrollDescription,setPayrollDescription] = useState('');
 
     const {getCodes} = useCodesQueries('payroll');
-    const payrollcodes = getCodes({    
+    const payrollcodes = getCodes({
+        //enabled:false, //only fetch when payroll select changes
         refetchOnMount:false,
         select:d=>d.filter(p=>p.ACTIVE==1),
         onSuccess:d=>{
@@ -359,6 +361,11 @@ function PayrollDate({selectedId,selectedPayroll,selectedRoleType}) {
         setValue('payroll.description',description);
         setValue('formActions',defaultFormActions);
         setPayrollDescription(description);
+        //if (e.target.value) payrollcodes.refetch();
+    }
+    const handleEffDateChange = (d,field) => {
+        field.onChange(d);
+        if (!getValues('employment.position.apptEffDate')) setValue('employment.position.apptEffDate',d);
     }
     useEffect(()=>{
         //TODO: can this be consolidated or moved to a function?
@@ -367,11 +374,11 @@ function PayrollDate({selectedId,selectedPayroll,selectedRoleType}) {
             setValue('payroll.description','');
             setPayrollDescription('');
         } else {
-            if (!infoComplete) return;
-            const payroll = payrollcodes.data.find(p=>p.PAYROLL_CODE==selectedPayroll);
-            setValue('payroll.title',payroll?.PAYROLL_TITLE);
-            setValue('payroll.description',payroll?.PAYROLL_DESCRIPTION);
-            setPayrollDescription(payroll?.PAYROLL_DESCRIPTION);
+            if (infoComplete) return;
+            const p = payrollcodes.data.find(p=>p.PAYROLL_CODE==selectedPayroll);
+            setValue('payroll.title',p?.PAYROLL_TITLE);
+            setValue('payroll.description',p?.PAYROLL_DESCRIPTION);
+            setPayrollDescription(p?.PAYROLL_DESCRIPTION);
         }
     },[payrollcodes.data,selectedId,selectedPayroll]);
     return (
@@ -392,7 +399,7 @@ function PayrollDate({selectedId,selectedPayroll,selectedRoleType}) {
                                 defaultValue={selectedPayroll}
                                 rules={{required:{value:true,message:'Payroll is required'}}}
                                 render={({field}) => (
-                                    <Form.Control {...field} as="select" onChange={e=>handlePayrollChange(e,field)} isInvalid={errors.payroll} disabled={selectedPayroll!=''} aria-describedby="payrollDescription">
+                                    <Form.Control {...field} as="select" onChange={e=>handlePayrollChange(e,field)} isInvalid={errors.payroll} disabled={selectedPayroll!=''||journalStatus!=""} aria-describedby="payrollDescription">
                                         <option></option>
                                         {payrollcodes.data.map(p=><option key={p.PAYROLL_CODE} value={p.PAYROLL_CODE}>{p.PAYROLL_TITLE}</option>)}
                                     </Form.Control>
@@ -420,9 +427,10 @@ function PayrollDate({selectedId,selectedPayroll,selectedRoleType}) {
                                     name={field.name}
                                     selected={field.value}
                                     closeOnScroll={true}
-                                    onChange={field.onChange}
+                                    onChange={d=>handleEffDateChange(d,field)}
                                     isInvalid={errors.effDate}
                                     autoComplete="off"
+                                    disabled={journalStatus!=""}
                                 />}
                             />
                             <InputGroup.Append>
@@ -435,20 +443,21 @@ function PayrollDate({selectedId,selectedPayroll,selectedRoleType}) {
                     </Col>
                 </Form.Group>
             </article>
-            {watchPayrollDate.every(v=>!!v) && <FormActionsWrapper payroll={watchPayrollDate[0]} roleType={selectedRoleType}/>}
+            {watchPayrollDate.every(v=>!!v) && <FormActionsWrapper payroll={watchPayrollDate[0]}/>}
         </>
     );
 }
 
-function FormActionsWrapper({payroll,roleType}) {
-    const filter = (roleType=="New Employee")?"100":(roleType=="New Role")?"010":"001";
+function FormActionsWrapper({payroll}) {
+    const [filter,setFilter] = useState('000');
     
-    const { setValue } = useFormContext();
+    const { getValues, setValue } = useFormContext();
     const { handleTabs, actionsComplete } = useHRFormContext();
     const [watchFormCode,watchActionCode,watchTransactionCode] = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode']});
+    const watchRoleType = useWatch({name:'selectedRow.EMPLOYMENT_ROLE_TYPE'});
 
-    const {getPayTrans} = useTransactionQueries(payroll);
-    const paytrans = getPayTrans();
+    const {getPayTrans} = useTransactionQueries(payroll); 
+    const paytrans = getPayTrans({select:d=>d.filter(p=>p.ACTIVE==1)});//only return ACTIVE
 
     const codes = useMemo(()=>{
             if (!paytrans.data) return new Map();
@@ -522,8 +531,6 @@ function FormActionsWrapper({payroll,roleType}) {
         const actionCode = watchActionCode.ACTION_CODE;
         const transactionCode = watchTransactionCode.TRANSACTION_CODE;
         let pt;
-        console.log(paytrans.data);
-        console.log(formCode,actionCode,transactionCode);
         if (!!formCode) {
             if (getCodes('action').size == 0) {
                 pt = paytrans.data.find(p=>p.AVAILABLE_FOR&filter&&p.FORM_CODE==formCode);
@@ -539,17 +546,18 @@ function FormActionsWrapper({payroll,roleType}) {
                 }
             }
         }
-        if (pt) {
-            if (!actionsComplete) {
-                console.log(pt.TABS);
+        if (!getValues('formActions.PAYTRANS_ID')) { //Do not reload if PAYTRANS_ID already set
+            if (pt) {
                 setValue('formActions.PAYTRANS_ID',pt.PAYTRANS_ID);
                 handleTabs(pt.TABS);
+            } else {
+                setValue('formActions.PAYTRANS_ID',"");
+                handleTabs();
             }
-        } else {
-            setValue('formActions.PAYTRANS_ID',"");
-            handleTabs();
         }
     },[paytrans.data,filter,watchFormCode,watchActionCode,watchTransactionCode]);
+
+    useEffect(()=>setFilter((watchRoleType=="New Employee")?"100":(watchRoleType=="New Role")?"010":"001"),[watchRoleType]);
     
     if (!paytrans.data) return <Loading type="alert">Loading Form Actions...</Loading>;
     if (paytrans.error) return <Loading type="alert" isError>Error Loading Form Actions</Loading>;
@@ -568,7 +576,7 @@ function FormActionsWrapper({payroll,roleType}) {
 }
 function FormActionsFormCode({formCodes,description}) {
     const { control, setValue } = useFormContext();
-    const { setActionsComplete } = useHRFormContext();
+    const { journalStatus } = useHRFormContext();
 
     const handleSelectChange = (e,field) => {
         field.onChange(e);
@@ -581,7 +589,6 @@ function FormActionsFormCode({formCodes,description}) {
         setValue('formActions.formCode',filteredCode);
         setValue('formActions.actionCode',defaultFormActions.actionCode);
         setValue('formActions.transactionCode',defaultFormActions.transactionCode);
-        setActionsComplete(false);
     }
 
     return (
@@ -592,7 +599,7 @@ function FormActionsFormCode({formCodes,description}) {
                     name="formActions.formCode.FORM_CODE"
                     control={control}
                     render={({field}) => (
-                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} aria-describedby="formCodeDescription">
+                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} aria-describedby="formCodeDescription" disabled={journalStatus!=""}>
                             <option></option>
                             {Array.from(formCodes.values()).map(f=><option key={f.FORM_CODE} value={f.FORM_CODE}>{f.FORM_TITLE}</option>)}
                         </Form.Control>
@@ -605,9 +612,9 @@ function FormActionsFormCode({formCodes,description}) {
         </Form.Group>
     );
 }
-function FormActionsActionCode({actionCodes,description,formCode,actionSize,noActions}) {
+function FormActionsActionCode({actionCodes,description,formCode,actionSize}) {
     const { control, setValue } = useFormContext();
-    const { setActionsComplete } = useHRFormContext();
+    const { journalStatus } = useHRFormContext();
 
     const handleSelectChange = (e,field) => {
         field.onChange(e);
@@ -619,7 +626,6 @@ function FormActionsActionCode({actionCodes,description,formCode,actionSize,noAc
         setValue('formActions.PAYTRANS_ID',"");
         setValue('formActions.actionCode',filteredCode);
         setValue('formActions.transactionCode',defaultFormActions.transactionCode);
-        setActionsComplete(false);
     }
     return (
         <Form.Group as={Row}>
@@ -631,7 +637,7 @@ function FormActionsActionCode({actionCodes,description,formCode,actionSize,noAc
                         name="formActions.actionCode.ACTION_CODE"
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} aria-describedby="actionCodeDescription">
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} aria-describedby="actionCodeDescription" disabled={journalStatus!=""}>
                                 <option></option>
                                 {Array.from(actionCodes.values()).map(a=><option key={a.ACTION_CODE} value={a.ACTION_CODE}>{a.ACTION_TITLE}</option>)}
                             </Form.Control>
@@ -647,14 +653,13 @@ function FormActionsActionCode({actionCodes,description,formCode,actionSize,noAc
 }
 function FormActionsTransactionCode({transactionCodes,description,formCode,actionCode,actionSize,transactionSize}) {
     const { control, setValue } = useFormContext();
-    const { setActionsComplete } = useHRFormContext();
+    const { journalStatus } = useHRFormContext();
 
     const handleSelectChange = (e,field) => {
         field.onChange(e);
         const code = transactionCodes.get(e.target.value); 
         setValue('formActions.PAYTRANS_ID',"");
         setValue('formActions.transactionCode',(!code)?defaultFormActions.transactionCode:code);
-        setActionsComplete(false);
     }
     return (
         <Form.Group as={Row}>
@@ -668,7 +673,7 @@ function FormActionsTransactionCode({transactionCodes,description,formCode,actio
                         name="formActions.transactionCode.TRANSACTION_CODE"
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} aria-describedby="transactionCodeDescription">
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} aria-describedby="transactionCodeDescription" disabled={journalStatus!=""}>
                                 <option></option>
                                 {Array.from(transactionCodes.values()).map(t=><option key={t.TRANSACTION_CODE} value={t.TRANSACTION_CODE}>{t.TRANSACTION_TITLE}</option>)}
                             </Form.Control>

@@ -1,7 +1,7 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo } from "react";
 import { useParams, useHistory, Link } from "react-router-dom";
-import useRequestQueries from "../../queries/requests";
-import { Row, Col, Form, Button, Popover, OverlayTrigger, Tooltip, Overlay } from "react-bootstrap";
+import useFormQueries from "../../queries/forms";
+import { Row, Col, Form, Button, Popover, OverlayTrigger, Tooltip } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
 import { get, sortBy } from "lodash";
 import useGroupQueries from "../../queries/groups";
@@ -16,48 +16,48 @@ const statusTitle = {
     'F':'Pending Final'
 };
 
-export default function RequestJournal() {
+export default function FormJournal() {
     const {id} = useParams();
     const history = useHistory();
 
-    const [reqId,setReqId] = useState((!!id)?id:'');
+    const [formId,setFormId] = useState((!!id)?id:'');
     const [showResults,setShowResults] = useState(!!id);
 
     const handleChange = e => {
         setShowResults(false);
-        setReqId(e.target.value);
+        setFormId(e.target.value);
     }
     const handleESC = e => {
         if (e.key == 'Escape') {
             setShowResults(false);
-            setReqId('');
-            history.push('/request/journal/');
+            setFormId('');
+            history.push('/form/journal/');
         }
     }
     const handleSubmit = e => {
         e.preventDefault();
-        history.push('/request/journal/'+reqId);
+        history.push('/form/journal/'+formId);
         setShowResults(true);
     }
     return (
         <>
             <Row>
-                <Col><h2>Request Journal</h2></Col>
+                <Col><h2>Form Journal</h2></Col>
             </Row>
             <Form inline onSubmit={handleSubmit}>
-                <Form.Label className="my-1 mr-2" htmlFor="journalReqIdSearch" >Request ID:</Form.Label>
-                <Form.Control className="mb-2 mr-sm-2" id="journalReqIdSearch" value={reqId} onChange={handleChange} onKeyDown={handleESC} autoFocus/>
+                <Form.Label className="my-1 mr-2" htmlFor="journalFormIdSearch" >Form ID:</Form.Label>
+                <Form.Control className="mb-2 mr-sm-2" id="journalFormIdSearch" value={formId} onChange={handleChange} onKeyDown={handleESC} autoFocus/>
                 <Button type="submit" className="mb-2">Search</Button>
             </Form>
-            {(showResults && !reqId) && <p>You must enter a request id</p>}
-            {(showResults && reqId) && <JournalSearchResults reqId={reqId}/>}
+            {(showResults && !formId) && <p>You must enter a form id</p>}
+            {(showResults && formId) && <JournalSearchResults formId={formId}/>}
         </>
     );
 }
 
-function JournalSearchResults({reqId}) {
+function JournalSearchResults({formId}) {
     const [expandAll,setExpandAll] = useState(false);
-    const {getJournal} = useRequestQueries(reqId);
+    const {getJournal} = useFormQueries(formId);
     const journal = getJournal();
 
     useHotkeys('ctrl+alt+e',()=>{
@@ -87,7 +87,7 @@ function JournalSearchResults({reqId}) {
     return (
         <DataTable 
             keyField="SEQUENCE"
-            title={`Journal Report for Request ID: ${reqId}`}
+            title={`Journal Report for Form ID: ${formId}`}
             subHeader
             subHeaderComponent={expandToggleComponent}
             columns={columns} 
@@ -113,8 +113,8 @@ function ExpandedComponent({data}) {
     return (
         <div className="p-3" style={{backgroundColor:'#ddd'}}>
             <dl className="journal-list" style={{'display':'grid','gridTemplateColumns':'120px auto'}}>
-                <dt>Request ID:</dt>
-                <dd>{data.REQUEST_ID}</dd>
+                <dt>Form ID:</dt>
+                <dd>{data.FORM_ID}</dd>
                 <dt>Sequence:</dt>
                 <dd>{data.SEQUENCE}</dd>
                 <dt>Date:</dt>

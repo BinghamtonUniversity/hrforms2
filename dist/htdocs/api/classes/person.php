@@ -51,12 +51,13 @@ class Person extends HRForms2 {
             nvl(pemp.data_status_emp, pers.role_status) as data_status_emp, pemp.status_type,
             nvl(pemp.appointment_effective_date, pers.role_effective_date) as appointment_effective_date,
             nvl(pemp.appointment_end_date, pers.role_end_date) as appointment_end_date,
-            pers.birth_date, nvl(pers.alias_first_name,pers.legal_first_name) as first_name,
+            to_char(pers.birth_date,'DD-MON-YYYY') as birth_date, 
+            nvl(pers.alias_first_name,pers.legal_first_name) as first_name,
             pers.legal_middle_name, pers.legal_last_name, pers.suffix_code, 
             pers.local_campus_id, pemp.payroll_agency_code, pemp.title_description, pemp.dpt_cmp_dsc,
             pemp.negotiating_unit, pemp.appointment_type, pemp.appointment_percent, pemp.pay_basis
             FROM buhr.buhr_person_mv@banner.cc.binghamton.edu pers
-            JOIN (SELECT hr_person_id, payroll_agency_code, line_item_number, pay_basis,
+            LEFT JOIN (SELECT hr_person_id, payroll_agency_code, line_item_number, pay_basis,
                 employment_role_type, data_status_emp, status_type, negotiating_unit,
                 appointment_type, appointment_effective_date, appointment_end_date, appointment_percent,
                 title_description, dpt_cmp_dsc
@@ -93,7 +94,10 @@ class Person extends HRForms2 {
         // Get results
         $r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
-        oci_fetch_all($stmt,$results,null,null,OCI_FETCHSTATEMENT_BY_ROW);
+		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+            if ($row['EMPLOYMENT_ROLE_TYPE']=='VOLUN') $row['PAYROLL_AGENCY_CODE'] = "00000";
+			$results[] = $row;
+		}
         $this->nullToEmpty($results);
         $this->_arr['results'] = $results;
         $this->returnData = $this->_arr;

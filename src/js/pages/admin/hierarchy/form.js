@@ -10,10 +10,10 @@ import { Icon } from "@iconify/react";
 export const WorkflowContext = React.createContext();
 WorkflowContext.displayName = 'WorkflowContext';
 
-const AdminRequestHierarchyHierarchy = lazy(()=>import("../../../blocks/admin/hierarchy/requests/hierarchy"));
-const AdminRequestHierarchyWorkflow = lazy(()=>import("../../../blocks/admin/hierarchy/requests/workflow"));
+const AdminFormHierarchyHierarchy = lazy(()=>import("../../../blocks/admin/hierarchy/forms/hierarchy"));
+const AdminFormHierarchyWorkflow = lazy(()=>import("../../../blocks/admin/hierarchy/forms/workflow"));
 
-export default function AdminRequestHierarchy() {
+export default function AdminFormHierarchy() {
     const tabs = [
         {id:'hierarchy',title:'Hierarchy'},
         {id:'workflow',title:'Workflow'}
@@ -24,7 +24,7 @@ export default function AdminRequestHierarchy() {
     const [isNew,setIsNew] = useState('');
 
     const {getGroups} = useGroupQueries();
-    const {getWorkflow} = useWorkflowQueries('request');
+    const {getWorkflow} = useWorkflowQueries('form');
     const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME'])});
     const workflows = getWorkflow({enabled:!!groups.data,select:d=>{
         return d.map(w => {
@@ -38,7 +38,7 @@ export default function AdminRequestHierarchy() {
 
     const navigate = tab => {
         setActiveTab(tab);
-        history.push('/admin/hierarchy/request/'+tab);
+        history.push('/admin/hierarchy/form/'+tab);
     }
 
     useEffect(()=>{setActiveTab(tabs.map(t=>t.id).includes(pagetab)?pagetab:'hierarchy');},[pagetab]);
@@ -49,10 +49,10 @@ export default function AdminRequestHierarchy() {
             <section>
                 <header>
                     <Row>
-                        <Col><h2>Request Hierarchy</h2></Col>
+                        <Col><h2>Form Hierarchy</h2></Col>
                     </Row>
                 </header>
-                <Tabs activeKey={activeTab} onSelect={navigate} id="request-hierarchy-tabs">
+                <Tabs activeKey={activeTab} onSelect={navigate} id="form-hierarchy-tabs">
                     {tabs.map(t => (
                         <Tab key={t.id} eventKey={t.id} title={t.title}>
                             <Container as="article" className="mt-3" fluid>
@@ -71,8 +71,8 @@ export default function AdminRequestHierarchy() {
 
 function HierarchyRouter({tab}) {
     switch(tab) {
-        case "hierarchy": return <AdminRequestHierarchyHierarchy/>;
-        case "workflow": return <AdminRequestHierarchyWorkflow/>;
+        case "hierarchy": return <AdminFormHierarchyHierarchy/>;
+        case "workflow": return <AdminFormHierarchyWorkflow/>;
         default: return <p>{tab}</p>;
     }
 }
@@ -80,9 +80,15 @@ function HierarchyRouter({tab}) {
 /**
  * Component to display hierarchy chain on both tabs
  */
-export function HierarchyChain({list,conditions}) {
+export function HierarchyChain({list,conditions,sendToGroup}) {
     return (
         <>
+            {!!sendToGroup &&
+                <span className="my-1">
+                    <Badge variant="primary" className="p-2 border">Group</Badge>
+                    {(list.length>0)&&<span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>}
+                </span>
+            }
             {list.map((g,i) => {
                 const cond = find(conditions,(c=>c.seq==i));
                 return(

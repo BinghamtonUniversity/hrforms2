@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState, useReducer } from "react";
-import { Row, Col, Modal, Form, Tabs, Tab, Container, Alert, OverlayTrigger, Popover } from "react-bootstrap";
+import React, { useCallback, useEffect, useMemo, useState, useReducer, useRef } from "react";
+import { Row, Col, Modal, Form, Tabs, Tab, Container, Alert } from "react-bootstrap";
 import { useForm, FormProvider, Controller, useFormContext } from "react-hook-form";
 import { AppButton, CheckboxTreeComponent, DescriptionPopover, errorToast, ModalConfirm } from "../../components";
 import { useTransactionQueries, useCodesQueries } from "../../../queries/codes";
@@ -7,11 +7,23 @@ import DataTable from "react-data-table-component";
 import { toast } from "react-toastify";
 import { useQueryClient } from "react-query";
 import { allTabs } from "../../../pages/form";
+import { flattenObject } from "../../../utility";
+import { useHotkeys } from "react-hotkeys-hook";
 
 export default function PayrollTransactionsTab() {
     const [isNew,setIsNew] = useState(false);
     const [selectedRow,setSelectedRow] = useState({});
     const [changeRow,setChangeRow] = useState({});
+
+    const [filterText,setFilterText] = useState('');
+    const [rows,setRows] = useState([]);
+    const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
+    const searchRef = useRef();
+
+    useHotkeys('ctrl+f',e=>{
+        e.preventDefault();
+        searchRef.current.focus()
+    });
 
     //need to get ALL the codes
     const {getCodes:getPayrollCodes} = useCodesQueries('payroll');
@@ -24,8 +36,15 @@ export default function PayrollTransactionsTab() {
     const transactioncodes = getTransactionCodes();
 
     const queryclient = useQueryClient();
+    //TODO: ERROR: This is wrong, getPayTrans expects payroll code to be passed, not id.
     const {getPayTrans,patchPayTrans,deletePayTrans} = useTransactionQueries(changeRow?.PAYTRANS_ID);
-    const paytrans = getPayTrans({enabled:payrollcodes.isSuccess&&formcodes.isSuccess&&actioncodes.isSuccess&&transactioncodes.isSuccess});
+    const paytrans = getPayTrans({
+        enabled:payrollcodes.isSuccess&&formcodes.isSuccess&&actioncodes.isSuccess&&transactioncodes.isSuccess,
+        onSuccess:d=>{
+            setRows(d);
+            searchRef.current.focus();
+        }
+    });
     const updateActive = patchPayTrans();
     const delpaytrans = deletePayTrans();
 
@@ -42,6 +61,34 @@ export default function PayrollTransactionsTab() {
         console.log(r);
     },[]);
     const handleRowClick = useCallback(row=>setSelectedRow(row),[]);
+
+    const filterComponent = useMemo(() => {
+        const handleFilterChange = e => {
+            if (e.target.value) {
+                setResetPaginationToggle(false);
+                setFilterText(e.target.value);
+            } else {
+                setResetPaginationToggle(true);
+                setFilterText('');
+            }
+        }
+        return(
+            <Form onSubmit={e=>e.preventDefault()}>
+                <Form.Group as={Row} controlId="filter">
+                    <Form.Label column sm="2">Search: </Form.Label>
+                    <Col sm="10">
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange}/>
+                    </Col>
+                </Form.Group>
+            </Form>
+        );
+    },[filterText]);
+
+    const filteredRows = useMemo(()=>rows.filter(row => Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase())),[rows,filterText]);
+
+    const paginationComponentOptions = {
+        selectAllRowsItem: true
+    };
 
     const columns = useMemo(() => [
         {name:'Actions',cell:row=>{
@@ -139,8 +186,13 @@ export default function PayrollTransactionsTab() {
                 <DataTable
                         keyField="PAYTRANS_ID"
                         columns={columns}
-                        data={paytrans.data}
-                        pagination 
+                        data={filteredRows}
+                        subHeader
+                        subHeaderComponent={filterComponent}
+                        pagination
+                        paginationRowsPerPageOptions={[10,20,30,40,50,100]}
+                        paginationResetDefaultPage={resetPaginationToggle}
+                        paginationComponentOptions={paginationComponentOptions}
                         striped 
                         responsive
                         highlightOnHover

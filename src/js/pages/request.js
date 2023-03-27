@@ -265,6 +265,8 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
     }
     const handleUndo = () => {
         methods.reset(Object.assign({},defaultVals,data));
+        setActiveTab('information');
+        setLockTabs(true);
     }
     const handleSave = action => {
         methods.setValue('action',action);
@@ -286,6 +288,10 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
         setIsBlocking(true); //TODO: when true should be full block with no prompt
         setLockTabs(true);
         //TODO: switch? save, submit, appove, reject?
+        if (data.action=='approve'||data.action=='reject') {
+            console.log('TODO: handle approve/reject');
+            return;
+        }
         if (isDraft) {
             if (isNew || data.action=='submit') {
                 createReq.mutateAsync(data).then(d => {
@@ -379,7 +385,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
                                             {t.id!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
                                             {isDraft && 
                                                 <>
-                                                    {methods.formState.isDirty && <AppButton format="undo" onClick={handleUndo} disabled={isSaving}>Undo</AppButton>}
+                                                    {methods.formState.isDirty && <AppButton format="undo" onClick={handleUndo} disabled={isSaving}>Reset</AppButton>}
                                                     {!isNew && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
                                                     {!(isNew&&lockTabs)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
                                                     {t.id=='review'&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}>Submit</AppButton>}
@@ -387,8 +393,8 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
                                             }
                                             {(!isDraft&&t.id=='review') && 
                                                 <>
-                                                    <Button id="reject" variant="danger" onClick={()=>console.log('reject')} disabled={hasErrors||isSaving}><Icon icon="mdi:close-circle"/>Reject</Button>
-                                                    <Button id="approve" variant="success" onClick={()=>handleSave('approve')} disabled={hasErrors||isSaving}><Icon icon="mdi:check"/>Appprove</Button>
+                                                    <AppButton format="approve" id="approve" onClick={()=>handleSave('approve')} disabled={hasErrors||isSaving}>Approve</AppButton>
+                                                    <AppButton format="reject" id="reject" onClick={()=>handleSave('reject')} disabled={hasErrors||isSaving}>Reject</AppButton>
                                                 </>
                                             }
                                         </>

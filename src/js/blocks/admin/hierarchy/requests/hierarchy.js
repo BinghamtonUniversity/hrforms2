@@ -18,7 +18,7 @@ HierarchyContext.displayName = 'HierarchyContext';
 
 export default function HierarchyTab() {
     const {getListData} = useAppQueries();
-    const {getHierarchy} = useHierarchyQueries();
+    const {getHierarchy} = useHierarchyQueries('request');
     const {groups} = useContext(WorkflowContext);
     const position = getListData('posTypes');
     const hierarchy = getHierarchy({select:d=>{
@@ -94,7 +94,9 @@ function HierarchyTable() {
         );
     },[filterText]);
 
-    const filteredRows = rows.filter(row => Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
+    const filteredRows = useMemo(() => {
+        return rows.filter(row => Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
+    },[rows,filterText]);
 
     const columns = useMemo(() => [
         {name:'Actions',cell:row=>{
@@ -106,9 +108,9 @@ function HierarchyTable() {
         },ignoreRowClick:true},
         {name:'Position Type',selector:row=>row.POSITION_TYPE,sortable:true,sortField:'POSITION_TYPE',cell:row=>{
             return `${row.POSITION_TYPE} - ${position[row.POSITION_TYPE].title}`;
-        }},
+        },grow:2},
         {name:'Group Name',selector:row=>row.GROUP_NAME,sortable:true,sortField:'GROUP_NAME'},
-        {name:'Workflow ID',selector:row=>row.WORKFLOW_ID,sortable:true,sortField:'WORKFLOW_ID'},
+        {name:'Workflow ID',selector:row=>row.WORKFLOW_ID,sortable:true,sortField:'WORKFLOW_ID',center:true},
         {name:'Workflow Routing',selector:row=>row.GROUPS,grow:5,style:{flexWrap:'wrap'},cell:row=><HierarchyChain list={row.GROUPS_ARRAY} conditions={row.CONDITIONS}/>},
     ],[hierarchy]);
 
@@ -150,7 +152,7 @@ function HierarchyTable() {
 function DeleteHierarchy({HIERARCHY_ID,setDeleteHierarchy}) {
     const [show,setShow] = useState(true);
     const queryclient = useQueryClient();
-    const {deleteHierarchy} = useHierarchyQueries(HIERARCHY_ID);
+    const {deleteHierarchy} = useHierarchyQueries('request',HIERARCHY_ID);
     const del = deleteHierarchy();
     const handleDelete = () => {
         setShow(false);
@@ -199,7 +201,7 @@ function AddEditHierarchy(props) {
     const {hierarchy} = useContext(HierarchyContext);
 
     const queryclient = useQueryClient();
-    const {postHierarchy,patchHierarchy} = useHierarchyQueries(props.HIERARCHY_ID);
+    const {postHierarchy,patchHierarchy} = useHierarchyQueries('request',props.HIERARCHY_ID);
     const create = postHierarchy();
     const update = patchHierarchy();
 

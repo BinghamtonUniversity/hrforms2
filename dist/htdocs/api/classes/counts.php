@@ -37,6 +37,10 @@ class Counts extends HRForms2 {
 		$request_final = count((new requestlist(array('final'),false))->returnData);
 
 		$form_drafts = count((new formlist(array('drafts'),false))->returnData);
+		$form_pending = count((new formlist(array('pending'),false))->returnData);
+		$form_approvals = count((new formlist(array('approvals'),false))->returnData);
+		$form_rejections = count((new formlist(array('rejections'),false))->returnData);
+		$form_final = count((new formlist(array('final'),false))->returnData);
 
 		$counts = array(
             "requests" => array(
@@ -48,10 +52,10 @@ class Counts extends HRForms2 {
             ),
             "forms" => array(
                 "drafts"=>$form_drafts,
-				"pending"=>0,
-                "approvals"=>0,
-                "rejections"=>0,
-                "final"=>0
+				"pending"=>$form_pending,
+                "approvals"=>$form_approvals,
+                "rejections"=>$form_rejections,
+                "final"=>$form_final
             )
         );
         $this->toJSON($counts);

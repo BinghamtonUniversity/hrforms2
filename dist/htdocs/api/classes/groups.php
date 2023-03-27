@@ -34,7 +34,7 @@ class Groups extends HRForms2 {
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
-			$this->_arr[] = $row;
+			$this->_arr[] = $this->null2Empty($row);
 		}
 		oci_free_statement($stmt);
 		$this->returnData = $this->_arr;
@@ -43,11 +43,12 @@ class Groups extends HRForms2 {
 	function POST() {
 		//include 'groupusers.php';
 		//include 'groupdepts.php';
-		$qry = "insert into hrforms2_groups values(HRFORMS2_GROUP_ID_SEQ.nextval, :group_name, sysdate, :start_date, :end_date) returning GROUP_ID into :group_id";
+		$qry = "insert into hrforms2_groups values(HRFORMS2_GROUP_ID_SEQ.nextval, :group_name, sysdate, :start_date, :end_date, :description) returning GROUP_ID into :group_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":group_name", $this->POSTvars['GROUP_NAME']);
 		oci_bind_by_name($stmt,":start_date", $this->POSTvars['START_DATE']);
 		oci_bind_by_name($stmt,":end_date", $this->POSTvars['END_DATE']);
+		oci_bind_by_name($stmt,":description", $this->POSTvars['GROUP_DESCRIPTION']);
 		oci_bind_by_name($stmt,":group_id", $GROUP_ID,-1,SQLT_INT);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
@@ -59,11 +60,17 @@ class Groups extends HRForms2 {
 	function PUT() {
 		//include 'groupusers.php';
 		//include 'groupdepts.php';
-		$qry = "update hrforms2_groups set group_name = :group_name, start_date = :start_date, end_date = :end_date where group_id = :group_id";
+		$qry = "update hrforms2_groups set 
+			group_name = :group_name, 
+			start_date = :start_date, 
+			end_date = :end_date,
+			group_description = :description
+			where group_id = :group_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":group_name", $this->POSTvars['GROUP_NAME']);
 		oci_bind_by_name($stmt,":start_date", $this->POSTvars['START_DATE']);
 		oci_bind_by_name($stmt,":end_date", $this->POSTvars['END_DATE']);
+		oci_bind_by_name($stmt,":description", $this->POSTvars['GROUP_DESCRIPTION']);
 		oci_bind_by_name($stmt,":group_id", $this->req[0]);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();

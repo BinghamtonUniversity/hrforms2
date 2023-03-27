@@ -26,7 +26,7 @@ export default function PersonDemographics() {
 
     return (
         <HRFormContext.Consumer>
-            {({showInTest}) => (
+            {({showInTest,readOnly}) => (
                 <article className="mt-3">
                     <Row as="header">
                         <Col as="h3">Demographics</Col>
@@ -45,6 +45,7 @@ export default function PersonDemographics() {
                                         closeOnScroll={true}
                                         onChange={field.onChange}
                                         autoComplete="off"
+                                        disabled={readOnly}
                                     />}
                                 />
                                 <InputGroup.Append>
@@ -65,7 +66,7 @@ export default function PersonDemographics() {
                                     name={`${name}.GENDER.id`}
                                     control={control}
                                     render={({field})=>(
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
                                             <option></option>
                                             {gender.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
                                         </Form.Control>
@@ -83,8 +84,8 @@ export default function PersonDemographics() {
                                 control={control}
                                 render={({field}) => (
                                     <>
-                                        <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'}/>
-                                        <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'}/>
+                                        <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={readOnly}/>
+                                        <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'} disabled={readOnly}/>
                                     </>
                                 )}
                             />
@@ -104,8 +105,8 @@ export default function PersonDemographics() {
                                 control={control}
                                 render={({field}) => (
                                     <>
-                                        <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'}/>
-                                        <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'}/>
+                                        <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={readOnly}/>
+                                        <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'} disabled={readOnly}/>
                                     </>
                                 )}
                             />
@@ -138,20 +139,24 @@ function PersonDemographicsMilitaryStatus() {
         }
     }
     return (
-        <Form.Group as={Row}>
-            <Form.Label column md={2}>Military Status:</Form.Label>
-            <Col xs="auto" className="pt-2">
-                {milstatus.isLoading && <Loading>Loading Data</Loading>}
-                {milstatus.isError && <Loading isError>Failed to Load</Loading>}
-                {milstatus.data && 
-                <Controller
-                    name={`${name}.militaryStatus`}
-                    defaultValue="Yes"
-                    control={control}
-                    render={({field}) => milstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.findIndex(v=>v[0]==s[0])!=-1} onChange={e=>handleChange(e,field)}/>)}
-                />}
-            </Col>
-        </Form.Group>
+        <HRFormContext.Consumer>
+            {({readOnly}) => (
+                <Form.Group as={Row}>
+                    <Form.Label column md={2}>Military Status:</Form.Label>
+                    <Col xs="auto" className="pt-2">
+                        {milstatus.isLoading && <Loading>Loading Data</Loading>}
+                        {milstatus.isError && <Loading isError>Failed to Load</Loading>}
+                        {milstatus.data && 
+                        <Controller
+                            name={`${name}.militaryStatus`}
+                            defaultValue="Yes"
+                            control={control}
+                            render={({field}) => milstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.findIndex(v=>v[0]==s[0])!=-1} onChange={e=>handleChange(e,field)} disabled={readOnly}/>)}
+                        />}
+                    </Col>
+                </Form.Group>
+            )}
+        </HRFormContext.Consumer>
     );
 }
 
@@ -166,7 +171,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
 
     return (
         <HRFormContext.Consumer>
-            {({showInTest,testHighlight}) => (
+            {({showInTest,testHighlight,readOnly}) => (
                 <>
                     <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
                         <Form.Label column md={2}>Non-US Citizen Type:</Form.Label>
@@ -179,7 +184,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                                         {citizentype.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
                                         {citizentype.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
                                         {citizentype.data && 
-                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
+                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
                                                 <option></option>
                                                 {citizentype.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
                                             </Form.Control>
@@ -198,8 +203,8 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                                     control={control}
                                     render={({field}) => (
                                         <>
-                                            <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'}/>
-                                            <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'}/>
+                                            <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={readOnly}/>
+                                            <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'} disabled={readOnly}/>
                                         </>
                                     )}
                                 />
@@ -213,7 +218,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                                 name={`${name}.CITIZENSHIP_COUNTRY_CODE.id`}
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)}/>}
+                                render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={readOnly}/>}
                             />
                         </Col>
                     </Form.Group>
@@ -228,7 +233,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                                     {visatype.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
                                     {visatype.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
                                     {visatype.data &&
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
                                             <option></option>
                                             {visatype.data.map(k=><option key={k[0]} value={k[0]}>{k[0]} - {k[1]}</option>)}
                                         </Form.Control>
@@ -263,7 +268,7 @@ function PersonDemographicsVeteranDetails({watchVeteran}) {
     }
     return (
         <HRFormContext.Consumer>
-            {({testHighlight}) => (
+            {({testHighlight,readOnly}) => (
                 <>
                     <Form.Group as={Row} className={testHighlight(watchVeteran=='Y')}>
                         <Form.Label column md={2}>Protected Veteran Status:</Form.Label>
@@ -274,7 +279,7 @@ function PersonDemographicsVeteranDetails({watchVeteran}) {
                             <Controller
                                 name={`${name}.protectedVetStatus`}
                                 control={control}
-                                render={({field}) => vetstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.findIndex(v=>v[0]==s[0])!=-1} onChange={e=>handleChange(e,field)}/>)}
+                                render={({field}) => vetstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.findIndex(v=>v[0]==s[0])!=-1} onChange={e=>handleChange(e,field)} disabled={readOnly}/>)}
                             />}
                         </Col>
                     </Form.Group>
@@ -292,6 +297,7 @@ function PersonDemographicsVeteranDetails({watchVeteran}) {
                                         closeOnScroll={true}
                                         onChange={field.onChange}
                                         autoComplete="off"
+                                        disabled={readOnly}
                                     />}
                                 />
                                 <InputGroup.Append>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Alert, Button, Modal, ListGroup, NavDropdown, Form, OverlayTrigger, Popover } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { parse, format } from "date-fns";
@@ -34,6 +34,7 @@ export const formats = {
     'add-user':{icon:'mdi:account-plus',variant:'success'},
     'activate-group':{icon:'mdi:account-multiple',variant:'success'},
     'activate-user':{icon:'mdi:account',variant:'success'},
+    'approve':{icon:'mdi:check',variant:'success'},
     'cancel':{icon:'mdi:close-circle',variant:'danger'},
     'clear':{icon:'mdi:eraser-variant',variant:'secondary'},
     'close':{icon:'mdi:close-circle',variant:'secondary'},
@@ -47,6 +48,7 @@ export const formats = {
     'impersonate':{icon:'mdi:account-switch',variant:'primary'},
     'loading':{icon:'mdi:loading',variant:'secondary',spin:true},
     'next':{icon:'mdi:arrow-right-thick',variant:'primary'},
+    'reject':{icon:'mdi:close-circle',variant:'danger'},
     'run':{icon:'mdi:run',variant:'danger'},
     'save':{icon:'mdi:content-save',variant:'primary'},
     'save-move':{icon:'mdi:content-save-move',variant:'primary'},
@@ -91,25 +93,36 @@ export function CurrencyFormat({children}) {
  *      confirm:{title:'',variant:'',callback:()=>null}
  * }
  */
-const ModalConfirm = React.memo(({children,show,title,buttons,icon}) => {
-    const handleClose = () => invoke(buttons,'close.callback');
-    const handleConfirm = () => invoke(buttons,'confirm.callback');
+const ModalConfirm = React.memo(({children,show,title,buttons,icon,id}) => {
+    const [isSaving,setIsSaving] = useState(false);
+    const handleConfirm = () => {
+        setIsSaving(true);
+        invoke(buttons,'confirm.callback');
+    }
+    const handleClose = () => {
+        if (isSaving) return 0;
+        invoke(buttons,'close.callback');
+    }
+    useEffect(()=>setIsSaving(false),[id]);
     return (
-        <Modal show={show} onHide={handleClose} backdrop="static">
+        <Modal id={`modal_confirm_${id}`} show={show} onHide={handleClose} backdrop="static">
             <Modal.Header closeButton>
                 <Modal.Title>{icon&&<Icon className="iconify-inline" icon={icon} mr={2}/>}{title}</Modal.Title>
             </Modal.Header>
             <Modal.Body>{children}</Modal.Body>
             <Modal.Footer>
+                {isSaving && <Loading>Processing request...</Loading>}
                 <AppButton 
                     format={get(buttons,'close.format','close')}
                     variant={get(buttons,'close.variant','')}
                     onClick={handleClose}
+                    disabled={isSaving}
                 >{get(buttons,'close.title','Close')}</AppButton>
                 <AppButton 
                     format={get(buttons,'confirm.format','save')}
                     variant={get(buttons,'confirm.variant','')}
                     onClick={handleConfirm}
+                    disabled={isSaving}
                 >{get(buttons,'confirm.title','Confirm')}</AppButton>
             </Modal.Footer>
         </Modal>
@@ -273,12 +286,18 @@ const DescriptionPopover = ({title,content,showempty,children,...props}) => {
         s.width = `${props.width}em`;
     }
     return (
-        <OverlayTrigger key={props.id} trigger={props?.trigger||['focus','hover']} placement={props?.placement||"auto"} overlay={
-            <Popover id={props.id} style={s}>
-                {title&&<Popover.Title>{title}</Popover.Title>}
-                <Popover.Content>{(!content)?(<span className="font-italic">{emptydisplay}</span>):content}</Popover.Content>
-            </Popover>
-        }>
+        <OverlayTrigger 
+            key={props.id} 
+            trigger={props?.trigger||['focus','hover']} 
+            placement={props?.placement||"auto"} 
+            flip={props?.flip}
+            overlay={
+                <Popover id={props.id} style={s}>
+                    {title&&<Popover.Title>{title}</Popover.Title>}
+                    <Popover.Content>{(!content)?(<span className="font-italic">{emptydisplay}</span>):content}</Popover.Content>
+                </Popover>
+            }
+        >
             {children}
         </OverlayTrigger>
     );

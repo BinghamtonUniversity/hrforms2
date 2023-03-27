@@ -1,10 +1,9 @@
 import q from '../queries';
 import {useQuery,useMutation} from "react-query";
 
-export function useTransactionQueries(PAYTRANS_ID) {
+export function useTransactionQueries(PAYROLL_CODE) {
     const getPayTrans = (...args) => {
         const options = args[0]?.options||args[0]||{};
-        //const PAYROLL_CODE = args[0]?.PAYROLL_CODE||args[1]||null;
         if(options.select) options.select2 = options.select;
         options.select = data => {
             if (!data) return;
@@ -16,13 +15,13 @@ export function useTransactionQueries(PAYTRANS_ID) {
             });
             return (options.select2)?options.select2(data):data;
         }
-        if (PAYTRANS_ID) return useQuery(['paytrans',PAYTRANS_ID],q(`paytrans/${PAYTRANS_ID}`),options);
+        if (PAYROLL_CODE) return useQuery(['paytrans',PAYROLL_CODE],q(`paytrans/${PAYROLL_CODE}`),options);
         return useQuery('paytrans',q('paytrans'),options);
     }
     const postPayTrans = () => useMutation(d=>q('paytrans','POST',d)());
-    const putPayTrans = () => useMutation(d=>q(`paytrans/${PAYTRANS_ID}`,'PUT',d)());
-    const patchPayTrans = () => useMutation(d=>q(`paytrans/${PAYTRANS_ID}`,'PATCH',d)());
-    const deletePayTrans = () => useMutation(d=>q(`paytrans/${PAYTRANS_ID}`,'DELETE',{})());
+    const putPayTrans = () => useMutation(d=>q(`paytrans/${PAYROLL_CODE}`,'PUT',d)());
+    const patchPayTrans = () => useMutation(d=>q(`paytrans/${PAYROLL_CODE}`,'PATCH',d)());
+    const deletePayTrans = () => useMutation(d=>q(`paytrans/${PAYROLL_CODE}`,'DELETE',{})());
 
     return {getPayTrans,postPayTrans,putPayTrans,patchPayTrans,deletePayTrans};
 }

@@ -4,18 +4,20 @@ import { useQueryClient } from "react-query";
 import useFormQueries from "../../queries/forms";
 import useGroupQueries from "../../queries/groups";
 import { useForm, Controller } from "react-hook-form";
-import { capitalize, find } from "lodash";
+import { capitalize, find, pick } from "lodash";
 import { Redirect } from "react-router-dom";
 import { Row, Col, Button, Badge, Modal, Form } from "react-bootstrap";
-import { format } from "date-fns";
 import DataTable from 'react-data-table-component';
 import { Icon } from "@iconify/react";
-import { DateFormat, DescriptionPopover, Loading, ModalConfirm } from "../../blocks/components";
+import { AppButton, DescriptionPopover, Loading, ModalConfirm } from "../../blocks/components";
 import { getSettings, currentUser, getAuthInfo, SettingsContext, NotFound } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
+import { displayFormCode } from "../form";
 
 export default function FormList() {
     const {part} = useParams();
+    const [redirect,setRedirect] = useState();
+    if (redirect) return <Redirect to={redirect}/>;
     return (
         <SettingsContext.Consumer>
             {({forms}) => {
@@ -25,7 +27,9 @@ export default function FormList() {
                 <>
                     <header>
                         <Row>
-                            <Col><h2>Forms List: {forms.menu[part]?.title}</h2></Col>
+                            <Col>
+                                <h2>Forms List: {forms.menu[part]?.title} <AppButton format="add" onClick={()=>setRedirect('/form')}>New Form</AppButton></h2>
+                            </Col>
                         </Row>
                     </header>
                     <section>
@@ -44,10 +48,7 @@ function ListData({list}) {
     const listdata = getFormList(list,{enabled:!!groups.data,select:d=>{
         return d.map(l => {
             l.STATUS_ARRAY = l.JOURNAL_STATUS.split(',');
-            l.GROUPS_ARRAY = l.GROUPS.split(',').map(g => {
-                const name = find(groups.data,{GROUP_ID:g})
-                return {GROUP_ID:g,GROUP_NAME:name?.GROUP_NAME}
-            });
+            l.GROUPS_ARRAY = l.GROUPS.split(',').map(g=>pick(find(groups.data,{GROUP_ID:g}),['GROUP_ID','GROUP_NAME','GROUP_DESCRIPTION']));
             return l;
         });
     }});
@@ -63,6 +64,7 @@ function ListData({list}) {
 }
 
 function ListTable({data,list}) {
+    const [expandAll,setExpandAll] = useState(false);
     const [filterText,setFilterText] = useState('');
     const [rows,setRows] = useState([]);
     const [redirect,setRedirect] = useState();
@@ -76,7 +78,9 @@ function ListTable({data,list}) {
         e.preventDefault();
         searchRef.current.focus()
     });
-
+    useHotkeys('ctrl+alt+e',()=>{
+        setExpandAll(!expandAll);
+    },[expandAll]);
 
     const {SUNY_ID} = currentUser();
     const {isAdmin} = getAuthInfo();
@@ -95,8 +99,12 @@ function ListTable({data,list}) {
     };
 
     const handleAction = (a,r) => {
-        setAction(a);
-        setSelectedRow(r);
+        if (a == 'journal') {
+            setRedirect('/form/journal/'+r.FORM_ID);
+        } else {
+            setAction(a);
+            setSelectedRow(r);
+        }
     };
     const modalCallback = (e,comment) => {
         if (!e || e?.target.id == 'cancel') {
@@ -104,10 +112,8 @@ function ListTable({data,list}) {
             setSelectedRow(undefined);
             return true;
         }
-        console.log(action,comment);
-        frm.mutateAsync({action:action,reqId:selectedRow.FORM_ID,comment:comment,...selectedRow}).then(d=>{
-            console.log(d);
-            //refetch: counts and requestlist
+        frm.mutateAsync({action:action,formId:selectedRow.FORM_ID,comment:comment,...selectedRow}).then(()=>{
+            //refetch: counts and formlist
             queryclient.refetchQueries(SUNY_ID).then(() => {
                 setAction(undefined);
                 setSelectedRow(undefined);    
@@ -133,6 +139,14 @@ function ListTable({data,list}) {
         }
         return false;
     },[list,general,isAdmin]);
+    
+    const noData = useMemo(() => {
+        return (
+            <SettingsContext.Consumer>
+                {({forms}) => <p className="m-3">No Current {forms.menu[list]?.title}</p>}
+            </SettingsContext.Consumer>
+        );
+    },[list]);
 
     const filterComponent = useMemo(() => {
         const handleFilterChange = e => {
@@ -144,24 +158,36 @@ function ListTable({data,list}) {
                 setFilterText('');
             }
         }
+        const expandText = ((expandAll)?'Collapse':'Expand') + ' All';
         return(
-            <Form onSubmit={e=>e.preventDefault()}>
-                <Form.Group as={Row} controlId="filter">
-                    <Form.Label column sm="2">Search: </Form.Label>
-                    <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange}/>
+            <>
+                {expandRow &&
+                    <Col className="pl-0">
+                        <Form.Check type="switch" id="toggle-expand" label={expandText} onChange={()=>setExpandAll(!expandAll)} checked={expandAll}/>
                     </Col>
-                </Form.Group>
-            </Form>
+                }
+                <Col sm={6} md={5} lg={4} xl={3}>
+                    <Form onSubmit={e=>e.preventDefault()}>
+                        <Form.Group as={Row} controlId="filter">
+                            <Form.Label column sm="2">Search: </Form.Label>
+                            <Col sm="10">
+                                <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange}/>
+                            </Col>
+                        </Form.Group>
+                    </Form>
+                </Col>
+            </>
         );
-    },[filterText]);
+    },[filterText,expandAll,expandRow,list]);
 
-    const filteredRows = rows.filter(row=>Object.values(row).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
+    const filteredRows = useMemo(()=>rows.filter(row=>Object.values(row).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase())),[rows,filterText]);
+
     const columns = useMemo(() => [
         {name:'Actions',cell:row=>{
             return (
                 <div className="button-group">
                     {(list=='drafts')&&<Button variant="danger" className="no-label" size="sm" title="Delete Draft" onClick={()=>handleAction('delete',row)}><Icon icon="mdi:delete"/></Button>}
+                    {(list!='drafts')&&<Button variant="primary" className="no-label" size="sm" title="Show Journal" onClick={()=>handleAction('journal',row)}><Icon icon="mdi:information-variant-circle-outline"/></Button>}
                     {!(['drafts','pending','rejections'].includes(list))&&
                         <>
                             <Button variant="success" className="no-label" size="sm" title="Approve" onClick={()=>handleAction('approve',row)}><Icon icon="mdi:check"/></Button>
@@ -177,11 +203,9 @@ function ListTable({data,list}) {
         {name:'Form',selector:row=>(
                 <DescriptionPopover
                     id={`${row.FORM_ID}_code_description`}
-                    content={[row.FORM_CODE_TITLE,row.ACTION_CODE_TITLE,row.TRANSACTION_CODE_TITLE].join(' | ')}
+                    content={displayFormCode({variant:"title",separator:" | ",titles:[row.FORM_TITLE,row.ACTION_TITLE,row.TRANSACTION_TITLE]})}
                 >
-                    <p className="mb-0">{
-                        [row.FORM_CODE,row.ACTION_CODE,row.TRANSACTION_CODE].join('-')
-                    }</p>
+                    <p className="mb-0">{displayFormCode({codes:[row.FORM_CODE,row.ACTION_CODE,row.TRANSACTION_CODE]})}</p>
                 </DescriptionPopover>
         ),sortable:true},
         {name:'Payroll',selector:row=>(
@@ -196,7 +220,7 @@ function ListTable({data,list}) {
             <p className="mb-0">{row.TITLE} ({row.LINE_NUMBER})</p>
         ),sortable:true,wrap:true},
         {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortField:'UNIX_TS'},
-        {name:'Submitted By',selector:row=>row.SUNY_ID,sortable:true,omit:(list=='drafts'||list=='pending'),format:row=>`${row.fullName} (${row.SUNY_ID})`},
+        {name:'Submitted By',selector:row=>row.SUNY_ID,sortable:true,omit:(list=='drafts'||list=='pending'),format:row=>`${row.createdByName} (${row.CREATED_BY_SUNY_ID})`},
     ],[data,list]);
     useEffect(()=>{
         setRedirect(undefined);
@@ -222,8 +246,17 @@ function ListTable({data,list}) {
                 onRowClicked={handleRowClick}
                 expandableRows={expandRow}
                 expandableRowsComponent={ExpandedComponent}
+                expandableRowExpanded={()=>expandAll}
+                noDataComponent={noData}
             />
-            <ModalConfirm show={action=='delete'} title="Delete?" buttons={confirmDeleteButtons}>Are you sure you want to DELETE draft: {selectedRow?.FORM_ID}?</ModalConfirm>
+            <ModalConfirm 
+                id={selectedRow?.FORM_ID}
+                show={action=='delete'} 
+                title="Delete?"
+                buttons={confirmDeleteButtons}
+            >
+                    Are you sure you want to DELETE draft: {selectedRow?.FORM_ID}?
+            </ModalConfirm>
             {(action&&action!='delete') && <ActionModal action={action} modalCallback={modalCallback}/>}
         </>
     );
@@ -249,6 +282,7 @@ function ExpandedComponent({data}) {
                 <span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>
             </span>
             {data.GROUPS_ARRAY.map((g,i)=>{
+                const key = `${data.FORM_ID}_${i}`;
                 if (data.STATUS_ARRAY[i] == 'X' && !showSkipped) return null;
                 let variant = 'white';
                 let classname = 'p-2 m-0 d-inline-flex flex-column badge-outline border';
@@ -264,11 +298,19 @@ function ExpandedComponent({data}) {
                 if (data.STATUS_ARRAY[i] == 'F') {title = 'Pending Final';}
                 if (i == data.SEQUENCE && data.STATUS == 'R') { variant = 'danger-light'; classname += '-danger'; title = 'Rejected'; }
                 return (
-                    <span key={i} className="my-1">
-                        <Badge as="p" title={title} variant={variant} className={classname}>
-                            <span>{g.GROUP_NAME}</span>
-                            <span className="pt-1 font-italic">{title}</span>
-                        </Badge>
+                    <span key={key} className="my-1">
+                        <DescriptionPopover
+                            id={`workflow_description_${key}`}
+                            title={title}
+                            placement="top"
+                            flip
+                            content={<p>{g.GROUP_NAME}: {(!g.GROUP_DESCRIPTION)?<em>No group description</em>:g.GROUP_DESCRIPTION}</p>}
+                        >
+                            <Badge as="p" variant={variant} className={classname}>
+                                <span>{g.GROUP_NAME}</span>
+                                <span className="pt-1 font-italic">{title}</span>
+                            </Badge>
+                        </DescriptionPopover>
                         {(i<data.GROUPS_ARRAY.length-1)&&<span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>}
                     </span>
                 );
@@ -278,14 +320,25 @@ function ExpandedComponent({data}) {
 }
 
 function ActionModal({action,modalCallback}) {
+    const [isSaving,setIsSaving] = useState(false);
     const {handleSubmit,control,setFocus,formState:{errors}} = useForm();
-    const onSubmit = (data,e) => modalCallback(e,data.comment);
+    const onSubmit = (data,e) => {
+        setIsSaving(true);
+        modalCallback(e,data.comment);
+    }
+    const onHide = e => {
+        if(isSaving) return 0;
+        modalCallback(e);
+    }
     const onError = error => {
         console.error(error);
     }
+    useHotkeys('ctrl+alt+r',()=>{
+        setIsSaving(false);
+    });
     useEffect(()=>setFocus('comment'),[setFocus]);
     return (
-        <Modal show={true} onHide={modalCallback} backdrop="static">
+        <Modal show={true} onHide={e=>onHide(e)} backdrop="static">
             <Form onSubmit={handleSubmit(onSubmit,onError)}>
                 <Modal.Header closeButton>
                     <Modal.Title>{capitalize(action)}</Modal.Title>
@@ -301,8 +354,9 @@ function ActionModal({action,modalCallback}) {
                         <Form.Control.Feedback type="invalid">{errors.comment?.message}</Form.Control.Feedback>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button id="cancel" variant="secondary" onClick={modalCallback}>Cancel</Button>
-                    <Button type="submit" id={action} variant={(action=='approve'?'success':'danger')}>{capitalize(action)}</Button>
+                    {isSaving && <Loading>Saving...</Loading>}
+                    <Button id="cancel" variant="secondary" onClick={modalCallback} disabled={isSaving}>Cancel</Button>
+                    <Button type="submit" id={action} variant={(action=='approve'?'success':'danger')} disabled={isSaving}>{capitalize(action)}</Button>
                 </Modal.Footer>
             </Form>
         </Modal>

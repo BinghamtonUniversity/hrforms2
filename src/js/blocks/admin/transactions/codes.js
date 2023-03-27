@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useReducer, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useReducer, useEffect, useRef } from "react";
 import { useCodesQueries } from "../../../queries/codes";
 import { startCase, toUpper } from "lodash";
 import DataTable from 'react-data-table-component';
@@ -7,6 +7,8 @@ import { AppButton, DescriptionPopover, errorToast, ModalConfirm } from "../../c
 import { useQueryClient } from "react-query";
 import { toast } from "react-toastify";
 import { useForm, Controller, FormProvider, useFormContext } from "react-hook-form";
+import { flattenObject } from "../../../utility";
+import { useHotkeys } from "react-hotkeys-hook";
 
 
 export default function CodesTab({tab,tabName}) {
@@ -22,9 +24,22 @@ export default function CodesTab({tab,tabName}) {
     const [selectedRow,setSelectedRow] = useState({});
     const [changedRow,setChangedRow] = useState({...defaultChangedRow});
     
+    const [filterText,setFilterText] = useState('');
+    const [rows,setRows] = useState([]);
+    const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
+    const searchRef = useRef();
+
+    useHotkeys('ctrl+f',e=>{
+        e.preventDefault();
+        searchRef.current.focus()
+    });
+
     const queryclient = useQueryClient();
     const {getCodes,patchCodes,deleteCodes} = useCodesQueries(tab,changedRow.code);
-    const codes = getCodes();
+    const codes = getCodes({onSuccess:d=>{
+        setRows(d);
+        searchRef.current.focus();
+    }});
     const updateCode = patchCodes();
     const deleteCode = deleteCodes();
 
@@ -55,6 +70,34 @@ export default function CodesTab({tab,tabName}) {
                 return;
         }
     },[vars]);
+
+    const filterComponent = useMemo(() => {
+        const handleFilterChange = e => {
+            if (e.target.value) {
+                setResetPaginationToggle(false);
+                setFilterText(e.target.value);
+            } else {
+                setResetPaginationToggle(true);
+                setFilterText('');
+            }
+        }
+        return(
+            <Form onSubmit={e=>e.preventDefault()}>
+                <Form.Group as={Row} controlId="filter">
+                    <Form.Label column sm="2">Search: </Form.Label>
+                    <Col sm="10">
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange}/>
+                    </Col>
+                </Form.Group>
+            </Form>
+        );
+    },[filterText]);
+
+    const filteredRows = useMemo(()=>rows.filter(row => Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase())),[rows,filterText]);
+
+    const paginationComponentOptions = {
+        selectAllRowsItem: true
+    };
 
     const columns = useMemo(() => [
         {name:'Actions',cell:row=>{
@@ -140,10 +183,15 @@ export default function CodesTab({tab,tabName}) {
                     <DataTable
                         keyField={vars.code.upper}
                         columns={columns}
-                        data={codes.data}
+                        data={filteredRows}
                         pagination 
                         striped 
                         responsive
+                        subHeader
+                        subHeaderComponent={filterComponent} 
+                        paginationRowsPerPageOptions={[10,20,30,40,50,100]}
+                        paginationResetDefaultPage={resetPaginationToggle}
+                        paginationComponentOptions={paginationComponentOptions}        
                         highlightOnHover
                         defaultSortFieldId={5}
                         pointerOnHover

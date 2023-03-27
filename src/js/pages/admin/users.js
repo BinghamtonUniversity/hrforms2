@@ -14,7 +14,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory, Link, Redirect } from "react-router-dom";
 import { pick } from "lodash";
 
 const defaultVals = {SUNYID:'',firstName:'',lastName:'',email:'',dept:'',startDate:new Date(),endDate:'',assignedGroups:[],availableGroups:[]};
@@ -23,6 +23,8 @@ export default function AdminUsers() {
     const [newUser,setNewUser] = useState(false);
     const {getUsers} = useUserQueries();
     const users = getUsers();
+
+    useHotkeys('ctrl+alt+n',()=>setNewUser(true));
 
     return (
         <>
@@ -56,9 +58,9 @@ function UsersTable({users,newUser,setNewUser}) {
 
     const searchRef = useRef();
 
-    useHotkeys('ctrl+f',e=>{
+    useHotkeys('ctrl+f,ctrl+alt+f',e=>{
         e.preventDefault();
-        searchRef.current.focus()
+        searchRef.current.focus();
     });
 
     const handleRowClick = useCallback(row=>setSelectedRow(row));
@@ -75,6 +77,11 @@ function UsersTable({users,newUser,setNewUser}) {
         const statusChange = e => {
             setStatusFilter(e.target.value);
         }
+        const handleKeyDown = e => {
+            // Handle special keys
+            if (e.ctrlKey&&e.altKey&e.key=="n") setNewUser(true);
+            if(e.key=="Escape"&&!filterText) searchRef.current.blur();
+        }
         const handleFilterChange = e => {
             if (e.target.value) {
                 setResetPaginationToggle(false);
@@ -87,34 +94,56 @@ function UsersTable({users,newUser,setNewUser}) {
             }
         }
         return(
-            <Form style={{flexDirection:'column'}} onSubmit={e=>e.preventDefault()}>
-                <Form.Group as={Row} controlId="filter">
-                    <Form.Label column sm="2">Search: </Form.Label>
-                    <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" value={filterText} placeholder="search..." onChange={handleFilterChange}/>
-                    </Col>
-                </Form.Group>
-                <Form.Group as={Row} controlId="status">
-                    <Form.Label column sm="2" className="pt-0">Status:</Form.Label>
-                    <Col sm="10">
-                        <Form.Check className="ml-2" inline label="All" name="status" type="radio" id="status_all" value="all" checked={statusFilter=='all'} onChange={statusChange} />
-                        <Form.Check inline label="Active" name="status" type="radio" id="status_active" value="active" checked={statusFilter=='active'} onChange={statusChange} />
-                        <Form.Check inline label="Inactive" name="status" type="radio" id="status_inactive" value="inactive" checked={statusFilter=='inactive'} onChange={statusChange} />
-                    </Col>
-                </Form.Group>
-            </Form>
+            <>
+                <Col sm={6} md={5} lg={4} xl={3} className="pr-0">
+                    <Form style={{flexDirection:'column'}} onSubmit={e=>e.preventDefault()}>
+                        <Form.Group as={Row} controlId="filter">
+                            <Form.Label column sm="2">Search: </Form.Label>
+                            <Col sm="10">
+                                <Form.Control ref={searchRef} className="ml-2" type="search" value={filterText} placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
+                            </Col>
+                        </Form.Group>
+                        <Form.Group as={Row} controlId="status">
+                            <Form.Label column sm="2" className="pt-0">Status:</Form.Label>
+                            <Col sm="10">
+                                <Form.Check className="ml-2" inline label="All" name="status" type="radio" id="status_all" value="all" checked={statusFilter=='all'} onChange={statusChange} />
+                                <Form.Check inline label="Active" name="status" type="radio" id="status_active" value="active" checked={statusFilter=='active'} onChange={statusChange} />
+                                <Form.Check inline label="Inactive" name="status" type="radio" id="status_inactive" value="inactive" checked={statusFilter=='inactive'} onChange={statusChange} />
+                            </Col>
+                        </Form.Group>
+                    </Form>
+                </Col>
+            </>
         );
     },[filterText,statusFilter]);
 
-    const filteredRows = rows.filter(row => {
-        if (row.active && statusFilter == 'inactive') return false;
-        if (!row.active && statusFilter == 'active') return false;
+    // maybe make this an API endpoint and let PHP handle the content type and data
+    // testing for export
+/*    const actionsMemo = useMemo(() => {
+        const filtered = rows.filter(row => {
+            if (row.active && statusFilter == 'inactive') return false;
+            if (!row.active && statusFilter == 'active') return false;
 
-        if (startsWith(filterText,'id:')) {
-            return row.SUNY_ID == filterText.split(':')[1];
-        }
-        return Object.values(pick(row,['B_NUMBER','SUNY_ID','email','endDate','endDateFmt','fullName','sortName','startDate','startDateFmt'])).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
-    });
+            if (startsWith(filterText,'id:')) {
+                return row.SUNY_ID == filterText.split(':')[1];
+            }
+            return Object.values(pick(row,['B_NUMBER','SUNY_ID','email','endDate','endDateFmt','fullName','sortName','GROUP_NAME','startDate','startDateFmt'])).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
+        });
+        console.log(filtered.map(row=>pick(row,['B_NUMBER','SUNY_ID','fullName','email'])));
+        return <a href="">Test</a>;
+    },[filteredRows,statusFilter,filterText,rows]);*/
+
+    const filteredRows = useMemo(() => {
+        return rows.filter(row => {
+            if (row.active && statusFilter == 'inactive') return false;
+            if (!row.active && statusFilter == 'active') return false;
+
+            if (startsWith(filterText,'id:')) {
+                return row.SUNY_ID == filterText.split(':')[1];
+            }
+            return Object.values(pick(row,['B_NUMBER','SUNY_ID','email','endDate','endDateFmt','fullName','sortName','GROUP_NAME','startDate','startDateFmt'])).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
+        });
+    },[statusFilter,filterText,rows]);
 
     const columns = useMemo(() => [
         {name:'Actions',cell:row=>{
@@ -150,6 +179,7 @@ function UsersTable({users,newUser,setNewUser}) {
             </DescriptionPopover> {row.sortName}</div>
         ),sortable:true,sortField:'sortName'},
         {name:'Email',selector:row=>row.email,sortable:true,sortField:'email'},
+        {name:'Dept Group',selector:row=>row.GROUP_NAME,sortable:true},
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
         {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
     ],[users]);
@@ -167,9 +197,7 @@ function UsersTable({users,newUser,setNewUser}) {
         selectAllRowsItem: true
     };
 
-    useEffect(()=>{
-        setRows(orderBy(users,[sortField],[sortDir]));
-    },[users]);
+    useEffect(()=>setRows(orderBy(users,[sortField],[sortDir])),[users]);
     useEffect(()=>searchRef.current.focus(),[]);
     return (
         <>
@@ -192,6 +220,7 @@ function UsersTable({users,newUser,setNewUser}) {
                 onSort={handleSort}
                 sortServer
                 conditionalRowStyles={conditionalRowStyles}
+                noDataComponent={<p className="m-3">No Users Found Matching Your Criteria</p>}
             />
             {(selectedRow?.SUNY_ID||newUser) && <AddEditUserForm {...selectedRow} setSelectedRow={setSelectedRow} newUser={newUser} setNewUser={setNewUser}/>}
             {impersonateUser?.SUNY_ID && <ImpersonateUser user={impersonateUser} setImpersonateUser={setImpersonateUser}/>}
@@ -325,6 +354,8 @@ function AddEditUserForm(props) {
             lastName:props.LEGAL_LAST_NAME||'',
             email:props.email||'',
             dept:props.REPORTING_DEPARTMENT_NAME||'No Department',
+            deptGroupId:props.GROUP_ID||'',
+            deptGroup:props.GROUP_NAME||'N/A',
             startDate: props.startDate||new Date(),
             endDate: props.endDate||''
         })
@@ -415,6 +446,8 @@ function AddEditUserForm(props) {
                         firstName:props.LEGAL_FIRST_NAME,
                         lastName:props.LEGAL_LAST_NAME,
                         dept:props.REPORTING_DEPARTMENT_NAME||'',
+                        deptGroupId:props.GROUP_ID||'',
+                        deptGroup:props.GROUP_NAME||'',
                         email:props.email,
                         startDate: props.startDate,
                         endDate: props.endDate,
@@ -440,7 +473,7 @@ function AddEditUserForm(props) {
                             {tabs.map(t=>(
                                 <Tab key={t.id} eventKey={t.id} title={t.title}>
                                     <Container className="mt-3" fluid>
-                                        <TabRouter tab={t.id} newUser={props.newUser} setStatus={setStatus}/>
+                                        <TabRouter tab={t.id} newUser={props.newUser} setStatus={setStatus} closeModal={closeModal}/>
                                     </Container>
                                 </Tab>
                             ))}
@@ -457,22 +490,22 @@ function AddEditUserForm(props) {
     );
 }
 
-function TabRouter({tab,newUser,setStatus}) {
+function TabRouter({tab,newUser,setStatus,closeModal}) {
     switch(tab) {
-        case "info": return <UserInfo newUser={newUser} setStatus={setStatus}/>;
+        case "info": return <UserInfo newUser={newUser} setStatus={setStatus} closeModal={closeModal}/>;
         case "groups": return <UserGroups/>;
         default: return <p>{tab}</p>;
     }
 }
 
-function UserInfo({newUser,setStatus}) {
+function UserInfo({newUser,setStatus,closeModal}) {
     const lookupStateDefault = {
         state:'',
         icon:'mdi:account-search',
         variant:'secondary',
         spin:false
     };
-    const { control, watch, reset, setValue, setError, formState: { errors } } = useFormContext();
+    const { control, watch, reset, getValues, setValue, setError, formState: { errors } } = useFormContext();
     const sunyid = watch('SUNYID');
 
     const [lookupState,setLookupState] = useReducer((state,action) => {
@@ -527,7 +560,9 @@ function UserInfo({newUser,setStatus}) {
                 firstName:userData.LEGAL_FIRST_NAME||'',
                 lastName:userData.LEGAL_LAST_NAME||'',
                 email:userData.EMAIL_ADDRESS_WORK||'',
-                dept:userData.REPORTING_DEPARTMENT_NAME||''
+                dept:userData.REPORTING_DEPARTMENT_NAME||'',
+                deptGroupId:userData.GROUP_ID||'',
+                deptGroup:userData.GROUP_NAME||'',
             }));
         });
     }
@@ -547,14 +582,17 @@ function UserInfo({newUser,setStatus}) {
         }
         if (e.key == 'Escape') {
             e.preventDefault();
-            setLookupState('clear');
-            reset(defaultVals);
-            return true;
+            if (!sunyid) {
+                closeModal();
+            } else {
+                setLookupState('clear');
+                reset(defaultVals);
+                return true;
+            }
         }
     }
 
     useEffect(() => { newUser && ref.current.focus();},[]);
-
     return (
         <>
             <Form.Row>
@@ -636,7 +674,7 @@ function UserInfo({newUser,setStatus}) {
                     />
                 </Form.Group>
                 <Form.Group as={Col} controlId="dept_group">
-                    <Form.Label>Department Group</Form.Label>
+                    <Form.Label><Link to={`/admin/groups/${getValues('deptGroupId')}`}>Department Group</Link></Form.Label>:
                     <Controller
                         name="deptGroup"
                         defaultValue=""

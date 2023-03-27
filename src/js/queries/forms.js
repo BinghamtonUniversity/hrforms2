@@ -1,6 +1,7 @@
 import q from '../queries';
 import {useQuery,useMutation} from "react-query";
-import { format } from 'date-fns';
+import { parse, format } from "date-fns";
+import { truncate } from 'lodash';
 import { getAuthInfo } from '../app';
 
 export default function useFormQueries(FORM_ID) {
@@ -19,6 +20,7 @@ export default function useFormQueries(FORM_ID) {
     const getSupervisorNames = (query,options) => {
         return useQuery(['supervisor',query],q(`supervisor/${query}`),options);
     }
+    //TBD: remove
     const getSalary = ({sunyId,effDate,options}) => {
         const ed = (effDate instanceof Date)?format(effDate,'dd-MMM-yyyy'):effDate;
         return useQuery(['salary',sunyId,ed],q(`salary/${sunyId}/${ed}`),options);
@@ -49,21 +51,37 @@ export default function useFormQueries(FORM_ID) {
         options.select = data => {
             if (!data) return;
             data.map(d => {
-                d.createdDate = (d?.UNIX_TS)?new Date(d.UNIX_TS*1000):new Date(d.CREATED_DATE);
-                d.createdDateFmt = format(d.createdDate,'Pp');
                 d.effDate = (d?.EFFDATE)?new Date(d.EFFDATE):"";
                 d.effDateFmt = format(d.effDate,'P');
                 d.sortName = [[d.LEGAL_LAST_NAME,d.FIRST_NAME].join(', '),d.LEGAL_MIDDLE_NAME].join(' ');
-                /*
-                const fName = (d?.ALIAS_FIRST_NAME)?d.ALIAS_FIRST_NAME:(d?.LEGAL_FIRST_NAME)?d.LEGAL_FIRST_NAME:'';
-                d.fullName = (fName)?`${fName} ${d.LEGAL_LAST_NAME}`:'';
-                d.sortName = (fName)?`${d.LEGAL_LAST_NAME}, ${fName}`:'';*/
+                d.createdDate = (d?.UNIX_TS)?new Date(d.UNIX_TS*1000):new Date(d.CREATED_DATE);
+                d.createdDateFmt = format(d.createdDate,'Pp');
+                d.createdByName = [d?.CREATED_BY_FIRST_NAME,d?.CREATED_BY_LEGAL_LAST_NAME].join(' ');
             });
             return (options.select2)?options.select2(data):data;
         }
         return useQuery([SUNY_ID,'formlist',list],q(`formlist/${list}`),options);
     }
 
-    return {getEducationInstitutions,getPosition,getSupervisorNames,getSalary,
+    const getJournal = (...args) => {
+        const options = args[0]?.options||args[0]||{};
+        if(options.select) options.select2 = options.select;
+        options.select = data => {
+            if (!data) return;
+            data.map(d => {
+                const fName = (d?.ALIAS_FIRST_NAME)?d.ALIAS_FIRST_NAME:(d?.LEGAL_FIRST_NAME)?d.LEGAL_FIRST_NAME:'';
+                d.fullName = (fName)?`${fName} ${d.LEGAL_LAST_NAME}`:'';
+                d.sortName = (fName)?`${d.LEGAL_LAST_NAME}, ${fName}`:'';
+                d.journalDate = parse(d.JOURNAL_DATE,'dd-MMM-yyyy H:m:s',new Date())
+                d.journalDateFmt = d.JOURNAL_DATE && format(d.journalDate,'Pp');
+                d.shortComment = truncate(d.COMMENTS,{'length':100});
+            });
+            return (options.select2)?options.select2(data):data;
+        }
+        return useQuery(['journal',FORM_ID],q(`journal/form/${FORM_ID}`),options);
+    }
+
+
+    return {getEducationInstitutions,getPosition,getSupervisorNames,getSalary,getJournal,
         getForm,postForm,putForm,patchForm,deleteForm,getFormList}
 }

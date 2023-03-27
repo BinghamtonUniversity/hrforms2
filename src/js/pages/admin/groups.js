@@ -3,7 +3,7 @@ import { useQueryClient } from "react-query";
 import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
 import { Loading, AppButton, errorToast } from "../../blocks/components";
-import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert, InputGroup } from "react-bootstrap";
+import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, DropdownButton, Dropdown } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { orderBy, sortBy, difference, differenceWith, isEqual, capitalize, startsWith } from "lodash";
 import DataTable from 'react-data-table-component';
@@ -14,6 +14,7 @@ import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useHistory, useParams } from "react-router-dom";
+import { flattenObject } from "../../utility";
 
 export default function AdminGroups() {
     const [newGroup,setNewGroup] = useState(false);
@@ -36,14 +37,22 @@ export default function AdminGroups() {
 }
 
 function GroupsTable({groups,newGroup,setNewGroup}) {
+    const filterFields = {
+        all:"All Fields",
+        id:"Group ID",
+        name:"Group Name"
+    };
+
     const {subpage} = useParams();
     const history = useHistory();
-    const [filterText,setFilterText] = useState((!!subpage)?`id:${subpage}`:'');
+    const [filterText,setFilterText] = useState((!subpage)?'':subpage);
     const [statusFilter,setStatusFilter] = useState('all');
-    const [sortField,setsortField] = useState('GROUP_NAME');
+    const [filterField,setFilterField] = useState((!subpage)?'all':'id');
+    const [sortField,setSortField] = useState('GROUP_NAME');
     const [sortDir,setSortDir] = useState('asc');
     const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
     const [rows,setRows] = useState([]);
+    const [selectedGroupId,setSelectedGroupId] = useState(subpage);
     const [selectedRow,setSelectedRow] = useState({});
     const [toggleGroup,setToggleGroup] = useState({});
     const [deleteGroup,setDeleteGroup] = useState({});
@@ -60,7 +69,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
     const handleSort = useCallback((...args) => {
         if (!args[0].sortable) return false;
         const sortKey = args[0].sortField; //columns[(args[0].id-1)].sortField;
-        setsortField(sortKey);
+        setSortField(sortKey);
         setSortDir(args[1]);
         if (sortKey == 'GROUP_ID') {
             if (args[1] == 'asc') {
@@ -81,19 +90,52 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
             if (e.target.value) {
                 setResetPaginationToggle(false);
                 setFilterText(e.target.value);
-                if (startsWith(e.target.value,'id:')) history.push('/admin/groups/'+e.target.value.split(':')[1]);
             } else {
                 setResetPaginationToggle(true);
                 setFilterText('');
-                history.push('/admin/groups');
             }
         }
+        const handleFilterKeyDown = e => {
+            if (e.key == 'Escape') {
+                if (filterText&&filterField=='id'&&subpage) history.push('/admin/groups');
+                if (!filterText&&filterField!='all') setFilterField('all');
+                if (!filterText&&filterField=='all') searchRef.current.blur();
+            }
+        }
+        const handleFilterField = field => {
+            if (filterText&&field=='all'&&subpage) history.push('/admin/groups');
+            setFilterField(field);
+        }
+    
         return(
             <Form style={{flexDirection:'column'}} onSubmit={e=>e.preventDefault()}>
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
                     <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." value={filterText} onChange={handleFilterChange}/>
+                        <InputGroup>
+                            <DropdownButton
+                                as={InputGroup.Prepend}
+                                variant={filterField=="all"?"secondary":"primary"}
+                                title={filterFields[filterField]}
+                                id="filter-field-dropdown"
+                                onSelect={handleFilterField}
+                            >
+                                {Object.keys(filterFields).map(key=>{
+                                    if (key==filterField) return null;
+                                    return <Dropdown.Item key={key} eventKey={key}>{filterFields[key]}</Dropdown.Item>
+                                })}
+                            </DropdownButton>
+                            <Form.Control 
+                                ref={searchRef} 
+                                type="search" 
+                                placeholder="search..." 
+                                value={filterText} 
+                                onChange={handleFilterChange}
+                                onKeyDown={handleFilterKeyDown}
+                                aria-label="search..."
+                                aria-describedby="search-addon"
+                            />
+                        </InputGroup>
                     </Col>
                 </Form.Group>
                 <Form.Group as={Row} controlId="status">
@@ -106,20 +148,18 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
                 </Form.Group>
             </Form>
         );
-    },[filterText,statusFilter]);
+    },[filterText,statusFilter,filterField,selectedGroupId,subpage]);
 
-    const filteredRows = rows.filter(row => {
-        if (row.active && statusFilter == 'inactive') return false;
-        if (!row.active && statusFilter == 'active') return false;
-        if (startsWith(filterText,'id:')) {
-            return row.GROUP_ID == filterText.split(':')[1];
-        }
-        const gName = row.GROUP_NAME.toLowerCase();
-        if (startsWith(filterText,'name:')) {
-            return gName.includes(filterText.split(':')[1].toLowerCase());
-        }
-        return Object.values(row).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
-    });
+    const filteredRows = useMemo(() => {
+        return rows.filter(row => {
+            if (row.active && statusFilter == 'inactive') return false;
+            if (!row.active && statusFilter == 'active') return false;
+            if (filterField!='all'&&!filterText) return true; //return all records until something is entered
+            if (filterField=='id') return row.GROUP_ID.includes(filterText);
+            if (filterField=='name') return row.GROUP_NAME.toLowerCase().includes(filterText.toLowerCase());
+            return Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
+        });
+    },[rows,filterText,filterField]);
 
     const columns = useMemo(() => [
         {name:'Actions',cell:row=>{
@@ -148,10 +188,16 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
     const paginationComponentOptions = {
         selectAllRowsItem: true
     };
-    useEffect(()=>{
-        setRows(orderBy(groups,[sortField],[sortDir]));
-    },[groups]);
+    useEffect(()=>setRows(orderBy(groups,[sortField],[sortDir])),[groups]);
     useEffect(()=>searchRef.current.focus(),[]);
+    useEffect(()=>{
+        if (!selectedGroupId&filteredRows.length==0) {
+            setSelectedRow({});
+        } else {
+            const match = filteredRows.find(r=>r.GROUP_ID==selectedGroupId);
+            if (match) setSelectedRow(match);
+        }
+    },[selectedGroupId,filteredRows]);
     return (
         <>
             <DataTable 
@@ -174,14 +220,14 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
                 sortServer
                 conditionalRowStyles={conditionalRowStyles}
             />
-            {(selectedRow?.GROUP_ID||newGroup) && <AddEditGroupForm {...selectedRow} setSelectedRow={setSelectedRow} newGroup={newGroup} setNewGroup={setNewGroup}/>}
-            {toggleGroup?.GROUP_ID && <ToggleGroup group={toggleGroup} setToggleGroup={setToggleGroup}/>}
+            {(selectedRow?.GROUP_ID||newGroup) && <AddEditGroupForm {...selectedRow} setSelectedRow={setSelectedRow} newGroup={newGroup} setNewGroup={setNewGroup} setSelectedGroupId={setSelectedGroupId}/>}
+            {toggleGroup?.GROUP_ID && <ToggleGroup group={toggleGroup}/>}
             {deleteGroup?.GROUP_ID && <DeleteGroup group={deleteGroup} setDeleteGroup={setDeleteGroup}/>}
         </>
     );
 }
 
-function ToggleGroup({group,setToggleGroup}) {
+function ToggleGroup({group}) {
     const {patchGroup} = useGroupQueries(group.GROUP_ID);
     const queryclient = useQueryClient();
     const update = patchGroup();
@@ -262,6 +308,7 @@ function AddEditGroupForm(props) {
         defaultValues:Object.assign({},defaultVals,{
             groupId: props.GROUP_ID||'',
             groupName: props.GROUP_NAME||'',
+            groupDescription:props.GROUP_DESCRIPTION||'',
             startDate: props.startDate||new Date(),
             endDate: props.endDate||''
         })
@@ -284,6 +331,7 @@ function AddEditGroupForm(props) {
     const closeModal = () => {
         if (status.state == 'saving') return false;
         props.setSelectedRow({});
+        props.setSelectedGroupId(undefined);
         props.setNewGroup(false);
     }
 
@@ -302,6 +350,7 @@ function AddEditGroupForm(props) {
         const delDepts = differenceWith(origDepts,data.assignedDepts,isEqual);
         const reqData = {
             GROUP_NAME:data.groupName,
+            GROUP_DESCRIPTION:data.groupDescription,
             START_DATE:format(data.startDate,'dd-MMM-yyyy'),
             END_DATE:(data.endDate)?format(data.endDate,'dd-MMM-yyyy'):'',
             ADD_USERS:addUsers,
@@ -361,6 +410,7 @@ function AddEditGroupForm(props) {
                     methods.reset({
                         groupId: props.GROUP_ID,
                         groupName: props.GROUP_NAME,
+                        groupDescription: props.GROUP_DESCRIPTION,
                         startDate: props.startDate,
                         endDate: props.endDate,
                         assignedUsers:groupuserData,
@@ -464,6 +514,16 @@ function GroupInfo() {
                         render={({field}) => <Form.Control {...field} ref={groupNameRef} type="text" placeholder="Enter Group Name" isInvalid={errors.groupName}/>}
                     />
                     <Form.Control.Feedback type="invalid">{errors.groupName?.message}</Form.Control.Feedback>
+                </Form.Group>
+            </Form.Row>
+            <Form.Row>
+                <Form.Group as={Col} controlId="groupDescription">
+                    <Form.Label>Group Description:</Form.Label>
+                    <Controller
+                        name="groupDescription"
+                        control={control}
+                        render={({field}) => <Form.Control {...field} type="text" placeholder="Group Description (Optional)"/>}
+                    />
                 </Form.Group>
             </Form.Row>
             <Form.Row>

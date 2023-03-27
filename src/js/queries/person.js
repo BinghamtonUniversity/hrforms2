@@ -30,7 +30,7 @@ export default function usePersonQueries() {
                 const mi = (d?.LEGAL_MIDDLE_NAME)?` ${d.LEGAL_MIDDLE_NAME.substr(0,1)}.`:'';
                 d.fullName = `${d.FIRST_NAME}${mi} ${d.LEGAL_LAST_NAME}${suffix}`;
                 d.sortName = `${d.LEGAL_LAST_NAME}${suffix}, ${d.FIRST_NAME}${mi}`;
-                d.birthDate = d.BIRTH_DATE && parse(d.BIRTH_DATE,'dd-MMM-yy',new Date());
+                d.birthDate = d.BIRTH_DATE && parse(d.BIRTH_DATE,'dd-MMM-yyyy',new Date());
                 d.birthDateFmt = d.BIRTH_DATE && format(d.birthDate,'P');
                 d.effectiveDate = d.APPOINTMENT_EFFECTIVE_DATE && parse(d.APPOINTMENT_EFFECTIVE_DATE,'dd-MMM-yy',new Date())
                 d.effectiveDateFmt = d.APPOINTMENT_EFFECTIVE_DATE && format(d.effectiveDate,'P');

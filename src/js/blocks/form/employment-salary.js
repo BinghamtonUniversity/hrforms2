@@ -123,8 +123,7 @@ export default function EmploymentAppointment() {
                     
                     <AdditionalSalary/>
 
-                    {watchFormType.join('-')=='TEST--'&&<p>testing</p>}
-                    <p>{watchFormType.join('-')}</p>
+                    {/* TODO: only show split for EF-PAY-1 */}
                     <SplitAssignments/>
 
                 </article>
