@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Row, Col, Form, InputGroup, Table, Alert } from "react-bootstrap";
 import { useFormContext, Controller, useWatch, useFieldArray } from "react-hook-form";
-import { HRFormContext } from "../../pages/form";
+import { HRFormContext } from "../../config/form";
 import DatePicker from "react-datepicker";
 import SUNYAccount, { SingleSUNYAccount } from "../sunyaccount";
 import { AppButton, CurrencyFormat, DateFormat, DepartmentSelector } from "../components";
@@ -39,7 +39,7 @@ export default function EmploymentAppointment() {
     },[watchAmounts]);
     return (
         <HRFormContext.Consumer>
-            {({showInTest,testHighlight}) => (
+            {({showInTest,testHighlight,readOnly}) => (
                 <article>
                     <section className="mt-3">
                         <Row as="header">
@@ -59,6 +59,7 @@ export default function EmploymentAppointment() {
                                             closeOnScroll={true}
                                             onChange={field.onChange}
                                             autoComplete="off"
+                                            disabled={readOnly}
                                         />}
                                     />
                                     <InputGroup.Append>
@@ -91,7 +92,7 @@ export default function EmploymentAppointment() {
                                         name={`${name}.NUMBER_OF_PAYMENTS`}
                                         defaultValue=""
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" min={1}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" min={1} disabled={readOnly}/>}
                                     />
                                 </Col>
                             </Form.Group>
@@ -103,7 +104,7 @@ export default function EmploymentAppointment() {
                                     name={`${name}.RATE_AMOUNT`}
                                     defaultValue=""
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="text"/>}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={readOnly}/>}
                                 />
                             </Col>
                         </Form.Group>
@@ -118,7 +119,7 @@ export default function EmploymentAppointment() {
                                 />
                             </Col>
                         </Form.Group>
-                        <SUNYAccount name={`${name}.SUNYAccounts`}/>
+                        <SUNYAccount name={`${name}.SUNYAccounts`} disabled={readOnly}/>
                     </section>
                     
                     <AdditionalSalary/>
@@ -220,129 +221,135 @@ function AdditionalSalary() {
     },[editIndex]);
 
     return (
-        <section className="mt-4 border-top pt-2">
-            <Row as="header">
-                <Col as="h3">
-                    Additional Salary
-                </Col>
-            </Row>
-            {getValues(`${name}.EXISTING_ADDITIONAL_SALARY`).length>0&&<ExistingAdditionalSalary/>}
-            {fields.map((flds,index)=>(
-                <section key={flds.id} className="border rounded p-2 mb-2">
-                    <Form.Row>
-                        <Col xs="auto" className="mb-2">
-                            <Form.Label>Type:</Form.Label>
-                            <Controller
-                                name={`${blockName}.${index}.type.id`}
-                                defaultValue=""
-                                control={control}
-                                render={({field}) => (
-                                    <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index}>
-                                        <option></option>
-                                        {types.data && types.data.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
-                                    </Form.Control>
-                                )}
-                            />
-                        </Col>
-                        <Col xs="auto" className="mb-2">
-                            <Form.Label>Start Date:</Form.Label>
-                            <InputGroup>
-                                <Controller
-                                    name={`${blockName}.${index}.startDate`}
-                                    control={control}
-                                    render={({field}) => <Form.Control 
-                                        as={DatePicker} 
-                                        name={field.name}
-                                        selected={field.value} 
-                                        closeOnScroll={true} 
-                                        onChange={field.onChange}
-                                        autoComplete="off"
-                                        disabled={editIndex!=index}
-                                        maxDate={()=>{
-                                            console.log(watchFieldArray);
-                                            return new Date();
-                                        }}
-                                    />}
-                                />
-                                <InputGroup.Append>
-                                    <InputGroup.Text>
-                                        <Icon icon="mdi:calendar-blank"/>
-                                    </InputGroup.Text>
-                                </InputGroup.Append>
-                            </InputGroup>
-                        </Col>
-                        <Col xs="auto" className="mb-2">
-                            <Form.Label>End Date:</Form.Label>
-                            <InputGroup>
-                                <Controller
-                                    name={`${blockName}.${index}.endDate`}
-                                    control={control}
-                                    render={({field}) => <Form.Control 
-                                        as={DatePicker} 
-                                        name={field.name}
-                                        selected={field.value} 
-                                        closeOnScroll={true} 
-                                        onChange={field.onChange}
-                                        autoComplete="off"
-                                        disabled={editIndex!=index}
-                                    />}
-                                />
-                                <InputGroup.Append>
-                                    <InputGroup.Text>
-                                        <Icon icon="mdi:calendar-blank"/>
-                                    </InputGroup.Text>
-                                </InputGroup.Append>
-                            </InputGroup>
-                        </Col>
-                        <Col xs={6} md={4} className="mb-2">
-                            <Form.Label>Account:</Form.Label>
-                            <SingleSUNYAccount name={`${blockName}.${index}.account`} disabled={editIndex!=index}/>
-                        </Col>
-                        <Col xs={2} md={1} className="mb-2">
-                            <Form.Label>Pmts:</Form.Label>
-                            <Controller
-                                name={`${blockName}.${index}.payments`}
-                                defaultValue=""
-                                control={control}
-                                render={({field}) => <Form.Control {...field} type="number" disabled={editIndex!=index}/>}
-                            />
-                        </Col>
-                        <Col xs={4} sm={3} md={2} className="mb-2">
-                            <Form.Label>Amount:</Form.Label>
-                            <Controller
-                                name={`${blockName}.${index}.amount`}
-                                defaultValue=""
-                                control={control}
-                                render={({field}) => <Form.Control {...field} type="number" disabled={editIndex!=index}/>}
-                            />
-                        </Col>
-                        <Col xs={4} sm={3} md={2} className="mb-2">
-                            <Form.Label>Total:</Form.Label>
-                            <p className="mb-0 py-2"><CurrencyFormat>{calcTotal(index)}</CurrencyFormat></p>
-                        </Col>
-                    </Form.Row>
-                    <Row>
-                        <Col className="button-group-sm">
-                            {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
-                            {editIndex==index && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
-                            {(editIndex==index&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
-                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
-                        </Col>
+        <HRFormContext.Consumer>
+            {({readOnly}) => (
+                <section className="mt-4 border-top pt-2">
+                    <Row as="header">
+                        <Col as="h3">Additional Salary</Col>
                     </Row>
-                    <Row>
-                        <Col>
-                            <small><span className="fw-bold">Created: </span><DateFormat>{flds.created}</DateFormat></small>
-                        </Col>
-                        <Col className="text-right">
-                            <small>{index}:{flds.id}</small>
-                        </Col>
-                    </Row>
+                    {getValues(`${name}.EXISTING_ADDITIONAL_SALARY`).length>0&&<ExistingAdditionalSalary/>}
+                    {fields.map((flds,index)=>(
+                        <section key={flds.id} className="border rounded p-2 mb-2">
+                            <Form.Row>
+                                <Col xs="auto" className="mb-2">
+                                    <Form.Label>Type:</Form.Label>
+                                    <Controller
+                                        name={`${blockName}.${index}.type.id`}
+                                        defaultValue=""
+                                        control={control}
+                                        render={({field}) => (
+                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index}>
+                                                <option></option>
+                                                {types.data && types.data.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
+                                            </Form.Control>
+                                        )}
+                                    />
+                                </Col>
+                                <Col xs="auto" className="mb-2">
+                                    <Form.Label>Start Date:</Form.Label>
+                                    <InputGroup>
+                                        <Controller
+                                            name={`${blockName}.${index}.startDate`}
+                                            control={control}
+                                            render={({field}) => <Form.Control 
+                                                as={DatePicker} 
+                                                name={field.name}
+                                                selected={field.value} 
+                                                closeOnScroll={true} 
+                                                onChange={field.onChange}
+                                                autoComplete="off"
+                                                disabled={editIndex!=index}
+                                                maxDate={()=>{
+                                                    console.log(watchFieldArray);
+                                                    return new Date();
+                                                }}
+                                            />}
+                                        />
+                                        <InputGroup.Append>
+                                            <InputGroup.Text>
+                                                <Icon icon="mdi:calendar-blank"/>
+                                            </InputGroup.Text>
+                                        </InputGroup.Append>
+                                    </InputGroup>
+                                </Col>
+                                <Col xs="auto" className="mb-2">
+                                    <Form.Label>End Date:</Form.Label>
+                                    <InputGroup>
+                                        <Controller
+                                            name={`${blockName}.${index}.endDate`}
+                                            control={control}
+                                            render={({field}) => <Form.Control 
+                                                as={DatePicker} 
+                                                name={field.name}
+                                                selected={field.value} 
+                                                closeOnScroll={true} 
+                                                onChange={field.onChange}
+                                                autoComplete="off"
+                                                disabled={editIndex!=index}
+                                            />}
+                                        />
+                                        <InputGroup.Append>
+                                            <InputGroup.Text>
+                                                <Icon icon="mdi:calendar-blank"/>
+                                            </InputGroup.Text>
+                                        </InputGroup.Append>
+                                    </InputGroup>
+                                </Col>
+                                <Col xs={6} md={4} className="mb-2">
+                                    <Form.Label>Account:</Form.Label>
+                                    <SingleSUNYAccount name={`${blockName}.${index}.account`} disabled={editIndex!=index}/>
+                                </Col>
+                                <Col xs={2} md={1} className="mb-2">
+                                    <Form.Label>Pmts:</Form.Label>
+                                    <Controller
+                                        name={`${blockName}.${index}.payments`}
+                                        defaultValue=""
+                                        control={control}
+                                        render={({field}) => <Form.Control {...field} type="number" disabled={editIndex!=index}/>}
+                                    />
+                                </Col>
+                                <Col xs={4} sm={3} md={2} className="mb-2">
+                                    <Form.Label>Amount:</Form.Label>
+                                    <Controller
+                                        name={`${blockName}.${index}.amount`}
+                                        defaultValue=""
+                                        control={control}
+                                        render={({field}) => <Form.Control {...field} type="number" disabled={editIndex!=index}/>}
+                                    />
+                                </Col>
+                                <Col xs={4} sm={3} md={2} className="mb-2">
+                                    <Form.Label>Total:</Form.Label>
+                                    <p className="mb-0 py-2"><CurrencyFormat>{calcTotal(index)}</CurrencyFormat></p>
+                                </Col>
+                            </Form.Row>
+                            {!readOnly&&
+                                <Row>
+                                    <Col className="button-group-sm">
+                                        {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
+                                        {editIndex==index && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
+                                        {(editIndex==index&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
+                                        <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
+                                    </Col>
+                                </Row>
+                            }
+                            <Row>
+                                <Col>
+                                    <small><span className="fw-bold">Created: </span><DateFormat>{flds.created}</DateFormat></small>
+                                </Col>
+                                <Col className="text-right">
+                                    <small>{index}:{flds.id}</small>
+                                </Col>
+                            </Row>
+                        </section>
+                    ))}
+                    {!readOnly &&
+                        <Row>
+                            <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={editIndex!=undefined}>Add Salary</AppButton></Col>
+                        </Row>
+                    }
                 </section>
-            ))}
-            <Row>
-                <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={editIndex!=undefined}>Add Salary</AppButton></Col>
-            </Row>
-        </section>
+            )}
+        </HRFormContext.Consumer>
     );
 }
 
@@ -511,204 +518,212 @@ function SplitAssignments() {
     },[watchFieldArray]);
 
     return (
-        <section className="mt-4 border-top pt-2">
-            <header>
-                <Row>
-                    <Col as="h3">Split Assignments</Col>
-                </Row>
-                <Row>
-                    <Col>
-                        <Alert variant={(editIndex!=undefined)?"info":(totalPct==100)?"success":"danger"}>
-                            <p className="m-0">Total Work Percent: {(editIndex!=undefined)?"updating...":totalPct+"%"} {editIndex==undefined&&totalPct!=100&&<strong className="font-size-85">(Must be 100%)</strong>}</p>
-                        </Alert>
-                    </Col>
-                </Row>
-            </header>
-            {fields.map((fld,index)=>(
-                <section key={fld.id} className="border rounded p-2 mb-2">
-                    {(editIndex==index&&Object.keys(errors).length!=0) && 
+        <HRFormContext.Consumer>
+            {({readOnly}) => (
+                <section className="mt-4 border-top pt-2">
+                    <header>
+                        <Row>
+                            <Col as="h3">Split Assignments</Col>
+                        </Row>
                         <Row>
                             <Col>
-                                <Alert variant="danger"><p className="m-0">Split Assignment has errors - Cannot Save!</p></Alert>
+                                <Alert variant={(editIndex!=undefined)?"info":(totalPct==100)?"success":"danger"}>
+                                    <p className="m-0">Total Work Percent: {(editIndex!=undefined)?"updating...":totalPct+"%"} {editIndex==undefined&&totalPct!=100&&<strong className="font-size-85">(Must be 100%)</strong>}</p>
+                                </Alert>
                             </Col>
                         </Row>
-                    }
-                    {(editIndex==index&&changePrimary) &&
-                        <Row>
-                            <Col>
-                                <Alert variant="warning"><p className="m-0">Warning: You are changing the primary flag to this assignment.  Saving will uncheck all other assigments.</p></Alert>
-                            </Col>
-                        </Row>
-                    }
-                    <Form.Row>
-                        <Col xs="auto" className="mb-2">
-                            <Form.Label>Primary:</Form.Label>
-                            <Controller
-                                name={`${blockName}.${index}.COMMITMENT_PRIMARY_FLAG`}
-                                control={control}
-                                render={({field}) => <Form.Check {...field} type="checkbox" className="ml-3 mt-1 form-check-input-lg" value="Y" onChange={e=>handlePrimaryChange(e,field)} checked={field.value=="Y"} disabled={editIndex!=index}/>}
-                            />
-                        </Col>
-                        <Col xs="auto" className="mb-2">
-                            <Form.Label>Start Date*:</Form.Label>
-                            <InputGroup>
-                                <Controller
-                                    name={`${blockName}.${index}.commitmentEffDate`}
-                                    defaultValue=""
-                                    control={control}
-                                    rules={{required:{value:true,message:'Start Date is Required'}}}
-                                    render={({field}) => <Form.Control 
-                                        as={DatePicker} 
-                                        name={field.name}
-                                        selected={field.value} 
-                                        closeOnScroll={true} 
-                                        onChange={field.onChange}
-                                        autoComplete="off"
-                                        disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""}
-                                        isInvalid={get(errors,field.name,false)}
-                                        maxDate={()=>{
-                                            console.log(watchFieldArray);
-                                            return new Date();
+                    </header>
+                    {fields.map((fld,index)=>(
+                        <section key={fld.id} className="border rounded p-2 mb-2">
+                            {(editIndex==index&&Object.keys(errors).length!=0) && 
+                                <Row>
+                                    <Col>
+                                        <Alert variant="danger"><p className="m-0">Split Assignment has errors - Cannot Save!</p></Alert>
+                                    </Col>
+                                </Row>
+                            }
+                            {(editIndex==index&&changePrimary) &&
+                                <Row>
+                                    <Col>
+                                        <Alert variant="warning"><p className="m-0">Warning: You are changing the primary flag to this assignment.  Saving will uncheck all other assigments.</p></Alert>
+                                    </Col>
+                                </Row>
+                            }
+                            <Form.Row>
+                                <Col xs="auto" className="mb-2">
+                                    <Form.Label>Primary:</Form.Label>
+                                    <Controller
+                                        name={`${blockName}.${index}.COMMITMENT_PRIMARY_FLAG`}
+                                        control={control}
+                                        render={({field}) => <Form.Check {...field} type="checkbox" className="ml-3 mt-1 form-check-input-lg" value="Y" onChange={e=>handlePrimaryChange(e,field)} checked={field.value=="Y"} disabled={editIndex!=index}/>}
+                                    />
+                                </Col>
+                                <Col xs="auto" className="mb-2">
+                                    <Form.Label>Start Date*:</Form.Label>
+                                    <InputGroup>
+                                        <Controller
+                                            name={`${blockName}.${index}.commitmentEffDate`}
+                                            defaultValue=""
+                                            control={control}
+                                            rules={{required:{value:true,message:'Start Date is Required'}}}
+                                            render={({field}) => <Form.Control 
+                                                as={DatePicker} 
+                                                name={field.name}
+                                                selected={field.value} 
+                                                closeOnScroll={true} 
+                                                onChange={field.onChange}
+                                                autoComplete="off"
+                                                disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""}
+                                                isInvalid={get(errors,field.name,false)}
+                                                maxDate={()=>{
+                                                    console.log(watchFieldArray);
+                                                    return new Date();
+                                                }}
+                                            />}
+                                        />
+                                        <InputGroup.Append>
+                                            <InputGroup.Text>
+                                                <Icon icon="mdi:calendar-blank"/>
+                                            </InputGroup.Text>
+                                        </InputGroup.Append>
+                                    </InputGroup>
+                                    <Form.Control.Feedback type="invalid" style={{display:get(errors,`${blockName}.${index}.commitmentEffDate`,false)?'block':'none'}}>{get(errors,`${blockName}.${index}.commitmentEffDate.message`,'')}</Form.Control.Feedback>
+                                </Col>
+                                <Col xs="auto" className="mb-2">
+                                    <Form.Label>End Date:</Form.Label>
+                                    <InputGroup>
+                                        <Controller
+                                            name={`${blockName}.${index}.commitmentEndDate`}
+                                            control={control}
+                                            render={({field}) => <Form.Control 
+                                                as={DatePicker} 
+                                                name={field.name}
+                                                selected={field.value} 
+                                                closeOnScroll={true} 
+                                                onChange={field.onChange}
+                                                autoComplete="off"
+                                                disabled={editIndex!=index}
+                                            />}
+                                        />
+                                        <InputGroup.Append>
+                                            <InputGroup.Text>
+                                                <Icon icon="mdi:calendar-blank"/>
+                                            </InputGroup.Text>
+                                        </InputGroup.Append>
+                                    </InputGroup>
+                                </Col>
+                                <Col xs="auto" className="mb-2">
+                                    <Form.Label>Title:</Form.Label>
+                                    <Controller
+                                        name={`${blockName}.${index}.CAMPUS_TITLE`}
+                                        defaultValue=""
+                                        control={control}
+                                        render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={get(errors,field.name,false)}/>}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.CAMPUS_TITLE.message`,'')}</Form.Control.Feedback>
+                                </Col>
+                                <Col xs="auto" className="mb-2">
+                                    <Form.Label>Department:</Form.Label>
+                                    <Controller
+                                        name={`${blockName}.${index}.REPORTING_DEPARTMENT_CODE.id`}
+                                        defaultValue=""
+                                        control={control}
+                                        render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={get(errors,field.name,false)}/>}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.REPORTING_DEPARTMENT_CODE.id.message`,'')}</Form.Control.Feedback>
+                                </Col>
+                                <Col xs={12} sm={8} md={6} lg={5} xl={4} className="mb-2">
+                                    <Form.Label>Supervisor:</Form.Label>
+                                    <Controller
+                                        name={`${blockName}.${index}.supervisor`}
+                                        control={control}
+                                        render={({field}) => <AsyncTypeahead
+                                            {...field}
+                                            filterBy={()=>true}
+                                            id="supervisor-search"
+                                            isLoading={supervisors.isLoading}
+                                            minLength={2}
+                                            flip={true} 
+                                            allowNew={true}
+                                            onSearch={handleSearch}
+                                            onBlur={e=>handleBlur(field,e)}
+                                            options={supervisors.data}
+                                            placeholder="Search for supervisor..."
+                                            selected={field.value}
+                                            disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""}
+                                        />}
+                                    />
+                                </Col>
+                                <Col xs="auto" className="mb-2">
+                                    <Form.Label>Allocation*:</Form.Label>
+                                    <Controller
+                                        name={`${blockName}.${index}.WORK_ALLOCATION.id`}
+                                        defaultValue=""
+                                        control={control}
+                                        rules={{required:{value:true,message:'Work Allocation is Required'}}}
+                                        render={({field}) => (
+                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={get(errors,field.name,false)}>
+                                                <option></option>
+                                                {workAllocation.data && workAllocation.data.map(a=><option key={a[0]} value={a[0]}>{a[1]}</option>)}
+                                            </Form.Control>
+                                        )}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.WORK_ALLOCATION.id.message`,'')}</Form.Control.Feedback>
+                                </Col>
+                                <Col xs="auto" className="mb-2">
+                                    <Form.Label>Work %*:</Form.Label>
+                                    <Controller
+                                        name={`${blockName}.${index}.WORK_PERCENT`}
+                                        defaultValue=""
+                                        control={control}
+                                        rules={{
+                                            required:{value:true,message:'Work % is Required'},
+                                            min:{value:0,message:'Work % cannot be less than 0%'},
+                                            max:{value:100,message:'Work % cannot be greater than 100%'}
                                         }}
-                                    />}
-                                />
-                                <InputGroup.Append>
-                                    <InputGroup.Text>
-                                        <Icon icon="mdi:calendar-blank"/>
-                                    </InputGroup.Text>
-                                </InputGroup.Append>
-                            </InputGroup>
-                            <Form.Control.Feedback type="invalid" style={{display:get(errors,`${blockName}.${index}.commitmentEffDate`,false)?'block':'none'}}>{get(errors,`${blockName}.${index}.commitmentEffDate.message`,'')}</Form.Control.Feedback>
-                        </Col>
-                        <Col xs="auto" className="mb-2">
-                            <Form.Label>End Date:</Form.Label>
-                            <InputGroup>
-                                <Controller
-                                    name={`${blockName}.${index}.commitmentEndDate`}
-                                    control={control}
-                                    render={({field}) => <Form.Control 
-                                        as={DatePicker} 
-                                        name={field.name}
-                                        selected={field.value} 
-                                        closeOnScroll={true} 
-                                        onChange={field.onChange}
-                                        autoComplete="off"
-                                        disabled={editIndex!=index}
-                                    />}
-                                />
-                                <InputGroup.Append>
-                                    <InputGroup.Text>
-                                        <Icon icon="mdi:calendar-blank"/>
-                                    </InputGroup.Text>
-                                </InputGroup.Append>
-                            </InputGroup>
-                        </Col>
-                        <Col xs="auto" className="mb-2">
-                            <Form.Label>Title:</Form.Label>
-                            <Controller
-                                name={`${blockName}.${index}.CAMPUS_TITLE`}
-                                defaultValue=""
-                                control={control}
-                                render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={get(errors,field.name,false)}/>}
-                            />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.CAMPUS_TITLE.message`,'')}</Form.Control.Feedback>
-                        </Col>
-                        <Col xs="auto" className="mb-2">
-                            <Form.Label>Department:</Form.Label>
-                            <Controller
-                                name={`${blockName}.${index}.REPORTING_DEPARTMENT_CODE.id`}
-                                defaultValue=""
-                                control={control}
-                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={get(errors,field.name,false)}/>}
-                            />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.REPORTING_DEPARTMENT_CODE.id.message`,'')}</Form.Control.Feedback>
-                        </Col>
-                        <Col xs={12} sm={8} md={6} lg={5} xl={4} className="mb-2">
-                            <Form.Label>Supervisor:</Form.Label>
-                            <Controller
-                                name={`${blockName}.${index}.supervisor`}
-                                control={control}
-                                render={({field}) => <AsyncTypeahead
-                                    {...field}
-                                    filterBy={()=>true}
-                                    id="supervisor-search"
-                                    isLoading={supervisors.isLoading}
-                                    minLength={2}
-                                    flip={true} 
-                                    allowNew={true}
-                                    onSearch={handleSearch}
-                                    onBlur={e=>handleBlur(field,e)}
-                                    options={supervisors.data}
-                                    placeholder="Search for supervisor..."
-                                    selected={field.value}
-                                    disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""}
-                                />}
-                            />
-                        </Col>
-                        <Col xs="auto" className="mb-2">
-                            <Form.Label>Allocation*:</Form.Label>
-                            <Controller
-                                name={`${blockName}.${index}.WORK_ALLOCATION.id`}
-                                defaultValue=""
-                                control={control}
-                                rules={{required:{value:true,message:'Work Allocation is Required'}}}
-                                render={({field}) => (
-                                    <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={get(errors,field.name,false)}>
-                                        <option></option>
-                                        {workAllocation.data && workAllocation.data.map(a=><option key={a[0]} value={a[0]}>{a[1]}</option>)}
-                                    </Form.Control>
-                                )}
-                            />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.WORK_ALLOCATION.id.message`,'')}</Form.Control.Feedback>
-                        </Col>
-                        <Col xs="auto" className="mb-2">
-                            <Form.Label>Work %*:</Form.Label>
-                            <Controller
-                                name={`${blockName}.${index}.WORK_PERCENT`}
-                                defaultValue=""
-                                control={control}
-                                rules={{
-                                    required:{value:true,message:'Work % is Required'},
-                                    min:{value:0,message:'Work % cannot be less than 0%'},
-                                    max:{value:100,message:'Work % cannot be greater than 100%'}
-                                }}
-                                render={({field}) => <Form.Control {...field} type="number" min={1} max={100} disabled={editIndex!=index} isInvalid={(editIndex==undefined&&totalPct!=100)||get(errors,field.name,false)}/>}
-                            />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.WORK_PERCENT.message`,'')}</Form.Control.Feedback>
-                        </Col>
-                    </Form.Row>
-                    <Form.Row>
-                        <Col xs={12} sm={10} md={8} lg={6} className="mb-2">
-                            <Form.Label>Duties:</Form.Label>
-                            <Controller
-                                name={`${blockName}.${index}.DUTIES`}
-                                defaultValue=""
-                                control={control}
-                                render={({field}) => <Form.Control {...field} as="textarea" rows={2} disabled={editIndex!=index}/>}
-                            />
-                        </Col>
-                    </Form.Row>
-                    <Row>
-                        <Col className="button-group-sm">
-                            {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
-                            {editIndex==index && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
-                            {(editIndex==index&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
-                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
-                        </Col>
-                    </Row>
-                    <Row>
-                        <Col>
-                            <small><span className="fw-bold">Created: </span><DateFormat>{fld.createDate}</DateFormat></small>
-                        </Col>
-                        <Col className="text-right">
-                            <small>{index}:{fld.id}:{fld.HR_COMMITMENT_ID}</small>
-                        </Col>
-                    </Row>
+                                        render={({field}) => <Form.Control {...field} type="number" min={1} max={100} disabled={editIndex!=index} isInvalid={(editIndex==undefined&&totalPct!=100)||get(errors,field.name,false)}/>}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.WORK_PERCENT.message`,'')}</Form.Control.Feedback>
+                                </Col>
+                            </Form.Row>
+                            <Form.Row>
+                                <Col xs={12} sm={10} md={8} lg={6} className="mb-2">
+                                    <Form.Label>Duties:</Form.Label>
+                                    <Controller
+                                        name={`${blockName}.${index}.DUTIES`}
+                                        defaultValue=""
+                                        control={control}
+                                        render={({field}) => <Form.Control {...field} as="textarea" rows={2} disabled={editIndex!=index}/>}
+                                    />
+                                </Col>
+                            </Form.Row>
+                            {!readOnly&&
+                                <Row>
+                                    <Col className="button-group-sm">
+                                        {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
+                                        {editIndex==index && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
+                                        {(editIndex==index&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
+                                        <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
+                                    </Col>
+                                </Row>
+                            }
+                            <Row>
+                                <Col>
+                                    <small><span className="fw-bold">Created: </span><DateFormat>{fld.createDate}</DateFormat></small>
+                                </Col>
+                                <Col className="text-right">
+                                    <small>{index}:{fld.id}:{fld.HR_COMMITMENT_ID}</small>
+                                </Col>
+                            </Row>
+                        </section>
+                    ))}
+                    {!readOnly&&
+                        <Row>
+                            <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={editIndex!=undefined}>Add Assignment</AppButton></Col>
+                        </Row>
+                    }
                 </section>
-            ))}
-            <Row>
-                <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={editIndex!=undefined}>Add Assignment</AppButton></Col>
-            </Row>
-        </section>
+            )}
+        </HRFormContext.Consumer>            
     );
 }

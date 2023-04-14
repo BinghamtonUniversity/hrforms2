@@ -1,22 +1,96 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
-import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
+import { useFormContext, useFieldArray, Controller } from "react-hook-form";
 import { get, cloneDeep } from "lodash";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
-import { AppButton, DateFormat, DepartmentSelector } from "../components";
+import { AppButton, CurrencyFormat, DateFormat, DepartmentSelector } from "../components";
 import { SingleSUNYAccount } from "../sunyaccount";
 import useFormQueries from "../../queries/forms";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import { addDays, subDays } from "date-fns";
+import DataTable from "react-data-table-component";
 
 const name = 'employment.pay';
 
 export default function EmploymentPay() {
-    const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext();
-    const { fields, append, remove, move, update } = useFieldArray({
+    return (
+        <article className="mt-3">
+            <Row as="header">
+                <Col as="h3">Pay</Col>
+            </Row>
+            <ExistingEmploymentPayTable/>
+            <NewEmploymentPay/>
+        </article>
+    );
+}
+
+function ExistingEmploymentPayTable() {
+    const blockName = `${name}.existingPay`;
+    const { getValues, control } = useFormContext();
+    const data = getValues(blockName);
+
+    const CalendarPortal = ({children}) => {
+        return createPortal(<div>{children}</div>,document.body);
+    };
+
+    const ExpandedComponent = ({data}) => <pre className="m-3"><span className="font-weight-bold">Duties:</span> {data.DUTIES}</pre>
+    const columns = useMemo(() => [
+        {name:'Start Date',selector:row=><DateFormat>{row.commitmentEffDate}</DateFormat>},
+        {name:'End Date',selector:(row,index)=>(
+            <Controller
+                name={`${blockName}.${index}.commitmentEndDate`}
+                control={control}
+                render={({field}) => <Form.Control 
+                    as={DatePicker} 
+                    name={field.name}
+                    selected={field.value} 
+                    closeOnScroll={true} 
+                    onChange={field.onChange}
+                    autoComplete="off"
+                    popperContainer={CalendarPortal}
+                />}
+            />
+        )},
+        {name:'Account',selector:row=>[row.ACCOUNT_NUMBER?.ACCOUNT_CODE,row.ACCOUNT_NUMBER?.ACCOUNT_DESCRIPTION].join(': ')},
+        {name:'Department',selector:row=>row.REPORTING_DEPARTMENT_NAME},
+        {name:'Supervisor',selector:row=>[row.SUPERVISOR_LEGAL_LAST_NAME,row.SUPERVISOR_FIRST_NAME].join(', ')},
+        {name:'Hourly Rate',selector:row=><CurrencyFormat>{row.COMMITMENT_RATE}</CurrencyFormat>},
+        {name:'Award Amount',selector:row=><CurrencyFormat>{row.STUDENT_AWARD_AMOUNT}</CurrencyFormat>,hide:!getValues('payroll.ADDITIONAL_INFO.showStudentAwardAmount')}
+    ],[data]);
+    return (
+        <section>
+            <Row as="header">
+                <Col as="h4">Existing Pay</Col>
+            </Row>
+            <Row>
+                <Col>
+                    <DataTable 
+                        keyField="HR_COMMITMENT_ID"
+                        columns={columns} 
+                        data={data}
+                        striped 
+                        responsive
+                        pointerOnHover
+                        highlightOnHover        
+                        expandableRows 
+                        expandOnRowClicked
+                        expandableRowsComponent={ExpandedComponent}
+                    />
+                </Col>
+            </Row>
+        </section>
+    );
+}
+
+function NewEmploymentPay() {
+    const blockName = `${name}.newPay`;
+
+    const { control, getValues, clearErrors, trigger, formState: { errors } } = useFormContext();
+    const { fields, append, remove, update } = useFieldArray({
         control:control,
-        name:name
+        name:blockName
     });
 
     const [isNew,setIsNew] = useState(false);
@@ -38,20 +112,20 @@ export default function EmploymentPay() {
             duties:"",
             created:new Date
         },{
-            focusName:`${name}.${fields.length}.startDate`
+            focusName:`${blockName}.${fields.length}.startDate`
         });
         setEditIndex(fields.length);
         setIsNew(true);
     }
     const handleEdit = index => {
         setEditIndex(index);
-        setEditValues(cloneDeep(getValues(`${name}.${index}`)));
-        setMinDate(addDays(getValues(`${name}.${index}.startDate`),1));
-        setMaxDate(subDays(getValues(`${name}.${index}.endDate`),1));
+        setEditValues(cloneDeep(getValues(`${blockName}.${index}`)));
+        setMinDate(addDays(getValues(`${blockName}.${index}.startDate`),1));
+        setMaxDate(subDays(getValues(`${blockName}.${index}.endDate`),1));
         setIsNew(false); // can only edit existing
     }
     const handleCancel = index => {
-        const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
+        const checkFields = Object.keys(fields[index]).map(f=>`${blockName}.${index}.${f}`);
         clearErrors(checkFields);
         update(index,editValues);
         setEditValues(undefined);
@@ -60,7 +134,7 @@ export default function EmploymentPay() {
         setMaxDate(undefined);
     }
     const handleSave = index => {
-        const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
+        const checkFields = Object.keys(fields[index]).map(f=>`${blockName}.${index}.${f}`);
         trigger(checkFields).then(valid => {
             if (!valid) {
                 console.log('Errors!',errors);
@@ -89,13 +163,10 @@ export default function EmploymentPay() {
     },[setMinDate,setMaxDate,getValues]);
 
     return (
-        <article className="mt-3">
+        <section className="mt-3">
             <Row as="header">
-                <Col as="h3">Pay <AppButton format="add" size="sm" onClick={handleNew} disabled={editIndex!=undefined}>New</AppButton></Col>
-            </Row>
-            <Row>
-                <Col>
-                    <p>TBD: Existing Pay</p>
+                <Col as="h4">
+                    New Pay
                 </Col>
             </Row>
             {fields.map((flds,index)=>(
@@ -105,7 +176,7 @@ export default function EmploymentPay() {
                             <Form.Label>Start Date:</Form.Label>
                             <InputGroup>
                                 <Controller
-                                    name={`${name}.${index}.startDate`}
+                                    name={`${blockName}.${index}.startDate`}
                                     defaultValue=""
                                     control={control}
                                     rules={{required:{value:true,message:'Start Date is Required'}}}
@@ -134,7 +205,7 @@ export default function EmploymentPay() {
                             <Form.Label>End Date:</Form.Label>
                             <InputGroup>
                                 <Controller
-                                    name={`${name}.${index}.endDate`}
+                                    name={`${blockName}.${index}.endDate`}
                                     defaultValue=""
                                     control={control}
                                     rules={{required:{value:true,message:'End Date is Required'}}}
@@ -160,12 +231,12 @@ export default function EmploymentPay() {
                         </Col>
                         <Col xs={6} md={4} className="mb-2">
                             <Form.Label>Account:</Form.Label>
-                            <SingleSUNYAccount name={`${name}.${index}.account`} disabled={editIndex!=index}/>
+                            <SingleSUNYAccount name={`${blockName}.${index}.account`} disabled={editIndex!=index}/>
                         </Col>
                         <Col xs={2} md={1} className="mb-2">
                             <Form.Label>Hourly Rate:</Form.Label>
                             <Controller
-                                name={`${name}.${index}.hourlyRate`}
+                                name={`${blockName}.${index}.hourlyRate`}
                                 defaultValue=""
                                 control={control}
                                 render={({field}) => <Form.Control {...field} type="number" disabled={editIndex!=index}/>}
@@ -174,7 +245,7 @@ export default function EmploymentPay() {
                         <Col xs={2} md={1} className="mb-2">
                             <Form.Label>Award Amount:</Form.Label>
                             <Controller
-                                name={`${name}.${index}.awardAmount`}
+                                name={`${blockName}.${index}.awardAmount`}
                                 defaultValue=""
                                 control={control}
                                 render={({field}) => <Form.Control {...field} type="number" disabled={editIndex!=index}/>}
@@ -185,7 +256,7 @@ export default function EmploymentPay() {
                         <Form.Label column xs={4} sm={3} md={2} xl={1}>Department:</Form.Label>
                         <Col xs="auto">
                             <Controller
-                                name={`${name}.${index}.department`}
+                                name={`${blockName}.${index}.department`}
                                 control={control}
                                 defaultValue=""
                                 render={({field}) => <DepartmentSelector field={field} disabled={editIndex!=index}/>}
@@ -199,7 +270,7 @@ export default function EmploymentPay() {
                         <Form.Label column xs={4} sm={3} md={2} xl={1}>Duties:</Form.Label>
                         <Col xs={8} md={7} xl={6}>
                             <Controller
-                                name={`${name}.${index}.duties`}
+                                name={`${blockName}.${index}.duties`}
                                 control={control}
                                 defaultValue=""
                                 render={({field}) => <Form.Control field={field} disabled={editIndex!=index}/>}
@@ -224,11 +295,17 @@ export default function EmploymentPay() {
                     </Row>
                 </section>
             ))}
-        </article>
+            <Row as="footer">
+                <Col>
+                    <AppButton format="add" size="sm" onClick={handleNew} disabled={editIndex!=undefined}>Add New Pay</AppButton>
+                </Col>
+            </Row>
+        </section>
     );
 }
 
 function PaySupervisor({index,editIndex}) {
+    const blockName = `${name}.newPay`;
     const { control, getValues, setValue } = useFormContext();
     const [searchFilter,setSearchFilter] = useState('');
     const { getSupervisorNames } = useFormQueries();
@@ -239,8 +316,8 @@ function PaySupervisor({index,editIndex}) {
     }
     const handleBlur = (field,e) => {
         field.onBlur(e);
-        if (e.target.value != getValues(`${name}.${index}.supervisor[0].label`)) {
-            setValue(`${name}.${index}.supervisor.0`,{id:`new-id-${index}`,label:e.target.value});
+        if (e.target.value != getValues(`${blockName}.${index}.supervisor[0].label`)) {
+            setValue(`${blockName}.${index}.supervisor.0`,{id:`new-id-${index}`,label:e.target.value});
         }
     }
 
@@ -253,7 +330,7 @@ function PaySupervisor({index,editIndex}) {
             <Form.Label column xs={4} sm={3} md={2} xl={1}>Supervisor:</Form.Label>
             <Col xs="auto">
                 <Controller
-                    name={`${name}.${index}.supervisor`}
+                    name={`${blockName}.${index}.supervisor`}
                     defaultValue=""
                     control={control}
                     render={({field}) => <AsyncTypeahead

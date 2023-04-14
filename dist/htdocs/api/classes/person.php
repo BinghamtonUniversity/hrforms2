@@ -99,6 +99,7 @@ class Person extends HRForms2 {
 			$results[] = $row;
 		}
         $this->nullToEmpty($results);
+        if (!$results) $results = array(); // if no results build an empty array
         $this->_arr['results'] = $results;
         $this->returnData = $this->_arr;
         if ($this->retJSON) $this->toJSON($this->returnData);

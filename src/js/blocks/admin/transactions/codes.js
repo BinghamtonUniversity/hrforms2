@@ -10,7 +10,6 @@ import { useForm, Controller, FormProvider, useFormContext } from "react-hook-fo
 import { flattenObject } from "../../../utility";
 import { useHotkeys } from "react-hotkeys-hook";
 
-
 export default function CodesTab({tab,tabName}) {
     const vals = {code:`${tab}_code`,title:`${tab}_title`,description:`${tab}_description`};
     const vars = {
@@ -108,7 +107,7 @@ export default function CodesTab({tab,tabName}) {
             );
         },ignoreRowClick:true,width:'100px'},
         {name:vars.code.start,selector:row=>row[vars.code.upper],sortable:true},
-        {name:vars.title.start,selector:row=>(
+        {name:vars.title.start,selector:row=>row[vars.title.upper],cell:row=>(
             <DescriptionPopover 
                 id={`${row[vars.code.upper]}_description`} 
                 content={row[vars.description.upper]}
@@ -117,8 +116,8 @@ export default function CodesTab({tab,tabName}) {
                 <p className="m-0">{row[vars.title.upper]}</p>
             </DescriptionPopover>
         ),sortable:true},
-        {name:'Active',selector:row=><Form.Check aria-label="Active" name="active" id={`active_${row[vars.code.upper]}`} value={row[vars.code.upper]} checked={row.ACTIVE==1} onChange={e=>handleRowEvents(e,row)}/>,sortable:true,ignoreRowClick:true},
-        {name:'Order',selector:row=><Form.Control type="number" name="orderby" defaultValue={row.ORDERBY} onBlur={e=>handleRowEvents(e,row)}/>,sortable:true,ignoreRowClick:true}
+        {name:'Active',selector:row=>row.ACTIVE,cell:row=><Form.Check aria-label="Active" name="active" id={`active_${row[vars.code.upper]}`} value={row[vars.code.upper]} checked={row.ACTIVE==1} onChange={e=>handleRowEvents(e,row)}/>,sortable:true,ignoreRowClick:true},
+        {name:'Order',selector:row=>row.ORDERBY,cell:row=><Form.Control type="number" name="orderby" defaultValue={row.ORDERBY} onBlur={e=>handleRowEvents(e,row)}/>,sortable:true,ignoreRowClick:true}
     ],[codes.data]);
 
     const nextOrder = useMemo(() => {
@@ -417,17 +416,31 @@ function PayrollTabs({tab,children}) {
 function PayrollTabAdditionalInfo() {
     const { control } = useFormContext();
     return (
-        <Form.Group as={Row} controlId="active">
-            <Form.Label column md={2}>Has Benefits:</Form.Label>
-            <Col xs="auto" className="pt-2">
-                <Controller
-                    name="additionalInfo.hasBenefits"
-                    control={control}
-                    defaultValue={false}
-                    render={({field}) => <Form.Check {...field} type="checkbox" checked={field.value}/>}
-                />
-                <Form.Text muted>Indicate the Payroll Code is allowed benefits</Form.Text>
-            </Col>
-        </Form.Group>
+        <section>
+            <Form.Group as={Row} controlId="active">
+                <Form.Label column md={3}>Has Benefits:</Form.Label>
+                <Col xs="auto" className="pt-2">
+                    <Controller
+                        name="additionalInfo.hasBenefits"
+                        control={control}
+                        defaultValue={false}
+                        render={({field}) => <Form.Check {...field} type="checkbox" checked={field.value}/>}
+                    />
+                    <Form.Text muted>Indicates the Payroll Code is allowed benefits</Form.Text>
+                </Col>
+            </Form.Group>
+            <Form.Group as={Row} controlId="active">
+                <Form.Label column md={3}>Show Award Amount:</Form.Label>
+                <Col xs="auto" className="pt-2">
+                    <Controller
+                        name="additionalInfo.showStudentAwardAmount"
+                        control={control}
+                        defaultValue={false}
+                        render={({field}) => <Form.Check {...field} type="checkbox" checked={field.value}/>}
+                    />
+                    <Form.Text muted>Indicates the Payroll will display the Student Award Amount in the Existing Pay table on the Pay Tab</Form.Text>
+                </Col>
+            </Form.Group>
+        </section>
     );
 }

@@ -1,22 +1,15 @@
-import React, { useState, useEffect, lazy, useCallback, useMemo, useContext } from "react";
-import { ErrorFallback, UserContext, useUserContext, NotFound } from "../app";
+import React, { useState, useEffect, lazy, useCallback, useMemo } from "react";
+import { ErrorFallback, UserContext, useUserContext } from "../app";
 import { useQueryClient } from "react-query";
-import { useParams, useHistory, Prompt, Redirect, useLocation } from "react-router-dom";
+import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
 import { Loading, AppButton, DateFormat } from "../blocks/components";
 import { get, set, has, zip, cloneDeep } from "lodash";
-import usePersonQueries from "../queries/person";
-import useEmploymentQueries from "../queries/employment";
-import { isValid } from "date-fns";
 import useFormQueries from "../queries/forms";
 import { Icon } from "@iconify/react";
 import { flattenObject } from "../utility";
-
-/* CONTEXT */
-export const HRFormContext = React.createContext();
-HRFormContext.displayName = 'HRFormContext';
-export function useHRFormContext() { return useContext(HRFormContext); }
+import { allTabs, fetchFormData, initFormValues, HRFormContext } from "../config/form";
 
 /* TABS */
 const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
@@ -35,37 +28,6 @@ const EmploymentVolunteer = lazy(()=>import("../blocks/form/employment-volunteer
 const Comments = lazy(()=>import("../blocks/form/comments"));
 const Review = lazy(()=>import("../blocks/form/review"));
 
-const allTabs = [
-    {value:'basic-info',label:'Basic Info'},
-    {value:'person',label:'Person',children:[
-        {value:'person-information',label:'Information'},
-        {value:'person-demographics',label:'Demographics'},
-        {value:'person-directory',label:'Directory'},
-        {value:'person-education',label:'Education'},
-        {value:'person-contacts',label:'Contacts'},
-    ]},
-    {value:'employment',label:'Employment',children:[
-        {value:'employment-position',label:'Position'},
-        {value:'employment-appointment',label:'Appointment'},
-        {value:'employment-salary',label:'Salary'},
-        {value:'employment-separation',label:'Separation'},
-        {value:'employment-leave',label:'Leave'},
-        {value:'employment-pay',label:'Pay'},
-        {value:'employment-volunteer',label:'Volunteer'}
-    ]},
-    {value:'comments',label:'Comments'},
-    {value:'review',label:'Review'}
-];
-export {allTabs}; //used on paytrans
-
-const defaultFormActions = {
-    PAYTRANS_ID:"",
-    formCode:{FORM_CODE:"",FORM_TITLE:"",FORM_DESCRIPTION:""},
-    actionCode:{ACTION_CODE:"",ACTION_TITLE:"",ACTION_DESCRIPTION:""},
-    transactionCode:{TRANSACTION_CODE:"",TRANSACTION_TITLE:"",TRANSACTION_DESCRIPTION:""}
-};
-export {defaultFormActions}; //used on basic_info
-
 export default function HRForm() {
     const [formId,setFormId] = useState('');
     const [isNew,setIsNew] = useState(false);
@@ -77,7 +39,7 @@ export default function HRForm() {
 
     useEffect(() => {
         console.log(id,sunyid,ts);
-        if (!id) {
+        if (!id||id=="new") {
             setIsNew(true);
             setIsDraft(true);
             setInfoComplete(false);
@@ -96,11 +58,12 @@ export default function HRForm() {
             isNew={isNew} 
             infoComplete={infoComplete}
             setInfoComplete={setInfoComplete}
+            reset={id=='new'}
         />
     );
 }
 
-function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete}) {
+function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete,reset}) {
     const [formData,setFormData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
 
@@ -122,6 +85,7 @@ function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete}) {
                 console.error(e);
             });
         } else {
+            console.log('isnew:',reset);
             setFormData({});
         }
     },[formId,isNew]);
@@ -144,6 +108,7 @@ function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete}) {
                 isNew={isNew}
                 infoComplete={infoComplete}
                 setInfoComplete={setInfoComplete}
+                reset={reset}
             />}
             {formData && <BlockNav formId={formId} when={isBlocking} isDraft={isNew}/>}
         </section>
@@ -178,6 +143,7 @@ function BlockNav({formId,when,isDraft}) {
         });
     }
     const handleProceed = () => {
+        console.log('TODO: need to save form');
         console.debug('proceed to location: ',nextLocation);
         setShowModal(false);
         setShouldProceed(true);
@@ -191,11 +157,17 @@ function BlockNav({formId,when,isDraft}) {
                     <Modal.Title>Exit?</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    The form has not been saved.  Do you want to leave and lose your changes?
+                    <p>
+                        The form has not been saved.{' '}
+                        {(isDraft)?
+                            <>If you exit your draft will be <strong>discarded</strong>.</>:
+                            <>If you exit your changes will not be saved.</>
+                        }
+                    </p>
                 </Modal.Body>
                 <Modal.Footer>
                     {isDraft&&<Button variant="danger" onClick={handleDelete}>Discard</Button>}
-                    <Button variant="primary" onClick={handleProceed}>Leave</Button>
+                    {!isDraft&&<Button variant="danger" onClick={handleProceed}>Leave</Button>}
                     <Button variant="secondary" onClick={handleClose}>Cancel</Button>
                 </Modal.Footer>
             </Modal>
@@ -203,7 +175,7 @@ function BlockNav({formId,when,isDraft}) {
     );
 }
 
-function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInfoComplete}) {
+function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInfoComplete,reset}) {
     //TODO: probably need to change to useReducer?
     const [tabList,setTabList] = useState(allTabs.filter(t=>t.value=='basic-info'));
 
@@ -217,173 +189,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const [redirect,setRedirect] = useState('');
     const [dataLoadError,setDataLoadError] = useState(undefined);
 
-    const defaultVals = {
-        formId:formId,
-        lookup:{
-            type:"bNumber",
-            values:{
-                bNumber:"",
-                lastName:"",
-                dob:"",
-            },
-        },
-        selectedRow:{},
-        payroll:{code:"",title:"",description:""},
-        effDate:"",
-        formActions:defaultFormActions,
-        person: {
-            information: {
-                "HR_PERSON_ID":"",
-                "SUNY_ID": "",
-                "LOCAL_CAMPUS_ID": "",
-                "SALUTATION_CODE":{"id": "","label": ""},
-                "FIRST_NAME": "",
-                "LEGAL_MIDDLE_NAME": "",
-                "LEGAL_LAST_NAME": "",
-                "SUFFIX_CODE": "",
-                "VOLUNTEER_FIRE_FLAG": "",
-                "REHIRE_RETIREE": "",
-                "RETIREMENT_DATE": "",
-                "RETIRED_FROM": "",
-                "retiredDate":""
-            },
-            demographics: {
-                "BIRTH_DATE": "",
-                "US_CITIZEN_INDICATOR": "Y",
-                "NON_CITIZEN_TYPE": {"id": "","label": ""},
-                "EMP_AUTHORIZE_CARD_INDICATOR": "",
-                "VISA_CODE": {"id": "","label": ""},
-                "CITIZENSHIP_COUNTRY_CODE": {"id": "","label": ""},
-                "GENDER": {"id": "","label": ""},
-                "HISPANIC_FLAG": "N",
-                "ETHNICITY_MULT_CODES": "",
-                "ETHNICITY_SOURCE_DSC": "",
-                "DISABILITY_INDICATOR": "N",
-                "MILITARY_STATUS_CODE": [],
-                "VETERAN_INDICATOR": "N",
-                "PROTECTED_VET_STATUS_CODE": [],
-                "MILITARY_SEPARATION_DATE": "",
-                "birthDate":"",
-                "militarySepDate":""
-            },
-            directory: {
-                address:[],
-                phone:[],
-                email:[]
-            },
-            education:{
-                institutions:[]
-            },
-            contact:{
-                contacts:[]
-            }
-        },
-        employment: {
-            position: {
-                "LINE_ITEM_NUMBER": "",
-                "APPOINTMENT_TYPE": {"id": "","label": ""},
-                "APPOINTMENT_PERCENT": "",
-                "BENEFIT_FLAG": {"id": "","label": ""},
-                "APPOINTMENT_EFFECTIVE_DATE": "",
-                "APPOINTMENT_END_DATE": "",
-                "VOLUNTARY_REDUCTION": "",
-                "PAYROLL_MAIL_DROP_ID": {"id": "","label": ""},
-                "positionDetails": {},
-                "apptEffDate": "",
-                "apptEndDate": "",
-                "hasBenefits": false,
-                "justification": {"id": "","label": ""}
-            },
-            appointment: {
-                "TERM_DURATION": "",
-                "NOTICE_DATE": "",
-                "CONTINUING_PERMANENCY_DATE": "",
-                "TENURE_STATUS": {"id": "", "label": ""},
-                "CAMPUS_TITLE": "",
-                "SUPERVISOR_SUNY_ID": "",
-                "SUPERVISOR_NAME": "",
-                "REPORTING_DEPARTMENT_CODE": {"id": "", "label": ""},
-                "DERIVED_FAC_TYPE": "N",
-                "supervisor": [],
-                "noticeDate": "",
-                "contPermDate": "",
-                "facultyDetails": {
-                    "fallCourses":{count:0,list:""},
-                    "springCourses":{count:0,list:""}
-                },
-                "studentDetails": {
-                    ACAD_HIST: "",
-                    INCOMPLETES: "0",
-                    MISSING_GRADES: "0",
-                    SGBSTDN_TERM_CODE_EFF: "",
-                    SHRLGPA_GPA: "",
-                    SMRPRLE_PROGRAM_DESC: "",
-                    SPRIDEN_ID: "",
-                    SPRIDEN_PIDM: "",
-                    STVCLAS_CODE: "",
-                    STVCLAS_DESC: "",
-                    STVMAJR_DESC: "",
-                    STVRESD_CODE: "",
-                    STVRESD_DESC: "",
-                    STVRESD_IN_STATE_DESC: "",
-                    STVRESD_IN_STATE_IND: "",
-                    STVTERM_DESC: "",
-                    "fall":{
-                        "tuition":"",
-                        "credits":"0"
-                    },
-                    "spring":{
-                        "tuition":"",
-                        "credits":"0"
-                    },
-                    "fellowship":"N",
-                    "fellowshipSource":{"id":"","label":""}
-                }
-            },
-            salary:{
-                "APPOINTMENT_PERCENT": "",
-                "PAY_BASIS": "",
-                "RATE_EFFECTIVE_DATE": "",
-                "RATE_AMOUNT": "",
-                "NUMBER_OF_PAYMENTS":"1",
-                "SUNY_ACCOUNTS": [],
-                "EXISTING_ADDITIONAL_SALARY": [],
-                "ADDITIONAL_SALARY": [],
-                "SPLIT_ASSIGNMENTS":[],
-                "SUNYAccountsSplit":false,
-                "SUNYAccounts": [
-                    {
-                        account:[{id:'',label:''}],
-                        pct:'100'
-                    }
-                ],
-                "totalSalary": ""
-            },
-            separation: {
-                lastDateWorked:""
-            },
-            leave: {
-                origSalary:"",
-                leavePercent:0,
-                leaveEndDate:"",
-                justification:""
-            },
-            pay: [],
-            volunteer: {
-                subRole:{id:"",label:""},
-                startDate:"",
-                endDate:"",
-                hoursPerWeek:"",
-                subRole:{id:"",label:""},
-                department:{id:"",label:""},
-                duties:""
-            }
-        },
-        lastJournal:{
-            STATUS:""
-        },
-        comment:""
-    };
+    const defaultVals = Object.assign({},initFormValues,{formId:formId});
     const methods = useForm({defaultValues: Object.assign({},defaultVals,data)});
     const watchFormActions = useWatch({name:'formActions.formCode',control:methods.control});
     const watchIds = useWatch({name:['person.information.HR_PERSON_ID','person.information.SUNY_ID','person.information.LOCAL_CAMPUS_ID'],control:methods.control});
@@ -396,129 +202,10 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const updateForm = putForm(formId);
     const delForm = deleteForm(formId);
 
-    const {getPersonInfo} = usePersonQueries();
-    const {getEmploymentInfo} = useEmploymentQueries();
-
-    //** Data Fetch: TODO: move to separate functions/file? */
-    const personinfo = getPersonInfo(watchIds[0],'information',{
-        refetchOnMount:false,
-        enabled:false,
-        onSuccess:d=>{
-            const retiredDate = new Date(d?.RETIREMENT_DATE);
-            d.retiredDate = isValid(retiredDate)?retiredDate:"";
-            methods.setValue('person.information',Object.assign({},defaultVals.person.information,d));
-        }
-    });
-    const persondemographics = getPersonInfo(watchIds[0],'demographics',{
-        refetchOnMount:false,
-        enabled:false,
-        onSuccess:d=>{
-            const birthDate = new Date(d?.BIRTH_DATE);
-            d.birthDate = isValid(birthDate)?birthDate:"";
-            const milSepDate = new Date(d?.MILITARY_SEPARATION_DATE);
-            d.milSepDate = isValid(milSepDate)?milSepDate:"";
-            methods.setValue('person.demographics',Object.assign({},defaultVals.person.demographics,d));
-        }
-    });
-    const persondirectory = getPersonInfo(watchIds[0],'directory',{
-        refetchOnMount:false,
-        enabled:false,
-        onSuccess:d=>{
-            Object.keys(d).forEach(k => {
-                d[k].forEach(v => {
-                    if (v.hasOwnProperty('CREATE_DATE')) {
-                        const dt = new Date(v.CREATE_DATE);
-                        v.effDate = isValid(dt)?dt:"";
-                        v.createDate = isValid(dt)?dt:"";
-                    }
-                });
-            });
-            methods.setValue('person.directory',Object.assign({},defaultVals.person.directory,d));
-        }
-    });
-    const personeducation = getPersonInfo(watchIds[0],'education',{
-        refetchOnMount:false,
-        enabled:false,
-        onSuccess:d=>{
-            d.forEach(o => {
-                const awardDate = new Date(o.DEGREE_YEAR,(o.DEGREE_MONTH||1)-1);
-                o.awardDate = isValid(awardDate)?awardDate:"";
-                o.institutionName = [{id:o.INSTITUTION_ID,label:o.INSTITUTION}];
-                o.institutionCity = [o.INSTITUTION_CITY];
-                const createDate = new Date(o.CREATE_DATE);
-                o.createDate = isValid(createDate)?createDate:"";
-            });
-            methods.setValue('person.education.institutions',d);
-        }
-    });
-    const personcontacts = getPersonInfo(watchIds[0],'contact',{
-        refetchOnMount:false,
-        enabled:false,
-        onSuccess:d=>{
-            d.forEach(o => {
-                o.isPrimary = (o.EMR_CTC_RANK=='1')?'Y':'N';
-                const createDate = new Date(o.CREATE_DATE);
-                o.createDate = isValid(createDate)?createDate:"";
-            });
-            methods.setValue('person.contact.contacts',d);
-        }
-    });
-    //Employment Info:
-    const employmentappointment = getEmploymentInfo([watchIds[0],'appointment'],{
-        refetchOnMount:false,
-        enabled:false,
-        onSuccess:d=>{
-            const noticeDate = new Date(d?.NOTICE_DATE);
-            d.noticeDate = isValid(noticeDate)?noticeDate:"";
-            console.log(d.noticeDate);
-            const contPermDate = new Date(d?.CONTINUING_PERMANENCY_DATE);
-            d.contPermDate = isValid(contPermDate)?contPermDate:"";
-            console.log(d.contPermDate);
-            methods.setValue('employment.appointment',Object.assign({},defaultVals.employment.appointment,d));
-        }
-    });
-    const studentinformation = getEmploymentInfo([watchIds[2],'studentinfo'],{
-        refetchOnMount:false,
-        enabled:false,
-        onSuccess:d=>{
-            methods.setValue('employment.appointment.studentDetails',Object.assign({},defaultVals.employment.appointment.studentDetails,d));
-        }
-    });
-    const employmentposition = getEmploymentInfo([watchIds[0],'position'],{
-        refetchOnMount:false,
-        enabled:false,
-        onSuccess:d=>{
-            const apptEffDate = new Date(d?.APPOINTMENT_EFFECTIVE_DATE);
-            d.apptEffDate = isValid(apptEffDate)?apptEffDate:"";
-            const apptEndDate = new Date(d?.APPOINTMENT_END_DATE);
-            d.apptEndDate = isValid(apptEndDate)?apptEndDate:"";
-            methods.setValue('employment.position',Object.assign({},defaultVals.employment.position,d));
-        }
-    });
-    const employmentsalary = getEmploymentInfo([watchIds[0],'salary'],{
-        refetchOnMount:false,
-        enabled:false,
-        onSuccess:d=>{
-            const effDate = new Date(d?.RATE_EFFECTIVE_DATE);
-            d.effDate = isValid(effDate)?effDate:methods.getValues('effDate');
-            d.SPLIT_ASSIGNMENTS.map(a => {
-                const commitmentEffDate = new Date(a?.COMMITMENT_EFFECTIVE_DATE);
-                a.commitmentEffDate = isValid(commitmentEffDate)?commitmentEffDate:"";
-                const commitmentEndDate = new Date(a?.COMMITMENT_END_DATE);
-                a.commitmentEndDate = isValid(commitmentEndDate)?commitmentEndDate:"";
-                const createDate = new Date(a?.CREATE_DATE);
-                a.createDate = isValid(createDate)?createDate:"";
-            });
-            d.totalSalary = ((+d.RATE_AMOUNT*+d.NUMBER_OF_PAYMENTS) * (+d.APPOINTMENT_PERCENT/100)).toFixed(2);
-            methods.setValue('employment.salary',Object.assign({},defaultVals.employment.salary,d));
-        }
-    });
-    const employmentleave = getEmploymentInfo([watchIds[1],'leave',methods.getValues('effDate')],{
-        refetchOnMount:false,
-        enabled:false,
-        onSuccess:d=>{
-            console.log(d);
-        }
+    const fetchData = fetchFormData({
+        watchIds:watchIds,
+        effectiveDate:methods.getValues('effDate'),
+        payrollCode:methods.getValues('payroll.PAYROLL_CODE')
     });
 
     const handleRedirect = () => {
@@ -586,6 +273,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const handleError = error => {
         console.log(error);
     }
+    const history = useHistory();
     const handleReset = () => {
         if (!isNew&&isDraft) return; // cannot reset a saved form?
         console.debug('Resetting Form');
@@ -597,8 +285,10 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         methods.reset(defaultVals);
         setTabList(allTabs.filter(t=>t.value=='basic-info'));
         setInfoComplete(false);
+        setIsBlocking(false);
         setActiveTab('basic-info');
         setActiveNav('');
+        if (reset) history.push('/form/');
     }
     const handleDelete = () => {
         if (isNew&&!isDraft) return;
@@ -640,60 +330,99 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         if (!tabs) {
             console.debug('Reset/Clear Tabs');
             setTabList(allTabs.filter(t=>t.value=='basic-info'));
+            setIsBlocking(false);
         } else {
             console.debug('Display Tabs: ',tabs);
             setInfoComplete(true);
-            const tablist = [allTabs.find(t=>t.value=='basic-info')];
+            setIsBlocking(true);
+            const tlist = [allTabs.find(t=>t.value=='basic-info')];
             ['person','employment'].forEach(t=>{
                 if (tabs.filter(v=>v.startsWith(t)).length>0) {
                     const subTabs = cloneDeep(allTabs.find(v=>v.value==t));
                     subTabs.children = subTabs.children.filter(s=>tabs.includes(s.value));
-                    tablist.push(subTabs);
+                    tlist.push(subTabs);
                 }
             });
-            tablist.push(...allTabs.filter(t=>['comments','review'].includes(t.value)));
-            setTabList(tablist);
+            tlist.push(...allTabs.filter(t=>['comments','review'].includes(t.value)));
+            setTabList(tlist);
             if (isNew) {
                 if (!!watchIds[0]) { 
+                    // Fetch Data:
                     const promiseList = [];
                     tabs.forEach(tab => {
                         switch(tab) {
-                            case "person-information": promiseList.push({func:personinfo.refetch}); break;
-                            case "person-demographics": promiseList.push({func:persondemographics.refetch}); break;
-                            case "person-directory": promiseList.push({func:persondirectory.refetch}); break;
-                            case "person-education": promiseList.push({func:personeducation.refetch}); break;
-                            case "person-contacts": promiseList.push({func:personcontacts.refetch}); break;
-                            case "employment-appointment": promiseList.push({func:employmentappointment.refetch}); break;
+                            case "person-information": promiseList.push({tab:tab,func:fetchData.personinfo.refetch}); break;
+                            case "person-demographics": promiseList.push({tab:tab,func:fetchData.persondemographics.refetch}); break;
+                            case "person-directory": promiseList.push({tab:tab,func:fetchData.persondirectory.refetch}); break;
+                            case "person-education": promiseList.push({tab:tab,func:fetchData.personeducation.refetch}); break;
+                            case "person-contacts": promiseList.push({tab:tab,func:fetchData.personcontacts.refetch}); break;
+                            case "employment-appointment": promiseList.push({tab:tab,func:fetchData.employmentappointment.refetch}); break;
                             case "employment-position": 
-                            promiseList.push({func:employmentposition.refetch,then:() =>{
+                            promiseList.push({tab:tab,func:fetchData.employmentposition.refetch,then:() =>{
                                     //if payroll == 28029 get student data
-                                    methods.getValues('payroll.code')=='28029' && studentinformation.refetch();
+                                    methods.getValues('payroll.PAYROLL_CODE')=='28029' && fetchData.studentinformation.refetch().then(r=>{
+                                        methods.setValue('employment.appointment.studentDetails',Object.assign({},defaultVals.employment.appointment.studentDetails,r.data));
+                                    });
                                 }}); 
                                 break;
-                            case "employment-salary": promiseList.push({func:employmentsalary.refetch}); break;
-                            case "employment-leave": promiseList.push({func:employmentleave.refetch}); break;
-                            case "employment-pay":
+                            case "employment-salary": 
+                                promiseList.push({tab:tab,func:fetchData.employmentsalary.refetch,then:d=>{
+                                    //Remove Employment-Leave tab if Pay Basis is BIW,FEE,HRY
+                                    if (['BIW','FEE','HRY'].includes(d.data?.PAY_BASIS)) {
+                                        tlist.filter(t=>{
+                                            if(t.hasOwnProperty('children')) {
+                                                return t.children = t.children.filter(c=>c.value!='employment-leave');
+                                            } else {
+                                                return t;
+                                            }
+                                        });
+                                        console.debug(`Employment-Leave Tab Removed.  Pay Basis ${d.data?.PAY_BASIS} not allowed.`);
+                                        setTabList(tlist);
+                                    }
+                                }});
+                                break;
+                            case "employment-leave": promiseList.push({tab:tab,func:fetchData.employmentleave.refetch}); break;
+                            case "employment-pay": promiseList.push({tab:tab,func:fetchData.employmentpay.refetch}); break;
                             case "employment-volunteer":
-                            case "comments":
                                 console.log('TODO; Load Tab: ',tab);
-                                promiseList.push({func:()=>new Promise(resolve=>resolve('done'))})
+                                //promiseList.push({tab:tab,func:()=>new Promise(resolve=>resolve({}))})
                                 break;
                             case "basic-info":
                             case "employment-separation":
+                            case "comments":
                             case "review":
                                 console.debug('Tab Skipped - No Data: ',tab);
                                 break;
                             default:
-                                console.log('Tab Not Configured:',tab);
+                                console.warn('Tab Not Configured:',tab);
                         }
                     });
-                    Promise.all(promiseList.map(prom=>prom.func().then(prom.then&&prom.then()))).then(res=>{
+                    Promise.all(promiseList.map(p=>p.func().then(r=>{
+                        p.then&&p.then(r);
+                        return r;
+                    }).then(r=>{
+                        const objPath = p.tab.replace('-','.');
+                        switch(p.tab) {
+                            case "person-education":
+                                methods.setValue('person.education.institutions',r.data);
+                                break;
+                            case "person-contacts":
+                                methods.setValue('person.contact.contacts',r.data);
+                                break;
+                            case "employment-pay":
+                                methods.setValue('employment.pay.existingPay',r.data);
+                                break;
+                            default:
+                                methods.setValue(objPath,Object.assign({},get(defaultVals,objPath),r.data));
+                        }
+                        return r;
+                    }))).then(res=>{
                         const errors = res.find(q=>q.isError);
                         if (errors) throw new Error(errors?.error);
-                        handleNext(tablist);
+                        handleNext(tlist);
                     }).catch(e=>setDataLoadError({message:e.message}));
                 } else { // new employee; not data loaded
-                    handleNext(tablist);
+                    handleNext(tlist);
                 }
             } else { // existing form
                 handleNext(tabList);
@@ -706,7 +435,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const readOnly = useMemo(()=>(methods.getValues('lastJournal.STATUS')!=""&&SUNY_ID==methods.getValues('lastJournal.SUBMITTER_SUNY_ID')),[methods,SUNY_ID,formId])
 
     useEffect(()=>!isNew && handleTabs(data.formActions.TABS),[formId]);
-    useEffect(()=>(isNew&&!data.hasOwnProperty('formId'))&&handleReset(),[isNew,data]); //reset form when "New"
+    useEffect(()=>(isNew&&!data.hasOwnProperty('formId'))&&handleReset(),[isNew,reset,data]); //reset form when "New"
 
     if (redirect) return <Redirect to={redirect}/>;
     if (dataLoadError) return <ErrorFallback error={dataLoadError}/>;
@@ -847,7 +576,7 @@ function FormInfoBox () {
                 <Col as="dt" sm={2} className="mb-0">HR Person ID:</Col>
                 <Col as="dd" sm={4} className="mb-0">{getValues('selectedRow.HR_PERSON_ID')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Payroll:</Col>
-                <Col as="dd" sm={4} className="mb-0">{getValues('payroll.title')}</Col>
+                <Col as="dd" sm={4} className="mb-0">{getValues('payroll.PAYROLL_TITLE')}</Col>
                 <Col as="dt" sm={2} className="mb-0">SUNY ID:</Col>
                 <Col as="dd" sm={4} className="mb-0">{getValues('selectedRow.SUNY_ID')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Form Type:</Col>

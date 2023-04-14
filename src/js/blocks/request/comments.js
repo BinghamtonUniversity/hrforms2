@@ -15,7 +15,7 @@ export default function Comments() {
                     <Controller
                         name="comment"
                         defaultValue=""
-                        rules={{required:{value:true,message:'Comment is required'}}}
+                        rules={{required:{value:getValues('action')!='save',message:'Comment is required'}}}
                         control={control}
                         render={({field}) => <Form.Control {...field} as="textarea" placeholder="Enter a brief comment" rows={5} isInvalid={errors.comment}/>}
                     />
@@ -54,6 +54,7 @@ function CommentsTable({reqId}) {
         <Row>
             <Col>
                 <DataTable 
+                    keyField="id"
                     columns={columns} 
                     data={journal.data}
                     striped 

@@ -13,6 +13,9 @@ export default function useEmploymentQueries() {
             case "leave":
                 const effDate = (!rest[0])?null:format(rest[0],'yyyyMMdd');
                 return useQuery(['employmentInfo',HR_PERSON_ID,infoType,effDate],q(`employmentinfo/${HR_PERSON_ID}/${infoType}/${effDate}`),options);
+            case "pay":
+                const payroll = (!rest[0])?null:rest[0];
+                return useQuery(['employmentInfo',HR_PERSON_ID,infoType,effDate],q(`employmentinfo/${HR_PERSON_ID}/${infoType}/${payroll}`),options);
             default:
                 return useQuery(['employmentInfo',HR_PERSON_ID,infoType],q(`employmentinfo/${HR_PERSON_ID}/${infoType}`),options);
         }        

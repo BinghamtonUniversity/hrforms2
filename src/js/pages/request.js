@@ -33,7 +33,7 @@ export default function Request() {
     const {SUNY_ID} = currentUser();
 
     useEffect(() => {
-        if (!id) {
+        if (!id||id=='new') {
             setIsNew(true);
             setIsDraft(true);
             setReqId(`draft-${SUNY_ID}`);
@@ -44,10 +44,10 @@ export default function Request() {
     },[id,sunyid,ts]);
     if (!reqId) return null;
     return(
-        <RequestWrapper reqId={reqId} isDraft={isDraft} isNew={isNew}/>
+        <RequestWrapper reqId={reqId} isDraft={isDraft} isNew={isNew} reset={id=='new'}/>
     );
 }
-function RequestWrapper({reqId,isDraft,isNew}) {
+function RequestWrapper({reqId,isDraft,isNew,reset}) {
     const [reqData,setReqData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
 
@@ -76,7 +76,7 @@ function RequestWrapper({reqId,isDraft,isNew}) {
                     </Col>
                 </Row>
             </header>
-            {reqData && <RequestForm reqId={reqId} data={reqData} setIsBlocking={setIsBlocking} isDraft={isDraft} isNew={isNew}/>}
+            {reqData && <RequestForm reqId={reqId} data={reqData} setIsBlocking={setIsBlocking} isDraft={isDraft} isNew={isNew} reset={reset}/>}
             {reqData && <BlockNav reqId={reqId} when={isBlocking} isDraft={isNew}/>}
         </section>
     );
@@ -123,11 +123,17 @@ function BlockNav({reqId,when,isDraft}) {
                     <Modal.Title>Exit?</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    The position request has not been saved.  Do you want to leave and lose your changes?
+                    <p>
+                        The request has not been saved.{' '}
+                        {(isDraft)?
+                            <>If you exit your draft will be <strong>discarded</strong>.</>:
+                            <>If you exit your changes will not be saved.</>
+                        }
+                    </p>
                 </Modal.Body>
                 <Modal.Footer>
                     {isDraft&&<Button variant="danger" onClick={handleDelete}>Discard</Button>}
-                    <Button variant="primary" onClick={handleProceed}>Leave</Button>
+                    {!isDraft&&<Button variant="danger" onClick={handleProceed}>Leave</Button>}
                     <Button variant="secondary" onClick={handleClose}>Cancel</Button>
                 </Modal.Footer>
             </Modal>
@@ -135,7 +141,7 @@ function BlockNav({reqId,when,isDraft}) {
     );
 }
 
-function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
+function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     const tabs = [
         {id:'information',title:'Information'},
         {id:'position',title:'Position'},
@@ -263,14 +269,17 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
         }
         methods.handleSubmit(handleSubmit,handleError)();
     }
-    const handleUndo = () => {
+    const history = useHistory();
+    const handleReset = () => {
         methods.reset(Object.assign({},defaultVals,data));
         setActiveTab('information');
         setLockTabs(true);
+        if (reset) history.push('/request/');
     }
     const handleSave = action => {
         methods.setValue('action',action);
-        handleValidation();
+        // Skip validation if only saving; validation errors will still trigger handleError
+        (action == 'save')?methods.handleSubmit(handleSubmit,handleError)():handleValidation();
     }
     const handleDelete = () => {
         //setIsBlocking(false);
@@ -282,6 +291,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
         });
     }
     const handleSubmit = data => {
+        console.log(data);
         setHasErrors(false);
         if (!data.action) return; // just validating the form, not saving
         setIsSaving(true);
@@ -290,6 +300,12 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
         //TODO: switch? save, submit, appove, reject?
         if (data.action=='approve'||data.action=='reject') {
             console.log('TODO: handle approve/reject');
+            console.log(data);
+            createReq.mutateAsync(data).then(d=>{
+                console.debug(d);
+                //refetch: counts and requestlist
+                queryclient.refetchQueries(SUNY_ID).then(()=>handleRedirect());
+            });
             return;
         }
         if (isDraft) {
@@ -326,9 +342,16 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
         }
     }
     const handleError = errors => {
-        console.debug(methods.getValues());
-        setHasErrors(true);
-        console.error('error:',errors);
+        const data = methods.getValues();
+        // clear errors and call handleSubmit if only saving
+        if (data.action == 'save') {
+            setHasErrors(false);
+            handleSubmit(data);
+        } else {
+            console.debug(data);
+            setHasErrors(true);
+            console.error('error:',errors);
+        }
     }
 
     const handleLockTabs = d => {
@@ -337,12 +360,10 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
         const effDate = d.effDate;
         setLockTabs(!(posType && reqType && effDate));
     }
-    useEffect(()=>{
-        setIsBlocking(methods.formState.isDirty);
-    },[methods.formState.isDirty]);
+    useEffect(()=>setIsBlocking(methods.formState.isDirty),[methods.formState.isDirty]);
+    useEffect(()=>reset&&handleReset(),[reset]);
     useEffect(() => {
         const watchFields = methods.watch((frmData,{name,type}) => {
-            //console.log(name,type);
             if (type == 'change') {
                 handleLockTabs(frmData);
                 if (name == 'posType.id') {
@@ -385,7 +406,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew}) {
                                             {t.id!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
                                             {isDraft && 
                                                 <>
-                                                    {methods.formState.isDirty && <AppButton format="undo" onClick={handleUndo} disabled={isSaving}>Reset</AppButton>}
+                                                    {methods.formState.isDirty && <AppButton format="undo" onClick={handleReset} disabled={isSaving}>Reset</AppButton>}
                                                     {!isNew && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
                                                     {!(isNew&&lockTabs)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
                                                     {t.id=='review'&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}>Submit</AppButton>}

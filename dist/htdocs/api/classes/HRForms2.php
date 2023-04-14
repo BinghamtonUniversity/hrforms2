@@ -251,7 +251,7 @@ Class HRForms2 {
 	}
 
 	/**
-	 * Returns something...
+	 * Returns GroupID for Department Code given
 	 * @param {number} $deptcode - Department Code to lookup 
 	 * @return {Array}
 	 */

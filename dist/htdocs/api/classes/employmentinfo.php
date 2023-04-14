@@ -280,7 +280,8 @@ class EmploymentInfo extends HRForms2 {
 				//
 				$qry = "select salary_effective_date, calculated_annual
 					from BUHR.BUHR_SALARY_MV@banner.cc.binghamton.edu
-					where data_status <> 'H' and suny_id = :suny_id and salary_effective_date <= to_date(:eff_date,'yyyymmdd')
+					where data_status <> 'H' and suny_id = :suny_id 
+					and salary_effective_date <= to_date(:eff_date,'yyyymmdd')
 					order by salary_effective_date desc";
 				$stmt = oci_parse($this->db,$qry);
 				oci_bind_by_name($stmt,":suny_id", $this->req[0]);
@@ -290,6 +291,33 @@ class EmploymentInfo extends HRForms2 {
 				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
 				$this->_arr = $this->null2Empty($row);
 				break;
+			case "pay": // needs SUNY_ID and Payroll Code
+				$accounts = (new listdata(array('accounts'),false))->returnData;
+				$qry = "select c.hr_commitment_id, c.commitment_effective_date, c.commitment_end_date,
+					c.account_number, c.commitment_rate, c.student_award_amount, 
+					c.reporting_department_code, c.reporting_department_name,
+					c.supervisor_suny_id, s.first_name as supervisor_first_name, s.legal_last_name as supervisor_legal_last_name, s.legal_middle_name as supervisor_legal_middle_name,
+					c.duties
+					from BUHR.BUHR_COMMITMENT_MV@banner.cc.binghamton.edu c
+					left join(select suny_id, nvl(alias_first_name,legal_first_name) as first_name, legal_last_name, legal_middle_name
+					from buhr.buhr_person_mv@banner.cc.binghamton.edu) s on (s.suny_id = c.supervisor_suny_id)
+					where data_status = 'C'
+					and nvl(commitment_end_date,sysdate) >= sysdate
+					and c.suny_id = :suny_id
+					and c.payroll_agency_code = :payroll
+					and c.commitment_rate > 0";
+				$stmt = oci_parse($this->db,$qry);
+				oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+				oci_bind_by_name($stmt,":payroll", $this->req[2]);
+				$r = oci_execute($stmt);
+				if (!$r) $this->raiseError();
+				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					$key = array_search(row['ACCOUNT_NUMBER'],array_column($accounts,'ACCOUNT_CODE'));
+					$row['ACCOUNT_NUMBER'] = $accounts[$key];
+					$this->_arr[] = $row;
+				};
+				$this->_arr = $this->null2Empty($this->_arr);
+				break;				
 			case "volunteer"://needs suny_id and effective date
 				$qry = "select 1 from dual";
 				$stmt = oci_parse($this->db,$qry);

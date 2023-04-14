@@ -3,7 +3,8 @@ import { Row, Col } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { Icon } from "@iconify/react";
 import { DateFormat } from "../components";
-import { EmploymentPositionInfoBox, FormTypeDisplay, useHRFormContext } from "../../pages/form";
+import { EmploymentPositionInfoBox, FormTypeDisplay } from "../../pages/form";
+import { useHRFormContext } from "../../config/form";
 import { find, get, startCase } from "lodash";
 
 //lazy load sections

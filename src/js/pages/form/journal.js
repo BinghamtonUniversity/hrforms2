@@ -58,7 +58,9 @@ export default function FormJournal() {
 function JournalSearchResults({formId}) {
     const [expandAll,setExpandAll] = useState(false);
     const {getJournal} = useFormQueries(formId);
-    const journal = getJournal();
+    const journal = getJournal({onSuccess:d=>{
+        d.forEach(c=>c.id=`${c.FORM_ID}_${c.SEQUENCE}`);
+    }});
 
     useHotkeys('ctrl+alt+e',()=>{
         setExpandAll(!expandAll);
@@ -86,7 +88,7 @@ function JournalSearchResults({formId}) {
 
     return (
         <DataTable 
-            keyField="SEQUENCE"
+            keyField="id"
             title={`Journal Report for Form ID: ${formId}`}
             subHeader
             subHeaderComponent={expandToggleComponent}

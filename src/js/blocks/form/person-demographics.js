@@ -1,7 +1,7 @@
 import React from "react";
 import { useAppQueries } from "../../queries";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
-import { HRFormContext } from "../../pages/form";
+import { HRFormContext } from "../../config/form";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";

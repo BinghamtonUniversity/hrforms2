@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Row, Col } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { DateFormat } from "../../components";
@@ -6,7 +6,10 @@ import { NewLine } from "../review";
 
 export default function ReviewEmploymentPosition() {
     const { getValues } = useFormContext();
-    const [position] = getValues(['employment.position']);
+    const [position,payroll] = getValues(['employment.position','payroll']);
+    useEffect(()=>{
+        console.log(payroll);
+    },[payroll]);
     return (
         <article className="border rounded p-1 mb-2">
             <Row as="header">
@@ -17,7 +20,7 @@ export default function ReviewEmploymentPosition() {
                 <Col as="dd" md={4} className="mb-0">{position.APPOINTMENT_TYPE.label}</Col>
                 <Col as="dt" md={2} className="mb-0">Percent:</Col>
                 <Col as="dd" md={4} className="mb-0">{position.APPOINTMENT_PERCENT}</Col>
-                {position.hasBenefits &&
+                {payroll?.ADDITIONAL_INFO?.hasBenefits &&
                     <>
                         <Col as="dt" md={2} className="mb-0">Benefits:</Col>
                         <Col as="dd" md={4} className="mb-0">{position.BENEFIT_FLAG.label}</Col>

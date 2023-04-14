@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Row, Col, Form, Alert, InputGroup } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { AppButton, DateFormat, Loading } from "../components";
@@ -6,14 +6,15 @@ import { useAppQueries } from "../../queries";
 import useFormQueries from "../../queries/forms";
 import DatePicker from "react-datepicker";
 import { addDays } from "date-fns";
-import { EmploymentPositionInfoBox, useHRFormContext } from "../../pages/form";
+import { EmploymentPositionInfoBox } from "../../pages/form";
+import { useHRFormContext } from "../../config/form";
 import { Icon } from "@iconify/react";
 
 const name = 'employment.position';
 
 export default function EmploymentPosition() {
     const { control, getValues } = useFormContext();
-    const watchLookupFields = useWatch({name:['payroll.code',`${name}.LINE_ITEM_NUMBER`,'effDate'],control:control});
+    const watchLookupFields = useWatch({name:['payroll.PAYROLL_CODE',`${name}.LINE_ITEM_NUMBER`,'effDate'],control:control});
 
     const [showResults,setShowResults] = useState(!!getValues(`${name}.positionDetails.POSITION_ID`));
 
@@ -106,7 +107,7 @@ function EmploymentAppointmentInformation() {
     const { control, setValue } = useFormContext();
     const { readOnly } = useHRFormContext();
     //TODO: get payroll and effDate from HRFormContext?
-    const watchPayroll = useWatch({name:'payroll.code',control:control});
+    const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
     const watchEffectiveDate = useWatch({name:`${name}.apptEffDate`,control:control,defaultValue:new Date(0)});
     const watchApptPercent = useWatch({name:`${name}.APPOINTMENT_PERCENT`,control:control})||100;
     const handleRangeChange = e => setValue(`${name}.APPOINTMENT_PERCENT`,e.target.value);
@@ -232,7 +233,7 @@ function AppointmentType() {
 function BenefitsFlag() {
     const { control, setValue } = useFormContext();
     const { readOnly } = useHRFormContext();
-    const watchHasBenefits = useWatch({name:`${name}.hasBenefits`,control:control});
+    const watchHasBenefits = useWatch({name:'payroll.ADDITIONAL_INFO.hasBenefits',control:control});
     
     const { getListData } = useAppQueries();
     const benefitcodes = getListData('benefitCodes');

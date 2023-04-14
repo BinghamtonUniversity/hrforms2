@@ -6,7 +6,7 @@ import { useTransactionQueries, useCodesQueries } from "../../../queries/codes";
 import DataTable from "react-data-table-component";
 import { toast } from "react-toastify";
 import { useQueryClient } from "react-query";
-import { allTabs } from "../../../pages/form";
+import { allTabs } from "../../../config/form";
 import { flattenObject } from "../../../utility";
 import { useHotkeys } from "react-hotkeys-hook";
 

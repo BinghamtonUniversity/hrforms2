@@ -5,11 +5,13 @@ import { Icon } from "@iconify/react";
 import { DateFormat } from "../components";
 import DatePicker from "react-datepicker";
 import { subDays } from "date-fns";
+import { useHRFormContext } from "../../config/form";
 
 const name = 'employment.separation';
 
 export default function EmploymentSeparation() {
     const { control } = useFormContext();
+    const { readOnly } = useHRFormContext();
     const watchEffectiveDate = useWatch({name:'effDate',control:control});
     return (
         <article>
@@ -36,6 +38,7 @@ export default function EmploymentSeparation() {
                                 closeOnScroll={true}
                                 onChange={field.onChange}
                                 autoComplete="off"
+                                disabled={readOnly}
                             />}
                         />
                         <InputGroup.Append>

@@ -20,11 +20,6 @@ export default function useFormQueries(FORM_ID) {
     const getSupervisorNames = (query,options) => {
         return useQuery(['supervisor',query],q(`supervisor/${query}`),options);
     }
-    //TBD: remove
-    const getSalary = ({sunyId,effDate,options}) => {
-        const ed = (effDate instanceof Date)?format(effDate,'dd-MMM-yyyy'):effDate;
-        return useQuery(['salary',sunyId,ed],q(`salary/${sunyId}/${ed}`),options);
-    }
 
     const getForm = (...args) => {
         const options = args[0]?.options||args[0]||{};
@@ -82,6 +77,6 @@ export default function useFormQueries(FORM_ID) {
     }
 
 
-    return {getEducationInstitutions,getPosition,getSupervisorNames,getSalary,getJournal,
+    return {getEducationInstitutions,getPosition,getSupervisorNames,getJournal,
         getForm,postForm,putForm,patchForm,deleteForm,getFormList}
 }

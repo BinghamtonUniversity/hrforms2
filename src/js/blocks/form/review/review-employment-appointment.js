@@ -6,7 +6,7 @@ import { NewLine } from "../review";
 
 export default function ReviewEmploymentAppointment() {
     const { getValues } = useFormContext();
-    const [payroll,selectedRowPayRoll] = getValues(['payroll.code','selectedRow.PAYROLL_AGENCY_CODE']);
+    const [payroll,selectedRowPayRoll] = getValues(['payroll.PAYROLL_CODE','selectedRow.PAYROLL_AGENCY_CODE']);
     const [appointment] = getValues(['employment.appointment']);
     return (
         <article className="border rounded p-1 mb-2">

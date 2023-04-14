@@ -7,6 +7,7 @@ import { Icon } from '@iconify/react';
 import { SettingsContext } from "../app";
 import { useUserQueries, useAppQueries } from "../queries";
 import CheckboxTree from 'react-checkbox-tree';
+import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 
 /** Table Of Contents * 
  * 
@@ -98,6 +99,7 @@ const ModalConfirm = React.memo(({children,show,title,buttons,icon,id}) => {
     const handleConfirm = () => {
         setIsSaving(true);
         invoke(buttons,'confirm.callback');
+        setIsSaving(false);
     }
     const handleClose = () => {
         if (isSaving) return 0;
@@ -105,7 +107,7 @@ const ModalConfirm = React.memo(({children,show,title,buttons,icon,id}) => {
     }
     useEffect(()=>setIsSaving(false),[id]);
     return (
-        <Modal id={`modal_confirm_${id}`} show={show} onHide={handleClose} backdrop="static">
+        <Modal id={`modal_confirm_${id||Date.now()}`} show={show} onHide={handleClose} backdrop="static">
             <Modal.Header closeButton>
                 <Modal.Title>{icon&&<Icon className="iconify-inline" icon={icon} mr={2}/>}{title}</Modal.Title>
             </Modal.Header>
@@ -140,6 +142,7 @@ const AppButton = React.memo(({children,format,icon,spin,...props}) => {
 const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
     /* showOn: home or menu */
     const {getCounts} = useUserQueries();
+    const location = useLocation();
     const counts = getCounts();
     if (counts.isError) {
         if (showOn == 'home') return <p>error</p>;
@@ -155,12 +158,14 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
         <SettingsContext.Consumer>
         {settings=>{
             const single = menu.slice(0,-1);
+            let linkTo = `/${single}/`;
+            if (location.pathname.startsWith(linkTo)) linkTo += 'new';
             return (
                 <>
                     {(showNew && showOn=='home') && <Link key={`${menu}.new`} to={`/${single}/`} component={DashBoardListComponent}><span className="font-italic">New {capitalize(single)}</span></Link> }
                     {(showNew && showOn=='menu') && 
                         <>
-                            <NavDropdown.Item as={Link} to={`/${single}/`}>New {capitalize(single)}</NavDropdown.Item>
+                            <NavDropdown.Item as={Link} to={linkTo}>New {capitalize(single)}</NavDropdown.Item>
                             <NavDropdown.Divider/>
 
                         </>

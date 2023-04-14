@@ -11,7 +11,7 @@ import { useCodesQueries, useTransactionQueries } from "../../queries/codes";
 import DataTable from 'react-data-table-component';
 import { useQueryClient } from "react-query";
 import { Icon } from "@iconify/react";
-import { defaultFormActions, useHRFormContext } from "../../pages/form";
+import { defaultFormActions, useHRFormContext } from "../../config/form";
 import { Modal } from "react-bootstrap";
 
 export default function FormBasicInfo() {
@@ -233,18 +233,17 @@ function LookupResults({data}) {
         setSelectedId((selectedId==row.id)?undefined:row.id);
     },[selectedId]);
     const handleSelectedRowChange = args => {
-        const id = (args.selectedCount)?args.selectedRows[0]?.id:undefined;
-        if (selectedRow?.id === id) return false;
-        console.debug(`handleSelectedRowChange: ${selectedRow?.id} -> ${id}`);
-        setSelectedId(id);
-        setSelectedRow((args.selectedCount)?args.selectedRows[0]:{});
-        setValue('selectedRow',(args.selectedCount)?args.selectedRows[0]:{});
-        setValue('payroll.code',(args.selectedCount)?args.selectedRows[0]?.PAYROLL_AGENCY_CODE:"");
-        //setValue('payroll.title','');
-        //setValue('payroll.description','');
+        const newRow = (args.selectedCount)?args.selectedRows[0]:{};
+        if (selectedRow?.id === newRow?.id) return false;
+        console.debug(`handleSelectedRowChange: ${selectedRow?.id} -> ${newRow.id}`);
+        setSelectedId(newRow.id);
+        setSelectedRow(newRow);
+        setValue('selectedRow',newRow);
+        console.log('newRow:')
+        if (!newRow.PAYROLL_AGENCY_CODE) setValue('payroll',{PAYROLL_CODE:''}); // if PAYROLL_AGENCY_CODE this will be set when the payrol section loads
         setValue('formActions',defaultFormActions);
-        setValue('person.information.HR_PERSON_ID',(args.selectedCount)?args.selectedRows[0]?.HR_PERSON_ID:"");
-        setValue('person.information.SUNY_ID',(args.selectedCount)?args.selectedRows[0]?.SUNY_ID:"");
+        setValue('person.information.HR_PERSON_ID',newRow?.HR_PERSON_ID);
+        setValue('person.information.SUNY_ID',newRow?.SUNY_ID);
     }
 
     const rowSelectCritera = row => {
@@ -326,64 +325,68 @@ function LookupResults({data}) {
 
 function PayrollDate({selectedId,selectedPayroll}) {
     const { control, getValues, setValue, formState: { errors }} = useFormContext();
-    const { infoComplete, journalStatus } = useHRFormContext();
+    const { infoComplete, journalStatus, handleTabs } = useHRFormContext();
 
-    const watchPayrollDate = useWatch({name:['payroll.code','effDate']});
+    const watchPayrollDate = useWatch({name:['payroll.PAYROLL_CODE','effDate']});
 
     //const effDateRef = useRef();
     const [payrollDescription,setPayrollDescription] = useState('');
 
     const {getCodes} = useCodesQueries('payroll');
     const payrollcodes = getCodes({
-        //enabled:false, //only fetch when payroll select changes
         refetchOnMount:false,
-        select:d=>d.filter(p=>p.ACTIVE==1),
-        onSuccess:d=>{
-            if(selectedPayroll) {
-                const payroll = d.find(p=>p.PAYROLL_CODE==selectedPayroll);
-                setValue('payroll.title',payroll?.PAYROLL_TITLE);
-                setValue('payroll.description',payroll?.PAYROLL_DESCRIPTION);
-                setPayrollDescription(payroll?.PAYROLL_DESCRIPTION);
-                const hasBenefits = payroll?.ADDITIONAL_INFO?.hasBenefits;
-                setValue('employment.position.hasBenefits',!!hasBenefits);
-            }
-        }
+        select:d=>d.filter(p=>p.ACTIVE==1) // only show active payrolls
     });
 
-    const handleKeyDown = e => {
-        console.log('handlekeyDown');
-    }
-    const handlePayrollChange = (e,field) => {
+    const handleFieldChange = (e,field)=> {
         field.onChange(e);
-        const title = (payrollcodes.data)?payrollcodes.data.find(p=>p.PAYROLL_CODE==e.target.value)?.PAYROLL_TITLE:'';
-        const description = (payrollcodes.data)?payrollcodes.data.find(p=>p.PAYROLL_CODE==e.target.value)?.PAYROLL_DESCRIPTION:'';
-        setValue('payroll.title',title);
-        setValue('payroll.description',description);
-        setValue('formActions',defaultFormActions);
-        setPayrollDescription(description);
-        //if (e.target.value) payrollcodes.refetch();
-    }
-    const handleEffDateChange = (d,field) => {
-        field.onChange(d);
-        if (!getValues('employment.position.apptEffDate')) setValue('employment.position.apptEffDate',d);
+        const values = [...watchPayrollDate];
+        switch(field.name) {
+            case "payroll.PAYROLL_CODE":
+                values[0] = e.target.value;
+                const payroll = payrollcodes.data.find(p=>p.PAYROLL_CODE==e.target.value);
+                if (!payroll) {
+                    console.log('handleFieldChange');
+                    setValue('payroll',{PAYROLL_CODE:''});
+                } else {
+                    setValue('payroll',payroll);
+                }
+                setValue('formActions',defaultFormActions);
+                setPayrollDescription(payroll?.PAYROLL_DESCRIPTION);        
+                break;
+            case "effDate":
+                values[1] = e;
+                if (!getValues('employment.position.apptEffDate')) setValue('employment.position.apptEffDate',e);
+        }
+        if (!values.every(v=>!!v)) {
+            console.debug('Reset FormActions and Tabs');
+            setValue('formActions',defaultFormActions);
+            handleTabs(null);
+        }
     }
     useEffect(()=>{
         //TODO: can this be consolidated or moved to a function?
-        if (!payrollcodes.data) {
-            setValue('payroll.title','');
-            setValue('payroll.description','');
+        if (!payrollcodes.data&&!infoComplete) {
+            setValue('payroll',{PAYROLL_CODE:''});
             setPayrollDescription('');
         } else {
-            if (infoComplete) return;
-            const p = payrollcodes.data.find(p=>p.PAYROLL_CODE==selectedPayroll);
-            setValue('payroll.title',p?.PAYROLL_TITLE);
-            setValue('payroll.description',p?.PAYROLL_DESCRIPTION);
-            setPayrollDescription(p?.PAYROLL_DESCRIPTION);
+            if (infoComplete) {
+                setPayrollDescription(getValues('payroll.PAYROLL_DESCRIPTION'));
+            } else {
+                const p = payrollcodes.data.find(p=>p.PAYROLL_CODE==selectedPayroll);
+                setValue('payroll',(!p)?{PAYROLL_CODE:''}:p);
+                /*if (!p) {
+                    setValue('payroll',{PAYROLL_CODE:''});
+                } else {
+                    setValue('payroll',p);
+                }*/
+                setPayrollDescription(p?.PAYROLL_DESCRIPTION);
+            }
         }
     },[payrollcodes.data,selectedId,selectedPayroll]);
     return (
         <>
-            <article className="mt-3" onKeyDown={handleKeyDown}>
+            <article className="mt-3">
                 <Row as="header">
                     <Col as="h3">Payroll &amp; Date</Col>
                 </Row>
@@ -394,12 +397,12 @@ function PayrollDate({selectedId,selectedPayroll}) {
                         {payrollcodes.isLoading && <Loading>Loading Payrolls...</Loading>}
                         {payrollcodes.data &&
                             <Controller
-                                name="payroll.code"
+                                name="payroll.PAYROLL_CODE"
                                 control={control}
                                 defaultValue={selectedPayroll}
                                 rules={{required:{value:true,message:'Payroll is required'}}}
                                 render={({field}) => (
-                                    <Form.Control {...field} as="select" onChange={e=>handlePayrollChange(e,field)} isInvalid={errors.payroll} disabled={selectedPayroll!=''||journalStatus!=""} aria-describedby="payrollDescription">
+                                    <Form.Control {...field} as="select" onChange={e=>handleFieldChange(e,field)} isInvalid={errors.payroll} disabled={selectedPayroll!=''||journalStatus!=""} aria-describedby="payrollDescription">
                                         <option></option>
                                         {payrollcodes.data.map(p=><option key={p.PAYROLL_CODE} value={p.PAYROLL_CODE}>{p.PAYROLL_TITLE}</option>)}
                                     </Form.Control>
@@ -427,7 +430,7 @@ function PayrollDate({selectedId,selectedPayroll}) {
                                     name={field.name}
                                     selected={field.value}
                                     closeOnScroll={true}
-                                    onChange={d=>handleEffDateChange(d,field)}
+                                    onChange={d=>handleFieldChange(d,field)}
                                     isInvalid={errors.effDate}
                                     autoComplete="off"
                                     disabled={journalStatus!=""}

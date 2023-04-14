@@ -8,7 +8,7 @@ import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css'
-import { HRFormContext } from "../../pages/form";
+import { HRFormContext } from "../../config/form";
 
 //TODO: make address form a component and pass stuff?
 //TODO: consolidate the save/edit/cancel/remove footer?

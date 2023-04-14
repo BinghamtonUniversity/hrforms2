@@ -56,31 +56,3 @@ export default function AppNav() {
         </header>
     );
 }
-
-/*
-                        {(requests.size > 0) &&
-                        <NavDropdown title="Request" id="request-nav-dropdown" alignRight>
-                            <NavDropdown.Item as={Link} to="/request/">New Request</NavDropdown.Item>
-                            <NavDropdown.Divider/>
-                            {requests.has('draft') && <NavDropdown.Item as={Link} to="/request/list/drafts">Drafts ({requests.get('draft')})</NavDropdown.Item>}
-                            {requests.has('pending') && <NavDropdown.Item as={Link} to="/request/list/pending">Pending Review ({requests.get('pending')})</NavDropdown.Item>}
-                            {requests.has('rejection') && <NavDropdown.Item as={Link} to="/request/list/rejections">Rejections ({requests.get('rejection')})</NavDropdown.Item>}
-                            {requests.has('approval') && <NavDropdown.Item as={Link} to="/request/list/approvals">Approvals ({requests.get('approval')})</NavDropdown.Item>}
-                            {requests.has('final') && <NavDropdown.Item as={Link} to="/request/list/final">Final Approvals ({requests.get('final')})</NavDropdown.Item>}
-                            <NavDropdown.Divider/>
-                            <NavDropdown.Item as={Link} to="/request/list">My Requests</NavDropdown.Item>
-                            <NavDropdown.Divider/>
-                            <NavDropdown.Item as={Link} to="/request/list">List</NavDropdown.Item>
-                        </NavDropdown>}
-                        {(forms.size > 0) && 
-                        <NavDropdown title="Forms" id="forms-nav-dropdown" alignRight>
-                            <NavDropdown.Item as={Link} to="/form/">New Form</NavDropdown.Item>
-                            <NavDropdown.Divider/>
-                            {forms.has('draft') && <NavDropdown.Item as={Link} to="/form/list/drafts">Drafts ({forms.get('draft')})</NavDropdown.Item>}
-                            {forms.has('approval') && <NavDropdown.Item as={Link} to="/form/list/approvals">Approvals ({forms.get('approval')})</NavDropdown.Item>}
-                            {forms.has('rejection') && <NavDropdown.Item as={Link} to="/form/list/rejections">Rejections ({forms.get('rejection')})</NavDropdown.Item>}
-                            {forms.has('final') && <NavDropdown.Item as={Link} to="/form/list/final">Final Approvals ({forms.get('final')})</NavDropdown.Item>}
-                            <NavDropdown.Divider/>
-                            <NavDropdown.Item as={Link} to="/request/list">List</NavDropdown.Item>
-                        </NavDropdown>}
-*/
