@@ -55,7 +55,7 @@ function ExistingEmploymentPayTable() {
         )},
         {name:'Account',selector:row=>[row.ACCOUNT_NUMBER?.ACCOUNT_CODE,row.ACCOUNT_NUMBER?.ACCOUNT_DESCRIPTION].join(': ')},
         {name:'Department',selector:row=>row.REPORTING_DEPARTMENT_NAME},
-        {name:'Supervisor',selector:row=>[row.SUPERVISOR_LEGAL_LAST_NAME,row.SUPERVISOR_FIRST_NAME].join(', ')},
+        {name:'Supervisor',selector:row=>row.supervisorSortName},
         {name:'Hourly Rate',selector:row=><CurrencyFormat>{row.COMMITMENT_RATE}</CurrencyFormat>},
         {name:'Award Amount',selector:row=><CurrencyFormat>{row.STUDENT_AWARD_AMOUNT}</CurrencyFormat>,hide:!getValues('payroll.ADDITIONAL_INFO.showStudentAwardAmount')}
     ],[data]);
@@ -87,7 +87,7 @@ function ExistingEmploymentPayTable() {
 function NewEmploymentPay() {
     const blockName = `${name}.newPay`;
 
-    const { control, getValues, clearErrors, trigger, formState: { errors } } = useFormContext();
+    const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
         name:blockName
@@ -107,7 +107,7 @@ function NewEmploymentPay() {
             account:[],
             hourlyRate:"",
             awardAmount:"",
-            department:"",
+            department:{id:"",label:""},
             supervisor:[],
             duties:"",
             created:new Date
@@ -161,6 +161,12 @@ function NewEmploymentPay() {
         if (field?.name.split('.').pop() == 'startDate') setMinDate(addDays(d,1));
         if (field?.name.split('.').pop() == 'endDate') setMaxDate(subDays(d,1));
     },[setMinDate,setMaxDate,getValues]);
+
+    const handleSelectChange = (e,field) => {
+        field.onChange(e);
+        const nameBase = field.name.split('.').slice(0,-1).join('.');
+        setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
+    }
 
     return (
         <section className="mt-3">
@@ -233,7 +239,7 @@ function NewEmploymentPay() {
                             <Form.Label>Account:</Form.Label>
                             <SingleSUNYAccount name={`${blockName}.${index}.account`} disabled={editIndex!=index}/>
                         </Col>
-                        <Col xs={2} md={1} className="mb-2">
+                        <Col xs={6} sm={3} md={2} className="mb-2">
                             <Form.Label>Hourly Rate:</Form.Label>
                             <Controller
                                 name={`${blockName}.${index}.hourlyRate`}
@@ -242,7 +248,7 @@ function NewEmploymentPay() {
                                 render={({field}) => <Form.Control {...field} type="number" disabled={editIndex!=index}/>}
                             />
                         </Col>
-                        <Col xs={2} md={1} className="mb-2">
+                        <Col xs={6} sm={3} md={2} className="mb-2">
                             <Form.Label>Award Amount:</Form.Label>
                             <Controller
                                 name={`${blockName}.${index}.awardAmount`}
@@ -256,10 +262,10 @@ function NewEmploymentPay() {
                         <Form.Label column xs={4} sm={3} md={2} xl={1}>Department:</Form.Label>
                         <Col xs="auto">
                             <Controller
-                                name={`${blockName}.${index}.department`}
+                                name={`${blockName}.${index}.department.id`}
                                 control={control}
                                 defaultValue=""
-                                render={({field}) => <DepartmentSelector field={field} disabled={editIndex!=index}/>}
+                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index}/>}
                             />
                         </Col>
                     </Form.Group>
@@ -273,7 +279,7 @@ function NewEmploymentPay() {
                                 name={`${blockName}.${index}.duties`}
                                 control={control}
                                 defaultValue=""
-                                render={({field}) => <Form.Control field={field} disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Control {...field} disabled={editIndex!=index}/>}
                             />
                         </Col>
                     </Form.Group>
@@ -344,6 +350,7 @@ function PaySupervisor({index,editIndex}) {
                         onSearch={handleSearch}
                         onBlur={e=>handleBlur(field,e)}
                         options={supervisors.data}
+                        selected={field.value}
                         placeholder="Search for supervisor..."
                         disabled={editIndex!=index}
                     />}

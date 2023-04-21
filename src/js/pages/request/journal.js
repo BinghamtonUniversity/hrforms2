@@ -101,6 +101,7 @@ function JournalSearchResults({reqId}) {
             expandOnRowClicked
             expandableRowsComponent={ExpandedComponent}
             expandableRowExpanded={()=>expandAll}
+            noDataComponent={<p className="m-3">No Request Journal Found Matching Your Criteria</p>}
         />
     );
 }

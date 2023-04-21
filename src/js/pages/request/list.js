@@ -19,6 +19,9 @@ export default function RequestList() {
     const {part} = useParams();
     const [redirect,setRedirect] = useState();
     if (redirect) return <Redirect to={redirect}/>;
+
+    //useHotkeys('ctrl+alt+n',()=>setRedirect('/request'));
+
     return (
         <SettingsContext.Consumer>
             {({requests}) => {
@@ -80,6 +83,7 @@ function ListTable({data,list}) {
     useHotkeys('ctrl+alt+e',()=>{
         setExpandAll(!expandAll);
     },[expandAll]);
+    useHotkeys('ctrl+alt+n',()=>setRedirect('/request'));
 
     const {SUNY_ID} = currentUser();
     const {isAdmin} = getAuthInfo();
@@ -140,8 +144,21 @@ function ListTable({data,list}) {
         }
         return false;
     },[list,general,isAdmin]);
+    
+    const noData = useMemo(() => {
+        return (
+            <SettingsContext.Consumer>
+                {({requests}) => <p className="m-3">No Current {requests.menu[list]?.title}</p>}
+            </SettingsContext.Consumer>
+        );
+    },[list]);
 
     const filterComponent = useMemo(() => {
+        const handleKeyDown = e => {
+            // Handle special keys
+            if (e.ctrlKey&&e.altKey&e.key=="n") setRedirect('/request'); //added here for when search box has focus
+            if(e.key=="Escape"&&!filterText) searchRef.current.blur();
+        }
         const handleFilterChange = e => {
             if (e.target.value) {
                 setResetPaginationToggle(false);
@@ -164,7 +181,7 @@ function ListTable({data,list}) {
                         <Form.Group as={Row} controlId="filter">
                             <Form.Label column sm="2">Search: </Form.Label>
                             <Col sm="10">
-                                <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange}/>
+                                <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
                             </Col>
                         </Form.Group>
                     </Form>
@@ -234,6 +251,7 @@ function ListTable({data,list}) {
                 expandableRows={expandRow}
                 expandableRowsComponent={ExpandedComponent}
                 expandableRowExpanded={()=>expandAll}
+                noDataComponent={noData}
             />
             <ModalConfirm 
                 id={selectedRow?.REQUEST_ID}

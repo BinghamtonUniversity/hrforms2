@@ -154,7 +154,7 @@ function SplitAssignment({assignments}) {
                                     </tr>
                                     <tr>
                                         <td>Duties:</td>
-                                        <td colSpan="7">{a.DUTIES}</td>
+                                        <td colSpan="7"><pre>{a.DUTIES}</pre></td>
                                     </tr>
                                 </React.Fragment>
                             ))}

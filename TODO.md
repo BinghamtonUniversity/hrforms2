@@ -9,13 +9,16 @@ Bug fixes, enhancements and things still to complete.
     - Mostly works, some errors with origSalary, but may be moot because of using TEST form code.
 
 ## In Progress Tasks:
+  * Clean up queries and remove queries.js
+  * FORM: Complete Review page
   * FormList and RequestList; drop the additional formId, requestId and just use POSTvars.
   * DataTables:
-    - add hotkey ctrl+f to focus the search box.
+    - Add hotkey ctrl+f to focus the search box.
     - Add special key handling to search box component (see users.js)
     - Add search-by-field as needed (see groups.js)
     - Add progressPending/progressComponent
     - Add noDataComponent
+    - Global setting for paginationRowsPerPageOptions
   * Change delete modals to component: ModalConfirm
   * "globalize" icons (e.g. the "save" icon should be the same for all; this may be making buttons a component)
   * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
@@ -25,8 +28,8 @@ Bug fixes, enhancements and things still to complete.
   * Request: Move config items into config/request.js file.
   * Request: Control who can view/edit based on status (see TODO in file)
   * Forms: Auto focus fields
-  * Forms: [DONE?]Merge saved data with default object; allows for changes later - old data won't break due to missing key
-  * Approver in sequential groups should skip.
+  * Request: Approver in next group auto-approve (done in forms)
+  * Add setting control to allow/disabled subsequent approver skips and message.
   * Create list of standard hotkeys for application.
   * Ability to download user list for auditing
   * Admin Lists: 
@@ -40,6 +43,8 @@ Bug fixes, enhancements and things still to complete.
   * Use Helmet to change the title of the page
   * Add default routing in settings
   * On app error allow "reset"; test with undefined import component.
+  * Add print to PDF
+  * Add CSS for printing
 
 ## Upgrades:
   * Upgrade to Bootstrap v5

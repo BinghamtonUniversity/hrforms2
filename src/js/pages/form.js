@@ -5,7 +5,7 @@ import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
 import { Loading, AppButton, DateFormat } from "../blocks/components";
-import { get, set, has, zip, cloneDeep } from "lodash";
+import { get, set, has, zip, cloneDeep, merge } from "lodash";
 import useFormQueries from "../queries/forms";
 import { Icon } from "@iconify/react";
 import { flattenObject } from "../utility";
@@ -189,8 +189,8 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const [redirect,setRedirect] = useState('');
     const [dataLoadError,setDataLoadError] = useState(undefined);
 
-    const defaultVals = Object.assign({},initFormValues,{formId:formId});
-    const methods = useForm({defaultValues: Object.assign({},defaultVals,data)});
+    const defaultVals = merge({},initFormValues,{formId:formId});
+    const methods = useForm({defaultValues: merge({},defaultVals,data)});
     const watchFormActions = useWatch({name:'formActions.formCode',control:methods.control});
     const watchIds = useWatch({name:['person.information.HR_PERSON_ID','person.information.SUNY_ID','person.information.LOCAL_CAMPUS_ID'],control:methods.control});
 

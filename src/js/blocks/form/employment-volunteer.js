@@ -1,26 +1,36 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAppQueries } from "../../queries";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
+import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { get } from "lodash";
 import { Loading, DepartmentSelector } from "../components";
 import DatePicker from "react-datepicker";
-import { HRFormContext } from "../../config/form";
+import { HRFormContext, useHRFormContext } from "../../config/form";
+import useFormQueries from "../../queries/forms";
 
 const name = 'employment.volunteer';
 
 export default function EmploymentSeparation() {
     const { control, setValue, formState: { errors } } = useFormContext();
+    const [subRoleId] = useWatch({name:[`${name}.subRole.id`]});
 
     const { getListData } = useAppQueries();
     const subroles = getListData('volunteerSubRoles');
     const servicetypes = getListData('volunteerServiceTypes');
+    const tenurestatus = getListData('tenureStatus',{enabled:subRoleId=='Instructor'});
 
     const handleSelectChange = (e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
+        if (nameBase == `${name}.subRole`) {
+            // clear conditional fields: tenureStatus, univOfficial, and supervisor
+            setValue(`${name}.tenureStatus`,'');
+            setValue(`${name}.univOfficial`,[]);
+            setValue(`${name}.supervisor`,[]);
+        }
     }
 
     return (
@@ -99,6 +109,27 @@ export default function EmploymentSeparation() {
                             </InputGroup>
                         </Col>
                     </Form.Group>
+                    {subRoleId=='Instructor'&&
+                        <Form.Group as={Row}>
+                            <Form.Label column md={2}>Tenure Status:</Form.Label>
+                            <Col xs="auto">
+                                {tenurestatus.isLoading && <Loading>Loading Data</Loading>}
+                                {tenurestatus.isError && <Loading isError>Failed to Load</Loading>}
+                                {tenurestatus.data &&
+                                    <Controller
+                                        name={`${name}.tenureStatus.id`}
+                                        control={control}
+                                        render={({field}) => (
+                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
+                                                <option></option>
+                                                {tenurestatus.data.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}
+                                            </Form.Control>
+                                        )}
+                                    />
+                                }
+                            </Col>
+                        </Form.Group>
+                    }
                     <Form.Group as={Row}>
                         <Form.Label column md={2}>Hours/Week:</Form.Label>
                         <Col xs="auto">
@@ -113,7 +144,7 @@ export default function EmploymentSeparation() {
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row}>
-                        <Form.Label column md={2}>Sub-Role:</Form.Label>
+                        <Form.Label column md={2}>Service Type:</Form.Label>
                         <Col xs="auto">
                             {servicetypes.isLoading && <Loading>Loading Data</Loading>}
                             {servicetypes.isError && <Loading isError>Failed to Load</Loading>}
@@ -142,6 +173,12 @@ export default function EmploymentSeparation() {
                             />
                         </Col>
                     </Form.Group>
+                    {(subRoleId&&subRoleId.startsWith('CP'))&& 
+                        <VolunteerSupervisor fieldName={`${name}.univOfficial`} fieldLabel="Responsible Univ Official"/>
+                    }
+                    {(subRoleId&&!subRoleId.startsWith('CP'))&& 
+                        <VolunteerSupervisor fieldName={`${name}.supervisor`} fieldLabel="Supervisor"/>
+                    }
                     <Form.Group as={Row}>
                         <Form.Label column md={2}>Duties:</Form.Label>
                         <Col xs={12} sm={10} md={8} lg={6}>
@@ -156,5 +193,48 @@ export default function EmploymentSeparation() {
                 </article>
             )}
         </HRFormContext.Consumer>
+    );
+}
+
+function VolunteerSupervisor({fieldName,fieldLabel}) {
+    const { control, getValues, setValue } = useFormContext();
+    const { readOnly } = useHRFormContext();
+    const [searchFilter,setSearchFilter] = useState('');
+    const { getSupervisorNames } = useFormQueries();
+    const supervisors = getSupervisorNames(searchFilter,{enabled:false});
+
+    const handleSearch = query => setSearchFilter(query);
+    const handleBlur = (field,e) => {
+        field.onBlur(e);
+        if (e.target.value != getValues(`${fieldName}[0].label`)) {
+            setValue(`${fieldName}.0`,{id:'new-id-0',label:e.target.value});
+        }
+    }
+    useEffect(() => searchFilter&&supervisors.refetch(),[searchFilter]);
+    return (
+        <Form.Group as={Row}>
+            <Form.Label column md={2}>{fieldLabel}:</Form.Label>
+            <Col xs={10} sm={8} md={6} lg={5} xl={4}>
+                <Controller
+                    name={fieldName}
+                    control={control}
+                    render={({field}) => <AsyncTypeahead
+                        {...field}
+                        filterBy={()=>true}
+                        id={`${fieldName.replaceAll('.','-')}-search`}
+                        isLoading={supervisors.isLoading}
+                        minLength={2}
+                        flip={true} 
+                        allowNew={true}
+                        onSearch={handleSearch}
+                        onBlur={e=>handleBlur(field,e)}
+                        options={supervisors.data}
+                        placeholder="Search for people..."
+                        selected={field.value}
+                        disabled={readOnly}
+                    />}
+                />
+            </Col>
+        </Form.Group>
     );
 }

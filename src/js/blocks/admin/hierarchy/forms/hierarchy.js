@@ -191,6 +191,7 @@ function HierarchyTable() {
                 onSort={handleSort}
                 sortServer
                 onRowClicked={handleRowClick}
+                noDataComponent={<p className="m-3">No Hierarchies Found Matching Your Criteria</p>}
             />
             {(selectedRow?.HIERARCHY_ID||isNew=='hierarchy') && <AddEditHierarchy {...selectedRow} setSelectedRow={setSelectedRow} isNew={isNew}/>}
             {deleteHierarchy?.HIERARCHY_ID && <DeleteHierarchy {...deleteHierarchy} setDeleteHierarchy={setDeleteHierarchy}/>}

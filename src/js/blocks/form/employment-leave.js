@@ -5,13 +5,11 @@ import { Row, Col, Form, InputGroup} from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import { useAppQueries } from "../../queries";
-import { CurrencyFormat } from "../components";
+import { Loading, CurrencyFormat } from "../components";
 
 const name = 'employment.leave';
 
-//TODO: Only show Leave Percent and Calculated Salary if transaction is partial leave
 export default function EmploymentLeave() {
-    //const readOnly = false;
     const { control, getValues, setValue } = useFormContext();
     const watchLeavePercent = useWatch({name:`${name}.leavePercent`,control:control})||0;
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
@@ -19,9 +17,19 @@ export default function EmploymentLeave() {
     const handleRangeChange = e => setValue(`${name}.leavePercent`,e.target.value);
 
     const { getListData } = useAppQueries();
-    const justifcation = getListData('leaveJustification');
+    const justification = getListData('leaveJustification');
 
-    const calcLeaveSalary = useCallback(()=>getValues(`${name}.origSalary`)*(1-(watchLeavePercent/100)),[watchLeavePercent]);
+    const handleSelectChange = (e,field) => {
+        field.onChange(e);
+        const nameBase = field.name.split('.').slice(0,-1).join('.');
+        setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
+    }
+
+    const calcLeaveSalary = useCallback(()=>{
+        const newSal = getValues(`${name}.origSalary`)*(1-(watchLeavePercent/100));
+        setValue(`${name}.leaveSalary`,newSal);
+        return newSal;
+    },[watchLeavePercent]);
 
     return (
         <HRFormContext.Consumer>
@@ -95,16 +103,20 @@ export default function EmploymentLeave() {
                     <Form.Group as={Row}>
                         <Form.Label column md={2}>Justification:</Form.Label>
                         <Col xs="auto">
-                            <Controller
-                                name={`${name}.justification`}
-                                control={control}
-                                render={({field}) => (
-                                    <Form.Control {...field} as="select" disabled={readOnly}>
-                                        <option></option>
-                                        {justifcation.data && justifcation.data.map(j=>!j.excludePayrolls.includes(watchPayroll)&&<option key={j.id} value={j.id}>{j.title}</option>)}
-                                    </Form.Control>
-                                )}
-                            />
+                            {justification.isLoading && <Loading>Loading Data</Loading>}
+                            {justification.isError && <Loading isError>Failed to Load</Loading>}
+                            {justification.data &&
+                                <Controller
+                                    name={`${name}.justification.id`}
+                                    control={control}
+                                    render={({field}) => (
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
+                                            <option></option>
+                                            {justification.data.map(j=>!j.excludePayrolls.includes(watchPayroll)&&<option key={j.id} value={j.id}>{j.title}</option>)}
+                                        </Form.Control>
+                                    )}
+                                />
+                            }
                         </Col>
                     </Form.Group>
                 </article>

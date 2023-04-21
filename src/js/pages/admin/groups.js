@@ -20,6 +20,9 @@ export default function AdminGroups() {
     const [newGroup,setNewGroup] = useState(false);
     const {getGroups} = useGroupQueries();
     const groups = getGroups();
+
+    useHotkeys('ctrl+alt+n',()=>setNewGroup(true));
+
     return (
         <>
             <Row>
@@ -96,6 +99,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
             }
         }
         const handleFilterKeyDown = e => {
+            if (e.ctrlKey&&e.altKey&e.key=="n") setNewGroup(true); //added here for when search box has focus
             if (e.key == 'Escape') {
                 if (filterText&&filterField=='id'&&subpage) history.push('/admin/groups');
                 if (!filterText&&filterField!='all') setFilterField('all');
@@ -219,6 +223,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
                 onSort={handleSort}
                 sortServer
                 conditionalRowStyles={conditionalRowStyles}
+                noDataComponent={<p className="m-3">No Groups Found Matching Your Criteria</p>}
             />
             {(selectedRow?.GROUP_ID||newGroup) && <AddEditGroupForm {...selectedRow} setSelectedRow={setSelectedRow} newGroup={newGroup} setNewGroup={setNewGroup} setSelectedGroupId={setSelectedGroupId}/>}
             {toggleGroup?.GROUP_ID && <ToggleGroup group={toggleGroup}/>}

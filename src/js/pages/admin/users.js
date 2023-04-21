@@ -57,11 +57,10 @@ function UsersTable({users,newUser,setNewUser}) {
     const [deleteUser,setDeleteUser] = useState({});
 
     const searchRef = useRef();
-
     useHotkeys('ctrl+f,ctrl+alt+f',e=>{
         e.preventDefault();
         searchRef.current.focus();
-    });
+    },{description:'Focus search box'});
 
     const handleRowClick = useCallback(row=>setSelectedRow(row));
     
@@ -79,7 +78,7 @@ function UsersTable({users,newUser,setNewUser}) {
         }
         const handleKeyDown = e => {
             // Handle special keys
-            if (e.ctrlKey&&e.altKey&e.key=="n") setNewUser(true);
+            if (e.ctrlKey&&e.altKey&e.key=="n") setNewUser(true); //added here for when search box has focus
             if(e.key=="Escape"&&!filterText) searchRef.current.blur();
         }
         const handleFilterChange = e => {
@@ -115,7 +114,7 @@ function UsersTable({users,newUser,setNewUser}) {
                 </Col>
             </>
         );
-    },[filterText,statusFilter]);
+    },[filterText,statusFilter,useHotkeys]);
 
     // maybe make this an API endpoint and let PHP handle the content type and data
     // testing for export

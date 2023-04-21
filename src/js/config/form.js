@@ -191,22 +191,26 @@ const initFormValues = {
             SALARY_EFFECTIVE_DATE: "",
             CALCULATED_ANNUAL: "",
             leavePercent:0,
+            leaveSalary:null,
             leaveEndDate:"",
-            justification:"",
+            justification:{id:"",label:""},
             origSalary:"",
             salaryEffDate:""
         },
         pay: {
-            "existingPay":[],
-            "newPay":[]
+            existingPay:[],
+            newPay:[]
         },
         volunteer: {
             subRole:{id:"",label:""},
             startDate:"",
             endDate:"",
+            tenureStatus:{id:"",labe:""},
             hoursPerWeek:"",
-            subRole:{id:"",label:""},
+            serviceType:{id:"",label:""},
             department:{id:"",label:""},
+            univOfficial:[],
+            supervisor: [],
             duties:""
         }
     },
@@ -328,6 +332,7 @@ export function fetchFormData({watchIds,effectiveDate,payrollCode}) {
         onSuccess:d=>{
             const origSalary = (!d?.CALCULATED_ANNUAL)?0:d.CALCULATED_ANNUAL
             d.origSalary = Number(origSalary.replace(/[^\d.]+/g,''));
+            d.leaveSalary = d.origSalary;
             const salaryEffDate = new Date(d?.SALARY_EFFECTIVE_DATE);
             d.salaryEffDate = isValid(salaryEffDate)?salaryEffDate:"";
         }
@@ -340,7 +345,8 @@ export function fetchFormData({watchIds,effectiveDate,payrollCode}) {
                 const commitmentEffDate = new Date(c?.COMMITMENT_EFFECTIVE_DATE);
                 c.commitmentEffDate = isValid(commitmentEffDate)?commitmentEffDate:"";
                 const commitmentEndDate = new Date(c?.COMMITMENT_END_DATE);
-                c.commitmentEndDate = isValid(commitmentEndDate)?commitmentEndDate:"";    
+                c.commitmentEndDate = isValid(commitmentEndDate)?commitmentEndDate:"";
+                c.supervisorSortName = [c.SUPERVISOR_LEGAL_LAST_NAME,c.SUPERVISOR_FIRST_NAME].join(', ');
             });
         }
     });

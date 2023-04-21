@@ -34,9 +34,10 @@ export default function EmploymentSeparation() {
                             render={({field}) => <Form.Control
                                 as={DatePicker}
                                 name={field.name}
-                                selected={field.value||(watchEffectiveDate&&subDays(watchEffectiveDate,1))}
+                                selected={field.value}
                                 closeOnScroll={true}
                                 onChange={field.onChange}
+                                maxDate={(watchEffectiveDate&&subDays(watchEffectiveDate,1))}
                                 autoComplete="off"
                                 disabled={readOnly}
                             />}

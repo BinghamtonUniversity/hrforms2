@@ -243,6 +243,7 @@ class Forms extends HRForms2 {
 
             case "approve":
                 $journal_array = array();
+                $comments_array = array();
 
                 $_SERVER['REQUEST_METHOD'] = 'GET';
                 $journal = (new journal(array('form',$this->POSTvars['formId']),false))->returnData;
@@ -256,15 +257,30 @@ class Forms extends HRForms2 {
                 $next_seq = intval($last_journal['SEQUENCE'])+1;
                 if ($next_seq >= sizeof($groups_array)) {
                     $journal_array[$next_seq] = 'Z';
+                    $comments_array[$next_seq] = $this->POSTvars['comment'];
                 } else if ($next_seq == sizeof($groups_array)-1) {
                     $journal_array[$next_seq] = 'F';
+                    $comments_array[$next_seq] = $this->POSTvars['comment'];
                 } else {
                     $journal_array[$next_seq] = 'A';
+                    $comments_array[$next_seq] = $this->POSTvars['comment'];
                     //check if NEXT is a skip
                     $this->checkSkip($workflow['WORKFLOW_ID'],$next_seq);
                     if (!$this->match && $this->conditions) {
                         $journal_array[$next_seq] = 'X';
-                        $journal_array[$next_seq+1] = ($next_seq+1 == sizeof($groups_array)-1)?'F':'A';
+                        $comments_array[$next_seq] = '';
+                        $next_seq++;
+                        $journal_array[$next_seq] = ($next_seq == sizeof($groups_array)-1)?'F':'A';
+                        $comments_array[$next_seq] = $this->POSTvars['comment'];
+                    }
+                    // Check if Approver is in next group and auto-approve
+                    $groupusers = (new groupusers(array($groups_array[$next_seq]),false))->returnData;
+                    foreach ($groupusers as $u) {
+                        if ($u['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID']) {
+                            $next_seq++;
+                            $journal_array[$next_seq] = ($next_seq == sizeof($groups_array)-1)?'F':'A';
+                            $comments_array[$next_seq] = 'auto-approved';
+                        }
                     }
                 }
 
@@ -276,13 +292,15 @@ class Forms extends HRForms2 {
                         'workflow_id'=>$last_journal['WORKFLOW_ID'],
                         'seq'=>$i,
                         'groups'=>implode(',',$groups_array),
-                        'group_from'=>$groups_array[$last_journal['SEQUENCE']],
+                        'group_from'=>$groups_array[$i-1], //last_journal['SEQUENCE']
                         'group_to'=>$groups_array[$i],
-                        'comment'=>($j=='X')?'':$this->POSTvars['comment']
+                        'comment'=>$comments_array[$i]
                     );
                     $journal = (new journal(array('form',$this->POSTvars['formId'],$j,$journal_data),false))->returnData;
                     if ($j=='Z') $archive = (new archive(array('form',$this->POSTvars['formId']),false))->returnData;
+                    sleep(1);
                 }
+                //TODO: make journal_data an array of arrays and return?
                 $this->toJSON($journal_data);
                 break;
 
