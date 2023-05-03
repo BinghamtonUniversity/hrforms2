@@ -5,6 +5,7 @@ dist/htdocs/js/
 dist/htdocs/index.php
 dist/htdocs/api/testemail.php
 dist/htdocs/api/classes/testing.php
+dist/etc/email.php
 package-lock.json
 *OLD.js
 *.code-workspace
