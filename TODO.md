@@ -9,16 +9,12 @@ Bug fixes, enhancements and things still to complete.
     - Mostly works, some errors with origSalary, but may be moot because of using TEST form code.
 
 ## In Progress Tasks:
+  * Email notification
+  * Rename contexts to use*Context() for consistency (see app.js)
   * Clean up queries and remove queries.js
-  * FORM: Complete Review page
+  * Form: Complete Review page
   * FormList and RequestList; drop the additional formId, requestId and just use POSTvars.
-  * DataTables:
-    - Add hotkey ctrl+f to focus the search box.
-    - Add special key handling to search box component (see users.js)
-    - Add search-by-field as needed (see groups.js)
-    - Add progressPending/progressComponent
-    - Add noDataComponent
-    - Global setting for paginationRowsPerPageOptions
+  * Request/Forms: Finish Final Approval and Archive
   * Change delete modals to component: ModalConfirm
   * "globalize" icons (e.g. the "save" icon should be the same for all; this may be making buttons a component)
   * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
@@ -29,22 +25,23 @@ Bug fixes, enhancements and things still to complete.
   * Request: Control who can view/edit based on status (see TODO in file)
   * Forms: Auto focus fields
   * Request: Approver in next group auto-approve (done in forms)
-  * Add setting control to allow/disabled subsequent approver skips and message.
   * Create list of standard hotkeys for application.
-  * Ability to download user list for auditing
-  * Admin Lists: 
-    * invalidate queries when list data in changed
-    * make list data an l/v pair
-  * Delete paytrans should check to see usage and handle
+  * Users: Ability to download user list for auditing
+  * Admin - Forms: Delete paytrans should check to see usage and handle
   * Switch from username to B# as primary key
-  * Email notification
-  * User should NOT be able to approve/reject requests they submitted.
+  * Request: User should NOT be able to approve/reject requests they submitted.
   * Remove last group from skip select list - cannot skip the last one.  Need to handle when changed.
   * Use Helmet to change the title of the page
-  * Add default routing in settings
+  * Admin: Add default routing in settings
   * On app error allow "reset"; test with undefined import component.
   * Add print to PDF
   * Add CSS for printing
+  * Forms: Default WF for all payrolls/forms?
+  * Forms|Requests: rejections - resubmit or delete - set back to "draft"
+  * Search for "TODO" in files
+  * DataTables:
+    - Add search-by-field as needed (see groups.js)
+    - Global setting for paginationRowsPerPageOptions
 
 ## Upgrades:
   * Upgrade to Bootstrap v5
@@ -52,6 +49,9 @@ Bug fixes, enhancements and things still to complete.
   * Upgrade to React Router v6
 
 ## Future Enhancements
+  * Add Help menu with Help, About items
+  * Admin Lists: make list data an l/v pair
+  * Add setting control to allow/disabled subsequent approver skips and message.
   * Users: Search by group in users (need to add group info in query)
   * Custom context (right-click) menu (https://fkhadra.github.io/react-contexify/)
   * Allow global configuration of DatePicker dateFormat
@@ -68,5 +68,5 @@ Bug fixes, enhancements and things still to complete.
 ## Questions for HR:
   * Form approvals:
     - if submitter is not in dept approval group, should it go?
-  * Review Transaction Codes
+  * Review Transaction Codes (in progress - VM)
   * Employment -> Salary Tab: Addl Salary and Split Assignment - should fields be required?  If so, which?

@@ -21,7 +21,7 @@ export default function AdminGroups() {
     const {getGroups} = useGroupQueries();
     const groups = getGroups();
 
-    useHotkeys('ctrl+alt+n',()=>setNewGroup(true));
+    useHotkeys('ctrl+alt+n',()=>setNewGroup(true),{enableOnTags:['INPUT']});
 
     return (
         <>
@@ -62,7 +62,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
 
     const searchRef = useRef();
 
-    useHotkeys('ctrl+f',e=>{
+    useHotkeys('ctrl+f,ctrl+alt+f',e=>{
         e.preventDefault();
         searchRef.current.focus()
     });
@@ -99,7 +99,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
             }
         }
         const handleFilterKeyDown = e => {
-            if (e.ctrlKey&&e.altKey&e.key=="n") setNewGroup(true); //added here for when search box has focus
+            //if (e.ctrlKey&&e.altKey&e.key=="n") setNewGroup(true); //added here for when search box has focus
             if (e.key == 'Escape') {
                 if (filterText&&filterField=='id'&&subpage) history.push('/admin/groups');
                 if (!filterText&&filterField!='all') setFilterField('all');

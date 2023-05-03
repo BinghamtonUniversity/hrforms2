@@ -4,6 +4,7 @@
  *
 **/
 include('db.php');
+include('email.php');
 
 define('VERSION','2.0.0');
 define('REVISION','DEV');
@@ -59,10 +60,11 @@ $CONFIG = array(
 
 /* ========= DO NOT EDIT BELOW THIS LINE ========= */
 $INSTANCES = array(
-	array_merge($CONFIG[0],$DBS[0]),
-	array_merge($CONFIG[1],$DBS[1]),
-	array_merge($CONFIG[2],$DBS[2]),
-	array_merge($CONFIG[3],$DBS[3])
+	array_merge($CONFIG[0],$DBS[0],$EMAIL[0]),
+	array_merge($CONFIG[1],$DBS[1],$EMAIL[1]),
+	array_merge($CONFIG[2],$DBS[2],$EMAIL[2]),
+	array_merge($CONFIG[3],$DBS[3],$EMAIL[3]),
+	array_merge($CONFIG[4],$DBS[4],$EMAIL[4])
 );
 $i = array_search($_SERVER['HTTP_HOST'],array_column($INSTANCES, 'HOST'));
 array_walk($INSTANCES[$i],function($v,$k) { define($k,$v); });

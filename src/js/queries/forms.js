@@ -52,6 +52,7 @@ export default function useFormQueries(FORM_ID) {
                 d.createdDate = (d?.UNIX_TS)?new Date(d.UNIX_TS*1000):new Date(d.CREATED_DATE);
                 d.createdDateFmt = format(d.createdDate,'Pp');
                 d.createdByName = [d?.CREATED_BY_FIRST_NAME,d?.CREATED_BY_LEGAL_LAST_NAME].join(' ');
+                d.id = d.FORM_ID;
             });
             return (options.select2)?options.select2(data):data;
         }

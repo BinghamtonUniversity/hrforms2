@@ -1,7 +1,7 @@
-import React, { useState, lazy, useEffect, useMemo } from "react";
+import React, { useState, lazy, useEffect } from "react";
 import { useParams, useHistory } from "react-router-dom";
-import { Container, Row, Col, Tabs, Tab, Badge } from "react-bootstrap";
-import { Loading, AppButton } from "../../blocks/components";
+import { Container, Row, Col, Tabs, Tab } from "react-bootstrap";
+import { useHotkeys } from "react-hotkeys-hook";
 
 const PayrollTransactionsTab = lazy(()=>import("../../blocks/admin/transactions/paytrans"));
 const CodesTab = lazy(()=>import("../../blocks/admin/transactions/codes"));
@@ -22,6 +22,14 @@ export default function AdminFormTransactions() {
         setActiveTab(tab);
         history.push('/admin/transactions/'+tab);
     }
+
+    useHotkeys('ctrl+right,ctrl+left',(_,handler)=>{
+        const tabIds = tabs.map(t=>t.id);
+        const idx = tabIds.indexOf(activeTab);
+        let newIdx = (handler.key=='ctrl+left')?idx-1:idx+1;
+        if (newIdx>=tabIds.length) newIdx = 0;
+        navigate(tabIds.at(newIdx));
+    },{enableOnTags:['INPUT']},[activeTab]);
 
     useEffect(()=>setActiveTab(tabs.map(t=>t.id).includes(subpage)?subpage:'paytrans'),[subpage]);
     return (

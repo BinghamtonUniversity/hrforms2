@@ -6,6 +6,8 @@ import { Form, Row, Col } from "react-bootstrap";
 import { useAppQueries } from "../../../queries";
 import { Alert } from "react-bootstrap";
 
+// TODO: Remove? Not Used
+
 export default function SettingsLists() {
     const {getLists} = useAppQueries();
     const listdata = getLists();

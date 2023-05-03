@@ -31,7 +31,9 @@ class Testing extends HRForms2 {
 	function GET() {
 		//echo json_decode($_COOKIE['hrforms2_local'])->bnumber;
 		//print_r($GLOBALS);
-		echo "test:";
-		echo DB;
+		$a = $this->sendEmail('requests','14',[
+			'to' => 'geigers+test@binghamton.edu'
+		]);
+		echo $a;
 	}
 }

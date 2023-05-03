@@ -24,7 +24,7 @@ export default function AdminUsers() {
     const {getUsers} = useUserQueries();
     const users = getUsers();
 
-    useHotkeys('ctrl+alt+n',()=>setNewUser(true));
+    useHotkeys('ctrl+alt+n',()=>setNewUser(true),{enableOnTags:['INPUT']});
 
     return (
         <>
@@ -60,7 +60,7 @@ function UsersTable({users,newUser,setNewUser}) {
     useHotkeys('ctrl+f,ctrl+alt+f',e=>{
         e.preventDefault();
         searchRef.current.focus();
-    },{description:'Focus search box'});
+    });
 
     const handleRowClick = useCallback(row=>setSelectedRow(row));
     
@@ -77,8 +77,6 @@ function UsersTable({users,newUser,setNewUser}) {
             setStatusFilter(e.target.value);
         }
         const handleKeyDown = e => {
-            // Handle special keys
-            if (e.ctrlKey&&e.altKey&e.key=="n") setNewUser(true); //added here for when search box has focus
             if(e.key=="Escape"&&!filterText) searchRef.current.blur();
         }
         const handleFilterChange = e => {
@@ -247,6 +245,7 @@ function ImpersonateUser({user,setImpersonateUser}) {
         },
         confirm:{
             title: 'Impersonate',
+            format: 'impersonate',
             callback: () => {
                 mutation.mutateAsync({IMPERSONATE_SUNY_ID:user.SUNY_ID}).then(d => {
                     queryclient.refetchQueries('session').then(()=>{
@@ -596,7 +595,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
         <>
             <Form.Row>
                 <Form.Group as={Col} controlId="suny_id">
-                    <Form.Label>SUNY ID</Form.Label>
+                    <Form.Label>SUNY ID:</Form.Label>
                     {newUser?
                         <InputGroup hasValidation className="mb-3">
                             <Controller
@@ -633,7 +632,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
             </Form.Row>
             <Form.Row>
                 <Form.Group as={Col} controlId="first_name">
-                    <Form.Label>First Name</Form.Label>
+                    <Form.Label>First Name:</Form.Label>
                     <Controller
                         name="firstName"
                         defaultValue=""
@@ -642,7 +641,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
                     />
                 </Form.Group>
                 <Form.Group as={Col} controlId="last_name">
-                    <Form.Label>Last Name</Form.Label>
+                    <Form.Label>Last Name:</Form.Label>
                     <Controller
                         name="lastName"
                         defaultValue=""
@@ -653,7 +652,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
             </Form.Row>
             <Form.Row>
                 <Form.Group as={Col} controlId="email">
-                    <Form.Label>Email</Form.Label>
+                    <Form.Label>Email:</Form.Label>
                     <Controller
                         name="email"
                         defaultValue=""
@@ -663,8 +662,20 @@ function UserInfo({newUser,setStatus,closeModal}) {
                 </Form.Group>
             </Form.Row>
             <Form.Row>
+                <Form.Group as={Col} controlId="notifications">
+                    <Form.Label>Email Notifications:</Form.Label>
+                    <Controller
+                        name="notifications"
+                        defaultValue=""
+                        control={control}
+                        render={({field}) => <Form.Check {...field} type="checkbox" aria-describedby="notificationHelp"/>}
+                    />
+                    <Form.Text id="notificationHelp" muted>Users in approval groups will receive email notification when a new approval is assigned to the group.</Form.Text>
+                </Form.Group>
+            </Form.Row>
+            <Form.Row>
                 <Form.Group as={Col} controlId="dept">
-                    <Form.Label>Department</Form.Label>
+                    <Form.Label>Department:</Form.Label>
                     <Controller
                         name="dept"
                         defaultValue=""
@@ -684,7 +695,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
             </Form.Row>
             <Form.Row>
                 <Form.Group as={Col} controlId="start_date">
-                    <Form.Label>Start Date</Form.Label>
+                    <Form.Label>Start Date:</Form.Label>
                     <InputGroup>
                         <Controller
                             name="startDate"
@@ -702,7 +713,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
                     <Form.Control.Feedback type="invalid">{errors.startDate?.message}</Form.Control.Feedback>                    
                 </Form.Group>
                 <Form.Group as={Col} controlId="end_date">
-                    <Form.Label>End Date</Form.Label>
+                    <Form.Label>End Date:</Form.Label>
                     <InputGroup>
                         <Controller
                             name="endDate"

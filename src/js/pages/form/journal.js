@@ -1,13 +1,14 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useParams, useHistory, Link } from "react-router-dom";
 import useFormQueries from "../../queries/forms";
 import { Row, Col, Form, Button, Popover, OverlayTrigger, Tooltip } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
 import { get, sortBy } from "lodash";
 import useGroupQueries from "../../queries/groups";
-import { getAuthInfo } from "../../app";
+import { getAuthInfo, useAuthContext, useSettingsContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
 
+//TODO: move to config?
 const statusTitle = {
     'S':'Submitter',
     'A':'Approved',
@@ -22,12 +23,22 @@ export default function FormJournal() {
 
     const [formId,setFormId] = useState((!!id)?id:'');
     const [showResults,setShowResults] = useState(!!id);
+    const [expandAll,setExpandAll] = useState(false);
+
+    const searchRef = useRef();
+    useHotkeys('ctrl+f,ctrl+alt+f',e=>{
+        e.preventDefault();
+        searchRef.current.focus();
+    });
+    useHotkeys('ctrl+alt+e',()=>setExpandAll(!expandAll),{
+        enableOnTags:['INPUT']
+    },[expandAll]);
 
     const handleChange = e => {
         setShowResults(false);
         setFormId(e.target.value);
     }
-    const handleESC = e => {
+    const handleKeyDown = e => {
         if (e.key == 'Escape') {
             setShowResults(false);
             setFormId('');
@@ -46,25 +57,21 @@ export default function FormJournal() {
             </Row>
             <Form inline onSubmit={handleSubmit}>
                 <Form.Label className="my-1 mr-2" htmlFor="journalFormIdSearch" >Form ID:</Form.Label>
-                <Form.Control className="mb-2 mr-sm-2" id="journalFormIdSearch" value={formId} onChange={handleChange} onKeyDown={handleESC} autoFocus/>
+                <Form.Control ref={searchRef} className="mb-2 mr-sm-2" id="journalFormIdSearch" value={formId} onChange={handleChange} onKeyDown={handleKeyDown} autoFocus/>
                 <Button type="submit" className="mb-2">Search</Button>
             </Form>
             {(showResults && !formId) && <p>You must enter a form id</p>}
-            {(showResults && formId) && <JournalSearchResults formId={formId}/>}
+            {(showResults && formId) && <JournalSearchResults formId={formId} expandAll={expandAll} setExpandAll={setExpandAll}/>}
         </>
     );
 }
 
-function JournalSearchResults({formId}) {
-    const [expandAll,setExpandAll] = useState(false);
+function JournalSearchResults({formId,expandAll,setExpandAll}) {
+    
     const {getJournal} = useFormQueries(formId);
     const journal = getJournal({onSuccess:d=>{
         d.forEach(c=>c.id=`${c.FORM_ID}_${c.SEQUENCE}`);
     }});
-
-    useHotkeys('ctrl+alt+e',()=>{
-        setExpandAll(!expandAll);
-    },[expandAll]);
 
     const expandToggleComponent = useMemo(() => {
         const expandText = ((expandAll)?'Collapse':'Expand') + ' All';
@@ -103,6 +110,7 @@ function JournalSearchResults({formId}) {
             expandOnRowClicked
             expandableRowsComponent={ExpandedComponent}
             expandableRowExpanded={()=>expandAll}
+            noDataComponent={<p className="m-3">No Form Journal Found Matching Your Criteria</p>}
         />
     );
 }
@@ -110,8 +118,12 @@ function JournalSearchResults({formId}) {
 function ExpandedComponent({data}) {
     //TODO: Consolidate with list flow?
     //TODO: check for admin to link
-    const {isAdmin} = getAuthInfo();
+    const {isAdmin} = useAuthContext();
+    const {general} = useSettingsContext();
     const clickHander = e => !isAdmin && e.preventDefault();
+    useEffect(()=>{
+        console.log(data);
+    },[data]);
     return (
         <div className="p-3" style={{backgroundColor:'#ddd'}}>
             <dl className="journal-list" style={{'display':'grid','gridTemplateColumns':'120px auto'}}>
@@ -122,7 +134,7 @@ function ExpandedComponent({data}) {
                 <dt>Date:</dt>
                 <dd>{data.journalDateFmt}</dd>
                 <dt>Status:</dt>
-                <dd>{get(statusTitle,data.STATUS,'Unknown')}</dd>
+                <dd>{get(general.status,`${data.STATUS}.journal`,'Unknown')}</dd>
                 {data.GROUP_FROM &&
                     <>
                         <dt>Group From:</dt>

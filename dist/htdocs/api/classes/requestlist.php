@@ -78,10 +78,11 @@ class RequestList extends HRForms2 {
 				j.status, j.sequence, w.groups,js.journal_status
 				from hrforms2_requests r,
 				(select jr2.* from (select jr1.*,
-					rank() over (partition by jr1.request_id order by jr1.journal_date desc) as rnk
+					rank() over (partition by jr1.request_id order by jr1.journal_date desc, jr1.sequence) as rnk
 					from hrforms2_requests_journal jr1
 					where jr1.request_id in (select request_id from hrforms2_requests_journal where suny_id = :suny_id and status = 'S')) jr2
-				where jr2.rnk = 1 and jr2.status not in ('R','X')) j
+				where jr2.rnk = 1 and jr2.status not in ('R')and
+                jr2.group_to not in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
 				left join (select * from hrforms2_requests_workflow) w on (j.workflow_id = w.workflow_id)
 				left join (select request_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal group by request_id) js on (js.request_id = j.request_id)
 				where r.request_id = j.request_id";

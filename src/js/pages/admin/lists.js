@@ -6,6 +6,7 @@ import { useForm, Controller, FormProvider, useFormContext, useWatch } from "rea
 import { toast } from "react-toastify";
 import camelCase from "lodash/camelCase";
 import { Loading, ModalConfirm, AppButton, errorToast } from "../../blocks/components";
+import { useHotkeys } from "react-hotkeys-hook";
 
 export default function AdminLists() {
     const [selectedList,setSelectedList] = useState();
@@ -27,12 +28,13 @@ export default function AdminLists() {
     const defaultValues = {
         LIST_ID:'',
         LIST_NAME:'',
+        LIST_DESCRIPTION:'',
         LIST_TYPE:'',
         LIST_SLUG:'',
         PROTECTED:'',
         LIST_DATA:''
     };
-    const methods = useForm();
+    const methods = useForm({defaultValues:defaultValues});
     
     const handleBlur = e => {
         const [listId,listSlug] = methods.getValues(['LIST_ID','LIST_SLUG']);
@@ -63,8 +65,10 @@ export default function AdminLists() {
         setRunSQL('');
         resetState();
         methods.setValue('LIST_ID','new');
-        ['LIST_NAME','LIST_TYPE','LIST_SLUG','PROTECTED','LIST_DATA'].forEach(k=>methods.setValue(k,''));
+        ['LIST_NAME','LIST_DESCRIPTION','LIST_TYPE','LIST_SLUG','PROTECTED','LIST_DATA'].forEach(k=>methods.setValue(k,''));
     }
+    useHotkeys('ctrl+alt+n',()=>newList());
+    
     const handleDeleteList = () => setConfirmDelete(true);
     const confirmDeleteButtons = {
         close:{title:'Cancel',callback:()=>setConfirmDelete(false)},
@@ -117,7 +121,10 @@ export default function AdminLists() {
         setConfirmSave(true);
     }
     const confirmSaveButtons = {
-        close:{title:'Cancel',callback:()=>setConfirmSave(false)},
+        close:{title:'Cancel',callback:()=>{
+            setConfirmSave(false);
+            methods.reset();
+        }},
         confirm:{title:'Save',callback:()=>{
             setConfirmSave(false);
             const data = methods.getValues();
@@ -138,7 +145,6 @@ export default function AdminLists() {
             } else if (selectedList) {
                 toast.promise(new Promise((resolve,reject) => {
                     updatelist.mutateAsync(data).then(()=>{
-                        //invalidate listdata?
                         Promise.all([
                             queryclient.refetchQueries('lists',{exact:true}),
                             queryclient.refetchQueries(['list',selectedList],{exact:true})
@@ -265,6 +271,20 @@ function ListDetails({locked,handleBlur,slugHint,pickSlugHint,handleDeleteList,i
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
+                <Form.Label column md={2}>List Description:</Form.Label>
+                <Col md={9}>
+                    <Controller
+                        name="LIST_DESCRIPTION"
+                        defaultValue=''
+                        control={control}
+                        render={({field})=>{
+                            if (locked=="1") return <p className="m-0 py-2">{field.value}</p>;
+                            else return <Form.Control {...field} type="text" disabled={locked=="1"}/>;
+                        }}
+                    />
+                </Col>
+            </Form.Group>
+            <Form.Group as={Row}>
                 <Form.Label column md={2}>List Type*:</Form.Label>
                 <Col xs="auto">
                     <Controller
@@ -273,7 +293,7 @@ function ListDetails({locked,handleBlur,slugHint,pickSlugHint,handleDeleteList,i
                         rules={{required:{value:true,message:'You must enter a List Type'}}}
                         control={control}
                         render={({field})=>{
-                            if (locked=="1") return <Form.Control {...field} plaintext readOnly/>;
+                            if (locked=="1") return <p className="m-0 py-2">{field.value}</p>;
                             else return (
                                 <ToggleButtonGroup {...field} type="radio" className={errors.LIST_TYPE&&'is-invalid'}>
                                     <ToggleButton type="radio" id="listType-JSON" value="json">JSON</ToggleButton>

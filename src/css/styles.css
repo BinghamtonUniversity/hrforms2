@@ -63,6 +63,9 @@ pre {
   white-space: -o-pre-wrap;    /* Opera 7 */
   word-wrap: break-word;       /* Internet Explorer 5.5+ */
  }
+ pre p {
+  margin: 0;
+ }
 
 /* active sub tab */
 .tab-pane.active .nav .nav-item p.active { color: #495057 }

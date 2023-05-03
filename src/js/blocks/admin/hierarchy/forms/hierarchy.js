@@ -57,11 +57,11 @@ function HierarchyTable() {
     const [selectedRow,setSelectedRow] = useState({});
     const [deleteHierarchy,setDeleteHierarchy] = useState({});
 
-    const {isNew} = useContext(WorkflowContext);
+    const {isNew,activeTab} = useContext(WorkflowContext);
     const {hierarchy} = useContext(HierarchyContext);
     const searchRef = useRef();
 
-    useHotkeys('ctrl+f',e=>{
+    useHotkeys('ctrl+f,ctrl+alt+f',e=>{
         e.preventDefault();
         searchRef.current.focus();
     });
@@ -82,6 +82,9 @@ function HierarchyTable() {
     },[]);
 
     const filterComponent = useMemo(() => {
+        const handleKeyDown = e => {
+            if(e.key=="Escape"&&!filterText) searchRef.current.blur();
+        }
         const handleFilterChange = e => {
             if (e.target.value) {
                 setResetPaginationToggle(false);
@@ -96,7 +99,7 @@ function HierarchyTable() {
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
                     <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange}/>
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
                     </Col>
                 </Form.Group>
             </Form>
@@ -169,7 +172,7 @@ function HierarchyTable() {
     useEffect(()=>{
         setRows(hierarchy);
         searchRef.current.focus();
-    },[hierarchy]);
+    },[hierarchy,activeTab]);
 
     return (
         <>
@@ -191,7 +194,7 @@ function HierarchyTable() {
                 onSort={handleSort}
                 sortServer
                 onRowClicked={handleRowClick}
-                noDataComponent={<p className="m-3">No Hierarchies Found Matching Your Criteria</p>}
+                noDataComponent={<p className="m-3">No Form Hierarchies Found Matching Your Criteria</p>}
             />
             {(selectedRow?.HIERARCHY_ID||isNew=='hierarchy') && <AddEditHierarchy {...selectedRow} setSelectedRow={setSelectedRow} isNew={isNew}/>}
             {deleteHierarchy?.HIERARCHY_ID && <DeleteHierarchy {...deleteHierarchy} setDeleteHierarchy={setDeleteHierarchy}/>}

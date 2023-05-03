@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, useReducer } from "react";
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/request";
 import { useWorkflowQueries } from "../../../../queries/hierarchy";
-import { find, startsWith } from 'lodash';
+import { find } from 'lodash';
 import { Row, Col, Modal, Button, Form, Alert, Tabs, Tab, Container, Table } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import DataTable from 'react-data-table-component';
@@ -23,13 +23,12 @@ export default function WorkflowTab() {
     const [deleteWorkflow,setDeleteWorkflow] = useState({});
 
     const searchRef = useRef();
-    useHotkeys('ctrl+f',e=>{
+    useHotkeys('ctrl+f,ctrl+alt+f',e=>{
         e.preventDefault();
         searchRef.current.focus();
     });
 
-
-    const {isNew} = useContext(WorkflowContext);
+    const {isNew,activeTab} = useContext(WorkflowContext);
     
     const handleRowClick = useCallback(row=>setSelectedRow(row));
 
@@ -43,6 +42,9 @@ export default function WorkflowTab() {
     },[]);
 
     const filterComponent = useMemo(() => {
+        const handleKeyDown = e => {
+            if(e.key=="Escape"&&!filterText) searchRef.current.blur();
+        }
         const handleFilterChange = e => {
             if (e.target.value) {
                 setResetPaginationToggle(false);
@@ -57,7 +59,7 @@ export default function WorkflowTab() {
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
                     <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange}/>
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
                     </Col>
                 </Form.Group>
             </Form>
@@ -84,7 +86,7 @@ export default function WorkflowTab() {
     useEffect(()=>{
         setRows(workflows);
         searchRef.current.focus();
-    },[workflows]);
+    },[workflows,activeTab]);
 
     return (
         <>
@@ -106,6 +108,7 @@ export default function WorkflowTab() {
                 onSort={handleSort}
                 sortServer
                 onRowClicked={handleRowClick}
+                noDataComponent={<p className="m-3">No Request Workflows Found Matching Your Criteria</p>}
             />
             {(selectedRow?.WORKFLOW_ID||isNew=='workflow') && <AddEditWorkflow {...selectedRow} setSelectedRow={setSelectedRow}/>}
             {deleteWorkflow?.WORKFLOW_ID && <DeleteWorkflow {...deleteWorkflow} setDeleteWorkflow={setDeleteWorkflow}/>}

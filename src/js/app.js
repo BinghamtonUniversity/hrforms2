@@ -30,10 +30,13 @@ UserContext.displayName = 'UserContext';
 export const SettingsContext = React.createContext();
 SettingsContext.displayName = 'SettingsContext';
 
-export function getAuthInfo() { return useContext(AuthContext); }
-export function currentUser() { return useContext(UserContext); } // rename to useUserContext; consistency across libraries
+export function getAuthInfo() { return useContext(AuthContext); } // TODO: rename to useAuthContext
+export function useAuthContext() { return useContext(AuthContext); }
+export function currentUser() { return useContext(UserContext); } // TODO: rename to useUserContext; consistency across libraries
 export function useUserContext() { return useContext(UserContext); } 
-export function getSettings() { return useContext(SettingsContext); }
+export function getSettings() { return useContext(SettingsContext); } //TODO: rename to useAuthContext
+export function useSettingsContext() { return useContext(SettingsContext); }
+
 //export function getNavContext() { return useContext(NavContext); } // do we need this?  can't we import useContext from react and import NavContext from app?
 
 /* QUERIES */

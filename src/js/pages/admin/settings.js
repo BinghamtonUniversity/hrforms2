@@ -26,7 +26,6 @@ function AdminSettingsTabs({settingsData}) {
         {id:'requests',title:'Requests'},
         {id:'forms',title:'Forms'}
     ];
-//        {id:'lists',title:'Lists'},
 
     const [activeTab,setActiveTab] = useState('general');
 

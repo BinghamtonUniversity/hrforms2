@@ -40,6 +40,7 @@ export default function useRequestQueries(REQUEST_ID) {
                 const fName = (d?.ALIAS_FIRST_NAME)?d.ALIAS_FIRST_NAME:(d?.LEGAL_FIRST_NAME)?d.LEGAL_FIRST_NAME:'';
                 d.fullName = (fName)?`${fName} ${d.LEGAL_LAST_NAME}`:'';
                 d.sortName = (fName)?`${d.LEGAL_LAST_NAME}, ${fName}`:'';
+                d.id = d.REQUEST_ID;
             });
             return (options.select2)?options.select2(data):data;
         }

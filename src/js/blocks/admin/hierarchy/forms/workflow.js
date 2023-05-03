@@ -14,7 +14,7 @@ import { AppButton, errorToast } from "../../../components";
 import { flattenObject } from "../../../../utility";
 
 export default function WorkflowTab() {
-    const {workflows} = useContext(WorkflowContext);
+    const {workflows,activeTab} = useContext(WorkflowContext);
     const [filterText,setFilterText] = useState('');
     const [rows,setRows] = useState([]);
     const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
@@ -22,7 +22,7 @@ export default function WorkflowTab() {
     const [deleteWorkflow,setDeleteWorkflow] = useState({});
 
     const searchRef = useRef();
-    useHotkeys('ctrl+f',e=>{
+    useHotkeys('ctrl+f,ctrl+alt+f',e=>{
         e.preventDefault();
         searchRef.current.focus();
     });
@@ -41,6 +41,9 @@ export default function WorkflowTab() {
     },[]);
 
     const filterComponent = useMemo(() => {
+        const handleKeyDown = e => {
+            if(e.key=="Escape"&&!filterText) searchRef.current.blur();
+        }
         const handleFilterChange = e => {
             if (e.target.value) {
                 setResetPaginationToggle(false);
@@ -55,7 +58,7 @@ export default function WorkflowTab() {
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
                     <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange}/>
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
                     </Col>
                 </Form.Group>
             </Form>
@@ -84,7 +87,7 @@ export default function WorkflowTab() {
     useEffect(()=>{
         setRows(workflows);
         searchRef.current.focus();
-    },[workflows]);
+    },[workflows,activeTab]);
 
     return (
         <>
@@ -106,6 +109,7 @@ export default function WorkflowTab() {
                 onSort={handleSort}
                 sortServer
                 onRowClicked={handleRowClick}
+                noDataComponent={<p className="m-3">No Form Workflows Found Matching Your Criteria</p>}
             />
             {(selectedRow?.WORKFLOW_ID||isNew=='workflow') && <AddEditWorkflow {...selectedRow} setSelectedRow={setSelectedRow}/>}
             {deleteWorkflow?.WORKFLOW_ID && <DeleteWorkflow {...deleteWorkflow} setDeleteWorkflow={setDeleteWorkflow}/>}

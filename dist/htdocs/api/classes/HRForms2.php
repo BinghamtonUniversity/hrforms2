@@ -1,4 +1,8 @@
 <?php
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+require '../../vendor/autoload.php';
+
 set_include_path(implode(PATH_SEPARATOR, array(get_include_path(),'../../','./api/classes/')));
 include_once 'etc/config.php';
 
@@ -209,6 +213,8 @@ Class HRForms2 {
 
 	/**
 	* Helper function to convert null values in an array to empty strings
+	* @param array $array - array containing null values to conver to empty strings
+	* @return array - return updated array
 	*/
 	protected function null2Empty($array) {
 		foreach($array as &$row) {
@@ -235,8 +241,8 @@ Class HRForms2 {
 
 	/**
 	* Returns true/false if the SUNY ID is in the local admin table
-	* @param {number} $id - SUNY ID to check
-	* @return {boolean} 
+	* @param number $id - SUNY ID to check
+	* @return boolean
 	*/
 	protected function isAdmin($id) {
 		if (isset($this->sessionData['isAdmin'])) return $this->sessionData['isAdmin'];
@@ -252,8 +258,8 @@ Class HRForms2 {
 
 	/**
 	 * Returns GroupID for Department Code given
-	 * @param {number} $deptcode - Department Code to lookup 
-	 * @return {Array}
+	 * @param number $deptcode - Department Code to lookup 
+	 * @return array
 	 */
 	protected function getGroupIds($deptcode) {
 		if (!isset($deptcode)) $this->raiseError(400); //return?
@@ -264,5 +270,111 @@ Class HRForms2 {
 		$group_id = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
 		oci_free_statement($stmt);
 		return $group_id;
+	}
+
+	/**
+	 * Triggers sending the email notification
+	 * @param string $type - The type (requests|forms) of email being sent
+	 * @param string $id - Request or Form ID to pull data from
+	 * @param array[
+	 * 		'to'		=> (array|string)
+	 * 		'reply-to'	=> (array|string)
+	 * 		'subject'	=> (string)
+	 * ] $params - Email parameters
+	 * @return mixed - Returns output from debug if enabled; could be null/undefined.
+	 */
+	function sendEmail($type,$id,$params) {
+		$origMethod = $_SERVER['REQUEST_METHOD'];
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+		$settings = (new settings(array(),false))->returnData;
+
+		$user = (new user(array($this->sessionData['SUNY_ID']),false))->returnData[0];
+		$firstName = isset($user['ALIAS_FIRST_NAME'])?$user['ALIAS_FIRST_NAME']:$user['LEGAL_FIRST_NAME'];
+		$fullName = $firstName . ' ' . $user['LEGAL_LAST_NAME'];
+
+		$defaults = [
+			'to'=>$settings[$type]['email']['default'],
+			'replyto'=>'',
+			'subject'=>''
+		];
+		['to'=>$to,'replyto'=>$replyto,'subject'=>$subject] = array_merge($defaults,$params);
+
+		// If instace is LOCAL or DEV change email to current user's email
+		if (is_string($to)) $to = [$to,null];
+		$origTo = $to;
+		if (INSTANCE=='LOCAL' or INSTANCE=='DEV') $to = [$this->sessionData['EMAIL'],$fullName];
+
+		// Concatenate Subject
+		$subject = '[HRFORMS2-'.INSTANCE.']: '.$settings[$type]['email']['subject'].' '.$subject;
+
+		$data = [];
+		switch($type) {
+			case "requests":
+				$data = (new requests(array($id),false))->returnData;
+				$subject .= $data->reqId . " - " . $data->lastJournal['STATUS'];
+				break;
+			case "forms":
+				$data = (new forms(array($id),false))->returnData;
+				break;
+			default:
+				echo "ERROR! Invalid Type";
+				return;
+		}
+
+		ob_start();
+		if ($settings[$type]['email']['enabled']) {
+			$mail = new PHPMailer();
+			$mail->isSMTP();
+			if (SMTP_DEBUG) {
+				var_dump($settings[$type]['email']);
+				$mail->SMTPDebug = SMTP::DEBUG_SERVER;
+			} else {
+				$mail->SMTPDebug = SMTP::DEBUG_OFF;
+			}
+			$mail->Host = SMTP_HOST;
+			$mail->Port = SMTP_PORT;
+			$mail->SMTPAuth = SMTP_AUTH;
+			$mail->Username = SMTP_USERNAME;
+			$mail->Password = SMTP_PASSWORD;
+
+			$mail->setFrom($settings[$type]['email']['from'],$settings[$type]['email']['name']);
+			
+			if (is_string($replyto)) $replyto = [$replyto,null];
+			if (!!$replyto[0]) $mail->addReplyTo($replyto[0],$replyto[1]);
+
+			$mail->addAddress($to[0],$to[1]);	
+			$mail->Subject = $subject;
+			// Templates?
+			$mail->msgHTML('<p>this is a test</p>');
+			$mail->AltBody = 'This is a plain-text message body';
+			//$mail->addAttachment('images/phpmailer_mini.png');
+			$mail->send();
+		} else {
+			echo <<<EOT
+				<style>
+					#mh{font-family:"Courier New",Courier} 
+					#mb{margin-top: 1em}
+					section>p{margin:0}
+				</style>
+				<section id="mh">
+					<p>Date:</p>
+					<p>From:</p>
+					<p>To: "$to[1]" &lt;$to[0]&gt;</p>
+					<p>Reply-To:</p>
+					<p>Subject: $subject</p>
+				</section>
+				<section id="mb">
+					<p>Body of message...</p>
+				</section>
+			EOT;
+			var_dump($data);
+		}
+
+		$output = ob_get_contents();
+		ob_end_clean();
+
+		$_SERVER['REQUEST_METHOD'] = $origMethod;
+
+		return $output;
 	}
 }

@@ -4,14 +4,14 @@ import { useQueryClient } from "react-query";
 import useRequestQueries from "../../queries/requests";
 import useGroupQueries from "../../queries/groups";
 import { useForm, Controller } from "react-hook-form";
-import { capitalize, find, pick } from "lodash";
+import { capitalize, find, pick, get } from "lodash";
 import { Redirect } from "react-router-dom";
-import { Row, Col, Button, Badge, Modal, Form } from "react-bootstrap";
+import { Row, Col, Button, Modal, Form } from "react-bootstrap";
 import { format } from "date-fns";
 import DataTable from 'react-data-table-component';
 import { Icon } from "@iconify/react";
-import { AppButton, Loading, ModalConfirm, DescriptionPopover } from "../../blocks/components";
-import { getSettings, currentUser, getAuthInfo, SettingsContext, NotFound } from "../../app";
+import { AppButton, Loading, ModalConfirm, DescriptionPopover, WorkflowExpandedComponent } from "../../blocks/components";
+import { useUserContext, SettingsContext, NotFound, useSettingsContext, useAuthContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
 import { flattenObject } from "../../utility";
 
@@ -19,9 +19,6 @@ export default function RequestList() {
     const {part} = useParams();
     const [redirect,setRedirect] = useState();
     if (redirect) return <Redirect to={redirect}/>;
-
-    //useHotkeys('ctrl+alt+n',()=>setRedirect('/request'));
-
     return (
         <SettingsContext.Consumer>
             {({requests}) => {
@@ -76,18 +73,18 @@ function ListTable({data,list}) {
 
     const searchRef = useRef();
 
-    useHotkeys('ctrl+f',e=>{
+    useHotkeys('ctrl+f,ctrl+alt+f',e=>{
         e.preventDefault();
         searchRef.current.focus()
     });
     useHotkeys('ctrl+alt+e',()=>{
         setExpandAll(!expandAll);
-    },[expandAll]);
-    useHotkeys('ctrl+alt+n',()=>setRedirect('/request'));
+    },{enableOnTags:['INPUT']},[expandAll]);
+    useHotkeys('ctrl+alt+n',()=>setRedirect('/request'),{enableOnTags:['INPUT']});
 
-    const {SUNY_ID} = currentUser();
-    const {isAdmin} = getAuthInfo();
-    const {general} = getSettings();
+    const {SUNY_ID} = useUserContext();
+    const {isAdmin} = useAuthContext();
+    const {general} = useSettingsContext();
     const queryclient = useQueryClient();
     const {postRequest,deleteRequest} = useRequestQueries(selectedRow?.REQUEST_ID);
     const req = postRequest();
@@ -155,8 +152,6 @@ function ListTable({data,list}) {
 
     const filterComponent = useMemo(() => {
         const handleKeyDown = e => {
-            // Handle special keys
-            if (e.ctrlKey&&e.altKey&e.key=="n") setRedirect('/request'); //added here for when search box has focus
             if(e.key=="Escape"&&!filterText) searchRef.current.blur();
         }
         const handleFilterChange = e => {
@@ -208,17 +203,7 @@ function ListTable({data,list}) {
             );
         },ignoreRowClick:true,maxWidth:'100px'},
         {name:'ID',selector:row=>row.REQUEST_ID,sortable:true,sortField:'REQUEST_ID'},
-        {name:'Status',selector:row=>row.STATUS,format:row=>{
-            switch(row.STATUS) {
-                case "S":
-                case "A": return "Pending Review"; break;
-                case "F": return "Pending Final Review"; break;
-                case "R": return "Rejected"; break;
-                case "Z": return "Archived"; break;
-                case "draft": return "Draft"; break;
-                default: return row.STATUS;
-            }
-        },sortable:true,sortField:'STATUS'},
+        {name:'Status',selector:row=>row.STATUS,format:row=>(row.STATUS == 'draft')?"Draft":get(general.status,`${row.STATUS}.list`,row.STATUS),sortable:true,sortField:'STATUS'},
         {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortField:'UNIX_TS'},
         {name:'Submitted By',selector:row=>row.SUNY_ID,sortable:true,omit:(list=='drafts'||list=='pending'),format:row=>`${row.fullName} (${row.SUNY_ID})`},
         {name:'Position Type',selector:row=>row.POSTYPE.id,format:row=>`${row.POSTYPE.id} - ${row.POSTYPE.title}`,sortable:true},
@@ -249,7 +234,7 @@ function ListTable({data,list}) {
                 highlightOnHover
                 onRowClicked={handleRowClick}
                 expandableRows={expandRow}
-                expandableRowsComponent={ExpandedComponent}
+                expandableRowsComponent={WorkflowExpandedComponent}
                 expandableRowExpanded={()=>expandAll}
                 noDataComponent={noData}
             />
@@ -263,63 +248,6 @@ function ListTable({data,list}) {
             </ModalConfirm>
             {(action&&action!='delete') && <ActionModal action={action} modalCallback={modalCallback}/>}
         </>
-    );
-}
-
-function ExpandedComponent({data}) {
-    //TODO: need to create usersettings/permissions and control this per user
-    //TODO: Consolidate title for component use.
-    const [showSkipped,setShowSkipped] = useState(false);
-    const {general} = getSettings();
-    const {isAdmin} = getAuthInfo();
-    useEffect(() => {
-        if (isAdmin && general.showSkipped == 'a' || general.showSkipped == 'y') {
-            setShowSkipped(true);
-        } else {
-            setShowSkipped(false);
-        }
-    },[general]);
-    return (
-        <div className="p-3" style={{backgroundColor:'#ddd'}}>
-            <span className="my-1">
-                <Badge variant="secondary" className="p-2 badge-outline border-dark">Submitter</Badge> 
-                <span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>
-            </span>
-            {data.GROUPS_ARRAY.map((g,i)=>{
-            const key = `${data.REQUEST_ID}_${i}`;
-                if (data.STATUS_ARRAY[i] == 'X' && !showSkipped) return null;
-                let variant = 'white';
-                let classname = 'p-2 m-0 d-inline-flex flex-column badge-outline border';
-                let title = 'Awaiting';
-                if (i < data.SEQUENCE) { 
-                    if (data.STATUS_ARRAY[i] == 'X') {
-                        classname += '-dark badge-white-striped'; title = 'Skipped';
-                    } else {
-                        variant = 'success-light'; classname += '-success'; title = 'Approved'; 
-                    }
-                }
-                if (i == data.SEQUENCE && data.STATUS != 'R') { variant = 'info-light'; classname += '-info'; title = 'Pending'; }
-                if (data.STATUS_ARRAY[i] == 'F') {title = 'Pending Final';}
-                if (i == data.SEQUENCE && data.STATUS == 'R') { variant = 'danger-light'; classname += '-danger'; title = 'Rejected'; }
-                return (
-                    <span key={i} className="my-1">
-                        <DescriptionPopover
-                            id={`workflow_description_${key}`}
-                            title={title}
-                            placement="top"
-                            flip
-                            content={<p>{g.GROUP_NAME}: {(!g.GROUP_DESCRIPTION)?<em>No group description</em>:g.GROUP_DESCRIPTION}</p>}
-                        >
-                            <Badge as="p" variant={variant} className={classname}>
-                                <span>{g.GROUP_NAME}</span>
-                                <span className="pt-1 font-italic">{title}</span>
-                            </Badge>
-                        </DescriptionPopover>
-                        {(i<data.GROUPS_ARRAY.length-1)&&<span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>}
-                    </span>
-                );
-            })}
-        </div>
     );
 }
 

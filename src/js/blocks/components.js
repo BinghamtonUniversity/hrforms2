@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Button, Modal, ListGroup, NavDropdown, Form, OverlayTrigger, Popover } from "react-bootstrap";
+import { Alert, Button, Modal, ListGroup, NavDropdown, Form, OverlayTrigger, Popover, Badge } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { parse, format } from "date-fns";
 import { invoke, get, capitalize, isDate } from "lodash";
 import { Icon } from '@iconify/react';
-import { SettingsContext } from "../app";
+import { SettingsContext, useSettingsContext, useAuthContext } from "../app";
 import { useUserQueries, useAppQueries } from "../queries";
 import CheckboxTree from 'react-checkbox-tree';
-import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { useLocation } from "react-router-dom";
 
 /** Table Of Contents * 
  * 
@@ -25,6 +25,7 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
  * CountrySelector
  * DepartmentSelector
  * DescriptionPopover
+ * WorkflowExpandedComponent
  */
 
 /* formats for AppButton */
@@ -308,5 +309,72 @@ const DescriptionPopover = ({title,content,showempty,children,...props}) => {
     );
 }
 
+/* Builds the workflow chart in Request and Form list pages */
+const WorkflowExpandedComponent = ({data}) => {
+    const [showSkipped,setShowSkipped] = useState(false);
+    const { general } = useSettingsContext();
+    const { isAdmin } = useAuthContext();
+    useEffect(() => {
+        setShowSkipped((isAdmin && general.showSkipped == 'a' || general.showSkipped == 'y'));
+    },[general]);
+    useEffect(()=>{
+        console.debug(data);
+    },[data]);
+    return (
+        <div className="p-3" style={{backgroundColor:'#ddd'}}>
+            <span className="my-1">
+                <Badge variant="secondary" className="p-2 badge-outline border-dark">Submitter</Badge> 
+                <span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>
+            </span>
+            {data.GROUPS_ARRAY.map((g,i)=>{
+                const sequence = parseInt(data.SEQUENCE,10);
+                const key = `${data.id}_${i}`;
+                if (data.STATUS_ARRAY[i+1] == 'X' && !showSkipped) return null;
+                let variant = 'white';
+                let classname = 'p-2 m-0 d-inline-flex flex-column badge-outline border';
+                let title = general.awaitLabel;
+                if (i < sequence) { 
+                    switch(data.STATUS_ARRAY[i+1]) {
+                        case "X":
+                            classname += '-dark badge-white-striped'
+                            break;
+                        case "R":
+                            classname += '-danger';
+                            variant = 'danger-light';
+                            break;
+                        default:
+                            classname += '-success';
+                            variant = 'success-light';
+                    }
+                    title = general.status[data.STATUS_ARRAY[i+1]].completed;
+                }
+                if (i == sequence && data.STATUS != 'R') {
+                    classname += '-info';
+                    variant = 'info-light';
+                    title = general.status[data.STATUS].pending;
+                }
+                return (
+                    <span key={key} className="my-1">
+                        <DescriptionPopover
+                            id={`workflow_description_${key}`}
+                            title={title}
+                            placement="top"
+                            flip
+                            content={<p>{g.GROUP_NAME}: {(!g.GROUP_DESCRIPTION)?<em>No group description</em>:g.GROUP_DESCRIPTION}</p>}
+                        >
+                            <Badge as="p" variant={variant} className={classname}>
+                                <span>{g.GROUP_NAME}</span>
+                                <span className="pt-1 font-italic">{title}</span>
+                                <span>{i}-{data.STATUS_ARRAY[i+1]}-{sequence}</span>
+                            </Badge>
+                        </DescriptionPopover>
+                        {(i<data.GROUPS_ARRAY.length-1)&&<span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>}
+                    </span>
+                );
+            })}
+        </div>
+    );
+}
+
 export {Loading,ModalConfirm,AppButton,MenuCounts,errorToast,CheckboxTreeComponent,
-    StateSelector,CountrySelector,DepartmentSelector,DescriptionPopover};
+    StateSelector,CountrySelector,DepartmentSelector,DescriptionPopover,WorkflowExpandedComponent};

@@ -6,11 +6,11 @@ import useGroupQueries from "../../queries/groups";
 import { useForm, Controller } from "react-hook-form";
 import { capitalize, find, pick } from "lodash";
 import { Redirect } from "react-router-dom";
-import { Row, Col, Button, Badge, Modal, Form } from "react-bootstrap";
+import { Row, Col, Button, Modal, Form } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
 import { Icon } from "@iconify/react";
-import { AppButton, DescriptionPopover, Loading, ModalConfirm } from "../../blocks/components";
-import { getSettings, currentUser, getAuthInfo, SettingsContext, NotFound } from "../../app";
+import { AppButton, DescriptionPopover, Loading, ModalConfirm, WorkflowExpandedComponent } from "../../blocks/components";
+import { SettingsContext, NotFound, useSettingsContext, useAuthContext, useUserContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
 import { displayFormCode } from "../form";
 
@@ -74,17 +74,20 @@ function ListTable({data,list}) {
 
     const searchRef = useRef();
 
-    useHotkeys('ctrl+f',e=>{
+    useHotkeys('ctrl+f,ctrl+alt+f',e=>{
         e.preventDefault();
         searchRef.current.focus()
     });
     useHotkeys('ctrl+alt+e',()=>{
         setExpandAll(!expandAll);
-    },[expandAll]);
+    },{enableOnTags:['INPUT']},[expandAll]);
+    useHotkeys('ctrl+alt+n',()=>{
+        setRedirect('/form/');
+    },{enableOnTags:['INPUT']},[expandAll]);
 
-    const {SUNY_ID} = currentUser();
-    const {isAdmin} = getAuthInfo();
-    const {general} = getSettings();
+    const {SUNY_ID} = useUserContext();
+    const {isAdmin} = useAuthContext();
+    const {general} = useSettingsContext();
     const queryclient = useQueryClient();
     const {postForm,deleteForm} = useFormQueries(selectedRow?.FORM_ID);
     const frm = postForm();
@@ -149,6 +152,10 @@ function ListTable({data,list}) {
     },[list]);
 
     const filterComponent = useMemo(() => {
+        const handleKeyDown = e => {
+            if(e.key=="Escape"&&!filterText) searchRef.current.blur();
+        }
+
         const handleFilterChange = e => {
             if (e.target.value) {
                 setResetPaginationToggle(false);
@@ -171,7 +178,7 @@ function ListTable({data,list}) {
                         <Form.Group as={Row} controlId="filter">
                             <Form.Label column sm="2">Search: </Form.Label>
                             <Col sm="10">
-                                <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange}/>
+                                <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
                             </Col>
                         </Form.Group>
                     </Form>
@@ -245,7 +252,7 @@ function ListTable({data,list}) {
                 highlightOnHover
                 onRowClicked={handleRowClick}
                 expandableRows={expandRow}
-                expandableRowsComponent={ExpandedComponent}
+                expandableRowsComponent={WorkflowExpandedComponent}
                 expandableRowExpanded={()=>expandAll}
                 noDataComponent={noData}
             />
@@ -259,63 +266,6 @@ function ListTable({data,list}) {
             </ModalConfirm>
             {(action&&action!='delete') && <ActionModal action={action} modalCallback={modalCallback}/>}
         </>
-    );
-}
-
-function ExpandedComponent({data}) {
-    //TODO: need to create usersettings/permissions and control this per user
-    //TODO: Consolidate title for component use.
-    const [showSkipped,setShowSkipped] = useState(false);
-    const {general} = getSettings();
-    const {isAdmin} = getAuthInfo();
-    useEffect(() => {
-        if (isAdmin && general.showSkipped == 'a' || general.showSkipped == 'y') {
-            setShowSkipped(true);
-        } else {
-            setShowSkipped(false);
-        }
-    },[general]);
-    return (
-        <div className="p-3" style={{backgroundColor:'#ddd'}}>
-            <span className="my-1">
-                <Badge variant="secondary" className="p-2 badge-outline border-dark">Submitter</Badge> 
-                <span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>
-            </span>
-            {data.GROUPS_ARRAY.map((g,i)=>{
-                const key = `${data.FORM_ID}_${i}`;
-                if (data.STATUS_ARRAY[i] == 'X' && !showSkipped) return null;
-                let variant = 'white';
-                let classname = 'p-2 m-0 d-inline-flex flex-column badge-outline border';
-                let title = 'Awaiting';
-                if (i < data.SEQUENCE) { 
-                    if (data.STATUS_ARRAY[i] == 'X') {
-                        classname += '-dark badge-white-striped'; title = 'Skipped';
-                    } else {
-                        variant = 'success-light'; classname += '-success'; title = 'Approved'; 
-                    }
-                }
-                if (i == data.SEQUENCE && data.STATUS != 'R') { variant = 'info-light'; classname += '-info'; title = 'Pending'; }
-                if (data.STATUS_ARRAY[i] == 'F') {title = 'Pending Final';}
-                if (i == data.SEQUENCE && data.STATUS == 'R') { variant = 'danger-light'; classname += '-danger'; title = 'Rejected'; }
-                return (
-                    <span key={key} className="my-1">
-                        <DescriptionPopover
-                            id={`workflow_description_${key}`}
-                            title={title}
-                            placement="top"
-                            flip
-                            content={<p>{g.GROUP_NAME}: {(!g.GROUP_DESCRIPTION)?<em>No group description</em>:g.GROUP_DESCRIPTION}</p>}
-                        >
-                            <Badge as="p" variant={variant} className={classname}>
-                                <span>{g.GROUP_NAME}</span>
-                                <span className="pt-1 font-italic">{title}</span>
-                            </Badge>
-                        </DescriptionPopover>
-                        {(i<data.GROUPS_ARRAY.length-1)&&<span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>}
-                    </span>
-                );
-            })}
-        </div>
     );
 }
 

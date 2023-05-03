@@ -20,10 +20,11 @@ export default function PayrollTransactionsTab() {
     const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
     const searchRef = useRef();
 
-    useHotkeys('ctrl+f',e=>{
+    useHotkeys('ctrl+f,ctrl+alt+f',e=>{
         e.preventDefault();
         searchRef.current.focus()
     });
+    useHotkeys('ctrl+alt+n',()=>setIsNew(true),{enableOnTags:['INPUT']});
 
     //need to get ALL the codes
     const {getCodes:getPayrollCodes} = useCodesQueries('payroll');
@@ -63,6 +64,9 @@ export default function PayrollTransactionsTab() {
     const handleRowClick = useCallback(row=>setSelectedRow(row),[]);
 
     const filterComponent = useMemo(() => {
+        const handleKeyDown = e => {
+            if(e.key=="Escape"&&!filterText) searchRef.current.blur();
+        }
         const handleFilterChange = e => {
             if (e.target.value) {
                 setResetPaginationToggle(false);
@@ -77,7 +81,7 @@ export default function PayrollTransactionsTab() {
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
                     <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange}/>
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
                     </Col>
                 </Form.Group>
             </Form>
@@ -199,6 +203,7 @@ export default function PayrollTransactionsTab() {
                         pointerOnHover
                         onRowClicked={handleRowClick}
                         progressPending={paytrans.isLoading||paytrans.isIdle}
+                        noDataComponent={<p className="m-3">No Payroll Transactions Found Matching Your Criteria</p>}
                     />  
                 </Col>
             </Row>

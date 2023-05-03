@@ -6,6 +6,7 @@ import { find, sortBy } from 'lodash';
 import { Container, Row, Col, Tabs, Tab, Badge } from "react-bootstrap";
 import { Loading, AppButton } from "../../../blocks/components";
 import { Icon } from "@iconify/react";
+import { useHotkeys } from "react-hotkeys-hook";
 
 export const WorkflowContext = React.createContext();
 WorkflowContext.displayName = 'WorkflowContext';
@@ -22,6 +23,17 @@ export default function AdminRequestHierarchy() {
     const history = useHistory();
     const [activeTab,setActiveTab] = useState('hierarchy');
     const [isNew,setIsNew] = useState('');
+
+    useHotkeys('ctrl+alt+n',()=>{
+        setIsNew(activeTab);
+    },{enableOnTags:['INPUT']},[activeTab]);
+    useHotkeys('ctrl+right,ctrl+left',(_,handler)=>{
+        const tabIds = tabs.map(t=>t.id);
+        const idx = tabIds.indexOf(activeTab);
+        let newIdx = (handler.key=='ctrl+left')?idx-1:idx+1;
+        if (newIdx>=tabIds.length) newIdx = 0;
+        setActiveTab(tabIds.at(newIdx));
+    },{enableOnTags:['INPUT']},[activeTab]);
 
     const {getGroups} = useGroupQueries();
     const {getWorkflow} = useWorkflowQueries('request');
@@ -45,7 +57,7 @@ export default function AdminRequestHierarchy() {
     if (groups.isError||workflows.isError) return <Loading isError>Error Loading Data</Loading>;
     if (groups.isLoading||workflows.isIdle||workflows.isLoading) return <Loading type="alert">Loading Data</Loading>;
     return (
-        <WorkflowContext.Provider value={{groups:groups.data,workflows:workflows.data,isNew:isNew,setIsNew:setIsNew}}>
+        <WorkflowContext.Provider value={{groups:groups.data,workflows:workflows.data,isNew:isNew,setIsNew:setIsNew,activeTab:activeTab}}>
             <section>
                 <header>
                     <Row>
