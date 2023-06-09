@@ -31,9 +31,9 @@ export default function useFormQueries(FORM_ID) {
         }
         return useQuery(['forms',FORM_ID],q(`forms/${formIdAsPath}`),options);
     }
-    const postForm = () => useMutation(d=>q(`forms/${formIdAsPath}`,'POST',d)());
-    const putForm = () => useMutation(d=>q(`forms/${formIdAsPath}`,'PUT',d)());
-    const patchForm = () => useMutation(d=>q(`forms/${formIdAsPath}`,'PATCH',d)());
+    const postForm = () => useMutation(d=>q(`forms/${d.action}/${formIdAsPath}`,'POST',d)());
+    const putForm = () => useMutation(d=>q(`forms/${d.action}/${formIdAsPath}`,'PUT',d)());
+    const patchForm = () => useMutation(d=>q(`forms/${d.action}/${formIdAsPath}`,'PATCH',d)());
     const deleteForm = () => useMutation(d=>q(`forms/${formIdAsPath}`,'DELETE',d)());
 
     const getFormList = (...args) => {

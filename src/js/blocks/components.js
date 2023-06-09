@@ -146,15 +146,10 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
     const location = useLocation();
     const counts = getCounts();
     if (counts.isError) {
-        if (showOn == 'home') return <p>error</p>;
-        if (showOn == 'menu') return <p>error</p>;
+        if (showOn == 'home') return <ListGroup.Item className="d-flex justify-content-center"><Loading isError>Error Loading</Loading></ListGroup.Item>;
+        if (showOn == 'menu') return <NavDropdown.Item><Loading isError>Error Loading</Loading></NavDropdown.Item>;
         return null;
     }
-    /*if (counts.isLoading) {
-        if (showOn == 'home') return <ListGroup.Item className="d-flex justify-content-center"><Loading>Loading...</Loading></ListGroup.Item>
-        if (showOn == 'menu') return <NavDropdown.Item><Loading>Loading...</Loading></NavDropdown.Item>;
-        return null;
-    }*/
     return (
         <SettingsContext.Consumer>
         {settings=>{
@@ -181,7 +176,7 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
                         if (!show) return null;
                         const cnt = get(counts.data,`${menu}.${l}`,0);
                         if (showOn == 'home') return <Link key={key} className="d-flex justify-content-between" to={`/${single}/list/${l}`} component={DashBoardListComponent}><span>{title}</span>{cnt}</Link>;
-                        if (showOn == 'menu') return <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`}>{title} ({cnt})</NavDropdown.Item>;
+                        if (showOn == 'menu') return <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`}>{title} {cnt!=null && <span>({cnt})</span>}</NavDropdown.Item>;
                     })}
                 </>
             );
@@ -317,9 +312,6 @@ const WorkflowExpandedComponent = ({data}) => {
     useEffect(() => {
         setShowSkipped((isAdmin && general.showSkipped == 'a' || general.showSkipped == 'y'));
     },[general]);
-    useEffect(()=>{
-        console.debug(data);
-    },[data]);
     return (
         <div className="p-3" style={{backgroundColor:'#ddd'}}>
             <span className="my-1">
@@ -342,17 +334,22 @@ const WorkflowExpandedComponent = ({data}) => {
                             classname += '-danger';
                             variant = 'danger-light';
                             break;
+                        case "PA":
+                        case "PF":
+                            classname += '-info';
+                            variant = 'info-light';
+                            break;
                         default:
                             classname += '-success';
                             variant = 'success-light';
                     }
-                    title = general.status[data.STATUS_ARRAY[i+1]].completed;
+                    title = general.status[data.STATUS_ARRAY[i+1]].badge;
                 }
-                if (i == sequence && data.STATUS != 'R') {
+                /*if (i == sequence && data.STATUS != 'R') {
                     classname += '-info';
                     variant = 'info-light';
-                    title = general.status[data.STATUS].pending;
-                }
+                    title = general.status[data.STATUS].badge;
+                }*/
                 return (
                     <span key={key} className="my-1">
                         <DescriptionPopover
@@ -365,7 +362,7 @@ const WorkflowExpandedComponent = ({data}) => {
                             <Badge as="p" variant={variant} className={classname}>
                                 <span>{g.GROUP_NAME}</span>
                                 <span className="pt-1 font-italic">{title}</span>
-                                <span>{i}-{data.STATUS_ARRAY[i+1]}-{sequence}</span>
+                                {/*<span>{i}-{data.STATUS_ARRAY[i+1]}-{sequence}</span>*/}
                             </Badge>
                         </DescriptionPopover>
                         {(i<data.GROUPS_ARRAY.length-1)&&<span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>}

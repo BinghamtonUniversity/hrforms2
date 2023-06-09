@@ -1,8 +1,8 @@
-import React,{lazy, useEffect, useState} from "react";
+import React,{lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal } from "react-bootstrap";
 import { useForm, FormProvider, useFormContext } from "react-hook-form";
-import { currentUser, NotFound } from "../app";
+import { NotFound, useSettingsContext, useUserContext } from "../app";
 import { useAppQueries } from "../queries";
 import useRequestQueries from "../queries/requests";
 import { useQueryClient } from "react-query";
@@ -10,12 +10,9 @@ import { Loading, AppButton } from "../blocks/components";
 import format from "date-fns/format";
 import get from "lodash/get";
 import { Icon } from '@iconify/react';
+import { RequestContext, tabs, requiredFields, resetFields, defaultVals } from "../config/request";
 
-//TODO: need to look at the status of the request
-//IF 'draft': edit only if owner
-//IF 'R': edit/re-submit only if owner
-//IF 'A': view only; approve/reject buttons only if approver 
-//IF 'S': view only; approve/reject buttons only if approver 
+//TODO: need to look at the status of the request; who can edit?
 
 /* TABS */
 const Information = lazy(()=>import("../blocks/request/information"));
@@ -30,7 +27,7 @@ export default function Request() {
     const [isDraft,setIsDraft] = useState(false);
 
     const {id,sunyid,ts} = useParams();
-    const {SUNY_ID} = currentUser();
+    const {SUNY_ID} = useUserContext();
 
     useEffect(() => {
         if (!id||id=='new') {
@@ -86,7 +83,7 @@ function BlockNav({reqId,when,isDraft}) {
     const [showModal,setShowModal] = useState(false);
     const [nextLocation,setNextLocation] = useState();
     const [shouldProceed,setShouldProceed] = useState(false);
-    const {SUNY_ID} = currentUser();
+    const {SUNY_ID} = useUserContext();
     const queryclient = useQueryClient();
     const {deleteRequest} = useRequestQueries(reqId);
     const delReq = deleteRequest();
@@ -142,71 +139,6 @@ function BlockNav({reqId,when,isDraft}) {
 }
 
 function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
-    const tabs = [
-        {id:'information',title:'Information'},
-        {id:'position',title:'Position'},
-        {id:'account',title:'Account'},
-        {id:'comments',title:'Comments'},
-        {id:'review',title:'Review'},
-    ];
-    const resetFields = [
-        'reqType.id','reqType.title',
-        'payBasis.id','payBasis.title',
-        'reqBudgetTitle.id','reqBudgetTitle.title',
-        'currentGrade','newGrade',
-        'apptStatus.id','apptStatus.title',
-        'expType'
-    ];
-    const defaultVals = {
-        "reqId": reqId,
-        "posType": {
-            "id": "",
-            "title": ""
-        },
-        "reqType": {
-            "id": "",
-            "title": ""
-        },
-        "effDate": "",
-        "candidateName": "",
-        "bNumber": "",
-        "jobDesc": "",
-        "lineNumber": "",
-        "newLine": false,
-        "multiLines": "N",
-        "numLines": "",
-        "minSalary": "",
-        "maxSalary": "",
-        "fte": "100",
-        "payBasis": {
-            "id": "",
-            "title": ""
-        },
-        "currentGrade": "",
-        "newGrade": "",
-        "reqBudgetTitle": {
-            "id": "",
-            "title": ""
-        },
-        "apptStatus": {
-            "id": "",
-            "title": ""
-        },
-        "apptDuration": "",
-        "apptPeriod": "y",
-        "tentativeEndDate": "",
-        "expType": "",
-        "orgName": "",
-        "SUNYAccountsSplit":false,
-        "SUNYAccounts": [
-            {
-                account:[{id:'',label:''}],
-                pct:'100'
-            }
-        ],
-        "comment": ""
-    };
-    const requiredFields = ['posType.id','reqType.id','effDate','orgName','comment'];
     const [activeTab,setActiveTab] = useState('information');
     const [lockTabs,setLockTabs] = useState(false);
     const [isSaving,setIsSaving] = useState(false);
@@ -217,10 +149,11 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     const methods = useForm({
         mode:'onSubmit',
         reValidateMode:'onChange',
-        defaultValues:Object.assign({},defaultVals,data)
+        defaultValues:Object.assign({"reqId":reqId},defaultVals,data)
     });
 
-    const {SUNY_ID} = currentUser();
+    const {SUNY_ID,USER_GROUPS} = useUserContext();
+    const {requests} = useSettingsContext();
 
     const queryclient = useQueryClient();
     const { getListData } = useAppQueries();
@@ -271,7 +204,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     }
     const history = useHistory();
     const handleReset = () => {
-        methods.reset(Object.assign({},defaultVals,data));
+        methods.reset(Object.assign({"reqId":reqId},defaultVals,data));
         setActiveTab('information');
         setLockTabs(true);
         if (reset) history.push('/request/');
@@ -291,19 +224,20 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         });
     }
     const handleSubmit = data => {
-        console.log(data);
         setHasErrors(false);
         if (!data.action) return; // just validating the form, not saving
         setIsSaving(true);
         setIsBlocking(true); //TODO: when true should be full block with no prompt
         setLockTabs(true);
         //TODO: switch? save, submit, appove, reject?
+        if (data.action == 'resubmit') {
+            createReq.mutateAsync(data).then(()=>{
+                queryclient.refetchQueries(SUNY_ID).then(()=>handleRedirect());
+            });
+            return;
+        }
         if (data.action=='approve'||data.action=='reject') {
-            console.log('TODO: handle approve/reject');
-            console.log(data);
-            createReq.mutateAsync(data).then(d=>{
-                console.debug(d);
-                //refetch: counts and requestlist
+            createReq.mutateAsync(data).then(()=>{
                 queryclient.refetchQueries(SUNY_ID).then(()=>handleRedirect());
             });
             return;
@@ -316,8 +250,8 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                 }).catch(e => {
                     //TODO: for testing
                     //TODO: need to handle errors better
-                    setIsSaving(false);
-                    setLockTabs(false);
+                    //setIsSaving(false);
+                    //setLockTabs(false);
                     //end testing
                     console.error(e);
                 });
@@ -348,7 +282,6 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
             setHasErrors(false);
             handleSubmit(data);
         } else {
-            console.debug(data);
             setHasErrors(true);
             console.error('error:',errors);
         }
@@ -360,6 +293,17 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         const effDate = d.effDate;
         setLockTabs(!(posType && reqType && effDate));
     }
+
+    const canEdit = useMemo(()=>{
+        console.log(isDraft,SUNY_ID,data.submittedBy);
+        if (isDraft && SUNY_ID == get(data,'submittedBy',SUNY_ID)) return true;
+        if (!isDraft && SUNY_ID == data.submittedBy && data.lastJournal.STATUS == 'R') return true;
+        if (!isDraft && SUNY_ID == data.submittedBy) return false;
+        const userGroups = USER_GROUPS.split(',');
+        if (userGroups.includes(get(data,'lastJournal.GROUP_TO'))) return true;
+        return false;
+    },[SUNY_ID,USER_GROUPS,data,isDraft]);
+
     useEffect(()=>setIsBlocking(methods.formState.isDirty),[methods.formState.isDirty]);
     useEffect(()=>reset&&handleReset(),[reset]);
     useEffect(() => {
@@ -387,23 +331,29 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     if (!postypes.data) return <Loading type="alert" isError>Error - No Position Type Data Loaded</Loading>;
     return(
         <FormProvider {...methods} posTypes={postypes.data} isDraft={isDraft}>
-            <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
-                <Tabs activeKey={activeTab} onSelect={navigate} id="position-request-tabs">
-                    {tabs.map(t=>(
-                        <Tab key={t.id} eventKey={t.id} title={t.title} disabled={t.id!='information'&&lockTabs}>
-                            <Container as="article" className="mt-3" fluid>
-                                <Row as="header">
-                                    <Col as="h3">{t.title}</Col>
-                                </Row>
-                                {hasErrors && <RequestFormErrors/>}
-                                {(t.id!='information'&&t.id!='review')&& <RequestInfoBox isNew={isNew}/>}
-                                <RequestTabRouter tab={t.id} isNew={isNew}/>
-                                <Row as="footer">
-                                    <Col className="button-group justify-content-end">
-                                        <>
+            <RequestContext.Provider value={{
+                reqId:reqId,
+                posTypes:postypes.data,
+                isDraft:isDraft,
+                lastJournal:data.lastJournal,
+                submittedBy:data.submittedBy,
+                canEdit:canEdit
+            }}>
+                <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
+                    <Tabs activeKey={activeTab} onSelect={navigate} id="position-request-tabs">
+                        {tabs.map(t=>(
+                            <Tab key={t.id} eventKey={t.id} title={t.title} disabled={t.id!='information'&&lockTabs}>
+                                <Container as="article" className="mt-3" fluid>
+                                    <Row as="header">
+                                        <Col as="h3">{t.title}</Col>
+                                    </Row>
+                                    {hasErrors && <RequestFormErrors/>}
+                                    {(t.id!='information'&&t.id!='review')&& <RequestInfoBox isNew={isNew}/>}
+                                    <RequestTabRouter tab={t.id} isNew={isNew}/>
+                                    <Row as="footer">
+                                        <Col className="button-group justify-content-end">
                                             {hasErrors && <div className="d-inline-flex align-items-center text-danger mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:alert"/><span>Errors</span></div>}
                                             {isSaving && <div className="d-inline-flex align-items-center mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:loading" className="spin"/><span>Saving...</span></div>}
-                                            {t.id!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
                                             {isDraft && 
                                                 <>
                                                     {methods.formState.isDirty && <AppButton format="undo" onClick={handleReset} disabled={isSaving}>Reset</AppButton>}
@@ -412,24 +362,34 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                                                     {t.id=='review'&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}>Submit</AppButton>}
                                                 </>
                                             }
-                                            {(!isDraft&&t.id=='review') && 
+                                            {(get(data,'lastJournal.STATUS')=='R'&&canEdit) && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
+                                            {t.id!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
+                                            {(t.id=='review'&&!isDraft&&canEdit&&get(data,'lastJournal.STATUS')!='R') && 
                                                 <>
-                                                    <AppButton format="approve" id="approve" onClick={()=>handleSave('approve')} disabled={hasErrors||isSaving}>Approve</AppButton>
                                                     <AppButton format="reject" id="reject" onClick={()=>handleSave('reject')} disabled={hasErrors||isSaving}>Reject</AppButton>
+                                                    {(get(data,'lastJournal.STATUS')=='PF')?
+                                                        <AppButton format="approve" id="final" onClick={()=>handleSave('final')} disabled={hasErrors||isSaving}>Final Approve</AppButton>
+                                                    :
+                                                        <AppButton format="approve" id="approve" onClick={()=>handleSave('approve')} disabled={hasErrors||isSaving}>Approve</AppButton>
+                                                    }
                                                 </>
                                             }
-                                        </>
-                                    </Col>
-                                </Row>
-                            </Container>
-                        </Tab>
-                    ))}
-                </Tabs>
-            </Form>
-            {showDeleteModal && <DeleteRequestModal setShowDeleteModal={setShowDeleteModal} handleDelete={handleDelete}/>}
+                                            {(t.id=='review'&&get(data,'lastJournal.STATUS')=='R'&&requests.menu.rejections.resubmit&&canEdit)&&
+                                                <AppButton format="approve" id="resubmit" onClick={()=>handleSave('resubmit')} disabled={hasErrors||isSaving}>Resubmit</AppButton>
+                                            }
+                                        </Col>
+                                    </Row>
+                                </Container>
+                            </Tab>
+                        ))}
+                    </Tabs>
+                </Form>
+                {showDeleteModal && <DeleteRequestModal setShowDeleteModal={setShowDeleteModal} handleDelete={handleDelete}/>}
+            </RequestContext.Provider>
         </FormProvider>
     );
 }
+
 
 function RequestFormErrors() {
     const {formState:{errors}} = useFormContext();

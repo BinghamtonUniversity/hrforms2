@@ -341,11 +341,6 @@ function AddEditGroupForm(props) {
     }
 
     const handleSave = data => {
-        if (!Object.keys(methods.formState.dirtyFields).length) {
-            toast.info('No changes to group');
-            closeModal();
-            return true;
-        }
         const origIds = (groupusers.data)?groupusers.data.map(u=>u.SUNY_ID):[];
         const newIds = data.assignedUsers.map(u=>u.SUNY_ID);
         const addUsers = difference(newIds,origIds);
@@ -353,6 +348,17 @@ function AddEditGroupForm(props) {
         const origDepts = groupdepts.data||[];
         const addDepts = differenceWith(data.assignedDepts,origDepts,isEqual);
         const delDepts = differenceWith(origDepts,data.assignedDepts,isEqual);
+        if ([
+            Object.keys(methods.formState.dirtyFields).length,
+            addUsers.length,
+            delUsers.length,
+            addDepts.length,
+            delDepts.length
+        ].every(v=>!v)) {
+            toast.info('No changes to group');
+            closeModal();
+            return true;
+        }
         const reqData = {
             GROUP_NAME:data.groupName,
             GROUP_DESCRIPTION:data.groupDescription,

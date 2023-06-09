@@ -38,7 +38,7 @@ export default function AdminNews() {
                 <Form onSubmit={handleSubmit(onSubmit)}>
                     <Form.Group as={Row} controlId="newsText">
                         <Col xs="auto">
-                            <Controller name="newsText" control={control} render={({field:{onBlur,onChange,value}}) => (
+                            <Controller name="newsText" control={control} render={({field:{onBlur,onChange}}) => (
                                 <JoditEditor ref={editor} config={config} onBlur={onBlur} value={news.data?.NEWS_TEXT} onChange={onChange}/>
                             )}/>
                         </Col>

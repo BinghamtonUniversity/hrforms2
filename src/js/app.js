@@ -10,6 +10,7 @@ import { Icon, loadIcons } from '@iconify/react';
 import {useAppQueries,useUserQueries} from "./queries";
 import AppNav from "./blocks/appnav";
 import Footer from "./blocks/footer";
+import AppHotKeys from "./blocks/apphotkeys";
 
 /* PAGES */
 const Home = lazy(()=>import("./pages/home"));
@@ -128,6 +129,7 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
         <UserContext.Provider value={{...userData,setUserData}}>
             <PageChange/>
             <AppNav/>
+            <AppHotKeys/>
             <Suspense fallback={null}>
                 <Container as="main" fluid>
                     <ErrorBoundary FallbackComponent={ErrorFallback}>

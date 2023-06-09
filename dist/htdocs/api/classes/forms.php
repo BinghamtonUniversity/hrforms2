@@ -23,8 +23,10 @@ class Forms extends HRForms2 {
 	}
 
     private function checkSkip($wf_id,$seq) {
+        if ($wf_id == null || $seq == null) return; // if parameters are missing return
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $wf = (new workflow(array('form',$wf_id),false))->returnData[0];
+        if ($wf['CONDITIONS'] == null) return; // if no conditions return; no need to parse
         $this->conditions = array_filter($wf['CONDITIONS'],function($c) use($seq){
             return strval($c->seq) == strval($seq);
         });
@@ -45,6 +47,19 @@ class Forms extends HRForms2 {
                 }
             });
         }
+    }
+
+    /** check if submitter/approver is in the next group and auto-approve */
+    private function autoApproveNext($groups,$seq) {
+        // Check if Approver is in next group and auto-approve
+        if ($seq >= sizeof($groups)-1) return false; // do not auto-approve last group.
+        $groupusers = (new groupusers(array($groups[$seq]),false))->returnData;
+        foreach ($groupusers as $u) {
+            if ($u['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID']) {
+                return true;
+            }
+        }
+        return false;
     }
 
 	/**
@@ -115,12 +130,321 @@ class Forms extends HRForms2 {
 	}
 
     function POST() {
-        //TODO: should this be part of the URL?
-        //POST: https://{domain}/api/api.php/requests/draft/... (eq action=="save")
-        //POST: https://{domain}/api/api.php/requests/submit/12
-        //POST: https://{domain}/api/api.php/requests/approve/12
-        //POST: https://{domain}/api/api.php/requests/reject/12
-        
+        switch($this->POSTvars['action']) {
+            case "save":
+                //Limit number of drafts a user may have; to prevent "SPAMMING"
+                $qry = "select count(*) from HRFORMS2_FORMS_DRAFTS where SUNY_ID = :suny_id";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
+                $row = oci_fetch_array($stmt,OCI_ARRAY+OCI_RETURN_NULLS);
+                oci_free_statement($stmt);
+                if ($row[0] > MAX_DRAFTS) {
+                    $this->raiseError(E_TOO_MANY_DRAFTS);
+                    return;
+                }
+                $unix_ts = time();
+                $formId = 'draft-'.$this->sessionData['EFFECTIVE_SUNY_ID'].'-'.$unix_ts;
+                $this->POSTvars['formId'] = $formId;
+                //TODO: need to modify POSTvars to use new assigned draft ID; don't use the assigned code... assigned could just be "draft"?
+                $qry = "insert into HRFORMS2_FORMS_DRAFTS values(:suny_id, :unix_ts, EMPTY_CLOB()) returning DATA into :data";
+                $stmt = oci_parse($this->db,$qry);
+                $clob = oci_new_descriptor($this->db, OCI_D_LOB);
+                oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
+                oci_bind_by_name($stmt, ":unix_ts", $unix_ts);
+                oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
+                $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+                if (!$r) $this->raiseError();
+                $clob->save(json_encode($this->POSTvars));
+                oci_commit($this->db);
+                if ($this->retJSON) $this->toJSON(array('formId'=>$formId));
+                break;
+
+            case "resubmit":
+            case "submit":
+                $journal_array = array("S");
+                $comments_array = array();
+    
+                // get user's group
+                $_SERVER['REQUEST_METHOD'] = 'GET';
+                $user = (new user(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData[0];
+                $group = $this->getGroupIds($user['REPORTING_DEPARTMENT_CODE']);
+
+                //get hierarchy for group
+                $h = (new hierarchy(array('form','group',$group['GROUP_ID']),false))->returnData;
+                $paytransId = $this->POSTvars['formActions']['PAYTRANS_ID'];
+                $j = array_filter($h,function($v) use($group,$paytransId) {
+                    $hgroups = explode(',',$v['HIERARCHY_GROUPS']);
+                    return ($v['PAYTRANS_ID']==$paytransId&&in_array($group['GROUP_ID'],$hgroups));
+                });
+                if (count($j)<1) $this->raiseError(400);
+                $hierarchy = array_shift($j); //get the first record
+                $groups = $hierarchy['WORKFLOW_GROUPS'];
+                $groups_array = explode(",",$groups);
+
+                // Add User's Dept Group(s) to front of queue if "Send To Group" checked.
+                if ($hierarchy['SENDTOGROUP'] == "Y") {
+                    $deptGroup = $this->getGroupIds($user['REPORTING_DEPARTMENT_CODE']);
+                    $groups_array = array_merge(array_values($deptGroup),$groups_array);
+                }
+                // Add empty value to the beginning of the groups for the "S" record.
+                array_unshift($groups_array,"-99");
+
+                //extract comments from JSON
+                array_push($comments_array,$this->POSTvars['comment']);
+                unset($this->POSTvars['comment']);
+
+                // Add workflowId and groups to formdata
+                $this->POSTvars['workflowId'] = $hierarchy['WORKFLOW_ID'];
+                $this->POSTvars['workflowGroups'] = implode(',',$groups_array);               
+
+                if ($this->req[0] == "submit") {
+                    // insert into hrforms2_forms (get form id);
+                    $qry = "insert into HRFORMS2_FORMS 
+                    values(HRFORMS2_FORM_ID_SEQ.nextval,EMPTY_CLOB(),sysdate,EMPTY_CLOB()) 
+                    returning FORM_ID, CREATED_BY, FORM_DATA into :form_id, :created_by, :form_data";
+                    $stmt = oci_parse($this->db,$qry);
+                    $created_by = oci_new_descriptor($this->db, OCI_D_LOB);
+                    $form_data = oci_new_descriptor($this->db, OCI_D_LOB);
+                    oci_bind_by_name($stmt,":form_id", $form_id,-1,SQLT_INT);
+                    oci_bind_by_name($stmt,":created_by", $created_by, -1, OCI_B_CLOB);
+                    oci_bind_by_name($stmt,":form_data", $form_data, -1, OCI_B_CLOB);
+                    $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+                    if (!$r) $this->raiseError();
+                    $created_by->save(json_encode($user));
+                    $this->POSTvars['draftFormId'] = $this->POSTvars['formId'];
+                    $this->POSTvars['formId'] = $form_id;
+                    $form_data->save(json_encode($this->POSTvars));
+                    oci_commit($this->db);
+                }
+
+                // Check for skip conditions
+                $this->checkSkip($hierarchy['WORKFLOW_ID'],0);
+                if (!$this->match && $this->conditions) {
+                    array_push($journal_array,"X");
+                    array_push($comments_array,"Skipped by hierarchy rule");
+                }
+
+                // Check if submitter is in next approval group and auto-approve
+                if ($this->autoApproveNext($groups_array,sizeof($journal_array))) {
+                    array_push($journal_array,'A');
+                    array_push($comments_array,"Auto Approved - Submitter in approval group");
+                }
+
+                // Append PA/PF to $journal_array
+                array_push($journal_array,(sizeof($journal_array)==sizeof($groups_array)-1)?'PF':'PA');
+                array_push($comments_array,"");
+
+                // Post to Journal
+                $_SERVER['REQUEST_METHOD'] = 'POST';
+                $return_data = array("journal"=>[],"email_response"=>[]);
+                foreach ($journal_array as $i=>$j) {
+                    $data = array(
+                        'form_id'=>$form_id,
+                        'hierarchy_id'=>$hierarchy['HIERARCHY_ID'],
+                        'workflow_id'=>$hierarchy['WORKFLOW_ID'],
+                        'seq'=>$i,
+                        'groups'=>implode(',',$groups_array),
+                        'group_from'=>'-99',
+                        'group_to'=>$groups_array[$i],
+                        'status'=>$j,
+                        'submitted_by'=>$user['SUNY_ID'],
+                        'comment'=>$comments_array[$i]
+                    );
+                    $return_data['journal'][] = $data;
+                    $this->POSTvars['journal_data'] = $data;
+                    $journal = (new journal(array('form',$form_id,$j,$data),false))->returnData;
+                    
+                    // Email Notification
+                    $return_data['email_response'][$j] = $this->sendEmail($data);
+                }
+
+                if ($this->req[0] == "submit") {
+                    // delete from hrforms2_forms_drafts
+                    if (isset($this->req[3])) { //only delete from drafts if it was saved
+                        $_SERVER['REQUEST_METHOD'] = 'DELETE';
+                        array_shift($this->req);
+                        $del_draft = (new forms($this->req,false));
+                    }
+                }
+
+                $this->toJSON($return_data);
+                break;
+
+            case "approve":
+                echo "approve";
+                break;
+
+                $journal_array = array();
+                $comments_array = array();
+
+                $_SERVER['REQUEST_METHOD'] = 'GET';
+                $form_id = $this->POSTvars['formId'];
+                $journal = (new journal(array('form',$form_id),false))->returnData;
+                $last_journal = array_pop($journal);
+                $workflow = (new workflow(array('form',$last_journal['WORKFLOW_ID']),false))->returnData[0];
+                $groups_array = explode(',',$this->POSTvars['workflowGroups']);
+                $next_seq = intval($last_journal['SEQUENCE'])+1;
+
+                //extract comments from JSON
+                array_push($comments_array,$this->POSTvars['comment']);
+                unset($this->POSTvars['comment']);
+
+                // set PA/PF to A/F
+                switch($last_journal['STATUS']) {
+                    case "PA":
+                        array_push($journal_array,"A");
+                        break;
+                    case "PF":
+                        array_push($journal_array,"F");
+                        break;
+                    default:
+                        // if last status is not PA or PF should not be approving
+                        $this->raiseError(E_BAD_REQUEST);
+                        return;
+                }
+
+                // Check for skip conditions
+                $this->checkSkip($last_journal['WORKFLOW_ID'],0);
+                if (!$this->match && $this->conditions) {
+                    array_push($journal_array,"X");
+                    array_push($comments_array,"Skipped by hierarchy rule");
+                }
+
+                // Check if approver is in next approval group and auto-approve
+                if ($this->autoApproveNext($groups_array,$next_seq)) {
+                    array_push($journal_array,'A');
+                    array_push($comments_array,"Auto Approved - Approver in previous approval group");
+                }
+                
+                // Set next status
+                $end_seq = $next_seq + sizeof($journal_array) - 1;
+                if ($end_seq >= sizeof($groups_array)) {
+                    array_push($journal_array,"Z"); //TODO: should not happen; this should be "final"
+                } else if ($end_seq == sizeof($groups_array)-1){
+                    array_push($journal_array,"PF");
+                } else {
+                    array_push($journal_array,"PA");
+                }
+
+                // Update current journal entry from PA/PF to A/F
+                $_SERVER['REQUEST_METHOD'] = 'PATCH';
+                $jrnl_update = (new journal(array(
+                    'form',
+                    $form_id,
+                    $last_journal['SEQUENCE'],
+                    $last_journal['STATUS'],
+                    $journal_array[0],
+                    $comments_array[0]
+                ),false))->returnData;
+
+                // Post to Journal
+                $_SERVER['REQUEST_METHOD'] = 'POST';
+                $return_data = array("journal"=>[],"email_response"=>[]);
+                foreach ($journal_array as $i=>$j) {
+                    if ($i == 0) continue; //skip first elements
+                    $seq = $next_seq+$i-1;
+                    $data = array(
+                        'form_id'=>$form_id,
+                        'hierarchy_id'=>$last_journal['HIERARCHY_ID'],
+                        'workflow_id'=>$last_journal['WORKFLOW_ID'],
+                        'seq'=>$seq,
+                        'groups'=>implode(',',$groups_array),
+                        'group_from'=>$groups_array[$seq-1],
+                        'group_to'=>$groups_array[$seq],
+                        'status'=>$j,
+                        'submitted_by'=>$user['SUNY_ID'],
+                        'comment'=>$comments_array[$seq-1]
+                    );
+                    $return_data['journal'][] = $data;
+                    $this->POSTvars['journal_data'] = $data;
+                    $journal = (new journal(array('form',$form_id,$j,$data),false))->returnData;
+                    
+                    // Email Notification
+                    $return_data['email_response'][$j] = $this->sendEmail($data);
+                }
+
+                $this->toJSON($return_data);
+                break;
+
+            case "reject":
+                // check settings to see if "rejection" is enabled.
+                $_SERVER['REQUEST_METHOD'] = 'GET';
+                $settings = (new settings(array(),false))->returnData;
+                if (!$settings['forms']['menu']['rejections']['enabled']) $this->raiseError(E_FORBIDDEN);
+
+                $journal_array = array();
+
+                $journal = (new journal(array('form',$this->POSTvars['formId']),false))->returnData;
+                $last_journal = array_pop($journal);
+
+                $workflow = (new workflow(array('form',$last_journal['WORKFLOW_ID']),false))->returnData[0];
+                $groups_array = explode(",",$workflow['GROUPS']);
+                
+                //extract comments from JSON
+                $comment = $this->POSTvars['comment'];
+                unset($this->POSTvars['comment']);
+
+                // Update current journal entry to R
+                $_SERVER['REQUEST_METHOD'] = 'PATCH';
+                $jrnl_update = (new journal(array(
+                    'form',
+                    $this->POSTvars['formId'],
+                    $last_journal['SEQUENCE'],
+                    $last_journal['STATUS'],
+                    'R',
+                    $comment
+                ),false))->returnData;
+
+                $_SERVER['REQUEST_METHOD'] = 'GET';
+                $return_data = array("journal"=>[],"email_response"=>[]);
+                $journal = (new journal(array('form',$this->POSTvars['formId']),false))->returnData;
+                $return_data['journal'] = array_pop($journal);
+
+                // Email Notification
+                $return_data['email_response'] = $this->sendEmail($return_data['journal']);
+
+                $this->toJSON($return_data);
+                break;
+
+            case "final":
+                $_SERVER['REQUEST_METHOD'] = 'GET';
+                $journal = (new journal(array('form',$this->POSTvars['formId']),false))->returnData;
+                $last_journal = array_pop($journal);
+
+                //extract comments from JSON
+                $comment = $this->POSTvars['comment'];
+                unset($this->POSTvars['comment']);
+                
+                // Update current to 'Z'
+                $_SERVER['REQUEST_METHOD'] = 'PATCH';
+                $jrnl_update = (new journal(array(
+                    'form',
+                    $this->POSTvars['formId'],
+                    $last_journal['SEQUENCE'],
+                    $last_journal['STATUS'],
+                    'Z',
+                    $comment
+                ),false))->returnData;
+                
+                // Move Request and Request_Journal to archive
+                $_SERVER['REQUEST_METHOD'] = 'POST';
+                $archive = (new archive(array('form',$this->POSTvars['formId']),false))->returnData;
+
+                // Email Notification
+                //TODO: $return_data['email_response'][$j] = $this->sendEmail($data);
+
+                $this->done();
+                break;
+
+            default:
+                $this->raiseError(E_BAD_REUQEST);
+        };
+
+        return;
+
+        /*** OLD CODE BELOW */
         switch($this->POSTvars['action']) {
             case "save":
                 //Limit number of drafts a user may have; to prevent "SPAMMING"
@@ -340,17 +664,18 @@ class Forms extends HRForms2 {
                 $this->raiseError(E_BAD_REQUEST);
 
         }
+        /** END OLD CODE */
     }
 
     function PUT() {
-        if ($this->req[0] == 'draft') {
+        if ($this->req[1] == 'draft') {
             $qry = "update HRFORMS2_FORMS_DRAFTS set data = EMPTY_CLOB() 
                 where SUNY_ID = :suny_id and unix_ts = :unix_ts
                 returning DATA into :data";
             $stmt = oci_parse($this->db,$qry);
             $clob = oci_new_descriptor($this->db, OCI_D_LOB);
             oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
-            oci_bind_by_name($stmt, ":unix_ts", $this->req[2]);
+            oci_bind_by_name($stmt, ":unix_ts", $this->req[3]);
             oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
             $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
             if (!$r) $this->raiseError();
@@ -364,16 +689,17 @@ class Forms extends HRForms2 {
                 returning FORM_DATA into :data";
             $stmt = oci_parse($this->db,$qry);
             $clob = oci_new_descriptor($this->db, OCI_D_LOB);
-            oci_bind_by_name($stmt, ":form_id", $this->req[0]);
+            oci_bind_by_name($stmt, ":form_id", $this->req[2]);
             oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
             $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
             if (!$r) $this->raiseError();
             $clob->save(json_encode($this->POSTvars));
             oci_commit($this->db);
-            if ($this->POSTvars['action']=='approve'||$this->POSTvars['action']=='reject') {
+            //TODO: save comment?
+            /*if ($this->POSTvars['action']=='approve'||$this->POSTvars['action']=='reject') {
                 $_SERVER['REQUEST_METHOD'] = 'POST';
                 $this->POST();
-            }
+            }*/
             if ($this->retJSON) $this->done();
         }
     }

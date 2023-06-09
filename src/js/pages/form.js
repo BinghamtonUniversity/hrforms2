@@ -242,12 +242,32 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         setLockTabs(true);
         //TODO: switch? save, submit, appove, reject?
         //TODO: on approve need to handle changes to form.  PUT (update)
-/*
- (save and isNew) or submit = POST
- (save and !isNew) or not submit = PUT
-*/
-        if (isNew || data.action=='submit') {
-            console.log('create:',data.action);
+        if (isDraft) {
+            if (isNew || data.action=='submit') {
+                console.log('create:',data.action);
+                createForm.mutateAsync(data).then(d => {
+                    console.debug(d);
+                    handleRedirect();
+                }).catch(e => {
+                    //TODO: for testing
+                    //TODO: need to handle errors better
+                    setIsSaving(false);
+                    setLockTabs(false);
+                    //end testing
+                    console.error(e);
+                });
+            } else {
+                console.log('update:',data.action);
+                updateForm.mutateAsync(data).then(() => {
+                    handleRedirect();
+                }).catch(e => {
+                    console.error(e);
+                    setIsSaving(false);
+                    setLockTabs(false);    
+                });
+            }    
+        } else {
+            console.log('approve/reject:',data.action);
             createForm.mutateAsync(data).then(d => {
                 console.debug(d);
                 handleRedirect();
@@ -258,15 +278,6 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                 setLockTabs(false);
                 //end testing
                 console.error(e);
-            });
-        } else {
-            console.log('update:',data.action);
-            updateForm.mutateAsync(data).then(() => {
-                handleRedirect();
-            }).catch(e => {
-                console.error(e);
-                setIsSaving(false);
-                setLockTabs(false);    
             });
         }
     }
@@ -496,10 +507,14 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                                                 }
                                                 {(activeTab!='review')&&<AppButton id="next" format="next" onClick={handleNext} disabled={isSaving||!infoComplete}>Next</AppButton>}
                                                 {(activeTab=='review'&&methods.getValues('lastJournal.STATUS')=="")&&<AppButton id="submit" format="submit" onClick={()=>handleSave('submit')} disabled={isSaving||!infoComplete}>Submit</AppButton>}
-                                                {(methods.getValues('lastJournal.STATUS')!=""&&!readOnly) && 
+                                                {(methods.getValues('lastJournal.STATUS')!=""&&!readOnly&&(activeTab=='review')) && 
                                                     <>
-                                                        {(activeTab=='review')&&<AppButton id="approve" format="approve" onClick={()=>handleSave('approve')} disabled={isSaving}>Approve</AppButton>}
-                                                        {(activeTab=='review')&&<AppButton id="reject" format="reject" onClick={()=>handleSave('reject')} disabled={isSaving}>Reject</AppButton>}
+                                                        <AppButton id="reject" format="reject" onClick={()=>handleSave('reject')} disabled={isSaving}>Reject</AppButton>
+                                                        {(methods.getValues('lastJournal.STATUS')=="PF")?
+                                                            <AppButton id="final" format="approve" onClick={()=>handleSave('final')} disabled={isSaving}>Final Approve</AppButton>
+                                                        :
+                                                            <AppButton id="approve" format="approve" onClick={()=>handleSave('approve')} disabled={isSaving}>Approve</AppButton>
+                                                        }
                                                     </>
                                                 }
                                                 <AppButton id="submit" format="submit" variant="outline-danger" onClick={()=>handleSave('test')} disabled={isSaving}>Test Submit</AppButton>

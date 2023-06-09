@@ -6,7 +6,7 @@ import {useAppQueries} from "../../queries";
 import { Loading, ModalConfirm, AppButton, errorToast, DescriptionPopover } from "../../blocks/components";
 import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert, InputGroup } from "react-bootstrap";
 import { Icon } from "@iconify/react";
-import { orderBy, sortBy, difference, capitalize, startsWith } from "lodash";
+import { orderBy, sortBy, difference, capitalize, startsWith, get } from "lodash";
 import DataTable from 'react-data-table-component';
 import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
 import DatePicker from "react-datepicker";
@@ -14,10 +14,22 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
-import { useParams, useHistory, Link, Redirect } from "react-router-dom";
+import { useParams, useHistory, Link } from "react-router-dom";
 import { pick } from "lodash";
+import { useAuthContext } from "../../app";
 
-const defaultVals = {SUNYID:'',firstName:'',lastName:'',email:'',dept:'',startDate:new Date(),endDate:'',assignedGroups:[],availableGroups:[]};
+const defaultVals = {
+    SUNYID:'',
+    firstName:'',
+    lastName:'',
+    email:'',
+    notifications:"Y",
+    dept:'',
+    startDate:new Date(),
+    endDate:'',
+    assignedGroups:[],
+    availableGroups:[]
+};
 
 export default function AdminUsers() {
     const [newUser,setNewUser] = useState(false);
@@ -34,7 +46,7 @@ export default function AdminUsers() {
             <Row>
                 <Col>
                     {users.isLoading && <Loading type="alert">Loading Users...</Loading>}
-                    {users.isError && <Loading type="alert" isError>Error Users: <small>{users.error?.name} {users.error?.description}</small></Loading>}
+                    {users.isError && <Loading type="alert" isError>Error Users: <small>{users.error?.name} {users.error?.message}</small></Loading>}
                     {users.isSuccess && <UsersTable users={users.data} newUser={newUser} setNewUser={setNewUser}/>}
                 </Col>
             </Row>
@@ -44,6 +56,7 @@ export default function AdminUsers() {
 
 function UsersTable({users,newUser,setNewUser}) {
     const { subpage } = useParams();
+    const { SUNY_ID } = useAuthContext();
     const history = useHistory();
     const [filterText,setFilterText] = useState((!!subpage)?`id:${subpage}`:'');
     const [statusFilter,setStatusFilter] = useState('all');
@@ -61,6 +74,10 @@ function UsersTable({users,newUser,setNewUser}) {
         e.preventDefault();
         searchRef.current.focus();
     });
+    useHotkeys('ctrl+alt+i',() => {
+        // Impersonate the first user in the table
+        setImpersonateUser(filteredRows[0]);
+    },{enableOnTags:['INPUT']},[filteredRows]);
 
     const handleRowClick = useCallback(row=>setSelectedRow(row));
     
@@ -146,10 +163,10 @@ function UsersTable({users,newUser,setNewUser}) {
         {name:'Actions',cell:row=>{
             return (
                 <div className="button-group">
-                    {row.SUNY_ID && <AppButton format="impersonate" size="sm" title="Impersonate User" onClick={()=>setImpersonateUser(row)} disabled={!row.active}/>}
-                    {row.active && <AppButton format="deactivate-user" size="sm" title="Deactivate User" onClick={()=>setToggleUser(row)}/>}
-                    {!row.active && <AppButton format="activate-user" size="sm" title="Restore User" onClick={()=>setToggleUser(row)}/>}
-                    <AppButton format="delete" size="sm" title="Delete User" onClick={()=>setDeleteUser(row)}/>
+                    {row.SUNY_ID && <AppButton format="impersonate" size="sm" title="Impersonate User" onClick={()=>setImpersonateUser(row)} disabled={!row.active||row.SUNY_ID==SUNY_ID}/>}
+                    {row.active && <AppButton format="deactivate-user" size="sm" title="Deactivate User" onClick={()=>setToggleUser(row)} disabled={row.SUNY_ID==SUNY_ID}/>}
+                    {!row.active && <AppButton format="activate-user" size="sm" title="Restore User" onClick={()=>setToggleUser(row)} disabled={row.SUNY_ID==SUNY_ID}/>}
+                    <AppButton format="delete" size="sm" title="Delete User" onClick={()=>setDeleteUser(row)} disabled={row.SUNY_ID==SUNY_ID}/>
                 </div>
             );
         },ignoreRowClick:true},
@@ -179,7 +196,7 @@ function UsersTable({users,newUser,setNewUser}) {
         {name:'Dept Group',selector:row=>row.GROUP_NAME,sortable:true},
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
         {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
-    ],[users]);
+    ],[users,SUNY_ID]);
 
     const conditionalRowStyles = [
         {
@@ -351,6 +368,7 @@ function AddEditUserForm(props) {
             firstName:props.LEGAL_FIRST_NAME||'',
             lastName:props.LEGAL_LAST_NAME||'',
             email:props.email||'',
+            notifications:props.NOTIFICATIONS,
             dept:props.REPORTING_DEPARTMENT_NAME||'No Department',
             deptGroupId:props.GROUP_ID||'',
             deptGroup:props.GROUP_NAME||'N/A',
@@ -378,6 +396,7 @@ function AddEditUserForm(props) {
     }
     
     const handleSave = data => {
+        console.log(data);
         if (!Object.keys(methods.formState.dirtyFields).length &&!props.newUser) {
             toast.info('No changes to user data');
             closeModal();
@@ -392,7 +411,10 @@ function AddEditUserForm(props) {
             START_DATE:format(data.startDate,'dd-MMM-yyyy'),
             END_DATE:(data.endDate)?format(data.endDate,'dd-MMM-yyyy'):'',
             ADD_GROUPS:addGroups,
-            DEL_GROUPS:delGroups
+            DEL_GROUPS:delGroups,
+            OPTIONS:{
+                notifications:data.notifications
+            }
         }
         setStatus({state:'saving'});
         if (!props.newUser) {
@@ -447,6 +469,7 @@ function AddEditUserForm(props) {
                         deptGroupId:props.GROUP_ID||'',
                         deptGroup:props.GROUP_NAME||'',
                         email:props.email,
+                        notifications:props.NOTIFICATIONS,
                         startDate: props.startDate,
                         endDate: props.endDate,
                         assignedGroups:usergroupData,
@@ -558,6 +581,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
                 firstName:userData.LEGAL_FIRST_NAME||'',
                 lastName:userData.LEGAL_LAST_NAME||'',
                 email:userData.EMAIL_ADDRESS_WORK||'',
+                notifications:userData.NOTIFICATIONS,
                 dept:userData.REPORTING_DEPARTMENT_NAME||'',
                 deptGroupId:userData.GROUP_ID||'',
                 deptGroup:userData.GROUP_NAME||'',
@@ -572,6 +596,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
             ['firstName','lastName','email'].forEach(v=>setValue(v,'')); //reset firstName, lastName, and email
         }
     }
+    const handleCheck = (e,field)=>field.onChange((e.target.checked)?"Y":"N");
     const handleKeyDown = e => {
         if (e.key == 'Enter') {
             e.preventDefault();
@@ -668,7 +693,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
                         name="notifications"
                         defaultValue=""
                         control={control}
-                        render={({field}) => <Form.Check {...field} type="checkbox" aria-describedby="notificationHelp"/>}
+                        render={({field}) => <Form.Check {...field} type="checkbox" onChange={e=>handleCheck(e,field)} value="Y" checked={field.value=="Y"} aria-describedby="notificationHelp"/>}
                     />
                     <Form.Text id="notificationHelp" muted>Users in approval groups will receive email notification when a new approval is assigned to the group.</Form.Text>
                 </Form.Group>

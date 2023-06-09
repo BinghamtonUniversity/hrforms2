@@ -48,7 +48,8 @@ function ListData({list}) {
     const listdata = getFormList(list,{enabled:!!groups.data,select:d=>{
         return d.map(l => {
             l.STATUS_ARRAY = l.JOURNAL_STATUS.split(',');
-            l.GROUPS_ARRAY = l.GROUPS.split(',').map(g=>pick(find(groups.data,{GROUP_ID:g}),['GROUP_ID','GROUP_NAME','GROUP_DESCRIPTION']));
+            // exclude first element: submitter group
+            l.GROUPS_ARRAY = l.GROUPS.split(',').slice(1,).map(g=>pick(find(groups.data,{GROUP_ID:g}),['GROUP_ID','GROUP_NAME','GROUP_DESCRIPTION']));
             return l;
         });
     }});
@@ -94,10 +95,15 @@ function ListTable({data,list}) {
     const delFrm = deleteForm();
 
     const handleRowClick = row => {
-        if (list=='drafts') {
-            setRedirect('/form/'+row.FORM_ID.replaceAll('-','/'));
-        } else {
-            setRedirect('/form/'+row.FORM_ID);
+        switch (list) {
+            case 'drafts':
+                setRedirect('/form/'+row.FORM_ID.replaceAll('-','/'));
+                break;
+            case 'archived':
+                console.warn('TODO: view archived');
+                break;
+            default:
+                setRedirect('/form/'+row.FORM_ID);
         }
     };
 
@@ -105,7 +111,7 @@ function ListTable({data,list}) {
         if (a == 'journal') {
             setRedirect('/form/journal/'+r.FORM_ID);
         } else {
-            setAction(a);
+            setAction((a=='approve'&&list=='final')?'final':a);
             setSelectedRow(r);
         }
     };

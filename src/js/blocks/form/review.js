@@ -20,6 +20,7 @@ const ReviewEmploymentSeparation = lazy(()=>import("./review/review-employment-s
 const ReviewEmploymentLeave = lazy(()=>import("./review/review-employment-leave"));
 const ReviewEmploymentPay = lazy(()=>import("./review/review-employment-pay"));
 const ReviewEmploymentVolunteer = lazy(()=>import("./review/review-employment-volunteer"));
+const ReviewComments = lazy(()=>import("./review/review-comments"));
 
 export default function Review() {
     return (
@@ -29,6 +30,7 @@ export default function Review() {
             </Row>
             <ReviewFormData/>
             <ReviewSections/>
+            <ReviewComments/>
         </article>
     );
 }
@@ -103,7 +105,7 @@ function ReviewSections() {
                             </article>
                         }
                         {t.map(s=><ReviewSectionRouter key={s.value} tab={s.value}/>)}
-                    </section>        
+                    </section>
                 );
             })}
         </>

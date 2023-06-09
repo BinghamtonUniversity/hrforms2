@@ -46,10 +46,25 @@ class Archive extends HRForms2 {
                 oci_bind_by_name($stmt,":request_id",$this->req[1]);
                 $r = oci_execute($stmt);
                 if (!$r) $this->raiseError();
-                $this->done();
+                if ($this->retJSON) $this->done();
                 break;
             case "form":
-                echo "archive forms";
+                $qry = "insert into HRFORMS2_FORMS_ARCHIVE select * from HRFORMS2_FORMS where form_id = :form_id";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":form_id",$this->req[1]);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
+                $qry = "insert into HRFORMS2_FORMS_JOURNAL_ARCHIVE select * from HRFORMS2_FORMS_JOURNAL where form_id = :form_id";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":form_id",$this->req[1]);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
+                $qry = "delete from HRFORMS2_FORMS where form_id = :form_id";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":form_id",$this->req[1]);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
+                if ($this->retJSON) $this->done();
                 break;
             default:
                 $this->raiseError(400);

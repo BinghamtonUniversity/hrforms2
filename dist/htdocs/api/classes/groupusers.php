@@ -30,9 +30,12 @@ class GroupUsers extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
+		//TODO: get user info first, if null then get persemp
+		//TODO: add in user settings
+
 		$qry = "select distinct u.*, " . $this->BASE_PERSEMP_FIELDS . " from buhr.buhr_persemp_mv@banner.cc.binghamton.edu p
         join (select suny_id as ug_suny_id, group_id from hrforms2_user_groups) ug on (p.suny_id = ug.ug_suny_id and ug.group_id = :group_id)
-        join (select suny_id as user_suny_id, start_date, end_date from hrforms2_users) u on (p.suny_id = u.user_suny_id)";
+        join (select suny_id as user_suny_id, start_date, end_date, u1.user_options.notifications as notifications from hrforms2_users u1) u on (p.suny_id = u.user_suny_id)";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":group_id", $this->req[0]);
 		$r = oci_execute($stmt);

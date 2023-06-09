@@ -10,7 +10,7 @@ import { Row, Col, Button, Modal, Form } from "react-bootstrap";
 import { format } from "date-fns";
 import DataTable from 'react-data-table-component';
 import { Icon } from "@iconify/react";
-import { AppButton, Loading, ModalConfirm, DescriptionPopover, WorkflowExpandedComponent } from "../../blocks/components";
+import { AppButton, Loading, ModalConfirm, WorkflowExpandedComponent } from "../../blocks/components";
 import { useUserContext, SettingsContext, NotFound, useSettingsContext, useAuthContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
 import { flattenObject } from "../../utility";
@@ -91,10 +91,16 @@ function ListTable({data,list}) {
     const delReq = deleteRequest();
 
     const handleRowClick = row => {
-        if (list=='drafts') {
-            setRedirect('/request/'+row.REQUEST_ID.replaceAll('-','/'));
-        } else {
-            setRedirect('/request/'+row.REQUEST_ID);
+        switch (list) {
+            case 'drafts':
+                setRedirect('/request/'+row.REQUEST_ID.replaceAll('-','/'));
+                break;
+            case 'archived':
+                //setRedirect('/request/'+row.REQUEST_ID);
+                console.warn('TODO: view archived');
+                break;
+            default:
+                setRedirect('/request/'+row.REQUEST_ID);
         }
     };
 
@@ -102,7 +108,7 @@ function ListTable({data,list}) {
         if (a == 'journal') {
             setRedirect('/request/journal/'+r.REQUEST_ID);
         } else {
-            setAction(a);
+            setAction((a=='approve'&&list=='final')?'final':a);
             setSelectedRow(r);
         }
     };
@@ -112,9 +118,7 @@ function ListTable({data,list}) {
             setSelectedRow(undefined);
             return true;
         }
-        console.log(action,comment);
         req.mutateAsync({action:action,reqId:selectedRow.REQUEST_ID,comment:comment,...selectedRow}).then(d=>{
-            console.log(d);
             //refetch: counts and requestlist
             queryclient.refetchQueries(SUNY_ID).then(() => {
                 setAction(undefined);
@@ -125,13 +129,17 @@ function ListTable({data,list}) {
 
     const confirmDeleteButtons = {
         close:{title:'Cancel',callback:()=>setAction(undefined)},
-        confirm:{title:'Delete',variant:'danger',callback:()=>{
-            delReq.mutateAsync().then(()=>{
-                queryclient.refetchQueries(SUNY_ID).then(() => {
-                    setAction(undefined);
-                    setSelectedRow(undefined);    
-                });    
-            });
+        confirm:{
+            title:'Delete',
+            variant:'danger',
+            format:'delete',
+            callback:()=>{
+                delReq.mutateAsync().then(()=>{
+                    queryclient.refetchQueries(SUNY_ID).then(() => {
+                        setAction(undefined);
+                        setSelectedRow(undefined);    
+                    });    
+                });
         }}
     };
 
@@ -193,7 +201,7 @@ function ListTable({data,list}) {
                 <div className="button-group">
                     {(list=='drafts')&&<Button variant="danger" className="no-label" size="sm" title="Delete Draft" onClick={()=>handleAction('delete',row)}><Icon icon="mdi:delete"/></Button>}
                     {(list!='drafts')&&<Button variant="primary" className="no-label" size="sm" title="Show Journal" onClick={()=>handleAction('journal',row)}><Icon icon="mdi:information-variant-circle-outline"/></Button>}
-                    {!(['drafts','pending','rejections'].includes(list))&&
+                    {!(['drafts','pending','rejections','archived'].includes(list))&&
                         <>
                             <Button variant="success" className="no-label" size="sm" title="Approve" onClick={()=>handleAction('approve',row)}><Icon icon="mdi:check"/></Button>
                             <Button variant="danger" className="no-label" size="sm" title="Reject" onClick={()=>handleAction('reject',row)}><Icon icon="mdi:close-circle"/></Button>
@@ -283,8 +291,8 @@ function ActionModal({action,modalCallback}) {
                         <Form.Control.Feedback type="invalid">{errors.comment?.message}</Form.Control.Feedback>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button id="cancel" variant="secondary" onClick={modalCallback} disabled={isSaving}>Cancel</Button>
-                    <Button type="submit" id={action} variant={(action=='approve'?'success':'danger')} disabled={isSaving}>{capitalize(action)}</Button>
+                    <AppButton id="cancel" format="cancel" onClick={modalCallback} disabled={isSaving}>Cancel</AppButton>
+                    <AppButton type="submit" format="approve" disabled={isSaving}>{capitalize(action)}</AppButton>
                 </Modal.Footer>
             </Form>
         </Modal>

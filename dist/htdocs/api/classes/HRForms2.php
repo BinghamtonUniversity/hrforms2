@@ -273,60 +273,167 @@ Class HRForms2 {
 	}
 
 	/**
+	 * Returns an array of email addresses from the users table
+	 * @param string|array $ids - a single SUNY_ID or array of SUNY_IDs
+	 * @return array
+	 */
+	protected function getUserEmail($ids) {
+		if (is_string($ids)) $ids = [$ids];
+		if (!is_array($ids)) return [];
+
+		$arr = array();
+		foreach($ids as $id) {
+			$user = (new user(array($id),false))->returnData[0];
+			if ($user['EMAIL_ADDRESS_WORK'] == "") continue;
+			array_push($arr,$user['EMAIL_ADDRESS_WORK']);
+		}
+		return $arr;
+	}
+
+	/**
 	 * Triggers sending the email notification
-	 * @param string $type - The type (requests|forms) of email being sent
-	 * @param string $id - Request or Form ID to pull data from
-	 * @param array[
-	 * 		'to'		=> (array|string)
-	 * 		'reply-to'	=> (array|string)
-	 * 		'subject'	=> (string)
-	 * ] $params - Email parameters
+	 * @param array{
+	 * 		requestId|formId: int,
+	 * 		hierarchy_id: int,
+	 * 		workflow_id: int,
+	 * 		seq: int,
+	 * 		groups: string,
+	 * 		group_from: int,
+	 * 		group_to: int,
+	 * 		status: string,
+	 * 		submitted_by: int,
+	 * 		comment: string
+	 * } $journal - Journal record from Request or Form
 	 * @return mixed - Returns output from debug if enabled; could be null/undefined.
 	 */
-	function sendEmail($type,$id,$params) {
+	function sendEmail($journal) {
 		$origMethod = $_SERVER['REQUEST_METHOD'];
 		$_SERVER['REQUEST_METHOD'] = 'GET';
 		$settings = (new settings(array(),false))->returnData;
 
-		$user = (new user(array($this->sessionData['SUNY_ID']),false))->returnData[0];
-		$firstName = isset($user['ALIAS_FIRST_NAME'])?$user['ALIAS_FIRST_NAME']:$user['LEGAL_FIRST_NAME'];
-		$fullName = $firstName . ' ' . $user['LEGAL_LAST_NAME'];
-
-		$defaults = [
-			'to'=>$settings[$type]['email']['default'],
-			'replyto'=>'',
-			'subject'=>''
-		];
-		['to'=>$to,'replyto'=>$replyto,'subject'=>$subject] = array_merge($defaults,$params);
-
-		// If instace is LOCAL or DEV change email to current user's email
-		if (is_string($to)) $to = [$to,null];
-		$origTo = $to;
-		if (INSTANCE=='LOCAL' or INSTANCE=='DEV') $to = [$this->sessionData['EMAIL'],$fullName];
-
-		// Concatenate Subject
-		$subject = '[HRFORMS2-'.INSTANCE.']: '.$settings[$type]['email']['subject'].' '.$subject;
-
-		$data = [];
-		switch($type) {
-			case "requests":
-				$data = (new requests(array($id),false))->returnData;
-				$subject .= $data->reqId . " - " . $data->lastJournal['STATUS'];
-				break;
-			case "forms":
-				$data = (new forms(array($id),false))->returnData;
-				break;
-			default:
-				echo "ERROR! Invalid Type";
-				return;
+		$type = null;
+		//build variables array
+		$vars = array(
+			'PROD' => (INSTANCE=='PROD'),
+			'INSTANCE' => INSTANCE,
+			'DEBUG' => DEBUG,
+			'SMTP_DEBUG' => SMTP_DEBUG,
+		);
+		if (array_key_exists('request_id',$journal)) {
+			$id = $journal['request_id'];
+			$type = 'requests';
+			$template_type = 'R';
 		}
+		if (array_key_exists('form_id',$journal)) {
+			$id = $journal['form_id'];
+			$type = 'forms';
+			$template_type = 'F';
+		}
+		if ($type == null) {
+			$_SERVER['REQUEST_METHOD'] = $origMethod;
+			return "Invalid Type";
+		}
+		$vars = array_merge($vars,array_change_key_case($journal,CASE_UPPER));
+
+		$status = $journal['status'];
+		$options = $settings[$type]['email']['status'][$status];
+		$defaultEmail = $settings[$type]['email']['default'];
+		$errorEmail = $settings[$type]['email']['errors'];
+
+		// Check for no "To" options and return
+		if (count(array_filter($options['mailto'],'strlen')) == 0) {
+			$_SERVER['REQUEST_METHOD'] = $origMethod;
+			return "No email notification for this status"; 
+		}
+
+		// Collect Email Addresses
+		$email_list = array('mailto'=>[],'mailcc'=>[]);
+		foreach (array_keys($email_list) as $key) {
+			foreach ($options[$key] as $opt=>$b) {
+				if (!$b) continue;
+				switch($opt) {
+					case "submitter":
+						$email_list[$key] = array_merge($email_list[$key],$this->getUserEmail($journal['submitted_by']));
+						break;
+					case "group_to":
+						if ($journal['group_to'] != "") {
+							$group_to_users = (new groupusers(array($journal['group_to']),false))->returnData;
+							foreach ($group_to_users as $user) {
+								if ($user['EMAIL_ADDRESS_WORK'] != "" && $user['EMAIL_ADDRESS_WORK'] != null && $user['NOTIFICATIONS'] == 'Y') 
+									$email_list[$key] = array_merge($email_list[$key],array($user['EMAIL_ADDRESS_WORK']));
+							}
+						}
+						break;
+					case "group_from":
+						if ($journal['group_from'] != "") {
+							$group_from_users = (new groupusers(array($journal['group_from']),false))->returnData;
+							foreach ($group_from_users as $user) {
+								if ($user['EMAIL_ADDRESS_WORK'] != "" && $user['EMAIL_ADDRESS_WORK'] != null && $user['NOTIFICATIONS'] == 'Y')
+									$email_list[$key] = array_merge($email_list[$key],array($user['EMAIL_ADDRESS_WORK']));
+							}
+						}
+						break;
+					case "default":
+						array_push($email_list[$key],$defaultEmail);
+						break;
+					case "error":
+						array_push($email_list[$key],$errorEmail);
+				}
+			}
+		}
+
+		// Set Reply-To Email Address
+		$replyto = "";
+		switch($options['replyto']) {
+			case "submitter":
+				$replyto = $this->getUserEmail($journal['submitted_by'])[0];
+				break;
+			case "default":
+				$replyto = $defaultEmail; 
+				break;
+			case "error":
+				$replyto = $errorEmail;
+				break;
+		}
+
+		// start PHP mailer
+		// if instance not prod/test then override to/cc; display original to/cc in body
+		// Concatenate Subject
+		$subject = '[HRFORMS2-'.INSTANCE.']: '.$options['subject'].' '.$subject;
+
+		// get templates
+		$partials = [];
+		$email_template = "";
+		$templates = (new template(array(),false))->returnData;
+		foreach ($templates as $template) {
+			if ($template['TEMPLATE_TYPE'] == 'S') $partials[$template['TEMPLATE_SLUG']] = "";
+			if ($template['TEMPLATE_TYPE'] == $template_type && $template['TEMPLATE_STATUS_CODE'] == $status) $email_template = $template['TEMPLATE_SLUG'];
+		}
+		foreach ($partials as $key=>$val) {
+			$rv = (new template(array($key),false))->returnData;
+			$partials[$key] = $rv['TEMPLATE'];
+		}
+		$tmpl = (new template(array($email_template),false))->returnData;
+
+		//build variables array
+		$vars = array_merge($vars,array(
+			'SUBJECT' => $subject,
+			'MAILTO' => function() use ($email_list) { return implode(', ',$email_list['mailto']); },
+			'MAILCC' => function() use ($email_list) { return implode(', ',$email_list['mailcc']); },
+			'REPLYTO' => $replyto
+		));
+		$m = new Mustache_Engine(array(
+			'partials' => $partials
+		));
+		$content = str_replace('{{&gt;','{{>',$tmpl['TEMPLATE']); // fix partial HTML entities 
+		// append notProduction and debugInformation partials to the beginning of the $content
+		$content = "{{>notProduction}}<br>{{>debugInformation}}<br><br>" . $content;
 
 		ob_start();
 		if ($settings[$type]['email']['enabled']) {
 			$mail = new PHPMailer();
 			$mail->isSMTP();
 			if (SMTP_DEBUG) {
-				var_dump($settings[$type]['email']);
 				$mail->SMTPDebug = SMTP::DEBUG_SERVER;
 			} else {
 				$mail->SMTPDebug = SMTP::DEBUG_OFF;
@@ -338,43 +445,28 @@ Class HRForms2 {
 			$mail->Password = SMTP_PASSWORD;
 
 			$mail->setFrom($settings[$type]['email']['from'],$settings[$type]['email']['name']);
+			if (INSTANCE == 'PROD') {
+				foreach($email_list['mailto'] as $email) {
+					$mail->addAddress($email);
+				}
+				foreach($email_list['mailcc'] as $email) {
+					$mail->addCC($email);
+				}
+			} else {
+				$emailTo = empty($this->sessionData['EMAIL'])?$errorEmail:$this->sessionData['EMAIL'];
+				$mail->addAddress($emailTo);
+			}
+			if (!!$replyto) $mail->addReplyTo($replyto);
 			
-			if (is_string($replyto)) $replyto = [$replyto,null];
-			if (!!$replyto[0]) $mail->addReplyTo($replyto[0],$replyto[1]);
-
-			$mail->addAddress($to[0],$to[1]);	
 			$mail->Subject = $subject;
-			// Templates?
-			$mail->msgHTML('<p>this is a test</p>');
-			$mail->AltBody = 'This is a plain-text message body';
-			//$mail->addAttachment('images/phpmailer_mini.png');
+			$htmlBody = $m->render($content,$vars);
+			$mail->msgHTML($htmlBody);
 			$mail->send();
-		} else {
-			echo <<<EOT
-				<style>
-					#mh{font-family:"Courier New",Courier} 
-					#mb{margin-top: 1em}
-					section>p{margin:0}
-				</style>
-				<section id="mh">
-					<p>Date:</p>
-					<p>From:</p>
-					<p>To: "$to[1]" &lt;$to[0]&gt;</p>
-					<p>Reply-To:</p>
-					<p>Subject: $subject</p>
-				</section>
-				<section id="mb">
-					<p>Body of message...</p>
-				</section>
-			EOT;
-			var_dump($data);
 		}
-
 		$output = ob_get_contents();
 		ob_end_clean();
 
 		$_SERVER['REQUEST_METHOD'] = $origMethod;
-
 		return $output;
 	}
 }

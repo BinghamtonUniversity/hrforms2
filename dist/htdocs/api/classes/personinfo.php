@@ -34,7 +34,7 @@ class PersonInfo extends HRForms2 {
 			case "information":
 				$salutations = (new listdata(array('salutations'),false))->returnData;
 				$qry = "select p.hr_person_id, p.suny_id, p.local_campus_id, p.salutation_code, 
-					nvl(p.alias_first_name,p.legal_first_name) as first_name, 
+					p.legal_first_name, p.alias_first_name,
 					p.legal_middle_name, p.legal_last_name, p.suffix_code, 
 					i.volunteer_fire_flag, decode(i.retirement_date,null,0,1) as rehire_retiree, 
 					i.retirement_date, i.retired_from

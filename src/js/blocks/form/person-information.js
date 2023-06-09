@@ -88,7 +88,17 @@ export default function PersonInfo() {
                             <Form.Label column md={2}>First Name:</Form.Label>
                             <Col xs="auto">
                                 <Controller
-                                    name={`${name}.FIRST_NAME`}
+                                    name={`${name}.LEGAL_FIRST_NAME`}
+                                    control={control}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={readOnly}/>}
+                                />
+                            </Col>
+                        </Form.Group>
+                        <Form.Group as={Row}>
+                            <Form.Label column md={2}>Preferred Name (optional):</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.ALIAS_FIRST_NAME`}
                                     control={control}
                                     render={({field})=><Form.Control {...field} type="text" disabled={readOnly}/>}
                                 />

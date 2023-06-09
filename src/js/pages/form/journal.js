@@ -5,17 +5,8 @@ import { Row, Col, Form, Button, Popover, OverlayTrigger, Tooltip } from "react-
 import DataTable from 'react-data-table-component';
 import { get, sortBy } from "lodash";
 import useGroupQueries from "../../queries/groups";
-import { getAuthInfo, useAuthContext, useSettingsContext } from "../../app";
+import { useAuthContext, useSettingsContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
-
-//TODO: move to config?
-const statusTitle = {
-    'S':'Submitter',
-    'A':'Approved',
-    'X':'Skipped',
-    'R':'Rejected',
-    'F':'Pending Final'
-};
 
 export default function FormJournal() {
     const {id} = useParams();
@@ -67,8 +58,8 @@ export default function FormJournal() {
 }
 
 function JournalSearchResults({formId,expandAll,setExpandAll}) {
-    
     const {getJournal} = useFormQueries(formId);
+    const { general } = useSettingsContext();
     const journal = getJournal({onSuccess:d=>{
         d.forEach(c=>c.id=`${c.FORM_ID}_${c.SEQUENCE}`);
     }});
@@ -87,11 +78,11 @@ function JournalSearchResults({formId,expandAll,setExpandAll}) {
         {name:'Date',selector:row=>row.journalDateFmt,sortable:true,width:'250px'},
         {name:'Status',selector:row=>(
             <OverlayTrigger placement="auto" overlay={
-                <Tooltip id={`tooltip-status-${row.SEQUENCE}`}>{get(statusTitle,row.STATUS,'Unknown')}</Tooltip>
+                <Tooltip id={`tooltip-status-${row.SEQUENCE}`}>{get(general.status,`${row.STATUS}.list`,'Unknown')}</Tooltip>
             }><span>{row.STATUS}</span></OverlayTrigger>
         ),width:'100px'},
         {name:'Comment',selector:row=>row.shortComment,sortable:false,wrap:true}
-    ]);
+    ],[general]);
 
     return (
         <DataTable 
@@ -134,7 +125,7 @@ function ExpandedComponent({data}) {
                 <dt>Date:</dt>
                 <dd>{data.journalDateFmt}</dd>
                 <dt>Status:</dt>
-                <dd>{get(general.status,`${data.STATUS}.journal`,'Unknown')}</dd>
+                <dd>{get(general.status,`${data.STATUS}.list`,'Unknown')}</dd>
                 {data.GROUP_FROM &&
                     <>
                         <dt>Group From:</dt>

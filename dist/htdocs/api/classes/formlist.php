@@ -34,7 +34,7 @@ class FormList extends HRForms2 {
 			case "drafts":
 				$qry = "select suny_id, unix_ts, drafts.data.formId as FORM_ID, 
                     drafts.data.effDate,
-                    drafts.data.person.information.FIRST_NAME as FIRST_NAME,
+                    nvl(drafts.data.person.information.ALIAS_FIRST_NAME,drafts.data.person.information.LEGAL_FIRST_NAME) as FIRST_NAME,
                     drafts.data.person.information.LEGAL_MIDDLE_NAME as LEGAL_MIDDLE_NAME,
                     drafts.data.person.information.LEGAL_LAST_NAME as LEGAL_LAST_NAME,
                     drafts.data.formActions.formCode.FORM_CODE as FORM_CODE,
@@ -57,7 +57,7 @@ class FormList extends HRForms2 {
 				$qry = "select f.form_id, f.created_by.SUNY_ID as created_by_suny_id, 
 				to_char(f.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				f.form_data.effDate,
-				f.form_data.person.information.FIRST_NAME as FIRST_NAME,
+				nvl(f.form_data.person.information.ALIAS_FIRST_NAME,f.form_data.person.information.LEGAL_FIRST_NAME) as FIRST_NAME,
 				f.form_data.person.information.LEGAL_MIDDLE_NAME as LEGAL_MIDDLE_NAME,
 				f.form_data.person.information.LEGAL_LAST_NAME as LEGAL_LAST_NAME,
 				f.form_data.formActions.formCode.FORM_CODE as FORM_CODE,
@@ -79,7 +79,7 @@ class FormList extends HRForms2 {
 					rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
 					from hrforms2_forms_journal jf1
 				) jf2
-				where jf2.rnk = 1 and jf2.status not in ('F') and
+				where jf2.rnk = 1 and jf2.status = 'PA' and
 				jf2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
 				left join (select * from hrforms2_forms_workflow) w on (j.workflow_id = w.workflow_id)
 				left join (select form_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal group by form_id) js on (js.form_id = j.form_id)
@@ -91,7 +91,7 @@ class FormList extends HRForms2 {
 				$qry = "select f.form_id, f.created_by.SUNY_ID as created_by_suny_id, 
 				to_char(f.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				f.form_data.effDate,
-				f.form_data.person.information.FIRST_NAME as FIRST_NAME,
+				nvl(f.form_data.person.information.ALIAS_FIRST_NAME,f.form_data.person.information.LEGAL_FIRST_NAME) as FIRST_NAME,
 				f.form_data.person.information.LEGAL_MIDDLE_NAME as LEGAL_MIDDLE_NAME,
 				f.form_data.person.information.LEGAL_LAST_NAME as LEGAL_LAST_NAME,
 				f.form_data.formActions.formCode.FORM_CODE as FORM_CODE,
@@ -108,14 +108,14 @@ class FormList extends HRForms2 {
 				nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
 				f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name,
 				j.status, j.sequence, f.form_data.workflowGroups as groups,js.journal_status
-				from hrforms2_forms f,
+                from hrforms2_forms f,
 				(select jf2.* from (select jf1.*,
-					rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
+					rank() over (partition by jf1.form_id order by jf1.sequence desc) as rnk
 					from hrforms2_forms_journal jf1
 					where jf1.form_id in (select form_id from hrforms2_forms_journal where suny_id = :suny_id and status = 'S')) jf2
-				where jf2.rnk = 1 and jf2.status not in ('R','X')) j
+				where jf2.rnk = 1 and jf2.status in ('PA','PF')) j
 				left join (select * from hrforms2_forms_workflow) w on (j.workflow_id = w.workflow_id)
-				left join (select form_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal group by form_id) js on (js.form_id = j.form_id)
+				left join (select form_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal where sequence >= 0 group by form_id) js on (js.form_id = j.form_id)
 				where f.form_id = j.form_id";
 				break;
 			
@@ -178,7 +178,7 @@ class FormList extends HRForms2 {
 					rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
 					from hrforms2_forms_journal jf1
 				) jf2
-				where jf2.rnk = 1 and jf2.status = 'F' and
+				where jf2.rnk = 1 and jf2.status = 'PF' and
 				jf2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
 				left join (select * from hrforms2_forms_workflow) w on (j.workflow_id = w.workflow_id)
 				left join (select form_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal group by form_id) js on (js.form_id = j.form_id)
@@ -187,8 +187,39 @@ class FormList extends HRForms2 {
 				break;
 
 			case "archived":
-				//separate PHP?  archive.php?
-				$this->done();
+				$qry = "select f.form_id, f.created_by.SUNY_ID as created_by_suny_id, 
+				to_char(f.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
+				f.form_data.effDate,
+				f.form_data.person.information.FIRST_NAME as FIRST_NAME,
+				f.form_data.person.information.LEGAL_MIDDLE_NAME as LEGAL_MIDDLE_NAME,
+				f.form_data.person.information.LEGAL_LAST_NAME as LEGAL_LAST_NAME,
+				f.form_data.formActions.formCode.FORM_CODE as FORM_CODE,
+				f.form_data.formActions.formCode.FORM_TITLE as FORM_TITLE,
+				f.form_data.formActions.actionCode.ACTION_CODE as ACTION_CODE,
+				f.form_data.formActions.actionCodeTitle.ACTION_TITLE as ACTION_TITLE,
+				f.form_data.formActions.transactionCode.TRANSACTION_CODE as TRANSACTION_CODE,
+				f.form_data.formActions.transactionCode.TRANSACTION_TITLE as TRANSACTION_TITLE,
+				f.form_data.payroll.PAYROLL_CODE as PAYROLL_CODE,
+				f.form_data.payroll.PAYROLL_TITLE as PAYROLL_TITLE,
+				f.form_data.payroll.PAYROLL_DESCRIPTION as PAYROLL_DESCRIPTION,
+				f.form_data.employment.position.positionDetails.LINE_NUMBER as LINE_NUMBER,
+				f.form_data.employment.position.positionDetails.TITLE as TITLE,
+				nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
+				f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name, 
+				j.status, j.sequence, f.form_data.workflowGroups as groups,js.journal_status
+				from hrforms2_forms_archive f,
+				(select jf2.* from (select jf1.*,
+					rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
+					from hrforms2_forms_journal_archive jf1
+				) jf2
+				where jf2.rnk = 1 and jf2.status = 'Z' and
+				jf2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
+				left join (select * from hrforms2_forms_workflow) w on (j.workflow_id = w.workflow_id)
+				left join (select form_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal_archive group by form_id) js on (js.form_id = j.form_id)
+				where f.form_id = j.form_id
+				and f.created_by.SUNY_ID == :suny_id";
+				break;
+
 			default:
 				$this->raiseError(E_BAD_REQUEST);
 		}

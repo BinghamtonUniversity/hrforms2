@@ -24,6 +24,8 @@ export default function useUserQueries(SUNY_ID) {
                 d.endDateFmt = d.END_DATE && format(d.endDate,'P');
                 d.endDateUnix = d.END_DATE && format(d.endDate,'t');
                 d.active = !(d.END_DATE&&d.endDateUnix<Date.now());
+                d.userOptions = d.USER_OPTIONS&&JSON.parse(d.USER_OPTIONS);
+                //console.log(d.SUNY_ID,d.USER_OPTIONS);
             });
             return (options.select2)?options.select2(data):data;
         };

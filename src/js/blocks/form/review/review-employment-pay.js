@@ -24,7 +24,7 @@ function ReviewEmploymentPayExisting() {
                 <Col><h6 className="mb-0">Existing Pay:</h6></Col>
             </Row>
             <Table striped bordered size="sm">
-                <thead className="bg-secondary">
+                <thead className="bg-main text-white">
                     <tr>
                         <th>Start Date</th>
                         <th>End Date</th>
@@ -68,7 +68,7 @@ function ReviewEmploymentPayNew() {
                 <Col><h6 className="mb-0">New Pay:</h6></Col>
             </Row>
             <Table striped bordered size="sm">
-                <thead className="bg-secondary">
+                <thead className="bg-main text-white">
                     <tr>
                         <th>Start Date</th>
                         <th>End Date</th>

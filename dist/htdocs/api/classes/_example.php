@@ -9,7 +9,7 @@ NB: HTTP Codes: https://tools.ietf.org/html/rfc7231#section-6
 NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 */
 
-class Template extends HRForms2 {
+class Example extends HRForms2 {
 	private $_arr = array();
 
 	function __construct($req,$rjson=true) {

@@ -251,8 +251,10 @@ button.btn-sm.no-label svg.iconify {
   font-family: 'Lucida Console','Courier New', Courier, monospace;
 }
 
-/* Jodit editor source view font size fix */
-.editor-container .jodit-source * { font-size: 18px }
+/* Jodit editor source view increase font size and change background color */
+/*.editor-container .jodit-source * { font-size: 18px !important }*/
+.ace_editor * { font-size: 18px !important }
+div.jodit-workplace > div.jodit-source{ background-color:inherit }
 
 /* SUNY Account styles */
 #col-SUNYAccount div.rbt {
