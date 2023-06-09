@@ -1,14 +1,11 @@
 import React, { useCallback } from "react";
-import { Form, Row, Col } from "react-bootstrap";
+import { Form, Row, Col, Table } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
-import { SettingsContext, useAuthContext, useSettingsContext, useUserContext } from "../../../app";
-import format from "date-fns/format";
-import { Icon } from "@iconify/react";
+import { useSettingsContext } from "../../../app";
 
 export default function SettingsRequests() {
     const { control } = useFormContext();
     const menuFields = useWatch({name:'requests.menu',control:control});
-    const watchEmailEnabled = useWatch({name:'requests.email.enabled',control:control});
     const { requests } = useSettingsContext();
     const disabled = useCallback(field => {
         const k = field.name.split('.')[2];
@@ -42,14 +39,13 @@ export default function SettingsRequests() {
                                 render={({field}) => <Form.Check {...field} type="checkbox" inline label="Show On Menu" checked={field.value} disabled={disabled(field)}/>}
                             />
                         </Col>
-                        {Object.keys(requests.menu[k]).includes('sendEmail') && 
+                        {Object.keys(requests.menu[k]).includes('resubmit') && 
                             <Col xs="auto">
                                 <Controller
-                                    name={`requests.menu.${k}.sendEmail`}
+                                    name={`requests.menu.${k}.resubmit`}
                                     control={control}
-                                    render={({field}) => <Form.Check {...field} className={(!watchEmailEnabled&&field.value)?'text-danger':''} type="checkbox" inline label={<>Send Email{(!watchEmailEnabled&&field.value)&&<Icon className="iconify-inline mt-1" icon="mdi:alert-circle"/>}</>} checked={field.value} disabled={disabled(field)}/>}
+                                    render={({field}) => <Form.Check {...field} type="checkbox" inline label="Allow Resubmit" checked={field.value} disabled={disabled(field)}/>}
                                 />
-                                {(!watchEmailEnabled&&requests.menu[k].sendEmail)&&<Form.Text id="emailErrorsHelp" className="text-danger mt-0">Notifications Disabled</Form.Text>}
                             </Col>
                         }
                         {Object.keys(requests.menu[k]).includes('enabled') && 
@@ -145,38 +141,78 @@ function SettingsRequestsEmail() {
                     </Col>
                 </Form.Group>
             </section>
-            <SampleRequestEmail enabled={enabled}/>
+            {enabled && <SettingsRequestsEmailStatus/>}
         </>
     );
 }
 
-function SampleRequestEmail({enabled}) {
+function SettingsRequestsEmailStatus() {
     const { control } = useFormContext();
-    const fields = useWatch({name:'requests.email',control:control});
-    const now = new Date();
-    const {INSTANCE:instance} = useAuthContext();
-    const {EMAIL_ADDRESS_WORK:email,fullname} = useUserContext();
+    const { requests } = useSettingsContext();
+    const mailOptions = [
+        ["submitter","Submitter"],
+        ["group_to","Group To"],
+        ["group_from","Group From"],
+        ["default","Default"],
+        ["error","Error"]
+    ];
+    const replyToOptions = [
+        ["none","None"],
+        ["submitter","Submitter"],
+        ["default","Default"],
+        ["error","Error"]
+    ];
     return (
-        <section>
-            <Row as="header" className="mt-3">
-                <Col as="h4">Sample Email</Col>
-            </Row>
-            <Row>
-                <Col>
-                    {enabled?
-                        <pre>
-                            <p>Date: {format(now,'E, d MMM yyyy HH:mm:ss XX')}</p>
-                            <p>From: "{fields.name}" &lt;{fields.from}&gt;</p>
-                            <p>To: "{fullname}" &lt;{email}&gt;</p>
-                            <p>Subject: [HRFORMS2-{instance}]: {fields.subject}</p>
-                        </pre>
-                    :
-                        <p>Not Enabled</p>
-                    }
-                </Col>
-            </Row>
-        </section>
+        <>
+            <Table striped bordered>
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Subject</th>
+                        <th>Email To</th>
+                        <th>Email Cc</th>
+                        <th>Email Reply-To</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {Object.keys(requests.email.status).map(s => (
+                        <tr key={s}>
+                            <td>{s}</td>
+                            <td>
+                                <Controller
+                                    name={`requests.email.status.${s}.subject`}
+                                    control={control}
+                                    render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Subject"/>}
+                                />
+                            </td>
+                            <td>{mailOptions.map(o=>(
+                                <Controller
+                                    key={`mailto_${o[0]}`}
+                                    name={`requests.email.status.${s}.mailto.${o[0]}`}
+                                    control={control}
+                                    render={({field}) => <Form.Check {...field} type="checkbox" label={o[1]} checked={field.value}/>}
+                                />
+                            ))}</td>
+                            <td>{mailOptions.map(o=>(
+                                <Controller
+                                    key={`mailcc_${o[0]}`}
+                                    name={`requests.email.status.${s}.mailcc.${o[0]}`}
+                                    control={control}
+                                    render={({field}) => <Form.Check {...field} type="checkbox" label={o[1]} checked={field.value}/>}
+                                />
+                            ))}</td>
+                            <td>{replyToOptions.map(o=>(
+                                <Controller
+                                    key={`mailcc_${o[0]}`}
+                                    name={`requests.email.status.${s}.replyto`}
+                                    control={control}
+                                    render={({field}) => <Form.Check {...field} type="radio" label={o[1]} value={o[0]} checked={field.value==o[0]}/>}
+                                />
+                            ))}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </Table>
+        </>
     );
 }
-//Fri, 28 Apr 2023 09:53:47 -0400
-//e, d MM YYYY HH:mm:ss XX 

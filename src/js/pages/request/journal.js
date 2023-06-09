@@ -1,20 +1,12 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useParams, useHistory, Link } from "react-router-dom";
 import useRequestQueries from "../../queries/requests";
-import { Row, Col, Form, Button, Popover, OverlayTrigger, Tooltip, Overlay } from "react-bootstrap";
+import { Row, Col, Form, Button, Popover, OverlayTrigger, Tooltip } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
 import { get, sortBy } from "lodash";
 import useGroupQueries from "../../queries/groups";
-import { getAuthInfo, useAuthContext, useSettingsContext } from "../../app";
+import { useAuthContext, useSettingsContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
-
-const statusTitle = {
-    'S':'Submitter',
-    'A':'Approved',
-    'X':'Skipped',
-    'R':'Rejected',
-    'F':'Pending Final'
-};
 
 export default function RequestJournal() {
     const {id} = useParams();
@@ -49,6 +41,7 @@ export default function RequestJournal() {
         history.push('/request/journal/'+reqId);
         setShowResults(true);
     }
+    useEffect(()=>searchRef.current.focus(),[]);
     return (
         <>
             <Row>
@@ -67,6 +60,7 @@ export default function RequestJournal() {
 
 function JournalSearchResults({reqId,expandAll,setExpandAll}) {
     const {getJournal} = useRequestQueries(reqId);
+    const { general } = useSettingsContext();
     const journal = getJournal();
 
     const expandToggleComponent = useMemo(() => {
@@ -83,11 +77,11 @@ function JournalSearchResults({reqId,expandAll,setExpandAll}) {
         {name:'Date',selector:row=>row.journalDateFmt,sortable:true,width:'250px'},
         {name:'Status',selector:row=>(
             <OverlayTrigger placement="auto" overlay={
-                <Tooltip id={`tooltip-status-${row.SEQUENCE}`}>{get(statusTitle,row.STATUS,'Unknown')}</Tooltip>
+                <Tooltip id={`tooltip-status-${row.SEQUENCE}`}>{get(general.status,`${row.STATUS}.list`,'Unknown')}</Tooltip>
             }><span>{row.STATUS}</span></OverlayTrigger>
         ),width:'100px'},
         {name:'Comment',selector:row=>row.shortComment,sortable:false,wrap:true}
-    ]);
+    ],[general]);
 
     return (
         <DataTable 
@@ -117,9 +111,6 @@ function ExpandedComponent({data}) {
     const { isAdmin } = useAuthContext();
     const { general } = useSettingsContext();
     const clickHander = e => !isAdmin && e.preventDefault();
-    useEffect(()=>{
-        console.log(data);
-    },[data]);
     return (
         <div className="p-3" style={{backgroundColor:'#ddd'}}>
             <dl className="journal-list" style={{'display':'grid','gridTemplateColumns':'120px auto'}}>
@@ -130,7 +121,7 @@ function ExpandedComponent({data}) {
                 <dt>Date:</dt>
                 <dd>{data.journalDateFmt}</dd>
                 <dt>Status:</dt>
-                <dd>{general.status[data.STATUS].completed}</dd>
+                <dd>{get(general.status,`${data.STATUS}.list`,'Unknown')} ({data.STATUS})</dd>
                 {data.GROUP_FROM &&
                     <>
                         <dt>Group From:</dt>

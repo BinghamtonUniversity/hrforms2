@@ -4,9 +4,11 @@ import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import { useAppQueries } from "../../queries";
 import { Icon } from "@iconify/react";
+import { useRequestContext } from "../../config/request";
 
 export default function Information() {
-    const {control,setValue,posTypes,isDraft,formState:{errors}} = useFormContext();
+    const { control, setValue, formState:{ errors } } = useFormContext();
+    const { posTypes, isDraft, canEdit } = useRequestContext();
     const watchPosType = useWatch({name:'posType.id',control:control});
 
     const [showJobDesc,setShowJobDesc] = useState(true);
@@ -83,7 +85,7 @@ export default function Information() {
                         name="candidateName"
                         defaultValue=""
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Candidate Name" disabled={!isDraft}/>}
+                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Candidate Name" disabled={!canEdit}/>}
                     />
                 </Col>
             </Form.Group>
@@ -94,7 +96,7 @@ export default function Information() {
                         name="bNumber"
                         defaultValue=""
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter B-Number" disabled={!isDraft}/>}
+                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter B-Number" disabled={!canEdit}/>}
                     />
                 </Col>
             </Form.Group>
@@ -106,7 +108,7 @@ export default function Information() {
                             name="jobDesc"
                             defaultValue=""
                             control={control}
-                            render={({field}) => <Form.Control {...field} as="textarea" placeholder="Enter a brief job description" rows={5} disabled={!isDraft}/>}
+                            render={({field}) => <Form.Control {...field} as="textarea" placeholder="Enter a brief job description" rows={5} disabled={!canEdit}/>}
                         />
                     </Col>
                 </Form.Group>

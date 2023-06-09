@@ -332,7 +332,6 @@ function ListDetails({locked,handleBlur,slugHint,pickSlugHint,handleDeleteList,i
                     <Form.Control.Feedback type="invalid">{errors.LIST_DATA?.message}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
-            {}
             <Row>
                 <Col className="button-group">
                     <AppButton format="save" type="submit" disabled={!!Object.keys(errors).length}>Save</AppButton>

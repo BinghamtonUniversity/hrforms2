@@ -16,7 +16,9 @@ export default function ReviewPersonInformation() {
                 <Col as="dt" md={2} className="mb-0">B#:</Col>
                 <Col as="dd" md={4} className="mb-0">{info.LOCAL_CAMPUS_ID}</Col>
                 <Col as="dt" md={2} className="mb-0">Name:</Col>
-                <Col as="dd" md={4} className="mb-0">{[info.SALUTATION_CODE.label,info.FIRST_NAME,info.LEGAL_MIDDLE_NAME,info.LEGAL_LAST_NAME,info.SUFFIX_CODE].join(' ')}</Col>
+                <Col as="dd" md={4} className="mb-0">{[info.SALUTATION_CODE.label,info.LEGAL_FIRST_NAME,info.LEGAL_MIDDLE_NAME,info.LEGAL_LAST_NAME,info.SUFFIX_CODE].join(' ')}</Col>
+                <Col as="dt" md={2} className="mb-0">Preferred First Name:</Col>
+                <Col as="dd" md={4} className="mb-0">{info.ALIAS_FIRST_NAME}</Col>
                 <Col as="dt" md={2} className="mb-0">Vol FF/EMT:</Col>
                 <Col as="dd" md={4} className="mb-0">{(info.VOLUNTEER_FIRE_FLAG=="1")?"Yes":"No"}</Col>
                 <Col as="dt" md={2} className="mb-0">Rehire Retiree:</Col>

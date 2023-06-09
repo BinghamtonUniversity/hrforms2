@@ -9,7 +9,7 @@ export const HRFormContext = React.createContext();
 HRFormContext.displayName = 'HRFormContext';
 export function useHRFormContext() { return useContext(HRFormContext); }
 
-/** Tabs */
+/** TABS */
 // Format constructed for react-checkbox-tree (see:https://www.npmjs.com/package/react-checkbox-tree)
 const allTabs = [
     {value:'basic-info',label:'Basic Info'},
@@ -63,7 +63,8 @@ const initFormValues = {
             "SUNY_ID": "",
             "LOCAL_CAMPUS_ID": "",
             "SALUTATION_CODE":{"id": "","label": ""},
-            "FIRST_NAME": "",
+            "LEGAL_FIRST_NAME": "",
+            "ALIAS_FIRST_NAME": "",
             "LEGAL_MIDDLE_NAME": "",
             "LEGAL_LAST_NAME": "",
             "SUFFIX_CODE": "",

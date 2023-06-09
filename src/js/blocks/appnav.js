@@ -1,13 +1,12 @@
-import React,{ useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React,{ useState } from "react";
+import { Link, Redirect } from "react-router-dom";
 import { Navbar, Nav, NavDropdown } from "react-bootstrap";
-import { currentUser, getAuthInfo } from "../app";
+import { useAuthContext } from "../app";
 import capitalize from "lodash/capitalize";
 import { MenuCounts } from "./components";
 
 export default function AppNav() {
-    const {SUNY_ID,isAdmin,OVR_SUNY_ID} = getAuthInfo();
-    const user = currentUser();
+    const {isAdmin,OVR_SUNY_ID} = useAuthContext();
     const logout = e => {
         e.preventDefault();
         console.log('logout');
@@ -47,6 +46,7 @@ export default function AppNav() {
                             <NavDropdown.Item as={Link} to="/admin/hierarchy/form">Form Hierarchy</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/transactions">Form Transactions</NavDropdown.Item>
                             <NavDropdown.Divider/>
+                            <NavDropdown.Item as={Link} to="/admin/templates">Templates</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/settings">Settings</NavDropdown.Item>
                         </NavDropdown>}
                         <Nav.Link onClick={logout}>Logout</Nav.Link>

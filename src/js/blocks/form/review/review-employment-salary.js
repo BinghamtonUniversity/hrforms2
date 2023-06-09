@@ -55,7 +55,7 @@ function SplitSalary({accounts,total}) {
             <Row>
                 <Col>
                     <Table bordered striped size="sm">
-                        <thead className="bg-secondary">
+                        <thead className="bg-main text-white">
                             <tr>
                                 <th>Account</th>
                                 <th>Percent</th>
@@ -87,7 +87,7 @@ function AdditionalSalary({additional}) {
             <Row>
                 <Col>
                     <Table bordered striped size="sm">
-                        <thead className="bg-secondary">
+                        <thead className="bg-main text-white">
                             <tr>
                                 <th>Type</th>
                                 <th>Start Date</th>

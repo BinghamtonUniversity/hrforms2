@@ -111,17 +111,15 @@ function SettingsGeneralLabels() {
                 <thead>
                     <tr>
                         <th>Code</th>
-                        <th>Completed</th>
-                        <th>Pending</th>
+                        <th>Badge</th>
                         <th>List</th>
-                        <th>Email</th>
                     </tr>
                 </thead>
                 <tbody>
                     {Object.keys(general.status).map(k=>(
                         <tr key={k}>
                             <td className="align-middle">{k}</td>
-                            {['completed','pending','list','email'].map(s=>(
+                            {['badge','list'].map(s=>(
                                 <td key={`${k}-${s}`}>
                                     <Controller
                                         name={`general.status.${k}.${s}`}

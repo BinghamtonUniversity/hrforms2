@@ -60,7 +60,7 @@ function ReviewPersonDirectoryPhone({data}) {
                 <Col><h6 className="mb-0">Phone:</h6></Col>
             </Row>
             <Table striped bordered size="sm">
-                <thead className="bg-secondary">
+                <thead className="bg-main text-white">
                     <tr>
                         <th>Type</th>
                         <th>Number</th>
@@ -87,7 +87,7 @@ function ReviewPersonDirectoryEmail({data}) {
                 <Col><h6 className="mb-0">Email:</h6></Col>
             </Row>
             <Table striped bordered size="sm">
-                <thead className="bg-secondary">
+                <thead className="bg-main text-white">
                     <tr>
                         <th>Type</th>
                         <th>Email</th>

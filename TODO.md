@@ -2,6 +2,8 @@
 Bug fixes, enhancements and things still to complete.
 
 ## Bug Fix:
+  * Pending Form View (as submitter) triggers BlockNav on exit; should not
+  * Pending Form View (as submitter) create new form does not clear warning alert box.
   * TabRouters are wrong; need to use React.memo and send ACTIVE tab, not tab.  If tab is sent all tabs are generated on load rather than only the active one.
   * SGRIILLS showing as "ERR: DUPLICATE IDs" on email notification in old HR Forms PR request.
   * When no member of a group has email notifications approving PR will error.
@@ -21,6 +23,7 @@ Bug fixes, enhancements and things still to complete.
   * Hide News box on homepage for 24 hours or until new
 
 ## Tasks: 
+  * Forms: Add chosen name field
   * Request: Move config items into config/request.js file.
   * Request: Control who can view/edit based on status (see TODO in file)
   * Forms: Auto focus fields
@@ -49,6 +52,7 @@ Bug fixes, enhancements and things still to complete.
   * Upgrade to React Router v6
 
 ## Future Enhancements
+  * Request|Form: Allow copy/create as draft from archived/submitted?
   * Add Help menu with Help, About items
   * Admin Lists: make list data an l/v pair
   * Add setting control to allow/disabled subsequent approver skips and message.
@@ -65,8 +69,24 @@ Bug fixes, enhancements and things still to complete.
   * STVCLAS
   * STVTERM
 
-## Questions for HR:
-  * Form approvals:
-    - if submitter is not in dept approval group, should it go?
-  * Review Transaction Codes (in progress - VM)
-  * Employment -> Salary Tab: Addl Salary and Split Assignment - should fields be required?  If so, which?
+## Notes:
+### Requests|Forms: 
+  * can approvers edit?
+    * if so, what fields? all? yes (except 3 reqd fields)
+  * can HR edit (final approval)?
+    * if so, what fields? all? yes (except 3 reqd fields)
+  * if approvers can edit, do we need to track changes?
+        * future phase
+  * resubmit rejections: 
+    * do we need to save previous chain of approvals/comments: yes
+    * should submitter be able to save changes and resubmit later (i.e. make it a "draft" again): yes
+    * Can rejected be deleted? (i.e. submitter does not want to resubmit): yes
+
+### Note: 
+  * PF will go right to Z (Archived)
+  * There will be no "F" (Final Approved)
+  * Future enhancement will add in batch option to send to SUNY
+    * PF -> BP (Batch Pending)
+    * if Batch is successful BP -> Z
+    * if Batch has error BP -> BE (Batch Error)
+

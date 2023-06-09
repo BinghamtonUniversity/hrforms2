@@ -1,12 +1,14 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Row, Col, Form } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import { useAppQueries } from "../../queries";
 import { Loading } from "../components";
 import SUNYAccount from "../sunyaccount";
+import { useRequestContext } from "../../config/request";
 
 export default function Account() {
-    const {control,isDraft,formState:{errors}} = useFormContext();
+    const {control,formState:{errors}} = useFormContext();
+    const { canEdit } = useRequestContext();
     const posType = useWatch({name:'posType',control:control});
 
     const {getListData} = useAppQueries();
@@ -23,8 +25,8 @@ export default function Account() {
                             control={control}
                             render={({field}) => (
                                 <>
-                                    <Form.Check {...field} inline type="radio" id="expType-PSR" label="PSR" value='PSR' checked={field.value=='PSR'} disabled={!isDraft}/>
-                                    <Form.Check {...field} inline type="radio" id="expType-PST" label="PST" value='PST' checked={field.value=='PST'} disabled={!isDraft}/>
+                                    <Form.Check {...field} inline type="radio" id="expType-PSR" label="PSR" value='PSR' checked={field.value=='PSR'} disabled={!canEdit}/>
+                                    <Form.Check {...field} inline type="radio" id="expType-PST" label="PST" value='PST' checked={field.value=='PST'} disabled={!canEdit}/>
                                 </>
                             )}
                         />
@@ -43,7 +45,7 @@ export default function Account() {
                             control={control}
                             rules={{required:{value:true,message:'Org Name is required'}}}
                             render={({field}) => (
-                                <Form.Control {...field} as="select" isInvalid={errors.orgName} disabled={!isDraft}>
+                                <Form.Control {...field} as="select" isInvalid={errors.orgName} disabled={!canEdit}>
                                     <option></option>
                                     {orgs.data.map(o=><option key={o.DEPARTMENT_CODE}>{o.DEPARTMENT_DESC}</option>)}
                                 </Form.Control>
@@ -53,7 +55,7 @@ export default function Account() {
                     <Form.Control.Feedback type="invalid">{errors.orgName?.message}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
-            <SUNYAccount disabled={!isDraft}/>
+            <SUNYAccount disabled={!canEdit}/>
         </>
     );
 }

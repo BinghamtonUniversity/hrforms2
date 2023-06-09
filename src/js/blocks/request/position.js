@@ -4,9 +4,11 @@ import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
+import { useRequestContext } from "../../config/request";
 
 export default function Position() {
-    const {control,getValues,setValue,posTypes,isDraft,formState:{errors}} = useFormContext();
+    const { control, getValues, setValue, formState:{ errors }} = useFormContext();
+    const { posTypes, canEdit } = useRequestContext();
     const [oldLineNum,setOldLineNum] = useState(getValues('lineNumber'));
 
     const posType = useWatch({name:'posType.id',control:control})||'';
@@ -58,7 +60,7 @@ export default function Position() {
                         name="lineNumber"
                         defaultValue=""
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Line Number" disabled={isNewLine||!isDraft}/>}
+                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Line Number" disabled={isNewLine||!canEdit}/>}
                     />
                 </Col>
                 <Col xs="auto" className="pt-2">
@@ -66,7 +68,7 @@ export default function Position() {
                         name="newLine"
                         defaultValue={false}
                         control={control}
-                        render={({field}) => <Form.Check {...field} type="checkbox" size="lg" label="New Line" checked={field.value} disabled={!isDraft}/>}
+                        render={({field}) => <Form.Check {...field} type="checkbox" size="lg" label="New Line" checked={field.value} disabled={!canEdit}/>}
                     />                    
                 </Col>
             </Form.Group>
@@ -79,8 +81,8 @@ export default function Position() {
                         control={control}
                         render={({field}) => (
                             <>
-                                <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={!isDraft}/>
-                                <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value=='N'} disabled={!isDraft}/>
+                                <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={!canEdit}/>
+                                <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value=='N'} disabled={!canEdit}/>
                             </>
                         )}
                     />
@@ -101,7 +103,7 @@ export default function Position() {
                             defaultValue=""
                             control={control}
                             rules={{min:{value:2,message:'Number of Lines must be at least 2'}}}
-                            render={({field}) => <Form.Control {...field} type="number" min={2} isInvalid={errors.numLines} disabled={!isDraft}/>}
+                            render={({field}) => <Form.Control {...field} type="number" min={2} isInvalid={errors.numLines} disabled={!canEdit}/>}
                         />
                         <Form.Control.Feedback type="invalid">{errors.numLines?.message}</Form.Control.Feedback>
                     </Col>
@@ -127,7 +129,7 @@ export default function Position() {
                             deps:['maxSalary']
                         }}
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="number" isInvalid={errors.minSalary} disabled={!isDraft}/>}
+                        render={({field}) => <Form.Control {...field} type="number" isInvalid={errors.minSalary} disabled={!canEdit}/>}
                     />
                     <Form.Control.Feedback type="invalid">{errors.minSalary?.message}</Form.Control.Feedback>
                 </Col>
@@ -148,7 +150,7 @@ export default function Position() {
                             deps:['minSalary']
                         }}
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="number" isInvalid={errors.maxSalary} disabled={!isDraft}/>}
+                        render={({field}) => <Form.Control {...field} type="number" isInvalid={errors.maxSalary} disabled={!canEdit}/>}
                     />
                     <Form.Control.Feedback type="invalid">{errors.maxSalary?.message}</Form.Control.Feedback>
                 </Col>
@@ -161,12 +163,12 @@ export default function Position() {
                         defaultValue="100"
                         control={control}
                         rules={{min:{value:1,message:'FTE cannot be less than 1%'},max:{value:100,message:'FTE cannot be greater than 100%'}}}
-                        render={({field}) => <Form.Control {...field} type="number" min={1} max={100} isInvalid={errors.fte} disabled={!isDraft}/>}
+                        render={({field}) => <Form.Control {...field} type="number" min={1} max={100} isInvalid={errors.fte} disabled={!canEdit}/>}
                     />
                     <Form.Control.Feedback type="invalid">{errors.fte?.message}</Form.Control.Feedback>
                 </Col>
                 <Col sm={8} md={6} className="pt-2">
-                    <Form.Control type="range" name="fteRange" id="fteRange" min={1} max={100} value={watchFTE} onChange={handleFTERangeChange} disabled={!isDraft}/>
+                    <Form.Control type="range" name="fteRange" id="fteRange" min={1} max={100} value={watchFTE} onChange={handleFTERangeChange} disabled={!canEdit}/>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
@@ -177,7 +179,7 @@ export default function Position() {
                         defaultValue=""
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handlePayBasisChange(field,e)} disabled={!isDraft}>
+                            <Form.Control {...field} as="select" onChange={e=>handlePayBasisChange(field,e)} disabled={!canEdit}>
                                 <option></option>
                                 {paybasistypes.data && paybasistypes.data.map(p=><option key={p[0]} value={p[0]}>{p[0]} - {p[1]}</option>)}
                             </Form.Control>
@@ -199,7 +201,7 @@ export default function Position() {
                                     <InputGroup.Prepend>
                                         <InputGroup.Text>SG-</InputGroup.Text>
                                     </InputGroup.Prepend>
-                                    <Form.Control {...field} type="text" placeholder="Enter Current Salary Grade" disabled={!isDraft}/>
+                                    <Form.Control {...field} type="text" placeholder="Enter Current Salary Grade" disabled={!canEdit}/>
                                 </InputGroup>
                             )}
                         />
@@ -217,7 +219,7 @@ export default function Position() {
                                     <InputGroup.Prepend>
                                         <InputGroup.Text>SG-</InputGroup.Text>
                                     </InputGroup.Prepend>
-                                    <Form.Control {...field} type="text" placeholder="Enter New Salary Grade" disabled={!isDraft}/>
+                                    <Form.Control {...field} type="text" placeholder="Enter New Salary Grade" disabled={!canEdit}/>
                                 </InputGroup>
                             )}
                         />
@@ -233,7 +235,7 @@ export default function Position() {
                         defaultValue=""
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleReqBudgetTitleChange(field,e)} disabled={!isDraft}>
+                            <Form.Control {...field} as="select" onChange={e=>handleReqBudgetTitleChange(field,e)} disabled={!canEdit}>
                                 <option></option>
                                 {titles.data && titles.data.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
                             </Form.Control>
@@ -249,7 +251,7 @@ export default function Position() {
                         defaultValue=""
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleApptStatusChange(field,e)} disabled={!isDraft}>
+                            <Form.Control {...field} as="select" onChange={e=>handleApptStatusChange(field,e)} disabled={!canEdit}>
                                 <option></option>
                                 {appttypes.data && appttypes.data.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
                             </Form.Control>
@@ -265,7 +267,7 @@ export default function Position() {
                         defaultValue=""
                         rules={{min:{value:1,message:'Appointment Duration must greater than zero'}}}
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="number" min={1} isInvalid={errors.apptDuration} disabled={!isDraft}/>}
+                        render={({field}) => <Form.Control {...field} type="number" min={1} isInvalid={errors.apptDuration} disabled={!canEdit}/>}
                     />
                     <Form.Control.Feedback type="invalid">{errors.apptDuration?.message}</Form.Control.Feedback>
                 </Col>
@@ -276,10 +278,10 @@ export default function Position() {
                         control={control}
                         render={({field}) => (
                             <>
-                                <Form.Check {...field} inline type="radio" label="Year(s)" value='y' checked={field.value=='y'} disabled={!isDraft}/>
-                                <Form.Check {...field} inline type="radio" label="Semester(s)" value='s' checked={field.value=='s'} disabled={!isDraft}/>
-                                <Form.Check {...field} inline type="radio" label="Month(s)" value='m' checked={field.value=='m'} disabled={!isDraft}/>
-                                <Form.Check {...field} inline type="radio" label="Week(s)" value='w' checked={field.value=='w'} disabled={!isDraft}/>
+                                <Form.Check {...field} inline type="radio" label="Year(s)" value='y' checked={field.value=='y'} disabled={!canEdit}/>
+                                <Form.Check {...field} inline type="radio" label="Semester(s)" value='s' checked={field.value=='s'} disabled={!canEdit}/>
+                                <Form.Check {...field} inline type="radio" label="Month(s)" value='m' checked={field.value=='m'} disabled={!canEdit}/>
+                                <Form.Check {...field} inline type="radio" label="Week(s)" value='w' checked={field.value=='w'} disabled={!canEdit}/>
                             </>
                         )}
                     />
@@ -293,7 +295,7 @@ export default function Position() {
                             name="tentativeEndDate"
                             defaultValue=""
                             control={control}
-                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} disabled={!isDraft} autoComplete="off"/>}
+                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} disabled={!canEdit} autoComplete="off"/>}
                         />
                         <InputGroup.Append>
                             <InputGroup.Text>

@@ -46,11 +46,11 @@ function CommentHistory({formId}) {
     );
 }
 
-function CommentsTable({formId}) {
+export function CommentsTable({formId}) {
     const {getJournal} = useFormQueries(formId);
     const journal = getJournal({select:d=>d.filter(c=>{
         c.id = `${c.FORM_ID}_${c.SEQUENCE}`;
-        return c.STATUS!='X';
+        return !['PA','PF','X'].includes(c.STATUS);
     })});
     const columns = useMemo(() => [
         {name:'Date',selector:row=>row.JOURNAL_DATE},

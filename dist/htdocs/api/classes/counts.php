@@ -42,20 +42,23 @@ class Counts extends HRForms2 {
 		$form_rejections = count((new formlist(array('rejections'),false))->returnData);
 		$form_final = count((new formlist(array('final'),false))->returnData);
 
+		//TODO: use settings to get array list?
 		$counts = array(
             "requests" => array(
                 "drafts"=>$request_drafts,
 				"pending"=>$request_pending,
                 "approvals"=>$request_approvals,
 				"rejections"=>$request_rejections,
-                "final"=>$request_final
+                "final"=>$request_final,
+				"archived"=>null
             ),
             "forms" => array(
                 "drafts"=>$form_drafts,
 				"pending"=>$form_pending,
                 "approvals"=>$form_approvals,
                 "rejections"=>$form_rejections,
-                "final"=>$form_final
+                "final"=>$form_final,
+				"archived"=>null
             )
         );
         $this->toJSON($counts);
