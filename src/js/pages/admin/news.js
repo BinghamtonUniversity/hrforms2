@@ -5,12 +5,13 @@ import { toast } from "react-toastify";
 import JoditEditor from "jodit-react";
 import { editorConfig } from "../../config";
 import { useForm, Controller } from "react-hook-form";
-import { useAppQueries } from "../../queries";
 import { AppButton, errorToast } from "../../blocks/components";
+import { t } from "../../config/text";
+import useNewsQueries from "../../queries/news";
 
 export default function AdminNews() {
     const queryclient = useQueryClient();
-    const {getNews,patchNews} = useAppQueries();
+    const { getNews, patchNews } = useNewsQueries();
     const news = getNews();
     const updateNews = patchNews();
     const config = editorConfig();
@@ -31,7 +32,7 @@ export default function AdminNews() {
         <section>
             <header>
                 <Row>
-                    <Col><h2>Admin News</h2></Col>
+                    <Col><h2>{t('admin.news.title')}</h2></Col>
                 </Row>
             </header>
             <article>

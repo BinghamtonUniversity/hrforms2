@@ -1,19 +1,19 @@
 import React, { useState, lazy } from "react";
-import { useAppQueries } from "../../queries";
 import { useQueryClient } from "react-query";
 import { Row, Col, Form, Tabs, Tab, Container } from "react-bootstrap";
 import { useForm, FormProvider } from "react-hook-form";
 import { AppButton, Loading, errorToast } from "../../blocks/components";
 import { toast } from "react-toastify";
-import useAdminQueries from "../../queries/admin";
+import { t } from "../../config/text";
+import { NotFound } from "../../app";
+import useSettingsQueries from "../../queries/settings";
 
-const SettingsLists = lazy(()=>import("../../blocks/admin/settings/lists"));
 const SettingsRequests = lazy(()=>import("../../blocks/admin/settings/requests"));
 const SettingsForms = lazy(()=>import("../../blocks/admin/settings/forms"));
 const SettingsGeneral = lazy(()=>import("../../blocks/admin/settings/general"));
 
 export default function AdminSettings() {
-    const {getSettings} = useAppQueries();
+    const { getSettings } = useSettingsQueries();
     const settings = getSettings();
     if (settings.isError) return <Loading isError>Error Loading Settings</Loading>
     if (settings.isLoading) return <Loading>Loading Settings</Loading>
@@ -32,7 +32,7 @@ function AdminSettingsTabs({settingsData}) {
     const methods = useForm({defaultValues:settingsData});
 
     const queryclient = useQueryClient();
-    const {putSettings} = useAdminQueries();
+    const { putSettings } = useSettingsQueries();
     const update = putSettings();
     const handleSubmit = data => {
         console.debug(data);
@@ -54,7 +54,7 @@ function AdminSettingsTabs({settingsData}) {
         <>
             <header>
                 <Row>
-                    <Col><h2>Settings:</h2></Col>
+                    <Col><h2>{t('admin.settings.title')}</h2></Col>
                 </Row>
             </header>
             <FormProvider {...methods}>
@@ -68,7 +68,7 @@ function AdminSettingsTabs({settingsData}) {
                                             <Row as="header">
                                                 <Col as="h3">{t.title}</Col>
                                             </Row>
-                                            <SettingsRouter tab={t.id}/>
+                                            <SettingsRouter tab={activeTab}/>
                                         </Container>
                                     </Tab>
                                 ))}
@@ -86,12 +86,11 @@ function AdminSettingsTabs({settingsData}) {
     );
 }
 
-function SettingsRouter({tab}) {
+const SettingsRouter = React.memo(({tab}) => {
     switch(tab) {
         case "general": return <SettingsGeneral/>;
-        case "lists": return <SettingsLists/>;
         case "requests": return <SettingsRequests/>;
         case "forms": return <SettingsForms/>;
-        default: return <p>Not Found</p>;
+        default: return <NotFound/>;
     }
-}
+});

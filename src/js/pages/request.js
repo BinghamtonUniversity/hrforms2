@@ -1,16 +1,18 @@
-import React,{lazy, useCallback, useEffect, useMemo, useState } from "react";
+import React,{lazy, useEffect, useMemo, useState } from "react";
 import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
-import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal } from "react-bootstrap";
+import { Container, Row, Col, Form, Tabs, Tab, Alert, Modal } from "react-bootstrap";
 import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { NotFound, useSettingsContext, useUserContext } from "../app";
-import { useAppQueries } from "../queries";
 import useRequestQueries from "../queries/requests";
+import useListsQueries from "../queries/lists";
 import { useQueryClient } from "react-query";
 import { Loading, AppButton } from "../blocks/components";
 import format from "date-fns/format";
 import get from "lodash/get";
 import { Icon } from '@iconify/react';
 import { RequestContext, tabs, requiredFields, resetFields, defaultVals } from "../config/request";
+import { t } from "../config/text";
+
 
 //TODO: need to look at the status of the request; who can edit?
 
@@ -99,7 +101,7 @@ function BlockNav({reqId,when,isDraft}) {
     const handleClose = () => setShowModal(false);
     const handleDelete = () => {
         setShowModal(false);
-        //TODO: only delete if not saved
+        //Delete if not saved
         delReq.mutateAsync().then(()=>{
             queryclient.refetchQueries(SUNY_ID).then(() => {
                 handleProceed();
@@ -129,9 +131,9 @@ function BlockNav({reqId,when,isDraft}) {
                     </p>
                 </Modal.Body>
                 <Modal.Footer>
-                    {isDraft&&<Button variant="danger" onClick={handleDelete}>Discard</Button>}
-                    {!isDraft&&<Button variant="danger" onClick={handleProceed}>Leave</Button>}
-                    <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+                    {isDraft&&<AppButton format="delete" onClick={handleDelete}>Discard</AppButton>}
+                    {!isDraft&&<AppButton format="exit" onClick={handleProceed}>Leave</AppButton>}
+                    <AppButton format="close" onClick={handleClose}>Cancel</AppButton>
                 </Modal.Footer>
             </Modal>
         </>
@@ -156,7 +158,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     const {requests} = useSettingsContext();
 
     const queryclient = useQueryClient();
-    const { getListData } = useAppQueries();
+    const { getListData } = useListsQueries();
     const {postRequest,putRequest,deleteRequest} = useRequestQueries(reqId);
     const createReq = postRequest();
     const updateReq = putRequest();
@@ -295,10 +297,9 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     }
 
     const canEdit = useMemo(()=>{
-        console.log(isDraft,SUNY_ID,data.submittedBy);
-        if (isDraft && SUNY_ID == get(data,'submittedBy',SUNY_ID)) return true;
-        if (!isDraft && SUNY_ID == data.submittedBy && data.lastJournal.STATUS == 'R') return true;
-        if (!isDraft && SUNY_ID == data.submittedBy) return false;
+        if (isDraft && SUNY_ID == get(data,'CREATED_BY_SUNY_ID',SUNY_ID)) return true;
+        if (!isDraft && SUNY_ID == data.lastJournal.CREATED_BY_SUNY_ID && data.lastJournal.STATUS == 'R') return true;
+        if (!isDraft && SUNY_ID == data.lastJournal.CREATED_BY_SUNY_ID) return false;
         const userGroups = USER_GROUPS.split(',');
         if (userGroups.includes(get(data,'lastJournal.GROUP_TO'))) return true;
         return false;
@@ -330,13 +331,12 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     if (postypes.isLoading) return <Loading type="alert">Loading Position Types</Loading>;
     if (!postypes.data) return <Loading type="alert" isError>Error - No Position Type Data Loaded</Loading>;
     return(
-        <FormProvider {...methods} posTypes={postypes.data} isDraft={isDraft}>
+        <FormProvider {...methods}>
             <RequestContext.Provider value={{
                 reqId:reqId,
                 posTypes:postypes.data,
                 isDraft:isDraft,
                 lastJournal:data.lastJournal,
-                submittedBy:data.submittedBy,
                 canEdit:canEdit
             }}>
                 <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
@@ -348,6 +348,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                                         <Col as="h3">{t.title}</Col>
                                     </Row>
                                     {hasErrors && <RequestFormErrors/>}
+                                    <PendingReviewAlert/>
                                     {(t.id!='information'&&t.id!='review')&& <RequestInfoBox isNew={isNew}/>}
                                     <RequestTabRouter tab={t.id} isNew={isNew}/>
                                     <Row as="footer">
@@ -409,18 +410,33 @@ function DeleteRequestModal({setShowDeleteModal,handleDelete}) {
     return (
         <Modal show={true} backdrop="static" onHide={handleClose}>
             <Modal.Header closeButton>
-                <Modal.Title>Delete?</Modal.Title>
+                <Modal.Title>{t('dialog.request.delete.title')}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                Are you sure?
+                {t('dialog.request.delete.message')}
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="danger" onClick={handleConfirm}>Confirm</Button>
-                <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+                <AppButton format="close" onClick={handleClose}>Cancel</AppButton>
+                <AppButton format="delete" onClick={handleConfirm}>Delete</AppButton>
             </Modal.Footer>
         </Modal>
     );
-} 
+}
+
+function PendingReviewAlert() {
+    return (
+        <RequestContext.Consumer>
+            {({canEdit}) => {
+                if (canEdit) return null;
+                return (
+                    <Alert variant="warning">
+                        <p className="m-0"><strong>Pending Review:</strong> This request is currently being reviewed and cannot be modified.</p>
+                    </Alert>
+                );
+            }}
+        </RequestContext.Consumer>
+    )
+}
 
 function RequestInfoBox({isNew}) {
     const { getValues } = useFormContext();

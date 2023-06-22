@@ -7,6 +7,8 @@ import { Container, Row, Col, Tabs, Tab, Badge } from "react-bootstrap";
 import { Loading, AppButton } from "../../../blocks/components";
 import { Icon } from "@iconify/react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { t } from "../../../config/text";
+import { NotFound } from "../../../app";
 
 export const WorkflowContext = React.createContext();
 WorkflowContext.displayName = 'WorkflowContext';
@@ -61,7 +63,7 @@ export default function AdminFormHierarchy() {
             <section>
                 <header>
                     <Row>
-                        <Col><h2>Form Hierarchy</h2></Col>
+                        <Col><h2>{t('admin.hierarchy.form.title')}</h2></Col>
                     </Row>
                 </header>
                 <Tabs activeKey={activeTab} onSelect={navigate} id="form-hierarchy-tabs">
@@ -71,7 +73,7 @@ export default function AdminFormHierarchy() {
                                 <Row as="header">
                                     <Col as="h3">{t.title} <AppButton format="add" onClick={()=>setIsNew(t.id)}>New</AppButton></Col>
                                 </Row>
-                                <HierarchyRouter tab={t.id}/>
+                                <HierarchyRouter tab={activeTab}/>
                             </Container>
                         </Tab>
                     ))}
@@ -81,13 +83,13 @@ export default function AdminFormHierarchy() {
     );
 }
 
-function HierarchyRouter({tab}) {
+const HierarchyRouter = React.memo(({tab}) => {
     switch(tab) {
         case "hierarchy": return <AdminFormHierarchyHierarchy/>;
         case "workflow": return <AdminFormHierarchyWorkflow/>;
-        default: return <p>{tab}</p>;
+        default: return <NotFound/>;
     }
-}
+});
 
 /**
  * Component to display hierarchy chain on both tabs

@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { Row, Col, Form, Alert, InputGroup } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { AppButton, DateFormat, Loading } from "../components";
-import { useAppQueries } from "../../queries";
 import useFormQueries from "../../queries/forms";
 import DatePicker from "react-datepicker";
 import { addDays } from "date-fns";
 import { EmploymentPositionInfoBox } from "../../pages/form";
 import { useHRFormContext } from "../../config/form";
 import { Icon } from "@iconify/react";
+import useListsQueries from "../../queries/lists";
 
 const name = 'employment.position';
 
@@ -31,7 +31,7 @@ export default function EmploymentPosition() {
 
 function EmploymentPositionSearch({setShowResults}) {
     const { control, setValue } = useFormContext();
-    const { readOnly } = useHRFormContext();
+    const { canEdit } = useHRFormContext();
     const handleSearch = () => {
         setShowResults(true);
     }
@@ -52,11 +52,11 @@ function EmploymentPositionSearch({setShowResults}) {
                     <Controller
                         name={`${name}.LINE_ITEM_NUMBER`}
                         control={control}
-                        render={({field})=><Form.Control {...field} type="search" onKeyDown={handleKeyDown} disabled={readOnly}/>}
+                        render={({field})=><Form.Control {...field} type="search" onKeyDown={handleKeyDown} disabled={!canEdit}/>}
                     />
                 </Col>
             </Form.Group>
-            {!readOnly &&
+            {!canEdit &&
                 <Row>
                     <Col className="button-group">
                         <AppButton format="search" className="mr-1" onClick={handleSearch}>Search</AppButton>
@@ -105,7 +105,7 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
 
 function EmploymentAppointmentInformation() {
     const { control, setValue } = useFormContext();
-    const { readOnly } = useHRFormContext();
+    const { canEdit } = useHRFormContext();
     //TODO: get payroll and effDate from HRFormContext?
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
     const watchEffectiveDate = useWatch({name:`${name}.apptEffDate`,control:control,defaultValue:new Date(0)});
@@ -127,11 +127,11 @@ function EmploymentAppointmentInformation() {
                         defaultValue="100"
                         control={control}
                         rules={{min:{value:1,message:'Appointment Percent cannot be less than 1%'},max:{value:100,message:'Appointment Percent cannot be greater than 100%'}}}
-                        render={({field}) => <Form.Control {...field} type="number" min={1} max={100} disabled={readOnly}/>}
+                        render={({field}) => <Form.Control {...field} type="number" min={1} max={100} disabled={!canEdit}/>}
                     />
                 </Col>
                 <Col sm={8} md={6} className="pt-2">
-                    <Form.Control type="range" name="apptPercentRange" id="apptPercentRange" min={1} max={100} value={watchApptPercent} onChange={handleRangeChange} disabled={readOnly}/>
+                    <Form.Control type="range" name="apptPercentRange" id="apptPercentRange" min={1} max={100} value={watchApptPercent} onChange={handleRangeChange} disabled={!canEdit}/>
                 </Col>
             </Form.Group>
 
@@ -158,7 +158,7 @@ function EmploymentAppointmentInformation() {
                                 onChange={field.onChange}
                                 minDate={addDays(watchEffectiveDate,1)}
                                 autoComplete="off"
-                                disabled={readOnly}
+                                disabled={!canEdit}
                             />}
                         />
                         <InputGroup.Append>
@@ -179,8 +179,8 @@ function EmploymentAppointmentInformation() {
                             control={control}
                             render={({field}) => (
                                 <>
-                                    <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={readOnly}/>
-                                    <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'} disabled={readOnly}/>
+                                    <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={!canEdit}/>
+                                    <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'} disabled={!canEdit}/>
                                 </>
                             )}
                         />
@@ -197,9 +197,9 @@ function EmploymentAppointmentInformation() {
 
 function AppointmentType() {
     const { control, setValue } = useFormContext();
-    const { readOnly } = useHRFormContext();
+    const { canEdit } = useHRFormContext();
 
-    const { getListData } = useAppQueries();
+    const { getListData } = useListsQueries();
     const appttypes = getListData('appointmentTypes');
 
     const handleSelectChange = (e,field) => {
@@ -219,7 +219,7 @@ function AppointmentType() {
                         name={`${name}.APPOINTMENT_TYPE.id`}
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
                                 <option></option>
                                 {appttypes.data.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
                             </Form.Control>
@@ -232,10 +232,10 @@ function AppointmentType() {
 }
 function BenefitsFlag() {
     const { control, setValue } = useFormContext();
-    const { readOnly } = useHRFormContext();
+    const { canEdit } = useHRFormContext();
     const watchHasBenefits = useWatch({name:'payroll.ADDITIONAL_INFO.hasBenefits',control:control});
     
-    const { getListData } = useAppQueries();
+    const { getListData } = useListsQueries();
     const benefitcodes = getListData('benefitCodes');
 
     const handleSelectChange = (e,field) => {
@@ -256,7 +256,7 @@ function BenefitsFlag() {
                         control={control}
                         defaultValue="9"
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!watchHasBenefits||readOnly}>
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!watchHasBenefits||!canEdit}>
                                 {benefitcodes.data.map(b=><option key={b[0]} value={b[0]}>{b[1]}</option>)}
                             </Form.Control>
                         )}
@@ -268,9 +268,9 @@ function BenefitsFlag() {
 }
 function CheckSortCode() {
     const { control, setValue } = useFormContext();
-    const { readOnly } = useHRFormContext();
+    const { canEdit } = useHRFormContext();
 
-    const { getListData } = useAppQueries();
+    const { getListData } = useListsQueries();
     const checksortcodes = getListData('checkSortCodes');
 
     const handleSelectChange = (e,field) => {
@@ -291,7 +291,7 @@ function CheckSortCode() {
                         control={control}
                         defaultValue=""
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
                                 <option></option>
                                 {checksortcodes.data.map(c=><option key={c[0]} value={c[0]}>{c[1]}</option>)}
                             </Form.Control>
@@ -305,9 +305,9 @@ function CheckSortCode() {
 }
 function PositionJustification() {
     const { control, setValue } = useFormContext();
-    const { readOnly } = useHRFormContext();
+    const { canEdit } = useHRFormContext();
 
-    const { getListData } = useAppQueries();
+    const { getListData } = useListsQueries();
     const positionjustification = getListData('positionJustification');
 
     const handleSelectChange = (e,field) => {
@@ -328,7 +328,7 @@ function PositionJustification() {
                         control={control}
                         defaultValue=""
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
                                 <option></option>
                                 {positionjustification.data.map(j=><option key={j[0]} value={j[0]}>{j[1]}</option>)}
                             </Form.Control>

@@ -1,8 +1,22 @@
 import q from '../queries';
 import {useQuery,useMutation} from "react-query";
 import {format,parse} from "date-fns";
+import { useAuthContext } from '../app';
 
 export default function useUserQueries(SUNY_ID) {
+    const authData = useAuthContext();
+    const CURRENT_SUNY_ID = (authData.OVR_SUNY_ID)?authData.OVR_SUNY_ID:authData.SUNY_ID;
+
+    const getUser = () => {
+        return useQuery('user',q(`user/${CURRENT_SUNY_ID}`),{staleTime:Infinity,cacheTime:Infinity,onSuccess:d => {
+            return d.map(u => {
+                u.fullname = u.LEGAL_FIRST_NAME + ' ' + u.LEGAL_LAST_NAME;
+                u.sortname = u.LEGAL_LAST_NAME + ', ' + u.LEGAL_FIRST_NAME;
+            });
+        }});
+    }    
+    const getCounts = () => useQuery([CURRENT_SUNY_ID,'counts'],q('counts'));
+
     const lookupUser = (...args) => {
         const options = args[0]?.options||args[0]||{};
         return useQuery(['user',SUNY_ID],q(`user/${SUNY_ID}`),options);
@@ -57,5 +71,5 @@ export default function useUserQueries(SUNY_ID) {
         return useQuery(['usergroups',SUNY_ID],q(`usergroups/${SUNY_ID}`),options);
     }
 
-    return {lookupUser,getUsers,postUser,putUser,patchUser,deleteUser,getUserGroups};
+    return {getUser,getCounts,lookupUser,getUsers,postUser,putUser,patchUser,deleteUser,getUserGroups};
 }

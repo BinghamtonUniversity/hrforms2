@@ -1,11 +1,14 @@
 import React,{useState,useEffect} from "react";
-import {useAppQueries} from "../queries";
 import { useCookies } from "react-cookie";
 import {Alert} from "react-bootstrap";
 import htmr from "htmr";
+import { useSettingsContext } from "../app";
+import { t } from "../config/text";
+import useNewsQueries from "../queries/news";
 
 export function News() {
-    const {getNews} = useAppQueries();
+    const {general} = useSettingsContext();
+    const { getNews } = useNewsQueries();
     const news = getNews();
     const [cookies, setCookie] = useCookies();
     const [show,setShow] = useState(true);
@@ -20,11 +23,11 @@ export function News() {
         //check cookie; if news has been updated since cookie date or diff within set time frame
         const dism = cookies['hrforms2_news'] || Date.now();
         const diff = Date.now() - dism;
-        console.log(diff);
+        // 1000 = 1 sec, 60000 = 1 minute, 360000 = 1 hour
         // if dism < modifiedDateUnix: show
         // if diff == 0: show
-        // if diff > 60000: show
-        if (dism < news.data['modifiedDateUnix'] || diff == 0 || diff > 60000) {
+        // if diff > general.hideNewsExpire * 1 hour: show
+        if (dism < news.data['modifiedDateUnix'] || diff == 0 || diff > (parseInt(general.hideNewsExpire,10)*60000)) {
             setShow(true);
         } else {
             setShow(false);
@@ -33,31 +36,11 @@ export function News() {
     },[news.data]);
     if (show && news.data) {
         return (
-            <Alert variant="light" onClose={dismissNews} dismissible>
-                <Alert.Heading>News & Notices</Alert.Heading>
+            <Alert variant="light" onClose={dismissNews} dismissible={general.hideNews}>
+                <Alert.Heading>{t('home.news.heading')}</Alert.Heading>
                 {htmr(news.data.NEWS_TEXT)}
             </Alert>        
         );
     }
     return null;
 }
-
-/*export function News() {
-    const [collapsed,setCollapsed] = useState(true);
-    const {getNews} = useAppQueries();
-    const news = getNews();
-    if (news.isLoading||news.isError) return <p>Loading...</p>;
-    return (
-        <Alert variant="success">
-            <Alert.Heading className="d-flex justify-content-between" style={{marginBottom:(collapsed)?0:null}}>
-                News
-                <span id="news-collapse-toggle" className={(collapsed)?'closed':''} onClick={()=>setCollapsed(!collapsed)}><FontAwesomeIcon icon="chevron-down"/></span>
-            </Alert.Heading>
-            {news.data && 
-            <dl id="news-list" style={{display:(collapsed)?'none':'block'}}>
-                {news.data.map(n=><div key={n.NEWS_ID}><dt>{n.NEWS_TITLE}</dt><dd dangerouslySetInnerHTML={{__html:n.NEWS_TEXT}}></dd></div>)}
-            </dl>
-            }
-        </Alert>
-    );
-}*/

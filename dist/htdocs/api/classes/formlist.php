@@ -73,7 +73,7 @@ class FormList extends HRForms2 {
 				f.form_data.employment.position.positionDetails.TITLE as TITLE,
 				nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
 				f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name,
-				j.status, j.sequence, f.form_data.workflowGroups as groups,js.journal_status
+				j.status, j.sequence, f.form_data.GROUPS, js.journal_status
 				from hrforms2_forms f,
 				(select jf2.* from (select jf1.*,
 					rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
@@ -107,7 +107,7 @@ class FormList extends HRForms2 {
 				f.form_data.employment.position.positionDetails.TITLE as TITLE,
 				nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
 				f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name,
-				j.status, j.sequence, f.form_data.workflowGroups as groups,js.journal_status
+				j.status, j.sequence, f.form_data.GROUPS, js.journal_status
                 from hrforms2_forms f,
 				(select jf2.* from (select jf1.*,
 					rank() over (partition by jf1.form_id order by jf1.sequence desc) as rnk
@@ -139,7 +139,7 @@ class FormList extends HRForms2 {
 				f.form_data.employment.position.positionDetails.TITLE as TITLE,
 				nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
 				f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name, 
-				j.status, j.sequence, f.form_data.workflowGroups as groups,js.journal_status
+				j.status, j.sequence, f.form_data.GROUPS, js.journal_status
 				from hrforms2_forms f,
 				(select jf2.* from (select jf1.*,
 					rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
@@ -172,7 +172,7 @@ class FormList extends HRForms2 {
 				f.form_data.employment.position.positionDetails.TITLE as TITLE,
 				nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
 				f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name, 
-				j.status, j.sequence, f.form_data.workflowGroups as groups,js.journal_status
+				j.status, j.sequence, f.form_data.GROUPS, js.journal_status
 				from hrforms2_forms f,
 				(select jf2.* from (select jf1.*,
 					rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
@@ -206,18 +206,17 @@ class FormList extends HRForms2 {
 				f.form_data.employment.position.positionDetails.TITLE as TITLE,
 				nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
 				f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name, 
-				j.status, j.sequence, f.form_data.workflowGroups as groups,js.journal_status
+				j.status, j.sequence, f.form_data.GROUPS, js.journal_status
 				from hrforms2_forms_archive f,
 				(select jf2.* from (select jf1.*,
 					rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
 					from hrforms2_forms_journal_archive jf1
 				) jf2
-				where jf2.rnk = 1 and jf2.status = 'Z' and
-				jf2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
+				where jf2.rnk = 1 and jf2.status = 'Z') j
 				left join (select * from hrforms2_forms_workflow) w on (j.workflow_id = w.workflow_id)
 				left join (select form_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal_archive group by form_id) js on (js.form_id = j.form_id)
 				where f.form_id = j.form_id
-				and f.created_by.SUNY_ID == :suny_id";
+				and f.created_by.SUNY_ID = :suny_id";
 				break;
 
 			default:

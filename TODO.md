@@ -2,37 +2,32 @@
 Bug fixes, enhancements and things still to complete.
 
 ## Bug Fix:
-  * Pending Form View (as submitter) triggers BlockNav on exit; should not
   * Pending Form View (as submitter) create new form does not clear warning alert box.
-  * TabRouters are wrong; need to use React.memo and send ACTIVE tab, not tab.  If tab is sent all tabs are generated on load rather than only the active one.
   * SGRIILLS showing as "ERR: DUPLICATE IDs" on email notification in old HR Forms PR request.
-  * When no member of a group has email notifications approving PR will error.
   * TEST FORM: When person has no IDs (in prod: Keisha Wint, DOB: 8/23/1974)
     - Mostly works, some errors with origSalary, but may be moot because of using TEST form code.
 
-## In Progress Tasks:
-  * Email notification
-  * Rename contexts to use*Context() for consistency (see app.js)
-  * Clean up queries and remove queries.js
-  * Form: Complete Review page
-  * FormList and RequestList; drop the additional formId, requestId and just use POSTvars.
-  * Request/Forms: Finish Final Approval and Archive
-  * Change delete modals to component: ModalConfirm
-  * "globalize" icons (e.g. the "save" icon should be the same for all; this may be making buttons a component)
-  * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
-  * Hide News box on homepage for 24 hours or until new
+## Test:
+  * Request: auto-approve next code
 
-## Tasks: 
-  * Forms: Add chosen name field
+## In Progress Tasks:
+  * Email notification; auto-approved should not get emails (need to test/check this)
   * Request: Move config items into config/request.js file.
-  * Request: Control who can view/edit based on status (see TODO in file)
+  * Request|Form: Control who can view/edit based on status (see TODO in file)
+  * Change delete modals to component: ModalConfirm
+  * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
+  
+## Tasks: 
+  * Request|Form: Archived should save groups, hierarchym and workflow
+  * Request|Form: Approvals should have "save and exit" option?
+  * Request|Form: Archived list needs date filter; default should limit range?
+  * Request: User should NOT be able to approve/reject requests they submitted.
+  * FormList and RequestList; drop the additional formId, requestId and just use POSTvars.
   * Forms: Auto focus fields
-  * Request: Approver in next group auto-approve (done in forms)
   * Create list of standard hotkeys for application.
   * Users: Ability to download user list for auditing
   * Admin - Forms: Delete paytrans should check to see usage and handle
   * Switch from username to B# as primary key
-  * Request: User should NOT be able to approve/reject requests they submitted.
   * Remove last group from skip select list - cannot skip the last one.  Need to handle when changed.
   * Use Helmet to change the title of the page
   * Admin: Add default routing in settings
@@ -40,11 +35,12 @@ Bug fixes, enhancements and things still to complete.
   * Add print to PDF
   * Add CSS for printing
   * Forms: Default WF for all payrolls/forms?
-  * Forms|Requests: rejections - resubmit or delete - set back to "draft"
   * Search for "TODO" in files
+  * Search for "console.log" in files
   * DataTables:
     - Add search-by-field as needed (see groups.js)
     - Global setting for paginationRowsPerPageOptions
+  * Consolidate Title/Text of modals/confirmations - use config? i18n-next?  Can probably do something simpler.
 
 ## Upgrades:
   * Upgrade to Bootstrap v5
@@ -55,8 +51,7 @@ Bug fixes, enhancements and things still to complete.
   * Request|Form: Allow copy/create as draft from archived/submitted?
   * Add Help menu with Help, About items
   * Admin Lists: make list data an l/v pair
-  * Add setting control to allow/disabled subsequent approver skips and message.
-  * Users: Search by group in users (need to add group info in query)
+  * Users: Search/Filter by group in users (need to add group info in query)
   * Custom context (right-click) menu (https://fkhadra.github.io/react-contexify/)
   * Allow global configuration of DatePicker dateFormat
   * Allow upload of data to Admin Lists

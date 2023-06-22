@@ -11,7 +11,7 @@ const name = 'employment.separation';
 
 export default function EmploymentSeparation() {
     const { control } = useFormContext();
-    const { readOnly } = useHRFormContext();
+    const { canEdit } = useHRFormContext();
     const watchEffectiveDate = useWatch({name:'effDate',control:control});
     return (
         <article>
@@ -39,7 +39,7 @@ export default function EmploymentSeparation() {
                                 onChange={field.onChange}
                                 maxDate={(watchEffectiveDate&&subDays(watchEffectiveDate,1))}
                                 autoComplete="off"
-                                disabled={readOnly}
+                                disabled={!canEdit}
                             />}
                         />
                         <InputGroup.Append>

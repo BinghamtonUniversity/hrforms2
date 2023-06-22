@@ -5,6 +5,7 @@ import { capitalize } from "lodash";
 import { UserContext} from "../app";
 import { News } from "../blocks/news";
 import { MenuCounts } from "../blocks/components";
+import { t } from "../config/text";
 
 export default function Page() {
     return (
@@ -25,7 +26,7 @@ export default function Page() {
 function Welcome() {
     return (
         <UserContext.Consumer>
-            {({fullname}) => (<Row><Col><h2>Welcome {fullname}</h2></Col></Row>)}
+            {({fullname}) => (<Row><Col><h2>{t('home.welcome')} {fullname}</h2></Col></Row>)}
         </UserContext.Consumer>
     );
 }

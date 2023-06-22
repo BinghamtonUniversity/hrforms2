@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
-import { useAppQueries } from "../../queries";
 import useFormQueries from "../../queries/forms";
 import { get, cloneDeep } from "lodash";
 import { AppButton, CountrySelector, DateFormat, StateSelector } from "../components";
@@ -9,6 +8,7 @@ import DatePicker from "react-datepicker";
 import { addDays, addMonths, subMonths } from "date-fns";
 import { Typeahead } from "react-bootstrap-typeahead";
 import { Icon } from "@iconify/react";
+import useListsQueries from "../../queries/lists";
 
 const name = 'person.education.institutions';
 
@@ -31,7 +31,7 @@ export default function PersonEducation() {
     const [editIndex,setEditIndex] = useState();
     const [editValues,setEditValues] = useState();
 
-    const {getListData} = useAppQueries();
+    const { getListData } = useListsQueries();
     const degreeTypes = getListData('degreeTypes',{select:d=>{
         return d.map(degree=>{return {id:degree.DEGREE_TYPE_CODE,label:`${degree.DEGREE_TYPE_CODE} - ${degree.DEGREE_TYPE_DESC}`}});
     }});

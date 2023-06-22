@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useAppQueries } from "../../queries";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
@@ -9,6 +8,7 @@ import { Loading, DepartmentSelector } from "../components";
 import DatePicker from "react-datepicker";
 import { HRFormContext, useHRFormContext } from "../../config/form";
 import useFormQueries from "../../queries/forms";
+import useListsQueries from "../../queries/lists";
 
 const name = 'employment.volunteer';
 
@@ -16,7 +16,7 @@ export default function EmploymentSeparation() {
     const { control, setValue, formState: { errors } } = useFormContext();
     const [subRoleId] = useWatch({name:[`${name}.subRole.id`]});
 
-    const { getListData } = useAppQueries();
+    const { getListData } = useListsQueries();
     const subroles = getListData('volunteerSubRoles');
     const servicetypes = getListData('volunteerServiceTypes');
     const tenurestatus = getListData('tenureStatus',{enabled:subRoleId=='Instructor'});
@@ -35,7 +35,7 @@ export default function EmploymentSeparation() {
 
     return (
         <HRFormContext.Consumer>
-            {({readOnly}) => (
+            {({canEdit}) => (
                 <article>
                     <Row as="header">
                         <Col as="h3">Volunteer</Col>
@@ -50,7 +50,7 @@ export default function EmploymentSeparation() {
                                     name={`${name}.subRole.id`}
                                     control={control}
                                     render={({field}) => (
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
                                             <option></option>
                                             {subroles.data.map(r=><option key={r[0]} value={r[0]}>{r[1]}</option>)}
                                         </Form.Control>
@@ -73,7 +73,7 @@ export default function EmploymentSeparation() {
                                         closeOnScroll={true}
                                         onChange={field.onChange}
                                         autoComplete="off"
-                                        disabled={readOnly}
+                                        disabled={!canEdit}
                                     />}
                                 />
                                 <InputGroup.Append>
@@ -98,7 +98,7 @@ export default function EmploymentSeparation() {
                                         closeOnScroll={true}
                                         onChange={field.onChange}
                                         autoComplete="off"
-                                        disabled={readOnly}
+                                        disabled={!canEdit}
                                     />}
                                 />
                                 <InputGroup.Append>
@@ -120,7 +120,7 @@ export default function EmploymentSeparation() {
                                         name={`${name}.tenureStatus.id`}
                                         control={control}
                                         render={({field}) => (
-                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
+                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
                                                 <option></option>
                                                 {tenurestatus.data.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}
                                             </Form.Control>
@@ -138,7 +138,7 @@ export default function EmploymentSeparation() {
                                 defaultValue="1"
                                 control={control}
                                 rules={{min:{value:1,message:'Hours/Week cannot be less than 1'},max:{value:40,message:'Hours/Week cannot be greater than 40'}}}
-                                render={({field}) => <Form.Control {...field} type="number" min={1} max={40} isInvalid={get(errors,field.name,false)} disabled={readOnly}/>}
+                                render={({field}) => <Form.Control {...field} type="number" min={1} max={40} isInvalid={get(errors,field.name,false)} disabled={!canEdit}/>}
                             />
                             <Form.Control.Feedback type="invalid">{get(errors,`${name}.hoursPerWeek.message`,'')}</Form.Control.Feedback>
                         </Col>
@@ -153,7 +153,7 @@ export default function EmploymentSeparation() {
                                     name={`${name}.serviceType.id`}
                                     control={control}
                                     render={({field}) => (
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
                                             <option></option>
                                             {servicetypes.data.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}
                                         </Form.Control>
@@ -169,7 +169,7 @@ export default function EmploymentSeparation() {
                                 name={`${name}.department.id`}
                                 control={control}
                                 defaultValue=""
-                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={readOnly}/>}
+                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}/>}
                             />
                         </Col>
                     </Form.Group>
@@ -186,7 +186,7 @@ export default function EmploymentSeparation() {
                                 name={`${name}.duties`}
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <Form.Control {...field} as="textarea" rows={4} disabled={readOnly}/>}
+                                render={({field}) => <Form.Control {...field} as="textarea" rows={4} disabled={!canEdit}/>}
                             />
                         </Col>
                     </Form.Group>
@@ -198,7 +198,7 @@ export default function EmploymentSeparation() {
 
 function VolunteerSupervisor({fieldName,fieldLabel}) {
     const { control, getValues, setValue } = useFormContext();
-    const { readOnly } = useHRFormContext();
+    const { canEdit } = useHRFormContext();
     const [searchFilter,setSearchFilter] = useState('');
     const { getSupervisorNames } = useFormQueries();
     const supervisors = getSupervisorNames(searchFilter,{enabled:false});
@@ -231,7 +231,7 @@ function VolunteerSupervisor({fieldName,fieldLabel}) {
                         options={supervisors.data}
                         placeholder="Search for people..."
                         selected={field.value}
-                        disabled={readOnly}
+                        disabled={!canEdit}
                     />}
                 />
             </Col>

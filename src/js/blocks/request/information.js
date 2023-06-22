@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
-import { useAppQueries } from "../../queries";
 import { Icon } from "@iconify/react";
 import { useRequestContext } from "../../config/request";
+import useListsQueries from "../../queries/lists";
 
 export default function Information() {
     const { control, setValue, formState:{ errors } } = useFormContext();
@@ -13,7 +13,7 @@ export default function Information() {
 
     const [showJobDesc,setShowJobDesc] = useState(true);
     
-    const { getListData } = useAppQueries();
+    const { getListData } = useListsQueries();
     const reqtypes = getListData('reqTypes',{
         select:d=>d.filter(r=>posTypes[watchPosType]?.reqTypes.includes(r[0]))
     });

@@ -42,7 +42,7 @@ function CommentsHistory({reqId}) {
     );
 }
 
-function CommentsTable({reqId}) {
+export function CommentsTable({reqId}) {
     const {getJournal} = useRequestQueries(reqId);
     const journal = getJournal({select:d=>orderBy(d.filter(c=>{
         c.id = `${c.REQUEST_ID}_${c.SEQUENCE}`;

@@ -2,7 +2,7 @@ import q from '../queries';
 import { useQuery, useMutation } from "react-query";
 import { parse, format } from "date-fns";
 import { truncate } from 'lodash';
-import { getAuthInfo } from '../app';
+import { useAuthContext } from '../app';
 
 export default function useRequestQueries(REQUEST_ID) {
     const reqIdAsPath = (REQUEST_ID)?new String(REQUEST_ID).replaceAll('-','/'):'';
@@ -18,15 +18,11 @@ export default function useRequestQueries(REQUEST_ID) {
         return useQuery(['requests',REQUEST_ID],q(`requests/${reqIdAsPath}`),options);
     }
     const postRequest = () => useMutation(d=>q(`requests/${d.action}/${reqIdAsPath}`,'POST',d)());
-    //TODO: move from action to path?
-    //const submitRequest = () => useMutation(d=>q(`requests/submit/${reqIdAsPath}`,'POST',d)());
-    //const approveRequest = () => useMutation(d=>q(`requests/approve/${reqIdAsPath}`,'POST',d)());
-    //const rejectRequest = () => useMutation(d=>q(`requests/reject/${reqIdAsPath}`,'POST',d)());
     const putRequest = () => useMutation(d=>q(`requests/${d.action}/${reqIdAsPath}`,'PUT',d)());
     const deleteRequest = () => useMutation(d=>q(`requests/${reqIdAsPath}`,'DELETE',d)());
 
     const getRequestList = (...args) => {
-        const authData = getAuthInfo();
+        const authData = useAuthContext();
         const SUNY_ID = (authData.OVR_SUNY_ID)?authData.OVR_SUNY_ID:authData.SUNY_ID;
     
         const list = args[0]?.list||args[0];

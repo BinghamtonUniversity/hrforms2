@@ -1,9 +1,9 @@
 import React from "react";
 import { Row, Col, Table } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
-import { useAppQueries } from "../../../queries";
 import { DateFormat } from "../../components";
 import { includes } from "lodash";
+import useListsQueries from "../../../queries/lists";
 
 export default function ReviewPersonDirectory() {
     const { getValues } = useFormContext();
@@ -20,7 +20,7 @@ export default function ReviewPersonDirectory() {
     );
 }
 function ReviewPersonDirectoryAddress({data}) {
-    const {getListData} = useAppQueries();
+    const {getListData} = useListsQueries();
     const addressCodes = getListData('addressCodes');
     return (
         <section>

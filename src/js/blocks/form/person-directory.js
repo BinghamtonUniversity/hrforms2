@@ -2,13 +2,13 @@ import React, { useState, useCallback } from "react";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { get, cloneDeep, endsWith } from "lodash";
-import { useAppQueries } from "../../queries";
 import { AppButton, DateFormat, StateSelector } from "../components";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css'
 import { HRFormContext } from "../../config/form";
+import useListsQueries from "../../queries/lists";
 
 //TODO: make address form a component and pass stuff?
 //TODO: consolidate the save/edit/cancel/remove footer?
@@ -48,7 +48,7 @@ function PersonDirectoryAddresses() {
     const [editIndex,setEditIndex] = useState();
     const [editValues,setEditValues] = useState();
 
-    const {getListData} = useAppQueries();
+    const { getListData } = useListsQueries();
     const addressCodes = getListData('addressCodes');
     const buildings = getListData('buildings');
     const depts = getListData('deptOrgs');
@@ -133,10 +133,10 @@ function PersonDirectoryAddresses() {
 
     return (
         <HRFormContext.Consumer>
-            {({readOnly})=>(
+            {({canEdit})=>(
                 <article className="py-3">
                     <Row as="header">
-                        <Col as="h4">Addresses {!readOnly&&<AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
+                        <Col as="h4">Addresses {canEdit&&<AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
                     </Row>
                     {fields.map((field,index)=>(
                         <section key={field.id} className="border rounded p-2 mb-2">
@@ -278,7 +278,7 @@ function PersonDirectoryAddresses() {
                                     </Col>
                                 </Form.Group>
                             }
-                            {!readOnly &&
+                            {canEdit &&
                                 <Row>
                                     <Col className="button-group-sm">
                                         {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
@@ -298,7 +298,7 @@ function PersonDirectoryAddresses() {
                             </Row>
                         </section>
                     ))}
-                    {fields.length>0&&!readOnly && 
+                    {fields.length>0&&canEdit && 
                         <Row>
                             <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Address</AppButton></Col>
                         </Row>
@@ -322,7 +322,7 @@ function PersonDirectoryPhone() {
     const [editIndex,setEditIndex] = useState();
     const [editValues,setEditValues] = useState();
 
-    const {getListData} = useAppQueries();
+    const { getListData } = useListsQueries();
     const phoneTypes = getListData('phoneTypes');
 
     const editableType = useCallback(index => {
@@ -386,10 +386,10 @@ function PersonDirectoryPhone() {
 
     return (
         <HRFormContext.Consumer>
-            {({readOnly}) => (
+            {({canEdit}) => (
                 <article className="py-3">
                     <Row as="header">
-                        <Col as="h4">Phone Numbers {!readOnly && <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
+                        <Col as="h4">Phone Numbers {canEdit && <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
                     </Row>
                     {fields.map((field,index)=>(
                         <section key={field.id} className="border rounded p-2 mb-2">
@@ -460,7 +460,7 @@ function PersonDirectoryPhone() {
                                     </Col>
                                 </Form.Group>
                             }
-                            {!readOnly &&
+                            {canEdit &&
                                 <Row>
                                     <Col className="button-group-sm">
                                         {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
@@ -480,7 +480,7 @@ function PersonDirectoryPhone() {
                             </Row>
                         </section>
                     ))}
-                    {fields.length>0&&!readOnly && 
+                    {fields.length>0&&canEdit && 
                         <Row>
                             <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Phone</AppButton></Col>
                         </Row>
@@ -504,7 +504,7 @@ function PersonDirectoryEmail() {
     const [editIndex,setEditIndex] = useState();
     const [editValues,setEditValues] = useState();
 
-    const {getListData} = useAppQueries();
+    const { getListData } = useListsQueries();
     const emailTypes = getListData('emailTypes');
     
     const editableType = useCallback(index => {
@@ -557,10 +557,10 @@ function PersonDirectoryEmail() {
 
     return (
         <HRFormContext.Consumer>
-            {({readOnly}) => (
+            {({canEdit}) => (
                 <article className="py-3">
                     <Row as="header">
-                        <Col as="h4">Email Addresses {!readOnly && <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
+                        <Col as="h4">Email Addresses {canEdit && <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
                     </Row>
                     {fields.map((field,index)=>(
                         <section key={field.id} className="border rounded p-2 mb-2">
@@ -628,7 +628,7 @@ function PersonDirectoryEmail() {
                                     </Col>
                                 </Form.Group>
                             }
-                            {!readOnly && 
+                            {canEdit && 
                                 <Row>
                                     <Col className="button-group-sm">
                                         {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
@@ -648,7 +648,7 @@ function PersonDirectoryEmail() {
                             </Row>
                         </section>
                     ))}
-                    {fields.length>0&&!readOnly && 
+                    {fields.length>0&&canEdit && 
                         <Row>
                             <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Email</AppButton></Col>
                         </Row>

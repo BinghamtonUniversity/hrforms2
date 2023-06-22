@@ -7,9 +7,6 @@ import { NewLine } from "../review";
 export default function ReviewEmploymentPosition() {
     const { getValues } = useFormContext();
     const [position,payroll] = getValues(['employment.position','payroll']);
-    useEffect(()=>{
-        console.log(payroll);
-    },[payroll]);
     return (
         <article className="border rounded p-1 mb-2">
             <Row as="header">

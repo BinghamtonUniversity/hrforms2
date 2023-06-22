@@ -2,11 +2,11 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, useReducer } 
 import { useQueryClient } from "react-query";
 import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
-import {useAppQueries} from "../../queries";
+import useSessionQueries from "../../queries/session";
 import { Loading, ModalConfirm, AppButton, errorToast, DescriptionPopover } from "../../blocks/components";
-import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert, InputGroup } from "react-bootstrap";
+import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup } from "react-bootstrap";
 import { Icon } from "@iconify/react";
-import { orderBy, sortBy, difference, capitalize, startsWith, get } from "lodash";
+import { orderBy, sortBy, difference, capitalize, startsWith } from "lodash";
 import DataTable from 'react-data-table-component';
 import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
 import DatePicker from "react-datepicker";
@@ -16,7 +16,9 @@ import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useParams, useHistory, Link } from "react-router-dom";
 import { pick } from "lodash";
-import { useAuthContext } from "../../app";
+import { NotFound, useAuthContext } from "../../app";
+import { t } from "../../config/text";
+import { flattenObject } from "../../utility";
 
 const defaultVals = {
     SUNYID:'',
@@ -41,7 +43,7 @@ export default function AdminUsers() {
     return (
         <>
             <Row>
-                <Col><h2>Admin: Users <AppButton format="add-user" onClick={()=>setNewUser(true)}>Add New</AppButton></h2></Col>
+                <Col><h2>{t('admin.users.title')} <AppButton format="add-user" onClick={()=>setNewUser(true)}>Add New</AppButton></h2></Col>
             </Row>
             <Row>
                 <Col>
@@ -249,7 +251,7 @@ function ImpersonateUser({user,setImpersonateUser}) {
 
     const history = useHistory();
     const queryclient = useQueryClient();
-    const {patchSession} = useAppQueries();
+    const { patchSession } = useSessionQueries();
     const mutation = patchSession();
 
     const buttons = {
@@ -494,7 +496,7 @@ function AddEditUserForm(props) {
                             {tabs.map(t=>(
                                 <Tab key={t.id} eventKey={t.id} title={t.title}>
                                     <Container className="mt-3" fluid>
-                                        <TabRouter tab={t.id} newUser={props.newUser} setStatus={setStatus} closeModal={closeModal}/>
+                                        <TabRouter tab={activeTab} newUser={props.newUser} setStatus={setStatus} closeModal={closeModal}/>
                                     </Container>
                                 </Tab>
                             ))}
@@ -502,8 +504,8 @@ function AddEditUserForm(props) {
                     </Modal.Body>
                     <Modal.Footer>
                         {status.state != 'error' && <p>{status.message}</p>}
-                        <Button variant="secondary" onClick={closeModal}  disabled={!status.cancel}>Cancel</Button>
-                        <Button variant="danger" type="submit"disabled={!(status.save&&Object.keys(methods.formState.errors).length==0)}>{status.icon && <Icon icon={status.icon} className={status.spin?'spin':''}/>}Save</Button>
+                        <AppButton format="close" onClick={closeModal}  disabled={!status.cancel}>Cancel</AppButton>
+                        <AppButton format="save" type="submit" disabled={!(status.save&&Object.keys(methods.formState.errors).length==0)} icon={status.icon} spin={status.spin}>Save</AppButton>
                     </Modal.Footer>
                 </Form>
             </FormProvider>
@@ -511,13 +513,13 @@ function AddEditUserForm(props) {
     );
 }
 
-function TabRouter({tab,newUser,setStatus,closeModal}) {
+const TabRouter = React.memo(({tab,newUser,setStatus,closeModal}) => {
     switch(tab) {
         case "info": return <UserInfo newUser={newUser} setStatus={setStatus} closeModal={closeModal}/>;
         case "groups": return <UserGroups/>;
-        default: return <p>{tab}</p>;
+        default: return <NotFound/>;
     }
-}
+});
 
 function UserInfo({newUser,setStatus,closeModal}) {
     const lookupStateDefault = {
@@ -630,7 +632,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
                                 render={({field}) => <Form.Control {...field} ref={ref} type="text" placeholder="Search for SUNY ID" aria-label="Search for SUNY ID" aria-describedby="basic-addon" onKeyDown={handleKeyDown} onChange={e=>handleChange(e,field)} isInvalid={errors.SUNYID}/>}
                             />
                             <InputGroup.Append>
-                                <Button variant={lookupState.variant} className="no-label" title="Search" onClick={handleLookup}><Icon icon={lookupState.icon} className={lookupState.spin&&'spin'}/></Button>
+                                <AppButton format="search" variant={lookupState.variant} title="Search" onClick={handleLookup} icon={lookupState.icon} spin={lookupState.spin}></AppButton>
                             </InputGroup.Append>
                             <Form.Control.Feedback type="invalid">{errors.SUNYID?.message}</Form.Control.Feedback>
                         </InputGroup>
@@ -759,16 +761,42 @@ function UserInfo({newUser,setStatus,closeModal}) {
 }
 
 function UserGroups() {
+    const ref = useRef();
+    const [filterText,setFilterText] = useState('');
+    const [filteredGroups,setFilteredGroups] = useState([]);
+    const { getValues} = useFormContext();
+    const handleOnKeyDown = e => {
+        if (e.key == 'Escape') {
+            e.stopPropagation();
+            setFilterText('');
+        }
+    }
+    const handleOnChange = e => setFilterText(e.target.value);
+    useEffect(() => {
+        const filtered = getValues('availableGroups').filter(row =>{
+            return Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
+        }).map(f=>f.GROUP_ID);
+        setFilteredGroups(filtered);
+    },[filterText]);
+    useEffect(()=>ref.current.focus(),[]);
     return (
-        <div className="drag-col-2">
-            <div className="dlh1">Unassigned Groups</div>
-            <div className="dlh2">Assigned Groups</div>
-            <UserGroupsList/>
-        </div>
+        <>
+            <Form.Row>
+                <Form.Group as={Col}>
+                    <Form.Label>Filter Groups:</Form.Label>
+                    <Form.Control ref={ref} type="search" placeholder="filter available groups..." value={filterText} onChange={handleOnChange} onKeyDown={handleOnKeyDown}/>
+                </Form.Group>
+            </Form.Row>
+            <div className="drag-col-2">
+                <div className="dlh1">Unassigned Groups</div>
+                <div className="dlh2">Assigned Groups</div>
+                <UserGroupsList filteredGroups={filteredGroups} filterText={filterText}/>
+            </div>
+        </>
     );
 }
 
-function UserGroupsList() {
+function UserGroupsList({filteredGroups,filterText}) {
     const { control } = useFormContext();
     const { insert:insertAssignedGroups, remove:removeAssignedGroups } = useFieldArray({control:control,name:'assignedGroups'});
     const { insert:insertAvailableGroups, remove:removeAvailableGroups } = useFieldArray({control:control,name:'availableGroups'});
@@ -798,22 +826,25 @@ function UserGroupsList() {
             <Droppable droppableId="available">
                 {(provided, snapshot) => ( 
                     <div ref={provided.innerRef} className={`droplist dl1 ${snapshot.isDraggingOver?'over':''}`}>
-                        {availablegroups.map((g,i) => (
-                            <Draggable key={g.GROUP_ID} draggableId={g.GROUP_ID} index={i}>
-                                {(provided,snapshot) => (
-                                    <div
-                                        ref={provided.innerRef} 
-                                        {...provided.draggableProps} 
-                                        {...provided.dragHandleProps}
-                                        className={snapshot.isDragging?'dragging':''}
-                                        onDoubleClick={handleDblClick}
-                                        data-list="available" data-idx={i}
-                                    >
-                                        {g.GROUP_NAME}
-                                    </div>
-                                )}
-                            </Draggable>
-                        ))}
+                        {availablegroups.map((g,i) => {
+                            if (filterText&&!filteredGroups.includes(g.GROUP_ID)) return null;
+                            return (
+                                <Draggable key={g.GROUP_ID} draggableId={g.GROUP_ID} index={i}>
+                                    {(provided,snapshot) => (
+                                        <div
+                                            ref={provided.innerRef} 
+                                            {...provided.draggableProps} 
+                                            {...provided.dragHandleProps}
+                                            className={snapshot.isDragging?'dragging':''}
+                                            onDoubleClick={handleDblClick}
+                                            data-list="available" data-idx={i}
+                                        >
+                                            {g.GROUP_NAME}
+                                        </div>
+                                    )}
+                                </Draggable>
+                            );
+                        })}
                         {provided.placeholder}
                     </div>
                 )}

@@ -38,7 +38,8 @@ class RequestList extends HRForms2 {
 				break;
 
 			case "approvals":
-				$qry = "select r.request_id, r.created_by.SUNY_ID, to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
+				$qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id, 
+				to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
 				j.status, j.sequence, w.groups,js.journal_status
@@ -55,7 +56,8 @@ class RequestList extends HRForms2 {
 				and r.created_by.SUNY_ID != :suny_id";
 				break;
 			case "rejections":
-				$qry = "select r.request_id, r.created_by.SUNY_ID, to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
+				$qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id, 
+				to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
 				j.status, j.sequence, w.groups,js.journal_status
@@ -72,7 +74,8 @@ class RequestList extends HRForms2 {
 				break;
 			case "pending":
 				//TODO: exclude "final/completed/archived"; get LAST status and exclude
-				$qry = "select r.request_id, r.created_by.SUNY_ID, to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
+				$qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id,
+				to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
 				j.status, j.sequence, w.groups,js.journal_status
@@ -87,7 +90,8 @@ class RequestList extends HRForms2 {
 				where r.request_id = j.request_id";
 				break;
 			case "final":
-				$qry = "select r.request_id, r.created_by.SUNY_ID, to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
+				$qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id, 
+				to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
 				j.status, j.sequence, w.groups,js.journal_status
@@ -104,7 +108,8 @@ class RequestList extends HRForms2 {
 				and r.created_by.SUNY_ID != :suny_id";
 				break;
 			case "archived":
-				$qry = "select r.request_id, r.created_by.SUNY_ID, to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
+				$qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id,
+				 to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
 				j.status, j.sequence, w.groups,js.journal_status
@@ -113,8 +118,7 @@ class RequestList extends HRForms2 {
 					rank() over (partition by jr1.request_id order by jr1.journal_date desc) as rnk
 					from hrforms2_requests_journal_archive jr1
 				) jr2
-				where jr2.rnk = 1 and jr2.status ='Z' and
-				jr2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
+				where jr2.rnk = 1 and jr2.status ='Z') j
 				left join (select workflow_id, groups from hrforms2_requests_workflow) w on (j.workflow_id = w.workflow_id)
 				left join (select request_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
 				where r.request_id = j.request_id

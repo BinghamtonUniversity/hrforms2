@@ -1,16 +1,20 @@
-import React,{useContext,useState,useEffect,lazy,Suspense} from "react";
-import {Switch,Route,useLocation,useHistory} from "react-router-dom";
-import {useQueryClient} from "react-query";
-import {Container,Button,Alert} from "react-bootstrap";
+import React,{ useContext, useState, useEffect, lazy, Suspense } from "react";
+import { Switch, Route, useLocation, useHistory } from "react-router-dom";
+import { useQueryClient } from "react-query";
+import { ReactQueryDevtools } from 'react-query/devtools'
+import { Container, Alert } from "react-bootstrap";
 import { ToastContainer } from "react-toastify";
-import {useScrollPosition} from "@n8tb1t/use-scroll-position";
+import { useScrollPosition } from "@n8tb1t/use-scroll-position";
 import { ErrorBoundary } from "react-error-boundary";
 import head from "lodash/head";
 import { Icon, loadIcons } from '@iconify/react';
-import {useAppQueries,useUserQueries} from "./queries";
+import useUserQueries from "./queries/users";
 import AppNav from "./blocks/appnav";
 import Footer from "./blocks/footer";
 import AppHotKeys from "./blocks/apphotkeys";
+import { AppButton, formats } from "./blocks/components";
+import useSettingsQueries from "./queries/settings";
+import useSessionQueries from "./queries/session";
 
 /* PAGES */
 const Home = lazy(()=>import("./pages/home"));
@@ -30,26 +34,24 @@ export const UserContext = React.createContext();
 UserContext.displayName = 'UserContext';
 export const SettingsContext = React.createContext();
 SettingsContext.displayName = 'SettingsContext';
+export const TextContext = React.createContext();
+TextContext.displayName = 'TextContext';
 
-export function getAuthInfo() { return useContext(AuthContext); } // TODO: rename to useAuthContext
 export function useAuthContext() { return useContext(AuthContext); }
-export function currentUser() { return useContext(UserContext); } // TODO: rename to useUserContext; consistency across libraries
 export function useUserContext() { return useContext(UserContext); } 
-export function getSettings() { return useContext(SettingsContext); } //TODO: rename to useAuthContext
 export function useSettingsContext() { return useContext(SettingsContext); }
-
-//export function getNavContext() { return useContext(NavContext); } // do we need this?  can't we import useContext from react and import NavContext from app?
-
-/* QUERIES */
-//const {getSession,getUser,deleteSession} = useAppQueries();
+export function useTextContext() { return useContext(TextContext); }
 
 /* Pre-Load Iconify Icons */
 function loadAppIcons(icons) {
     return new Promise((resolve,reject) => {
         loadIcons(icons,(loaded,missing,pending,unsubscribe) => {
-            console.log(loaded,missing,pending);
+            console.debug('Pre-Loaded Icons: ',loaded);
             if (pending.length) return;
-            if (missing.length) reject({loaded,missing});
+            if (missing.length) {
+                console.warn('Missing Icons: ',missing);
+                reject({loaded,missing});
+            }
             resolve({loaded});
         });
     });
@@ -78,18 +80,13 @@ const LoggedOutApp = React.memo(() => (
 
 export default function StartApp() {
     const [authData,setAuthData] = useState();
-
-    const {getSession,getSettings} = useAppQueries();
+    const { getSession } = useSessionQueries();
+    const { getSettings } = useSettingsQueries();
 
     const session = getSession();
     const settings = getSettings({
         enabled:session.isSuccess,
-        onSettled:() => {
-            console.log('settings loaded, load icons?');
-            loadAppIcons(['mdi:chevron-right','mdi:chevron-down']).then(()=>{
-                console.log('icons loaded');
-            });
-        }
+        onSettled:() => loadAppIcons(Object.keys(formats).map(k=>formats[k]?.icon))
     });
 
     useEffect(() => {
@@ -101,9 +98,12 @@ export default function StartApp() {
         return (
             <SettingsContext.Provider value={{...settings.data}}>
                 <AuthContext.Provider value={{...authData}}>
-                    <ErrorBoundary FallbackComponent={AppErrorFallback}>
-                        <AppContent SUNY_ID={authData.SUNY_ID} OVR_SUNY_ID={authData.OVR_SUNY_ID}/>
-                    </ErrorBoundary>
+                    <TextContext.Provider value={{}}>
+                        <ErrorBoundary FallbackComponent={AppErrorFallback}>
+                            <AppContent SUNY_ID={authData.SUNY_ID} OVR_SUNY_ID={authData.OVR_SUNY_ID}/>
+                            {(session.data?.DEBUG&&session.data?.isAdmin) && <ReactQueryDevtools initialIsOpen={false} />}
+                        </ErrorBoundary>
+                    </TextContext.Provider>
                 </AuthContext.Provider>
             </SettingsContext.Provider>
         );
@@ -113,11 +113,9 @@ export default function StartApp() {
 
 function AppContent({SUNY_ID,OVR_SUNY_ID}) {
     const queryclient = useQueryClient();
-    const {getUser,getCounts} = useUserQueries();
+    const { getUser } = useUserQueries();
     const user = getUser();
-    //const counts = getCounts({enabled:false});
     const [userData,setUserData] = useState();
-    //add counts to UserContext?
     useEffect(() => {
         setUserData(head(user.data));
         queryclient.refetchQueries(SUNY_ID);
@@ -194,7 +192,7 @@ export function ErrorFallback({error}) {
 function ImpersonationAlert({SUNY_ID,fullname}) {
     const history = useHistory();
     const queryclient = useQueryClient();
-    const {patchSession} = useAppQueries();
+    const { patchSession } = useSessionQueries();
     const mutation = patchSession();
 
     const endImpersonation = () => {
@@ -230,7 +228,7 @@ const ScrollToTop = React.memo(function ScrollToTop() {
     }
     if (!show) return null;
     return (
-        <Button onClick={scrollTop} variant="secondary" size="lg" className="toTop" title="Scroll to top"><Icon icon="mdi:chevron-up" style={{margin:0,fontSize:'32px'}}/></Button>
+        <AppButton format="top" onClick={scrollTop} size="lg" className="toTop" title="Scroll to top"></AppButton>        
     );
 });
 

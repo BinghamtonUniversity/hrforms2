@@ -2,7 +2,7 @@ import q from '../queries';
 import {useQuery,useMutation} from "react-query";
 import { parse, format } from "date-fns";
 import { truncate } from 'lodash';
-import { getAuthInfo } from '../app';
+import { useAuthContext } from '../app';
 
 export default function useFormQueries(FORM_ID) {
     const formIdAsPath = (FORM_ID)?new String(FORM_ID).replaceAll('-','/'):'';
@@ -37,7 +37,7 @@ export default function useFormQueries(FORM_ID) {
     const deleteForm = () => useMutation(d=>q(`forms/${formIdAsPath}`,'DELETE',d)());
 
     const getFormList = (...args) => {
-        const authData = getAuthInfo();
+        const authData = useAuthContext();
         const SUNY_ID = (authData.OVR_SUNY_ID)?authData.OVR_SUNY_ID:authData.SUNY_ID;
     
         const list = args[0]?.list||args[0];

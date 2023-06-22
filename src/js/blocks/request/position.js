@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useAppQueries } from "../../queries";
 import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import { useRequestContext } from "../../config/request";
+import useListsQueries from "../../queries/lists";
 
 export default function Position() {
     const { control, getValues, setValue, formState:{ errors }} = useFormContext();
@@ -16,7 +16,7 @@ export default function Position() {
     const isMultiLine = useWatch({name:'multiLines',control:control});
     const watchFTE = useWatch({name:'fte',control:control})||100;
 
-    const { getListData } = useAppQueries();
+    const { getListData } = useListsQueries();
     const paybasistypes = getListData('payBasisTypes',{enabled:!!posType,
         select:d=>d.filter(p=>posTypes[posType]?.payBasisTypes.includes(p[0]))});
     const titles = getListData(posTypes[posType]?.budgetTitlesList,{enabled:!!posType});

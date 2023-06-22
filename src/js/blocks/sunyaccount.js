@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Row, Col, Form, InputGroup, Button, Table } from "react-bootstrap";
+import { Row, Col, Form, InputGroup, Table } from "react-bootstrap";
 import { Controller, useWatch, useFieldArray, useFormContext } from "react-hook-form";
-import { useAppQueries } from "../queries";
 import { Typeahead } from "react-bootstrap-typeahead";
-import { Icon } from '@iconify/react';
 import { get, camelCase } from "lodash";
-import { Loading } from "./components";
+import { AppButton, Loading } from "./components";
+import useListsQueries from "../queries/lists";
 
 export default function SUNYAccount(props) {
     const name = props.name||'SUNYAccounts';
@@ -14,7 +13,7 @@ export default function SUNYAccount(props) {
 
     const [showSplit,setShowSplit] = useState(false);
 
-    const {getListData} = useAppQueries();
+    const { getListData } = useListsQueries();
     const accounts = getListData('accounts',{select:d=>{
         return d.map(a=>{return {id:a.ACCOUNT_CODE,label:`${a.ACCOUNT_CODE} - ${a.ACCOUNT_DESCRIPTION}`}});
     }});
@@ -77,7 +76,7 @@ export default function SUNYAccount(props) {
                             />
                             {!props.noSplit &&
                                 <InputGroup.Append>
-                                    <Button variant={(showSplit)?'secondary':'primary'} onClick={()=>toggleSplit()} disabled={props.disabled}>Split</Button>
+                                    <AppButton format="none" variant={(showSplit)?'secondary':'primary'} onClick={()=>toggleSplit()} disabled={props.disabled}>Split</AppButton>
                                 </InputGroup.Append>
                             }
                         </InputGroup>
@@ -92,7 +91,7 @@ export default function SUNYAccount(props) {
 export function SingleSUNYAccount(props) {
     const {control, getValues, setValue } = useFormContext();
 
-    const {getListData} = useAppQueries();
+    const { getListData } = useListsQueries();
     const accounts = getListData('accounts',{select:d=>{
         return d.map(a=>{return {id:a.ACCOUNT_CODE,label:`${a.ACCOUNT_CODE} - ${a.ACCOUNT_DESCRIPTION}`}});
     }});
@@ -163,8 +162,8 @@ function SplitTable({accounts,fields,splitAction,handleBlur,disabled,name}) {
                             <td className="align-middle">
                                 {index >0 && 
                                     <div className="button-group">
-                                        <Button className="no-label" variant="success" size="sm" onClick={()=>splitAction('add',index)} tabIndex="-1"><Icon icon="mdi:plus"/></Button>
-                                        <Button className="no-label" variant="danger" size="sm" onClick={()=>splitAction('remove',index)} tabIndex="-1"><Icon icon="mdi:minus"/></Button>
+                                        <AppButton format="add" size="sm" onClick={()=>splitAction('add',index)} tabIndex="-1"></AppButton>
+                                        <AppButton format="remove" size="sm" onClick={()=>splitAction('remove',index)} tabIndex="-1"></AppButton>
                                     </div>
                                 }
                             </td>
