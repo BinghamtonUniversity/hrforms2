@@ -4,8 +4,8 @@ import { HRFormContext } from "../../config/form";
 import { Row, Col, Form, InputGroup} from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
-import { useAppQueries } from "../../queries";
 import { Loading, CurrencyFormat } from "../components";
+import useListsQueries from "../../queries/lists";
 
 const name = 'employment.leave';
 
@@ -16,7 +16,7 @@ export default function EmploymentLeave() {
 
     const handleRangeChange = e => setValue(`${name}.leavePercent`,e.target.value);
 
-    const { getListData } = useAppQueries();
+    const { getListData } = useListsQueries();
     const justification = getListData('leaveJustification');
 
     const handleSelectChange = (e,field) => {
@@ -33,7 +33,7 @@ export default function EmploymentLeave() {
 
     return (
         <HRFormContext.Consumer>
-            {({readOnly}) => (
+            {({canEdit}) => (
                 <article>
                     <Row as="header">
                         <Col as="h3">Leave</Col>
@@ -59,11 +59,11 @@ export default function EmploymentLeave() {
                                 defaultValue="0"
                                 control={control}
                                 rules={{min:{value:0,message:'Leave Percent cannot be less than 0%'},max:{value:100,message:'Leave Percent cannot be greater than 100%'}}}
-                                render={({field}) => <Form.Control {...field} type="number" min={0} max={100} disabled={readOnly}/>}
+                                render={({field}) => <Form.Control {...field} type="number" min={0} max={100} disabled={!canEdit}/>}
                             />
                         </Col>
                         <Col sm={8} md={6} className="pt-2">
-                            <Form.Control type="range" name="leavePercentRange" id="leavePercentRange" min={0} max={100} value={watchLeavePercent} onChange={handleRangeChange} disabled={readOnly}/>
+                            <Form.Control type="range" name="leavePercentRange" id="leavePercentRange" min={0} max={100} value={watchLeavePercent} onChange={handleRangeChange} disabled={!canEdit}/>
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row}>
@@ -89,7 +89,7 @@ export default function EmploymentLeave() {
                                         closeOnScroll={true}
                                         onChange={field.onChange}
                                         autoComplete="off"
-                                        disabled={readOnly}
+                                        disabled={!canEdit}
                                     />}
                                 />
                                 <InputGroup.Append>
@@ -110,7 +110,7 @@ export default function EmploymentLeave() {
                                     name={`${name}.justification.id`}
                                     control={control}
                                     render={({field}) => (
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
                                             <option></option>
                                             {justification.data.map(j=>!j.excludePayrolls.includes(watchPayroll)&&<option key={j.id} value={j.id}>{j.title}</option>)}
                                         </Form.Control>

@@ -5,9 +5,10 @@ import { parse, format } from "date-fns";
 import { invoke, get, capitalize, isDate } from "lodash";
 import { Icon } from '@iconify/react';
 import { SettingsContext, useSettingsContext, useAuthContext } from "../app";
-import { useUserQueries, useAppQueries } from "../queries";
+import useUserQueries from "../queries/users";
 import CheckboxTree from 'react-checkbox-tree';
 import { useLocation } from "react-router-dom";
+import useListsQueries from "../queries/lists";
 
 /** Table Of Contents * 
  * 
@@ -47,9 +48,13 @@ export const formats = {
     'delete':{icon:'mdi:delete',variant:'danger'},
     'edit':{icon:'mdi:pencil',variant:'primary'},
     'expand':{icon:'mdi:chevron-right',variant:'secondary'},
+    'exit':{icon:'mdi:arrow-left-circle',variant:'danger'},
     'impersonate':{icon:'mdi:account-switch',variant:'primary'},
+    'info':{icon:'mdi:information-variant-circle-outline',variant:'primary'},
     'loading':{icon:'mdi:loading',variant:'secondary',spin:true},
     'next':{icon:'mdi:arrow-right-thick',variant:'primary'},
+    'previous':{icon:'mdi:arrow-left-thick',variant:'secondary'},
+    'remove':{icon:'mdi:minus',variant:'danger'},
     'reject':{icon:'mdi:close-circle',variant:'danger'},
     'run':{icon:'mdi:run',variant:'danger'},
     'save':{icon:'mdi:content-save',variant:'primary'},
@@ -57,8 +62,10 @@ export const formats = {
     'saving':{icon:'mdi:loading',variant:'primary',spin:true},
     'search':{icon:'mdi:magnify',variant:'primary'},
     'submit':{icon:'mdi:content-save-check',variant:'primary'},
+    'top':{icon:'mdi:chevron-up',variant:'secondary'},
     'undo':{icon:'mdi:undo',variant:'secondary'},
     'upload':{icon:'mdi:file-upload',variant:'secondary'},
+    'view':{icon:'mdi:eye-arrow-right',variant:'primary'},
 };
 
 const Loading = React.memo(function Loading({children,className='',isError,error,variant,type}){
@@ -228,7 +235,7 @@ const CheckboxTreeComponent = props => {
 }
 
 const StateSelector = ({field,...props}) => {
-    const { getListData } = useAppQueries();
+    const { getListData } = useListsQueries();
     const states = getListData('states');
     return (
         <>
@@ -245,7 +252,7 @@ const StateSelector = ({field,...props}) => {
 }
 
 const CountrySelector = ({field,...props}) => {
-    const { getListData } = useAppQueries();
+    const { getListData } = useListsQueries();
     const countryCodes = getListData('countryCodes');
     return (
         <>
@@ -262,7 +269,7 @@ const CountrySelector = ({field,...props}) => {
 }
 
 const DepartmentSelector = ({field,...props}) => {
-    const { getListData } = useAppQueries();
+    const { getListData } = useListsQueries();
     const departments = getListData('deptOrgs');
     return (
         <>

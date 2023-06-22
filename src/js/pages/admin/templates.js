@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Row, Col, Form, Alert } from "react-bootstrap";
 import { AppButton } from "../../blocks/components";
-import useAdminQueries from "../../queries/admin";
+import useTemplateQueries from "../../queries/template";
 import { Loading, errorToast } from "../../blocks/components";
 import { toast } from "react-toastify";
 import { useForm, Controller } from "react-hook-form";
@@ -9,17 +9,18 @@ import JoditEditor from "jodit-react";
 import { editorConfig } from "../../config";
 import { useSettingsContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
+import { t } from "../../config/text";
 
 export default function AdminTemplates() {
     const [selectedTemplate,setSelectedTemplate] = useState('');
-    const { getTemplateList } = useAdminQueries();
+    const { getTemplateList } = useTemplateQueries();
     const lists = getTemplateList();
     return (
         <section>
             <section>
                 <header className="mb-4">
                     <Row>
-                        <Col><h2>Admin: Templates</h2></Col>
+                        <Col><h2>{t('admin.templates.title')}</h2></Col>
                     </Row>
                     <Row>
                         <Col>
@@ -70,7 +71,7 @@ function EditTemplate({selectedTemplate,setSelectedTemplate}) {
         TEMPLATE_STATUS_CODE:'',
         TEMPLATE:''
     }});
-    const { getTemplate, patchTemplate } = useAdminQueries();
+    const { getTemplate, patchTemplate } = useTemplateQueries();
     const template = getTemplate(selectedTemplate,{onSuccess:d=>{
         Object.keys(d).forEach(k=>setValue(k,d[k]));
         setLocked(d.PROTECTED);

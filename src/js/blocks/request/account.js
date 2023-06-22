@@ -1,17 +1,17 @@
 import React from "react";
 import { Row, Col, Form } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
-import { useAppQueries } from "../../queries";
 import { Loading } from "../components";
 import SUNYAccount from "../sunyaccount";
 import { useRequestContext } from "../../config/request";
+import useListsQueries from "../../queries/lists";
 
 export default function Account() {
     const {control,formState:{errors}} = useFormContext();
     const { canEdit } = useRequestContext();
     const posType = useWatch({name:'posType',control:control});
 
-    const {getListData} = useAppQueries();
+    const {getListData} = useListsQueries();
     const orgs = getListData('deptOrgs');
     return (
         <>

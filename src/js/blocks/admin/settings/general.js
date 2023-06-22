@@ -1,13 +1,46 @@
 import React from "react";
 import { Form, Row, Col, Table } from "react-bootstrap";
-import { useFormContext, Controller } from "react-hook-form";
+import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { useSettingsContext } from "../../../app";
 
 export default function SettingsGeneral() {
     const {control,formState:{errors}} = useFormContext();
+    const watchHideNews = useWatch({name:'general.hideNews'});
     return (
         <>
             <section>
+                <Form.Group as={Row}>
+                    <Form.Label column md={2}>Allow Hide News:</Form.Label>
+                    <Col xs="auto">
+                        <Controller
+                            name="general.hideNews"
+                            control={control}
+                            defaultValue="Y"
+                            render={({field}) => (
+                                <>
+                                    <Form.Check {...field} inline type="checkbox" checked={field.value} onChange={e=>field.onChange(e.target.checked)}/>
+                                    <Form.Text id="hideNewsHelp" muted>Allow users to hide news on home page.  Updating news content will show news again.</Form.Text>
+                                </>
+                            )}
+                        />
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row}>
+                    <Form.Label column md={2}>Hide News Expire:</Form.Label>
+                    <Col xs="auto">
+                        <Controller
+                            name="general.hideNewsExpire"
+                            control={control}
+                            defaultValue={24}
+                            render={({field}) => (
+                                <>
+                                    <Form.Control {...field} type="number" disabled={!watchHideNews}/>
+                                    <Form.Text id="hideNewsExpireHelp" muted>Amount of time (in hours) before the news will be displayed to the user after hiding (0 = no expiration)</Form.Text>
+                                </>
+                            )}
+                        />
+                    </Col>
+                </Form.Group>
                 <Form.Group as={Row}>
                     <Form.Label column md={2}>Draft Limit:</Form.Label>
                     <Col xs="auto">

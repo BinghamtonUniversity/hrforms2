@@ -3,11 +3,11 @@ import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { HRFormContext, useHRFormContext } from "../../config/form";
-import { useAppQueries } from "../../queries";
 import useFormQueries from "../../queries/forms";
 import { Loading, DepartmentSelector } from "../components";
 import { Icon } from "@iconify/react";
 import DatePicker from "react-datepicker";
+import useListsQueries from "../../queries/lists";
 
 const baseName = 'employment.appointment';
 
@@ -26,7 +26,7 @@ export default function EmploymentAppointment() {
 
     const handleRangeChange = e => setValue(`${baseName}.TERM_DURATION`,e.target.value);
 
-    const {getListData} = useAppQueries();
+    const { getListData } = useListsQueries();
     const tenure = getListData('tenureStatus');
 
     const handleSelectChange = (e,field) => {
@@ -43,7 +43,7 @@ export default function EmploymentAppointment() {
     },[watchFields]);
     return (
         <HRFormContext.Consumer>
-            {({showInTest,testHighlight,readOnly}) => (
+            {({showInTest,testHighlight,canEdit}) => (
                 <article className="mt-3">
                     <Row as="header">
                         <Col as="h3">Appointment Details</Col>
@@ -58,8 +58,8 @@ export default function EmploymentAppointment() {
                                     control={control}
                                     render={({field}) => (
                                         <>
-                                            <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'} disabled={readOnly}/>
-                                            <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!='Y'} disabled={readOnly}/>
+                                            <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'} disabled={!canEdit}/>
+                                            <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!='Y'} disabled={!canEdit}/>
                                         </>
                                     )}
                                 />
@@ -78,7 +78,7 @@ export default function EmploymentAppointment() {
                                         control={control}
                                         render={({field}) => (
                                             <>
-                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
+                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
                                                     <option></option>
                                                     {tenure.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
                                                 </Form.Control>
@@ -98,11 +98,11 @@ export default function EmploymentAppointment() {
                                     defaultValue=""
                                     control={control}
                                     rules={{min:{value:1,message:'Term Duration cannot be less than 0'},max:{value:5,message:'Term Duration cannot be greater than 5'}}}
-                                    render={({field}) => <Form.Control {...field} type="number" min={1} max={5} disabled={readOnly}/>}
+                                    render={({field}) => <Form.Control {...field} type="number" min={1} max={5} disabled={!canEdit}/>}
                                 />
                             </Col>
                             <Col sm={8} md={6} className="pt-2">
-                                <Form.Control type="range" name="termDurationRange" id="termDurationRange" min={1} max={5} value={watchTermDuration} onChange={handleRangeChange} disabled={readOnly}/>
+                                <Form.Control type="range" name="termDurationRange" id="termDurationRange" min={1} max={5} value={watchTermDuration} onChange={handleRangeChange} disabled={!canEdit}/>
                             </Col>
                         </Form.Group>
                     }
@@ -122,7 +122,7 @@ export default function EmploymentAppointment() {
                                             closeOnScroll={true}
                                             onChange={field.onChange}
                                             autoComplete="off"
-                                            disabled={readOnly}
+                                            disabled={!canEdit}
                                         />}
                                     />
                                     <InputGroup.Append>
@@ -147,7 +147,7 @@ export default function EmploymentAppointment() {
                                             closeOnScroll={true}
                                             onChange={field.onChange}
                                             autoComplete="off"
-                                            disabled={readOnly}
+                                            disabled={!canEdit}
                                         />}
                                     />
                                     <InputGroup.Append>
@@ -166,7 +166,7 @@ export default function EmploymentAppointment() {
                             <Controller
                                 name={`${baseName}.CAMPUS_TITLE`}
                                 control={control}
-                                render={({field})=><Form.Control {...field} type="text" disabled={readOnly}/>}
+                                render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
                             />
                         </Col>
                     </Form.Group>
@@ -180,7 +180,7 @@ export default function EmploymentAppointment() {
                                 name={`${baseName}.REPORTING_DEPARTMENT_CODE.id`}
                                 control={control}
                                 defaultValue=""
-                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={readOnly}/>}
+                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}/>}
                             />
                         </Col>
                     </Form.Group>
@@ -195,7 +195,7 @@ export default function EmploymentAppointment() {
 }
 function AppointmentSupervisor() {
     const { control, getValues, setValue } = useFormContext();
-    const { readOnly } = useHRFormContext();
+    const { canEdit } = useHRFormContext();
     const [searchFilter,setSearchFilter] = useState('');
     const { getSupervisorNames } = useFormQueries();
     const supervisors = getSupervisorNames(searchFilter,{enabled:false});
@@ -228,7 +228,7 @@ function AppointmentSupervisor() {
                         options={supervisors.data}
                         placeholder="Search for supervisor..."
                         selected={field.value}
-                        disabled={readOnly}
+                        disabled={!canEdit}
                     />}
                 />
             </Col>
@@ -245,7 +245,7 @@ function FacultyDetails({watchFaculty}) {
 
     return (
         <HRFormContext.Consumer>
-            {({testHighlight,readOnly}) => (
+            {({testHighlight,canEdit}) => (
                 <section className={`mt-4 ${testHighlight(watchFaculty=='Y')}`}>
                     <Row as="header">
                         <Col as="h4">Faculty Details</Col>
@@ -263,11 +263,11 @@ function FacultyDetails({watchFaculty}) {
                                         defaultValue=""
                                         control={control}
                                         rules={{min:{value:0,message:`${c.label} cannot be less than 0`},max:{value:20,message:`${c.label} cannot be greater than 20`}}}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={20} disabled={readOnly}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={20} disabled={!canEdit}/>}
                                     />
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
-                                    <Form.Control type="range" name={`${c.id}Range`} id={`${c.id}Range`} min={0} max={20} value={watchCourses[i].count} onChange={e=>handleRangeChange(e,`${name}.${c.id}.count`)} disabled={readOnly}/>
+                                    <Form.Control type="range" name={`${c.id}Range`} id={`${c.id}Range`} min={0} max={20} value={watchCourses[i].count} onChange={e=>handleRangeChange(e,`${name}.${c.id}.count`)} disabled={!canEdit}/>
                                 </Col>
                             </Form.Group>
                             <Form.Group as={Row}>
@@ -277,7 +277,7 @@ function FacultyDetails({watchFaculty}) {
                                         name={`${name}.${c.id}.list`}
                                         defaultValue=""
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} as="textarea" rows={5} disabled={readOnly}/>}
+                                        render={({field}) => <Form.Control {...field} as="textarea" rows={5} disabled={!canEdit}/>}
                                     />
                                 </Col>
                             </Form.Group>
@@ -299,13 +299,13 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
 
     const handleRangeChange = (e,fieldName) => setValue(fieldName,e.target.value);
 
-    const {getListData} = useAppQueries();
+    const { getListData } = useListsQueries();
     const fellowshipsources = getListData('fellowshipSources');
 
     useEffect(()=>watchFellowship=='N' && setValue(`${name}.fellowshipSource`,{"id":"","label":""}),[watchFellowship]);
     return (
         <HRFormContext.Consumer>
-            {({testHighlight,readOnly}) => (
+            {({testHighlight,canEdit}) => (
                 <section className={`mt-4 ${testHighlight(watchPayroll[0]=='28029')}`}>
                     <Row as="header">
                         <Col as="h4">Student Details</Col>
@@ -342,7 +342,7 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                                         name={`${name}.${c.id}.tuition`}
                                         defaultValue=""
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="text" disabled={readOnly}/>}
+                                        render={({field}) => <Form.Control {...field} type="text" disabled={!canEdit}/>}
                                     />
                                 </Col>
                             </Form.Group>
@@ -354,11 +354,11 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                                         defaultValue={0}
                                         control={control}
                                         rules={{min:{value:0,message:`${c.label} cannot be less than 0`},max:{value:30,message:`${c.label} cannot be greater than 30`}}}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={30} disabled={readOnly}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={30} disabled={!canEdit}/>}
                                     />
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
-                                    <Form.Control type="range" name={`${c.id}CreditsRange`} id={`${c.id}CreditsRange`} min={0} max={30} value={watchCredits[i]} onChange={e=>handleRangeChange(e,`${name}.${c.id}.credits`)} disabled={readOnly}/>
+                                    <Form.Control type="range" name={`${c.id}CreditsRange`} id={`${c.id}CreditsRange`} min={0} max={30} value={watchCredits[i]} onChange={e=>handleRangeChange(e,`${name}.${c.id}.credits`)} disabled={!canEdit}/>
                                 </Col>
                             </Form.Group>
                         </div>
@@ -372,8 +372,8 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                                 control={control}
                                 render={({field}) => (
                                     <>
-                                        <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'} disabled={readOnly}/>
-                                        <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!='Y'} disabled={readOnly}/>
+                                        <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'} disabled={!canEdit}/>
+                                        <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!='Y'} disabled={!canEdit}/>
                                     </>
                                 )}
                             />
@@ -391,7 +391,7 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                                         control={control}
                                         render={({field}) => (
                                             <>
-                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
+                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
                                                     <option></option>
                                                     {fellowshipsources.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
                                                 </Form.Control>

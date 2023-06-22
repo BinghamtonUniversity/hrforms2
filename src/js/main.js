@@ -1,8 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import {HashRouter} from "react-router-dom";
-import {QueryClient,QueryClientProvider} from "react-query";
-import { ReactQueryDevtools } from 'react-query/devtools'
+import { HashRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "react-query";
 import { CookiesProvider } from 'react-cookie';
 
 import "react-datepicker/dist/react-datepicker.css";
@@ -19,10 +18,13 @@ const queryClient = new QueryClient({
     defaultOptions:{
         queries:{
             notifyOnChangeProps:['data','error'],
-            retry:2,
+            retry:(count,error)=>{
+                // don't retry unless the error code/name less than 200 or 408 (timeout).
+                if (error?.name < 300 || error?.name == '408') return 2 - count;
+                return 0;
+            },
             retryDelay:attempt=>Math.min(attempt > 0 ? 2 ** attempt * 2000 : 1000, 30 * 1000),
-            //refetchOnMount:false, //for testing? probably should specify this on a per-query basis
-            refetchOnWindowFocus:false //for testing only.
+            refetchOnWindowFocus:false, //for testing only.
         }
     }
 });
@@ -33,7 +35,6 @@ ReactDOM.render(
             <CookiesProvider>
                 <StartApp/>
             </CookiesProvider>
-            <ReactQueryDevtools initialIsOpen={false} />
         </QueryClientProvider>            
     </HashRouter>,document.getElementById('root')
 );

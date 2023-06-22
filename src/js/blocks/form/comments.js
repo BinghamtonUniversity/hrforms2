@@ -8,11 +8,11 @@ import DataTable from 'react-data-table-component';
 
 export default function Comments() {
     const { control, getValues } = useFormContext();
-    const { isDraft, readOnly } = useHRFormContext();
+    const { isDraft, canEdit } = useHRFormContext();
     const formId = getValues('formId');
     return (
         <article>
-            {!readOnly &&
+            {canEdit &&
                 <section className="mt-3">
                     <Row as="header">
                         <Col as="h3">Comment</Col>

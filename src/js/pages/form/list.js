@@ -6,9 +6,8 @@ import useGroupQueries from "../../queries/groups";
 import { useForm, Controller } from "react-hook-form";
 import { capitalize, find, pick } from "lodash";
 import { Redirect } from "react-router-dom";
-import { Row, Col, Button, Modal, Form } from "react-bootstrap";
+import { Row, Col, Modal, Form } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
-import { Icon } from "@iconify/react";
 import { AppButton, DescriptionPopover, Loading, ModalConfirm, WorkflowExpandedComponent } from "../../blocks/components";
 import { SettingsContext, NotFound, useSettingsContext, useAuthContext, useUserContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -199,12 +198,12 @@ function ListTable({data,list}) {
         {name:'Actions',cell:row=>{
             return (
                 <div className="button-group">
-                    {(list=='drafts')&&<Button variant="danger" className="no-label" size="sm" title="Delete Draft" onClick={()=>handleAction('delete',row)}><Icon icon="mdi:delete"/></Button>}
-                    {(list!='drafts')&&<Button variant="primary" className="no-label" size="sm" title="Show Journal" onClick={()=>handleAction('journal',row)}><Icon icon="mdi:information-variant-circle-outline"/></Button>}
-                    {!(['drafts','pending','rejections'].includes(list))&&
+                    {(list=='drafts')&&<AppButton format="delete" size="sm" title="Delete Draft" onClick={()=>handleAction('delete',row)}></AppButton>}
+                    {(list!='drafts')&&<AppButton format="info" size="sm" title="Show Journal" onClick={()=>handleAction('journal',row)}></AppButton>}
+                    {!(['drafts','pending','rejections','archived'].includes(list))&&
                         <>
-                            <Button variant="success" className="no-label" size="sm" title="Approve" onClick={()=>handleAction('approve',row)}><Icon icon="mdi:check"/></Button>
-                            <Button variant="danger" className="no-label" size="sm" title="Reject" onClick={()=>handleAction('reject',row)}><Icon icon="mdi:close-circle"/></Button>
+                            <AppButton format="approve" size="sm" title="Approve" onClick={()=>handleAction('approve',row)}></AppButton>
+                            <AppButton format="reject" size="sm" title="Reject" onClick={()=>handleAction('reject',row)}></AppButton>
                         </>
                     }
                 </div>
@@ -240,7 +239,7 @@ function ListTable({data,list}) {
         setRows(data);
     },[data]);
     useEffect(()=>searchRef.current.focus(),[]);
-    if (redirect) return <Redirect to={redirect}/>
+    if (redirect) return <Redirect to={{pathname:redirect,state:{from:`/form/list/${list}`}}}/>;
     return (
         <>
             <DataTable 
@@ -282,16 +281,13 @@ function ActionModal({action,modalCallback}) {
         setIsSaving(true);
         modalCallback(e,data.comment);
     }
-    const onHide = e => {
+    const onHide = () => {
         if(isSaving) return 0;
-        modalCallback(e);
+        modalCallback(undefined);
     }
     const onError = error => {
         console.error(error);
     }
-    useHotkeys('ctrl+alt+r',()=>{
-        setIsSaving(false);
-    });
     useEffect(()=>setFocus('comment'),[setFocus]);
     return (
         <Modal show={true} onHide={e=>onHide(e)} backdrop="static">
@@ -311,8 +307,8 @@ function ActionModal({action,modalCallback}) {
                 </Modal.Body>
                 <Modal.Footer>
                     {isSaving && <Loading>Saving...</Loading>}
-                    <Button id="cancel" variant="secondary" onClick={modalCallback} disabled={isSaving}>Cancel</Button>
-                    <Button type="submit" id={action} variant={(action=='approve'?'success':'danger')} disabled={isSaving}>{capitalize(action)}</Button>
+                    <AppButton format="close" onClick={onHide} disabled={isSaving}>Cancel</AppButton>
+                    <AppButton format="save" type="submit" id={action} variant={(action=='approve'?'success':'danger')} disabled={isSaving}>{capitalize(action)}</AppButton>
                 </Modal.Footer>
             </Form>
         </Modal>

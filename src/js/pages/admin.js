@@ -1,6 +1,6 @@
 import React,{lazy} from "react";
 import {useParams} from "react-router-dom";
-import {getAuthInfo,NotFound} from "../app";
+import { NotFound, useAuthContext} from "../app";
 
 const AdminNews = lazy(()=>import("./admin/news"));
 const AdminUsers = lazy(()=>import("./admin/users"));
@@ -15,7 +15,7 @@ const AdminTemplates = lazy(()=>import("./admin/templates"));
 
 export default function AdminPages() {
     const {page,subpage} = useParams();
-    const {isAdmin} = getAuthInfo();
+    const { isAdmin } = useAuthContext();
     if (!isAdmin) return <NotFound/>;
     switch(page) {
         case "news": return <AdminNews/>;

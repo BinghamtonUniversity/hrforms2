@@ -23,6 +23,10 @@ const ReviewEmploymentVolunteer = lazy(()=>import("./review/review-employment-vo
 const ReviewComments = lazy(()=>import("./review/review-comments"));
 
 export default function Review() {
+    const { getValues } = useFormContext();
+    useEffect(()=>{
+        console.debug(getValues());
+    });
     return (
         <article id="form-review" className="mt-3">
             <Row as="header">

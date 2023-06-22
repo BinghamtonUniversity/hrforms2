@@ -239,7 +239,6 @@ function LookupResults({data}) {
         setSelectedId(newRow.id);
         setSelectedRow(newRow);
         setValue('selectedRow',newRow);
-        console.log('newRow:')
         if (!newRow.PAYROLL_AGENCY_CODE) setValue('payroll',{PAYROLL_CODE:''}); // if PAYROLL_AGENCY_CODE this will be set when the payrol section loads
         setValue('formActions',defaultFormActions);
         setValue('person.information.HR_PERSON_ID',newRow?.HR_PERSON_ID);
@@ -572,7 +571,7 @@ function FormActionsWrapper({payroll}) {
             <FormActionsFormCode formCodes={codes} description={watchFormCode.FORM_DESCRIPTION}/>
             <FormActionsActionCode actionCodes={getCodes('action').codes} description={watchActionCode.ACTION_DESCRIPTION} formCode={watchFormCode.FORM_CODE} actionSize={getCodes('action').size}/>
             <FormActionsTransactionCode transactionCodes={getCodes('transaction').codes} description={watchTransactionCode.TRANSACTION_DESCRIPTION} formCode={watchFormCode.FORM_CODE} actionCode={watchActionCode.ACTION_CODE} actionSize={getCodes('action').size} transactionSize={getCodes('transaction').size}/>
-            <p>{getCodes('form').size},{getCodes('action').size},{getCodes('transaction').size}</p>
+            {/**<p>{getCodes('form').size},{getCodes('action').size},{getCodes('transaction').size}</p>*/}
             <LoadingFormTabs/>
         </article>
     );

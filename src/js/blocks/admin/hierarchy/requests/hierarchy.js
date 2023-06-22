@@ -1,23 +1,23 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, useReducer } from "react";
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/request";
 import { useHierarchyQueries } from "../../../../queries/hierarchy";
-import { useAppQueries } from "../../../../queries";
 import { find, truncate, orderBy } from 'lodash';
-import { Row, Col, Modal, Button, Form, Alert } from "react-bootstrap";
-import { Loading, errorToast } from "../../../../blocks/components";
-import { Icon } from "@iconify/react";
+import { Row, Col, Modal, Form, Alert } from "react-bootstrap";
+import { AppButton, Loading, errorToast } from "../../../../blocks/components";
 import DataTable from 'react-data-table-component';
 import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useForm, FormProvider, useFormContext, Controller } from "react-hook-form";
 import { useQueryClient } from "react-query";
 import { flattenObject } from "../../../../utility";
+import { t } from "../../../../config/text";
+import useListsQueries from "../../../../queries/lists";
 
 const HierarchyContext = React.createContext();
 HierarchyContext.displayName = 'HierarchyContext';
 
 export default function HierarchyTab() {
-    const {getListData} = useAppQueries();
+    const { getListData } = useListsQueries();
     const {getHierarchy} = useHierarchyQueries('request');
     const {groups} = useContext(WorkflowContext);
     const position = getListData('posTypes');
@@ -105,7 +105,7 @@ function HierarchyTable() {
         {name:'Actions',cell:row=>{
             return (
                 <div className="button-group">
-                    <Button variant="danger" className="no-label" size="sm" title="Delete Hierarchy" onClick={()=>setDeleteHierarchy(row)}><Icon icon="mdi:delete"/></Button>
+                    <AppButton format="delete" size="sm" title="Delete Hierarchy" onClick={()=>setDeleteHierarchy(row)}></AppButton>
                 </div>
             );
         },ignoreRowClick:true},
@@ -176,14 +176,14 @@ function DeleteHierarchy({HIERARCHY_ID,setDeleteHierarchy}) {
     return(
         <Modal show={show} onHide={()=>setDeleteHierarchy({})} backdrop="static">
             <Modal.Header closeButton>
-                <Modal.Title>Delete?</Modal.Title>
+                <Modal.Title>{t('dialog.request.hierarchy.delete.title')}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <p>Are you sure?</p>
+                {t('dialog.request.hierarchy.delete.message')}
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={()=>setDeleteHierarchy({})}>Cancel</Button>
-                <Button variant="danger" onClick={handleDelete}>Delete</Button>
+                <AppButton format="close"  onClick={()=>setDeleteHierarchy({})}>Cancel</AppButton>
+                <AppButton format="delete" onClick={handleDelete}>Delete</AppButton>
             </Modal.Footer>
         </Modal>
     );
@@ -281,8 +281,8 @@ function AddEditHierarchy(props) {
                         <HierarchyForm/>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={closeModal} disabled={!status.cancel}>Cancel</Button>
-                        <Button variant="danger" type="submit" disabled={!status.save}>{status.icon && <Icon icon={status.icon} className={status.spin?'spin':''}/>}Save</Button>
+                        <AppButton format="close" onClick={closeModal} disabled={!status.cancel}>Cancel</AppButton>
+                        <AppButton format="save" type="submit" disabled={!status.save} icon={status.icon} spin={status.spin}>Save</AppButton>
                     </Modal.Footer>
                 </Form>
             </FormProvider>

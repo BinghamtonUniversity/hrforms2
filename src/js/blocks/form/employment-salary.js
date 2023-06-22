@@ -7,9 +7,9 @@ import SUNYAccount, { SingleSUNYAccount } from "../sunyaccount";
 import { AppButton, CurrencyFormat, DateFormat, DepartmentSelector } from "../components";
 import { Icon } from "@iconify/react";
 import { cloneDeep, get } from "lodash";
-import { useAppQueries } from "../../queries";
 import useFormQueries from "../../queries/forms";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
+import useListsQueries from "../../queries/lists";
 
 const name = 'employment.salary';
 const splitAssignFormTypes = ['EF-PAY-1'];
@@ -39,7 +39,7 @@ export default function EmploymentAppointment() {
     },[watchAmounts]);
     return (
         <HRFormContext.Consumer>
-            {({showInTest,testHighlight,readOnly}) => (
+            {({showInTest,testHighlight,canEdit}) => (
                 <article>
                     <section className="mt-3">
                         <Row as="header">
@@ -59,7 +59,7 @@ export default function EmploymentAppointment() {
                                             closeOnScroll={true}
                                             onChange={field.onChange}
                                             autoComplete="off"
-                                            disabled={readOnly}
+                                            disabled={!canEdit}
                                         />}
                                     />
                                     <InputGroup.Append>
@@ -92,7 +92,7 @@ export default function EmploymentAppointment() {
                                         name={`${name}.NUMBER_OF_PAYMENTS`}
                                         defaultValue=""
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" min={1} disabled={readOnly}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" min={1} disabled={!canEdit}/>}
                                     />
                                 </Col>
                             </Form.Group>
@@ -104,7 +104,7 @@ export default function EmploymentAppointment() {
                                     name={`${name}.RATE_AMOUNT`}
                                     defaultValue=""
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="text" disabled={readOnly}/>}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={!canEdit}/>}
                                 />
                             </Col>
                         </Form.Group>
@@ -119,7 +119,7 @@ export default function EmploymentAppointment() {
                                 />
                             </Col>
                         </Form.Group>
-                        <SUNYAccount name={`${name}.SUNYAccounts`} disabled={readOnly}/>
+                        <SUNYAccount name={`${name}.SUNYAccounts`} disabled={!canEdit}/>
                     </section>
                     
                     <AdditionalSalary/>
@@ -148,7 +148,7 @@ function AdditionalSalary() {
     const [editIndex,setEditIndex] = useState();
     const [editValues,setEditValues] = useState();
 
-    const {getListData} = useAppQueries();
+    const {getListData} = useListsQueries();
     const types = getListData('additionalSalaryTypes');
 
     const handleNew = () => {
@@ -222,7 +222,7 @@ function AdditionalSalary() {
 
     return (
         <HRFormContext.Consumer>
-            {({readOnly}) => (
+            {({canEdit}) => (
                 <section className="mt-4 border-top pt-2">
                     <Row as="header">
                         <Col as="h3">Additional Salary</Col>
@@ -322,7 +322,7 @@ function AdditionalSalary() {
                                     <p className="mb-0 py-2"><CurrencyFormat>{calcTotal(index)}</CurrencyFormat></p>
                                 </Col>
                             </Form.Row>
-                            {!readOnly&&
+                            {canEdit&&
                                 <Row>
                                     <Col className="button-group-sm">
                                         {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
@@ -342,7 +342,7 @@ function AdditionalSalary() {
                             </Row>
                         </section>
                     ))}
-                    {!readOnly &&
+                    {canEdit &&
                         <Row>
                             <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={editIndex!=undefined}>Add Salary</AppButton></Col>
                         </Row>
@@ -411,7 +411,7 @@ function SplitAssignments() {
     const [changePrimary,setChangePrimary] = useState(false);
     const [totalPct,setTotalPct] = useState(0);
 
-    const {getListData} = useAppQueries();
+    const {getListData} = useListsQueries();
     const workAllocation = getListData('workAllocation');
     const { getSupervisorNames } = useFormQueries();
     const supervisors = getSupervisorNames(searchFilter,{enabled:false});
@@ -519,7 +519,7 @@ function SplitAssignments() {
 
     return (
         <HRFormContext.Consumer>
-            {({readOnly}) => (
+            {({canEdit}) => (
                 <section className="mt-4 border-top pt-2">
                     <header>
                         <Row>
@@ -697,7 +697,7 @@ function SplitAssignments() {
                                     />
                                 </Col>
                             </Form.Row>
-                            {!readOnly&&
+                            {canEdit&&
                                 <Row>
                                     <Col className="button-group-sm">
                                         {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
@@ -717,7 +717,7 @@ function SplitAssignments() {
                             </Row>
                         </section>
                     ))}
-                    {!readOnly&&
+                    {canEdit&&
                         <Row>
                             <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={editIndex!=undefined}>Add Assignment</AppButton></Col>
                         </Row>

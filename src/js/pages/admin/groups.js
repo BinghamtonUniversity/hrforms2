@@ -3,9 +3,9 @@ import { useQueryClient } from "react-query";
 import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
 import { Loading, AppButton, errorToast } from "../../blocks/components";
-import { Row, Col, Button, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, DropdownButton, Dropdown } from "react-bootstrap";
+import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, DropdownButton, Dropdown } from "react-bootstrap";
 import { Icon } from "@iconify/react";
-import { orderBy, sortBy, difference, differenceWith, isEqual, capitalize, startsWith } from "lodash";
+import { orderBy, sortBy, difference, differenceWith, isEqual, capitalize, filter } from "lodash";
 import DataTable from 'react-data-table-component';
 import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
 import DatePicker from "react-datepicker";
@@ -15,6 +15,8 @@ import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useHistory, useParams } from "react-router-dom";
 import { flattenObject } from "../../utility";
+import { t } from "../../config/text";
+import { NotFound } from "../../app";
 
 export default function AdminGroups() {
     const [newGroup,setNewGroup] = useState(false);
@@ -26,7 +28,7 @@ export default function AdminGroups() {
     return (
         <>
             <Row>
-                <Col><h2>Admin: Groups <AppButton format="add-group" onClick={()=>setNewGroup(true)}>Add New</AppButton></h2></Col>
+                <Col><h2>{t('admin.groups.title')} <AppButton format="add-group" onClick={()=>setNewGroup(true)}>Add New</AppButton></h2></Col>
             </Row>
             <Row>
                 <Col>
@@ -276,11 +278,11 @@ function DeleteGroup({group,setDeleteGroup}) {
                 <Modal.Title><Icon className="iconify-inline" icon="mdi:alert"/>Delete Group?</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <p>Are you sure?</p>
+                <p>Are you sure you wish to delete this group?</p>
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={()=>setDeleteGroup({})}>Cancel</Button>
-                <Button variant="danger" onClick={handleDelete}>Delete</Button>
+                <AppButton format="close" onClick={()=>setDeleteGroup({})}>Cancel</AppButton>
+                <AppButton format="delete" onClick={handleDelete}>Delete</AppButton>
             </Modal.Footer>
         </Modal>
     )
@@ -426,6 +428,7 @@ function AddEditGroupForm(props) {
                         endDate: props.endDate,
                         assignedUsers:groupuserData,
                         availableUsers:filtered,
+                        filteredUsers:filtered,
                         assignedDepts:groupdeptData,
                         availableDepts:deptData
                     });    
@@ -453,7 +456,7 @@ function AddEditGroupForm(props) {
                                 {tabs.map(t=>(
                                     <Tab key={t.id} eventKey={t.id} title={t.title}>
                                         <Container className="mt-3" fluid>
-                                            <TabRouter tab={t.id}/>
+                                            <TabRouter tab={activeTab}/>
                                         </Container>
                                     </Tab>
                                 ))}
@@ -462,8 +465,8 @@ function AddEditGroupForm(props) {
                     </Modal.Body>
                     <Modal.Footer>
                         {status.state != 'error' && <p>{status.message}</p>}
-                        <Button variant="secondary" onClick={closeModal}  disabled={!status.cancel}>Cancel</Button>
-                        <Button variant="danger" type="submit" disabled={!(status.save&&methods.formState.isValid)}>{status.icon && <Icon icon={status.icon} className={status.spin?'spin':''}/>}Save</Button>
+                        <AppButton format="close" onClick={closeModal} disabled={!status.cancel}>Cancel</AppButton>
+                        <AppButton format="save" type="submit" disabled={!(status.save&&methods.formState.isValid)} icon={status.icon} spin={status.spin}>Save</AppButton>
                     </Modal.Footer>
                 </Form>
             </FormProvider>
@@ -471,24 +474,14 @@ function AddEditGroupForm(props) {
     );
 }
 
-function TabRouter({tab}) {
+const TabRouter = React.memo(({tab}) => {
     switch(tab) {
         case "info": return <GroupInfo/>;
         case "users": return <GroupUsers/>;
         case "depts": return <GroupDepts/>;
-        default: return <GroupTabNotFound/>;
+        default: return <NotFound/>;
     }
-}
-
-function GroupTabNotFound() {
-    return (
-        <Row>
-            <Col>
-                <Alert variant="danger">Tab Data Not Found</Alert>
-            </Col>
-        </Row>
-    );
-}
+});
 
 function GroupInfo() {
     const groupNameRef = useRef();
@@ -576,16 +569,42 @@ function GroupInfo() {
 }
 
 function GroupUsers() {
+    const ref = useRef();
+    const [filterText,setFilterText] = useState('');
+    const [filteredUsers,setFilteredUsers] = useState([]);
+    const { getValues} = useFormContext();
+    const handleOnKeyDown = e => {
+        if (e.key == 'Escape') {
+            e.stopPropagation();
+            setFilterText('');
+        }
+    }
+    const handleOnChange = e => setFilterText(e.target.value);
+    useEffect(() => {
+        const filtered = getValues('availableUsers').filter(row =>{
+            return Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
+        }).map(f=>f.SUNY_ID);
+        setFilteredUsers(filtered);
+    },[filterText]);
+    useEffect(()=>ref.current.focus(),[]);
     return (
-        <div className="drag-col-2">
-            <div className="dlh1">Unassigned Users</div>
-            <div className="dlh2">Assigned Users</div>
-            <GroupUsersList/>
-        </div>
+        <>
+            <Form.Row>
+                <Form.Group as={Col}>
+                    <Form.Label>Filter Users:</Form.Label>
+                    <Form.Control ref={ref} type="search" placeholder="filter available users..." value={filterText} onChange={handleOnChange} onKeyDown={handleOnKeyDown}/>
+                </Form.Group>
+            </Form.Row>
+            <div className="drag-col-2">
+                <div className="dlh1">Unassigned Users</div>
+                <div className="dlh2">Assigned Users</div>
+                <GroupUsersList filteredUsers={filteredUsers} filterText={filterText}/>
+            </div>
+        </>
     );
 }
 
-function GroupUsersList() {
+function GroupUsersList({filteredUsers,filterText}) {
     const { control } = useFormContext();
     const { insert:insertAssignedUsers, remove:removeAssignedUsers } = useFieldArray({control:control,name:'assignedUsers'});
     const { insert:insertAvailableUsers, remove:removeAvailableUsers } = useFieldArray({control:control,name:'availableUsers'});
@@ -615,22 +634,25 @@ function GroupUsersList() {
             <Droppable droppableId="available">
                 {(provided, snapshot) => ( 
                     <div ref={provided.innerRef} className={`droplist dl1 ${snapshot.isDraggingOver?'over':''}`}>
-                        {availableusers.map((u,i) => (
-                            <Draggable key={u.SUNY_ID} draggableId={u.SUNY_ID} index={i}>
-                                {(provided,snapshot) => (
-                                    <div
-                                        ref={provided.innerRef} 
-                                        {...provided.draggableProps} 
-                                        {...provided.dragHandleProps}
-                                        className={snapshot.isDragging?'dragging':''}
-                                        onDoubleClick={handleDblClick}
-                                        data-list="available" data-idx={i}
-                                    >
-                                        {u.sortName}
-                                    </div>
-                                )}
-                            </Draggable>
-                        ))}
+                        {availableusers.map((u,i) => {
+                            if (filterText&&!filteredUsers.includes(u.SUNY_ID)) return null;
+                            return (
+                                <Draggable key={u.SUNY_ID} draggableId={u.SUNY_ID} index={i}>
+                                    {(provided,snapshot) => (
+                                        <div
+                                            ref={provided.innerRef} 
+                                            {...provided.draggableProps} 
+                                            {...provided.dragHandleProps}
+                                            className={snapshot.isDragging?'dragging':''}
+                                            onDoubleClick={handleDblClick}
+                                            data-list="available" data-idx={i}
+                                        >
+                                            {u.sortName}
+                                        </div>
+                                    )}
+                                </Draggable>
+                            );
+                        })}
                         {provided.placeholder}
                     </div>
                 )}
@@ -663,16 +685,42 @@ function GroupUsersList() {
 }
 
 function GroupDepts() {
+    const ref = useRef();
+    const [filterText,setFilterText] = useState('');
+    const [filteredDepts,setFilteredDepts] = useState([]);
+    const { getValues} = useFormContext();
+    const handleOnKeyDown = e => {
+        if (e.key == 'Escape') {
+            e.stopPropagation();
+            setFilterText('');
+        }
+    }
+    const handleOnChange = e => setFilterText(e.target.value);
+    useEffect(() => {
+        const filtered = getValues('availableDepts').filter(row =>{
+            return Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
+        }).map(f=>f.DEPARTMENT_CODE);
+        setFilteredDepts(filtered);
+    },[filterText]);
+    useEffect(()=>ref.current.focus(),[]);
     return (
-        <div className="drag-col-2">
-            <div className="dlh1">Unassigned Depts</div>
-            <div className="dlh2">Assigned Depts</div>
-            <GroupDeptsList/>
-        </div>
+        <>
+            <Form.Row>
+                <Form.Group as={Col}>
+                    <Form.Label>Filter Departments:</Form.Label>
+                    <Form.Control ref={ref} type="search" placeholder="filter available departments..." value={filterText} onChange={handleOnChange} onKeyDown={handleOnKeyDown}/>
+                </Form.Group>
+            </Form.Row>
+            <div className="drag-col-2">
+                <div className="dlh1">Unassigned Depts</div>
+                <div className="dlh2">Assigned Depts</div>
+                <GroupDeptsList filteredDepts={filteredDepts} filterText={filterText}/>
+            </div>
+        </>
     );
 }
 
-function GroupDeptsList() {
+function GroupDeptsList({filteredDepts,filterText}) {
     const { control } = useFormContext();
     const { insert:insertAssignedDepts, remove:removeAssignedDepts } = useFieldArray({control:control,name:'assignedDepts'});
     const { insert:insertAvailableDepts, remove:removeAvailableDepts } = useFieldArray({control:control,name:'availableDepts'});
@@ -702,22 +750,25 @@ function GroupDeptsList() {
             <Droppable droppableId="available">
                 {(provided, snapshot) => ( 
                     <div ref={provided.innerRef} className={`droplist dl1 ${snapshot.isDraggingOver?'over':''}`}>
-                        {availabledepts.map((d,i) => (
-                            <Draggable key={d.DEPARTMENT_CODE} draggableId={d.DEPARTMENT_CODE} index={i}>
-                                {(provided,snapshot) => (
-                                    <div
-                                        ref={provided.innerRef} 
-                                        {...provided.draggableProps} 
-                                        {...provided.dragHandleProps}
-                                        className={snapshot.isDragging?'dragging':''}
-                                        onDoubleClick={handleDblClick}
-                                        data-list="available" data-idx={i}
-                                    >
-                                        {d.DEPARTMENT_DESC}
-                                    </div>
-                                )}
-                            </Draggable>
-                        ))}
+                        {availabledepts.map((d,i) => {
+                            if (filterText&&!filteredDepts.includes(d.DEPARTMENT_CODE)) return null;
+                            return (
+                                <Draggable key={d.DEPARTMENT_CODE} draggableId={d.DEPARTMENT_CODE} index={i}>
+                                    {(provided,snapshot) => (
+                                        <div
+                                            ref={provided.innerRef} 
+                                            {...provided.draggableProps} 
+                                            {...provided.dragHandleProps}
+                                            className={snapshot.isDragging?'dragging':''}
+                                            onDoubleClick={handleDblClick}
+                                            data-list="available" data-idx={i}
+                                        >
+                                            {d.DEPARTMENT_DESC}
+                                        </div>
+                                    )}
+                                </Draggable>
+                            );
+                        })}
                         {provided.placeholder}
                     </div>
                 )}

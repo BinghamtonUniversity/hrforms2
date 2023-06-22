@@ -2,9 +2,15 @@ import React, { useState, lazy, useEffect } from "react";
 import { useParams, useHistory } from "react-router-dom";
 import { Container, Row, Col, Tabs, Tab } from "react-bootstrap";
 import { useHotkeys } from "react-hotkeys-hook";
+import { t } from "../../config/text";
+import { NotFound } from "../../app";
 
 const PayrollTransactionsTab = lazy(()=>import("../../blocks/admin/transactions/paytrans"));
 const CodesTab = lazy(()=>import("../../blocks/admin/transactions/codes"));
+
+/** Using t.id instead of activeTab for the Router on this page to 
+ * improve performance and pre-load data.
+*/
 
 export default function AdminFormTransactions() {
     const tabs = [
@@ -37,14 +43,14 @@ export default function AdminFormTransactions() {
             <section>
                 <header>
                     <Row>
-                        <Col><h2>Form Transactions</h2></Col>
+                        <Col><h2>{t('admin.transactions.title')}</h2></Col>
                     </Row>
                 </header>
                 <Tabs activeKey={activeTab} onSelect={navigate} id="form-transaciton-tabs">
                     {tabs.map(t => (
                         <Tab key={t.id} eventKey={t.id} title={t.title}>
                             <Container as="article" className="mt-3" fluid>
-                                <FormTransactionRouter tab={activeTab} tabName={t.title}/>
+                                <FormTransactionRouter tab={t.id} tabName={t.title}/>
                             </Container>
                         </Tab>
                     ))}
@@ -61,6 +67,6 @@ const FormTransactionRouter = React.memo(({tab,...rest}) => {
         case "form":
         case "action":
         case "transaction": return <CodesTab tab={tab} {...rest}/>;
-        default: return <p>not found</p>;
+        default: return <NotFound/>;
     }
 });

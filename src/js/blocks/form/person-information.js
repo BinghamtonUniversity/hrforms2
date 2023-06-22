@@ -1,11 +1,11 @@
 import React from "react";
-import { useAppQueries } from "../../queries";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { HRFormContext } from "../../config/form";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import { Loading } from "../components";
+import useListsQueries from "../../queries/lists";
 
 const name = 'person.information';
 
@@ -14,7 +14,7 @@ export default function PersonInfo() {
 
     const watchRehireRetiree = useWatch({name:`${name}.REHIRE_RETIREE`});
 
-    const {getListData} = useAppQueries();
+    const { getListData } = useListsQueries();
     const salutations = getListData('salutations');
 
     const handleSelectChange = (e,field) => {
@@ -32,7 +32,7 @@ export default function PersonInfo() {
 
     return (
         <HRFormContext.Consumer>
-            {({showInTest,testHighlight,readOnly}) => (
+            {({showInTest,testHighlight,canEdit}) => (
                 <>
                     <article className="mt-3">
                         <Row as="header">
@@ -44,7 +44,7 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.SUNY_ID`}
                                     control={control}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={getValues('selectedRow.SUNY_ID')||readOnly}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={getValues('selectedRow.SUNY_ID')||!canEdit}/>}
                                 />
                             </Col>
                         </Form.Group>
@@ -54,7 +54,7 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.LOCAL_CAMPUS_ID`}
                                     control={control}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={readOnly}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
                                 />
                             </Col>
                         </Form.Group>
@@ -74,7 +74,7 @@ export default function PersonInfo() {
                                             {salutations.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
                                             {salutations.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
                                             {salutations.data &&
-                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={readOnly}>
+                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
                                                     <option></option>
                                                     {salutations.data.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}
                                                 </Form.Control>
@@ -90,7 +90,7 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.LEGAL_FIRST_NAME`}
                                     control={control}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={readOnly}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
                                 />
                             </Col>
                         </Form.Group>
@@ -100,7 +100,7 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.ALIAS_FIRST_NAME`}
                                     control={control}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={readOnly}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
                                 />
                             </Col>
                         </Form.Group>
@@ -110,7 +110,7 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.LEGAL_MIDDLE_NAME`}
                                     control={control}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={readOnly}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
                                 />
                             </Col>
                         </Form.Group>
@@ -120,7 +120,7 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.LEGAL_LAST_NAME`}
                                     control={control}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={readOnly}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
                                 />
                             </Col>
                         </Form.Group>
@@ -130,7 +130,7 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.SUFFIX_CODE`}
                                     control={control}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={readOnly}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
                                 />
                             </Col>
                         </Form.Group>
@@ -148,8 +148,8 @@ export default function PersonInfo() {
                                     control={control}
                                     render={({field}) => (
                                         <>
-                                            <Form.Check {...field} inline type="radio" label="Yes" value='1' checked={field.value=='1'} disabled={readOnly}/>
-                                            <Form.Check {...field} inline type="radio" label="No" value='0' checked={field.value=='0'} disabled={readOnly}/>
+                                            <Form.Check {...field} inline type="radio" label="Yes" value='1' checked={field.value=='1'} disabled={!canEdit}/>
+                                            <Form.Check {...field} inline type="radio" label="No" value='0' checked={field.value=='0'} disabled={!canEdit}/>
                                         </>
                                     )}
                                 />
@@ -164,8 +164,8 @@ export default function PersonInfo() {
                                     control={control}
                                     render={({field}) => (
                                         <>
-                                            <Form.Check {...field} inline type="radio" label="Yes" value='1' checked={field.value=='1'} onChange={e=>handleRehireRetireeChange(e,field)} disabled={readOnly}/>
-                                            <Form.Check {...field} inline type="radio" label="No" value='0' checked={field.value=='0'} onChange={e=>handleRehireRetireeChange(e,field)} disabled={readOnly}/>
+                                            <Form.Check {...field} inline type="radio" label="Yes" value='1' checked={field.value=='1'} onChange={e=>handleRehireRetireeChange(e,field)} disabled={!canEdit}/>
+                                            <Form.Check {...field} inline type="radio" label="No" value='0' checked={field.value=='0'} onChange={e=>handleRehireRetireeChange(e,field)} disabled={!canEdit}/>
                                         </>
                                     )}
                                 />
@@ -188,7 +188,7 @@ export default function PersonInfo() {
                                                     selected={field.value}
                                                     onChange={field.onChange}
                                                     autoComplete="off"
-                                                    disabled={readOnly}
+                                                    disabled={!canEdit}
                                                 />}
                                             />
                                             <InputGroup.Append>
@@ -205,7 +205,7 @@ export default function PersonInfo() {
                                         <Controller
                                             name={`${name}.RETIRED_FROM`}
                                             control={control}
-                                            render={({field})=><Form.Control {...field} type="text" disabled={readOnly}/>}
+                                            render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
                                         />
                                     </Col>
                                 </Form.Group>

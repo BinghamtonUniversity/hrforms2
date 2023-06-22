@@ -1,15 +1,15 @@
 import React, { useState, useEffect, lazy, useCallback, useMemo } from "react";
-import { ErrorFallback, UserContext, useUserContext } from "../app";
+import { ErrorFallback, UserContext, useUserContext, useSettingsContext } from "../app";
 import { useQueryClient } from "react-query";
 import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
-import { Container, Row, Col, Form, Tabs, Tab, Button, Alert, Modal, Nav } from "react-bootstrap";
+import { Container, Row, Col, Form, Tabs, Tab, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
 import { Loading, AppButton, DateFormat } from "../blocks/components";
 import { get, set, has, zip, cloneDeep, merge } from "lodash";
 import useFormQueries from "../queries/forms";
-import { Icon } from "@iconify/react";
 import { flattenObject } from "../utility";
 import { allTabs, fetchFormData, initFormValues, HRFormContext } from "../config/form";
+import { t } from "../config/text";
 
 /* TABS */
 const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
@@ -38,7 +38,6 @@ export default function HRForm() {
     const {SUNY_ID} = useUserContext();
 
     useEffect(() => {
-        console.log(id,sunyid,ts);
         if (!id||id=="new") {
             setIsNew(true);
             setIsDraft(true);
@@ -85,7 +84,6 @@ function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete,reset}
                 console.error(e);
             });
         } else {
-            console.log('isnew:',reset);
             setFormData({});
         }
     },[formId,isNew]);
@@ -135,7 +133,7 @@ function BlockNav({formId,when,isDraft}) {
     const handleClose = () => setShowModal(false);
     const handleDelete = () => {
         setShowModal(false);
-        //TODO: only delete if not saved
+        //Delete if not saved
         delForm.mutateAsync().then(()=>{
             queryclient.refetchQueries(SUNY_ID).then(() => {
                 handleProceed();
@@ -143,7 +141,6 @@ function BlockNav({formId,when,isDraft}) {
         });
     }
     const handleProceed = () => {
-        console.log('TODO: need to save form');
         console.debug('proceed to location: ',nextLocation);
         setShowModal(false);
         setShouldProceed(true);
@@ -166,9 +163,9 @@ function BlockNav({formId,when,isDraft}) {
                     </p>
                 </Modal.Body>
                 <Modal.Footer>
-                    {isDraft&&<Button variant="danger" onClick={handleDelete}>Discard</Button>}
-                    {!isDraft&&<Button variant="danger" onClick={handleProceed}>Leave</Button>}
-                    <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+                    {isDraft&&<AppButton format="delete" onClick={handleDelete}>Discard</AppButton>}
+                    {!isDraft&&<AppButton format="exit" onClick={handleProceed}>Leave</AppButton>}
+                    <AppButton format="close" onClick={handleClose}>Cancel</AppButton>
                 </Modal.Footer>
             </Modal>
         </>
@@ -194,7 +191,8 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const watchFormActions = useWatch({name:'formActions.formCode',control:methods.control});
     const watchIds = useWatch({name:['person.information.HR_PERSON_ID','person.information.SUNY_ID','person.information.LOCAL_CAMPUS_ID'],control:methods.control});
 
-    const {SUNY_ID} = useUserContext();
+    const {SUNY_ID, USER_GROUPS} = useUserContext();
+    const {forms} = useSettingsContext();
 
     const queryclient = useQueryClient();
     const {postForm,putForm,deleteForm} = useFormQueries(formId);
@@ -238,13 +236,12 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         //setHasErrors(false);
         if (!data.action||data.action=='test') return; // just validating the form, not saving
         setIsSaving(true);
-        setIsBlocking(true); //TODO: when true should be full block with no prompt
+        setIsBlocking(true); //TODO: when true should be full block with no prompt?
         setLockTabs(true);
         //TODO: switch? save, submit, appove, reject?
         //TODO: on approve need to handle changes to form.  PUT (update)
         if (isDraft) {
             if (isNew || data.action=='submit') {
-                console.log('create:',data.action);
                 createForm.mutateAsync(data).then(d => {
                     console.debug(d);
                     handleRedirect();
@@ -257,7 +254,6 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                     console.error(e);
                 });
             } else {
-                console.log('update:',data.action);
                 updateForm.mutateAsync(data).then(() => {
                     handleRedirect();
                 }).catch(e => {
@@ -267,7 +263,6 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                 });
             }    
         } else {
-            console.log('approve/reject:',data.action);
             createForm.mutateAsync(data).then(d => {
                 console.debug(d);
                 handleRedirect();
@@ -282,7 +277,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         }
     }
     const handleError = error => {
-        console.log(error);
+        console.error(error);
     }
     const history = useHistory();
     const handleReset = () => {
@@ -395,7 +390,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                             case "employment-leave": promiseList.push({tab:tab,func:fetchData.employmentleave.refetch}); break;
                             case "employment-pay": promiseList.push({tab:tab,func:fetchData.employmentpay.refetch}); break;
                             case "employment-volunteer":
-                                console.log('TODO; Load Tab: ',tab);
+                                console.warn('TODO; Load Tab: ',tab);
                                 //promiseList.push({tab:tab,func:()=>new Promise(resolve=>resolve({}))})
                                 break;
                             case "basic-info":
@@ -443,10 +438,18 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
 
     const testHighlight = useCallback(testCondition=>(testCondition)?'':'test-highlight',[]);
     const showInTest = useMemo(()=>watchFormActions?.FORM_CODE=='TEST'&&showHidden,[watchFormActions,showHidden]);
-    const readOnly = useMemo(()=>(methods.getValues('lastJournal.STATUS')!=""&&SUNY_ID==methods.getValues('lastJournal.SUBMITTER_SUNY_ID')),[methods,SUNY_ID,formId])
+    const canEdit = useMemo(()=>{
+        if (isDraft && SUNY_ID == get(data,'CREATED_BY_SUNY_ID',SUNY_ID)) return true;
+        if (!isDraft && SUNY_ID == data.lastJournal.CREATED_BY_SUNY_ID && data.lastJournal.STATUS == 'R') return true;
+        if (!isDraft && SUNY_ID == data.lastJournal.CREATED_BY_SUNY_ID) return false;
+        const userGroups = USER_GROUPS.split(',');
+        if (userGroups.includes(get(data,'lastJournal.GROUP_TO'))) return true;
+        return false;
+    },[SUNY_ID,USER_GROUPS,data,isDraft]);
 
     useEffect(()=>!isNew && handleTabs(data.formActions.TABS),[formId]);
     useEffect(()=>(isNew&&!data.hasOwnProperty('formId'))&&handleReset(),[isNew,reset,data]); //reset form when "New"
+    useEffect(()=>setIsBlocking(methods.formState.isDirty),[methods.formState.isDirty]);
 
     if (redirect) return <Redirect to={redirect}/>;
     if (dataLoadError) return <ErrorFallback error={dataLoadError}/>;
@@ -460,7 +463,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                     isNew:isNew,
                     infoComplete:infoComplete,
                     journalStatus:methods.getValues('lastJournal.STATUS'),
-                    readOnly:readOnly,
+                    canEdit:canEdit,
                     formActions:methods.getValues('formActions'),
                     sunyId:methods.getValues('person.information.SUNY_ID'),
                     hrPersonId:methods.getValues('person.information.HR_PERSON_ID'),
@@ -496,6 +499,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                                         </div>
                                         <Row as="footer" className="mt-3">
                                             <Col className="button-group justify-content-end">
+                                                {/*
                                                 {hasErrors && <div className="d-inline-flex align-items-center text-danger mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:alert"/><span>Errors</span></div>}
                                                 {isSaving && <div className="d-inline-flex align-items-center mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:loading" className="spin"/><span>Saving...</span></div>}
                                                 {methods.getValues('lastJournal.STATUS')=="" && 
@@ -507,7 +511,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                                                 }
                                                 {(activeTab!='review')&&<AppButton id="next" format="next" onClick={handleNext} disabled={isSaving||!infoComplete}>Next</AppButton>}
                                                 {(activeTab=='review'&&methods.getValues('lastJournal.STATUS')=="")&&<AppButton id="submit" format="submit" onClick={()=>handleSave('submit')} disabled={isSaving||!infoComplete}>Submit</AppButton>}
-                                                {(methods.getValues('lastJournal.STATUS')!=""&&!readOnly&&(activeTab=='review')) && 
+                                                {(methods.getValues('lastJournal.STATUS')!=""&&canEdit&&(activeTab=='review')) && 
                                                     <>
                                                         <AppButton id="reject" format="reject" onClick={()=>handleSave('reject')} disabled={isSaving}>Reject</AppButton>
                                                         {(methods.getValues('lastJournal.STATUS')=="PF")?
@@ -518,13 +522,35 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                                                     </>
                                                 }
                                                 <AppButton id="submit" format="submit" variant="outline-danger" onClick={()=>handleSave('test')} disabled={isSaving}>Test Submit</AppButton>
+                                                */}
+
+                                                {isDraft && 
+                                                    <>
+                                                        {methods.formState.isDirty && <AppButton format="undo" onClick={handleReset} disabled={isSaving}>Reset</AppButton>}
+                                                        {!isNew && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
+                                                        {!(isNew&&lockTabs)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
+                                                        {activeTab=='review'&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}>Submit</AppButton>}
+                                                    </>
+                                                }
+                                                {(get(data,'lastJournal.STATUS')=='R'&&canEdit) && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
+                                                {activeTab!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
+                                                {(activeTab=='review'&&!isDraft&&canEdit&&get(data,'lastJournal.STATUS')!='R') && 
+                                                    <>
+                                                        <AppButton format="reject" id="reject" onClick={()=>handleSave('reject')} disabled={hasErrors||isSaving}>Reject</AppButton>
+                                                        {(get(data,'lastJournal.STATUS')=='PF')?
+                                                            <AppButton format="approve" id="final" onClick={()=>handleSave('final')} disabled={hasErrors||isSaving}>Final Approve</AppButton>
+                                                        :
+                                                            <AppButton format="approve" id="approve" onClick={()=>handleSave('approve')} disabled={hasErrors||isSaving}>Approve</AppButton>
+                                                        }
+                                                    </>
+                                                }
+                                                {(activeTab=='review'&&get(data,'lastJournal.STATUS')=='R'&&forms.menu.rejections.resubmit&&canEdit)&&
+                                                    <AppButton format="approve" id="resubmit" onClick={()=>handleSave('resubmit')} disabled={hasErrors||isSaving}>Resubmit</AppButton>
+                                                }
                                             </Col>
                                         </Row>
                                         <SubmitterInfoBox/>
                                         <Row>
-                                            <Col>
-                                                <p>{activeTab}.{activeNav}</p>
-                                            </Col>
                                             {methods.getValues('formActions.formCode.FORM_CODE')=='TEST' &&
                                                 <Col className="d-flex justify-content-end">
                                                     <Form.Check type="switch" id="showHiddenToggle" className="custom-switch-lg" label="Hide/Show Fields In Test Mode" checked={showHidden} onChange={()=>setShowHidden(!showHidden)}/>
@@ -569,8 +595,8 @@ function FormTabRouter({tab,activeTab,subTab,...props}) {
 function PendingReviewAlert() {
     return (
         <HRFormContext.Consumer>
-            {({readOnly}) => {
-                if (!readOnly) return null;
+            {({canEdit}) => {
+                if (canEdit) return null;
                 return (
                     <Alert variant="warning" className="mt-3">
                         <p className="m-0"><strong>Pending Review:</strong> This form is currently being reviewed and cannot be modified.</p>
@@ -721,14 +747,14 @@ function DeleteFormModal({setShowDeleteModal,handleDelete}) {
     return (
         <Modal show={true} backdrop="static" onHide={handleClose}>
             <Modal.Header closeButton>
-                <Modal.Title>Delete?</Modal.Title>
+                <Modal.Title>{t('dialog.form.delete.title')}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                Are you sure?
+                {t('dialog.form.delete.message')}
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="danger" onClick={handleConfirm}>Confirm</Button>
-                <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+                <AppButton format="close" onClick={handleClose}>Cancel</AppButton>
+                <AppButton format="delete" onClick={handleConfirm}>Delete</AppButton> 
             </Modal.Footer>
         </Modal>
     );

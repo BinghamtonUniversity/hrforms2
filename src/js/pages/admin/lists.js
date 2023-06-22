@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useQueryClient } from "react-query";
 import { Row, Col, Form, ToggleButtonGroup, ToggleButton } from "react-bootstrap";
-import { useAppQueries, useAdminQueries } from "../../queries";
 import { useForm, Controller, FormProvider, useFormContext, useWatch } from "react-hook-form";
 import { toast } from "react-toastify";
 import camelCase from "lodash/camelCase";
 import { Loading, ModalConfirm, AppButton, errorToast } from "../../blocks/components";
 import { useHotkeys } from "react-hotkeys-hook";
+import { t } from "../../config/text";
+import useListsQueries from "../../queries/lists";
 
 export default function AdminLists() {
     const [selectedList,setSelectedList] = useState();
@@ -16,8 +17,7 @@ export default function AdminLists() {
     const [confirmSave,setConfirmSave] = useState(false);
     const [runSQL,setRunSQL] = useState('');
 
-    const {getLists,getList} = useAppQueries();
-    const {postList,putList,deleteList} = useAdminQueries();
+    const { getLists, getList, postList, putList, deleteList } = useListsQueries();
     const lists = getLists();
     const listdetails = getList(selectedList,{enabled:false});
     const queryclient = useQueryClient();
@@ -197,7 +197,7 @@ export default function AdminLists() {
             <section>
                 <header className="mb-4">
                     <Row>
-                        <Col><h2>Admin: Lists <AppButton format="add-list" onClick={newList}>Add New</AppButton></h2></Col>
+                        <Col><h2>{t('admin.lists.title')} <AppButton format="add-list" onClick={newList}>Add New</AppButton></h2></Col>
                     </Row>
                 </header>
                 <Form.Group as={Row}>
@@ -345,7 +345,7 @@ function ListDetails({locked,handleBlur,slugHint,pickSlugHint,handleDeleteList,i
 }
 
 function ListRunSQL({runSQL}) {
-    const {getListData} = useAppQueries();
+    const { getListData } = useListsQueries();
     const results = getListData(runSQL);
     return (
         <section className="border-top mt-4 pt-3">

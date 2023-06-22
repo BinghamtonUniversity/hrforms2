@@ -3,9 +3,12 @@ import { Row, Col } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { Icon } from '@iconify/react';
 import { DateFormat } from "../components";
+import { CommentsTable } from "./comments";
+import { useRequestContext } from "../../config/request";
 
 export default function Review({isNew}) {
     const {getValues} = useFormContext();
+    const {isDraft} = useRequestContext();
     const formValues = getValues();
     return (
         <>
@@ -114,6 +117,18 @@ export default function Review({isNew}) {
                     </Col>
                 </Row>
             </section>
+            {!isDraft &&
+                <section className="mb-4">
+                    <header>
+                        <Row>
+                            <Col>
+                                <h4>Comments History</h4>
+                            </Col>
+                        </Row>
+                    </header>
+                    <CommentsTable reqId={formValues.reqId}/>
+                </section>
+            }
         </>
     );
 }

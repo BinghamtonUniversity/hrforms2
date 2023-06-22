@@ -49,6 +49,19 @@ class Requests extends HRForms2 {
         }
     }
 
+    /** check if submitter/approver is in the next group and auto-approve */
+    private function autoApproveNext($groups,$seq) {
+        // Check if Approver is in next group and auto-approve
+        if ($seq >= sizeof($groups)-1) return false; // do not auto-approve last group.
+        $groupusers = (new groupusers(array($groups[$seq]),false))->returnData;
+        foreach ($groupusers as $u) {
+            if ($u['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID']) {
+                return true;
+            }
+        }
+        return false;
+    }    
+
 	/**
 	 * validate called from init()
 	 */
@@ -129,6 +142,11 @@ class Requests extends HRForms2 {
                 break;
 
             case "resubmit":
+                // check settings to see if "resubmit" is enabled.
+                $_SERVER['REQUEST_METHOD'] = 'GET';
+                $settings = (new settings(array(),false))->returnData;
+                if (!$settings['requests']['menu']['rejections']['resubmit']) $this->raiseError(E_FORBIDDEN);
+                
                 // Update existing Journal extries to be negative sequence then proceed to submit case
                 $max = $this->POSTvars['lastJournal']['SEQUENCE'];
                 $request_id = $this->POSTvars['reqId'];
@@ -157,16 +175,26 @@ class Requests extends HRForms2 {
                 $hierarchy = $h[$idx];
                 $groups = $hierarchy['GROUPS'];
                 $groups_array = explode(",",$groups);
-                array_unshift($groups_array,"");
-                
+                array_unshift($groups_array,"-99");
+
                 // Check for skip conditions
                 $this->checkSkip($hierarchy['WORKFLOW_ID'],0);
                 if (!$this->match && $this->conditions) array_push($journal_array,"X");
 
+                // Check if submitter is in next approval group and auto-approve
+                if ($this->autoApproveNext($groups_array,sizeof($journal_array))) {
+                    array_push($journal_array,'A');
+                    array_push($comments_array,"Auto Approved - Submitter in approval group");
+                }
+                
                 //extract comments from JSON
                 $comment = $this->POSTvars['comment'];
                 unset($this->POSTvars['comment']);
     
+                // Add workflowId and groups to formdata
+                $this->POSTvars['WORKFLOW_ID'] = $hierarchy['WORKFLOW_ID'];
+                $this->POSTvars['GROUPS'] = implode(',',$groups_array);
+
                 if ($this->req[0] == "submit") {
                     // insert into hrforms2_request (get request id);
                     $qry = "insert into HRFORMS2_REQUESTS 
@@ -198,6 +226,7 @@ class Requests extends HRForms2 {
                     if ($j == 'PA') $comment = '';
                     if ($j == 'PF') $comment = '';
                     $data = array(
+                        'status'=>$j,
                         'request_id'=>$request_id,
                         'hierarchy_id'=>$hierarchy['HIERARCHY_ID'],
                         'workflow_id'=>$hierarchy['WORKFLOW_ID'],
@@ -205,7 +234,6 @@ class Requests extends HRForms2 {
                         'groups'=>$groups,
                         'group_from'=>'-99',
                         'group_to'=>$groups_array[$i],
-                        'status'=>$j,
                         'submitted_by'=>$user['SUNY_ID'],
                         'comment'=>$comment
                     );
@@ -248,6 +276,12 @@ class Requests extends HRForms2 {
                     array_push($journal_array,'X');
                 }
 
+                // Check if submitter is in next approval group and auto-approve
+                if ($this->autoApproveNext($groups_array,sizeof($journal_array))) {
+                    array_push($journal_array,'A');
+                    array_push($comments_array,"Auto Approved - Submitter in approval group");
+                }
+
                 //extract comments from JSON
                 $comment = $this->POSTvars['comment'];
                 unset($this->POSTvars['comment']);
@@ -268,13 +302,14 @@ class Requests extends HRForms2 {
 
                 // Post to Journal
                 $_SERVER['REQUEST_METHOD'] = 'POST';
-                $journal_data = array();
+                $return_data = array("journal"=>[],"email_response"=>[]);
                 foreach ($journal_array as $i=>$j) {
                     if ($j == 'X') $comment = 'Skipped by hierarchy rule';
                     if ($j == 'PA') $comment = '';
                     if ($j == 'PF') $comment = '';
                     $seq = $next_seq - sizeof($journal_array) + 1 + $i;
                     $data = array(
+                        'status'=>$j,
                         'request_id'=>$this->POSTvars['reqId'],
                         'hierarchy_id'=>$last_journal['HIERARCHY_ID'],
                         'workflow_id'=>$last_journal['WORKFLOW_ID'],
@@ -282,10 +317,10 @@ class Requests extends HRForms2 {
                         'groups'=>$workflow['GROUPS'],
                         'group_from'=>$groups_array[$last_journal['SEQUENCE']-1],
                         'group_to'=>$groups_array[$seq-1],
+                        'submitted_by'=>$last_journal['CREATED_BY_SUNY_ID'],
                         'comment'=>$comment
                     );
-                    $data['status'] = $j;
-                    $journal_data[] = $data;
+                    $return_data['journal'][] = $data;
                     $this->POSTvars['journal_data'] = $data;
                     $journal = (new journal(array('request',$this->POSTvars['reqId'],$j,$data),false))->returnData;
 
@@ -294,7 +329,7 @@ class Requests extends HRForms2 {
 
                 }
 
-                $this->toJSON($journal_data);
+                $this->toJSON($return_data);
                 break;
 
             case "reject":
@@ -303,36 +338,58 @@ class Requests extends HRForms2 {
                 $settings = (new settings(array(),false))->returnData;
                 if (!$settings['requests']['menu']['rejections']['enabled']) $this->raiseError(E_FORBIDDEN);
 
-                $journal_array = array();
-
                 $journal = (new journal(array('request',$this->POSTvars['reqId']),false))->returnData;
                 $last_journal = array_pop($journal);
 
-                $workflow = (new workflow(array('request',$last_journal['WORKFLOW_ID']),false))->returnData[0];
-                $groups_array = explode(",",$workflow['GROUPS']);
-                
+                $groups_array = explode(',',$this->POSTvars['GROUPS']);
+
+                $seq = intval($last_journal['SEQUENCE'])-1;
+
                 //extract comments from JSON
                 $comment = $this->POSTvars['comment'];
                 unset($this->POSTvars['comment']);
 
                 // Update current journal entry to R
                 $_SERVER['REQUEST_METHOD'] = 'PATCH';
-                $jrnl_update = (new journal(array(
+                /*$jrnl_update = (new journal(array(
                     'request',
                     $this->POSTvars['reqId'],
-                    $last_journal['SEQUENCE'],
+                    $seq,
                     $last_journal['STATUS'],
                     'R',
                     $comment
-                ),false))->returnData;
+                ),false))->returnData;*/
 
-                $this->toJSON($jrnl_update);
+                $return_data = array(
+                    "journal"=>array(
+                        'status'=>'R',
+                        'request_id'=>$this->POSTvars['reqId'],
+                        'hierarchy_id'=>$last_journal['HIERARCHY_ID'],
+                        'workflow_id'=>$last_journal['WORKFLOW_ID'],
+                        'seq'=>$seq,
+                        'groups'=>$this->POSTvars['GROUPS'],
+                        'group_from'=>($seq==0)?'-99':$groups_array[$seq-1],
+                        'group_to'=>$groups_array[$seq],
+                        'submitted_by'=>$last_journal['CREATED_BY_SUNY_ID'],
+                        'comment'=>$comment
+                    ),
+                    "email_response"=>[]
+                );
+
+                // Email Notification
+                //$return_data['email_response'] = $this->sendEmail($return_data['journal']);
+
+                $this->toJSON($return_data);
                 break;
 
             case "final":
                 $_SERVER['REQUEST_METHOD'] = 'GET';
                 $journal = (new journal(array('request',$this->POSTvars['reqId']),false))->returnData;
                 $last_journal = array_pop($journal);
+
+                $groups_array = explode(',',$this->POSTvars['GROUPS']);
+
+                $seq = intval($last_journal['SEQUENCE'])-1;
 
                 //extract comments from JSON
                 $comment = $this->POSTvars['comment'];
@@ -343,7 +400,7 @@ class Requests extends HRForms2 {
                 $jrnl_update = (new journal(array(
                     'request',
                     $this->POSTvars['reqId'],
-                    $last_journal['SEQUENCE'],
+                    $seq,
                     $last_journal['STATUS'],
                     'Z',
                     $comment
@@ -353,7 +410,27 @@ class Requests extends HRForms2 {
                 $_SERVER['REQUEST_METHOD'] = 'POST';
                 $archive = (new archive(array('request',$this->POSTvars['reqId']),false))->returnData;
                 
-                $this->done();
+                $return_data = array(
+                    "journal"=>array(
+                        'status'=>'Z',
+                        'request_id'=>$this->POSTvars['reqId'],
+                        'hierarchy_id'=>$last_journal['HIERARCHY_ID'],
+                        'workflow_id'=>$last_journal['WORKFLOW_ID'],
+                        'seq'=>$seq,
+                        'groups'=>$this->POSTvars['GROUPS'],
+                        'group_from'=>$groups_array[$seq-1],
+                        'group_to'=>$groups_array[$seq],
+                        'submitted_by'=>$last_journal['CREATED_BY_SUNY_ID'],
+                        'comment'=>$comment
+                    ),
+                    "email_response"=>[]
+                );
+
+                // Email Notification
+                $return_data['email_response'] = $this->sendEmail($return_data['journal']);
+
+                $this->toJSON($return_data);
+
                 break;
 
             default:

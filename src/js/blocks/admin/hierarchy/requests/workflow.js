@@ -2,8 +2,7 @@ import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, u
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/request";
 import { useWorkflowQueries } from "../../../../queries/hierarchy";
 import { find } from 'lodash';
-import { Row, Col, Modal, Button, Form, Alert, Tabs, Tab, Container, Table } from "react-bootstrap";
-import { Icon } from "@iconify/react";
+import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Table } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
 import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -12,6 +11,8 @@ import { useQueryClient } from "react-query";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { AppButton, errorToast } from "../../../components";
 import { flattenObject } from "../../../../utility";
+import { t } from "../../../../config/text";
+import { NotFound } from "../../../../app";
 
 
 export default function WorkflowTab() {
@@ -72,7 +73,7 @@ export default function WorkflowTab() {
         {name:'Actions',selector:row=>row.WORKFLOW_ID,cell:row=>{
             return (
                 <div className="button-group">
-                    <Button variant="danger" className="no-label" size="sm" title="Delete Workflow" onClick={()=>setDeleteWorkflow(row)}><Icon icon="mdi:delete"/></Button>
+                    <AppButton format="delete" size="sm" title="Delete Workflow" onClick={()=>setDeleteWorkflow(row)}></AppButton>
                 </div>
             );
         },ignoreRowClick:true},
@@ -139,14 +140,14 @@ function DeleteWorkflow({WORKFLOW_ID,setDeleteWorkflow}) {
     return(
         <Modal show={show} onHide={()=>setDeleteWorkflow({})} backdrop="static">
             <Modal.Header closeButton>
-                <Modal.Title>Delete?</Modal.Title>
+                <Modal.Title>{t('dialog.request.workflow.delete.title')}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <p>Are you sure?</p>
+                {t('dialog.request.workflow.delete.message')}
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={()=>setDeleteWorkflow({})}>Cancel</Button>
-                <Button variant="danger" onClick={handleDelete}>Delete</Button>
+                <AppButton format="close" onClick={()=>setDeleteWorkflow({})}>Cancel</AppButton>
+                <AppButton format="delete" onClick={handleDelete}>Delete</AppButton>
             </Modal.Footer>
         </Modal>
     );
@@ -252,15 +253,15 @@ function AddEditWorkflow(props) {
                             {tabs.map(t=>(
                                 <Tab key={t.id} eventKey={t.id} title={t.title}>
                                     <Container className="mt-3" fluid>
-                                        <TabRouter tab={t.id}/>
+                                        <TabRouter tab={activeTab}/>
                                     </Container>
                                 </Tab>
                             ))}
                         </Tabs>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={closeModal} disabled={!status.cancel}>Cancel</Button>
-                        <Button variant="danger" type="submit" disabled={!status.save}>{status.icon && <Icon icon={status.icon} className={status.spin?'spin':''}/>}Save</Button>
+                        <AppButton format="close" onClick={closeModal} disabled={!status.cancel}>Cancel</AppButton>
+                        <AppButton format="save" type="submit" disabled={!status.save} icon={status.icon} spin={status.spin}>Save</AppButton>
                     </Modal.Footer>
                 </Form>
             </FormProvider>
@@ -268,26 +269,53 @@ function AddEditWorkflow(props) {
     );
 }
 
-function TabRouter({tab}) {
+const TabRouter = React.memo(({tab}) => {
     switch(tab) {
         case "groups": return <WorkflowForm/>;
         case "conditions": return <WorkflowConditions/>;
-        default: return <p>{tab}</p>
+        default: return <NotFound/>;
     }
-}
+});
 
 // <Form.Control plaintext readOnly defaultValue="email@example.com" />
 function WorkflowForm() {
+    const { groups } = useContext(WorkflowContext);
+    const ref = useRef();
+    const [filterText,setFilterText] = useState('');
+    const [filteredGroups,setFilteredGroups] = useState([]);
+    const handleOnKeyDown = e => {
+        if (e.key == 'Escape') {
+            e.stopPropagation();
+            setFilterText('');
+        }
+    }
+    const handleOnChange = e => setFilterText(e.target.value);
+    useEffect(() => {
+        const filtered = groups.filter(row =>{
+            return Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
+        }).map(f=>f.GROUP_ID);
+        setFilteredGroups(filtered);
+    },[filterText]);
+    useEffect(()=>ref.current.focus(),[]);
     return (
-        <div className="drag-col-2">
-            <div className="dlh1">Unassigned Groups</div>
-            <div className="dlh2">Assigned Groups</div>
-            <WorkflowGroupList/>
-        </div>
+        <>
+            <Form.Row>
+                <Form.Group as={Col}>
+                    <Form.Label>Filter Users:</Form.Label>
+                    <Form.Control ref={ref} type="search" placeholder="filter available groups..." value={filterText} onChange={handleOnChange} onKeyDown={handleOnKeyDown}/>
+                </Form.Group>
+            </Form.Row>
+
+            <div className="drag-col-2">
+                <div className="dlh1">Unassigned Groups</div>
+                <div className="dlh2">Assigned Groups</div>
+                <WorkflowGroupList filteredGroups={filteredGroups} filterText={filterText}/>
+            </div>
+        </>
     );
 }
 
-function WorkflowGroupList() {
+function WorkflowGroupList({filteredGroups,filterText}) {
     const { groups } = useContext(WorkflowContext);
     const { control } = useFormContext();
     const { insert, remove, move } = useFieldArray({control:control,name:'assignedGroups'});
@@ -316,22 +344,25 @@ function WorkflowGroupList() {
             <Droppable droppableId="available">
                 {(provided, snapshot) => ( 
                     <div ref={provided.innerRef} className={`droplist dl1 ${snapshot.isDraggingOver?'over':''}`}>
-                        {groups.map((g,i) => (
-                            <Draggable key={i} draggableId={g.GROUP_ID} index={i}>
-                                {(provided,snapshot) => (
-                                    <div
-                                        ref={provided.innerRef} 
-                                        {...provided.draggableProps} 
-                                        {...provided.dragHandleProps}
-                                        className={snapshot.isDragging?'dragging':''}
-                                        onDoubleClick={handleDblClick}
-                                        data-list="available" data-idx={i}
-                                    >
-                                        {g.GROUP_NAME}
-                                    </div>
-                                )}
-                            </Draggable>
-                        ))}
+                        {groups.map((g,i) => {
+                            if (filterText&&!filteredGroups.includes(g.GROUP_ID)) return null;
+                            return (
+                                <Draggable key={i} draggableId={g.GROUP_ID} index={i}>
+                                    {(provided,snapshot) => (
+                                        <div
+                                            ref={provided.innerRef} 
+                                            {...provided.draggableProps} 
+                                            {...provided.dragHandleProps}
+                                            className={snapshot.isDragging?'dragging':''}
+                                            onDoubleClick={handleDblClick}
+                                            data-list="available" data-idx={i}
+                                        >
+                                            {g.GROUP_NAME}
+                                        </div>
+                                    )}
+                                </Draggable>
+                            );
+                        })}
                         {provided.placeholder}
                     </div>
                 )}
@@ -431,7 +462,10 @@ function WorkflowConditions() {
                                                 render={({field})=>(
                                                     <Form.Control {...field} as="select" size="sm" onChange={e=>handleGroupChange(field,index,e)} isInvalid={errors.conditions?.[index].seq}>
                                                         <option></option>
-                                                        {assignedgroups.map((g,i)=><option key={i} value={i} data-group_id={g.GROUP_ID}>{i}: {g.GROUP_NAME}</option>)}
+                                                        {assignedgroups.map((g,i)=>{
+                                                            if (i >= assignedgroups.length-1) return null;
+                                                            return <option key={i} value={i} data-group_id={g.GROUP_ID}>{i+1}: {g.GROUP_NAME}</option>;
+                                                        })}
                                                     </Form.Control>
                                                 )}
                                             />

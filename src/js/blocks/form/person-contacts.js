@@ -3,8 +3,8 @@ import { Row, Col, Form } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { get, cloneDeep } from "lodash";
 import { AppButton, CountrySelector, DateFormat, StateSelector } from "../components";
-import { useAppQueries } from "../../queries";
 import PhoneInput from 'react-phone-input-2';
+import useListsQueries from "../../queries/lists";
 
 import 'react-phone-input-2/lib/style.css'
 
@@ -29,7 +29,7 @@ export default function PersonContacts() {
     const [editIndex,setEditIndex] = useState();
     const [editValues,setEditValues] = useState();
 
-    const {getListData} = useAppQueries();
+    const {getListData} = useListsQueries();
     const relationships = getListData('contactRelationships');
 
     const handleNew = () => {

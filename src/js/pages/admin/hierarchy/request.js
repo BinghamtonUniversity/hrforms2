@@ -7,6 +7,7 @@ import { Container, Row, Col, Tabs, Tab, Badge } from "react-bootstrap";
 import { Loading, AppButton } from "../../../blocks/components";
 import { Icon } from "@iconify/react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { NotFound } from "../../../app";
 
 export const WorkflowContext = React.createContext();
 WorkflowContext.displayName = 'WorkflowContext';
@@ -71,7 +72,7 @@ export default function AdminRequestHierarchy() {
                                 <Row as="header">
                                     <Col as="h3">{t.title} <AppButton format="add" onClick={()=>setIsNew(t.id)}>New</AppButton></Col>
                                 </Row>
-                                <HierarchyRouter tab={t.id}/>
+                                <HierarchyRouter tab={activeTab}/>
                             </Container>
                         </Tab>
                     ))}
@@ -81,13 +82,13 @@ export default function AdminRequestHierarchy() {
     );
 }
 
-function HierarchyRouter({tab}) {
+const HierarchyRouter = React.memo(({tab}) => {
     switch(tab) {
         case "hierarchy": return <AdminRequestHierarchyHierarchy/>;
         case "workflow": return <AdminRequestHierarchyWorkflow/>;
-        default: return <p>{tab}</p>;
+        default: return <NotFound/>;
     }
-}
+});
 
 /**
  * Component to display hierarchy chain on both tabs

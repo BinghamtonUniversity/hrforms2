@@ -314,6 +314,7 @@ Class HRForms2 {
 		$type = null;
 		//build variables array
 		$vars = array(
+			'ERROR'=> false,
 			'PROD' => (INSTANCE=='PROD'),
 			'INSTANCE' => INSTANCE,
 			'DEBUG' => DEBUG,
@@ -343,7 +344,7 @@ Class HRForms2 {
 		// Check for no "To" options and return
 		if (count(array_filter($options['mailto'],'strlen')) == 0) {
 			$_SERVER['REQUEST_METHOD'] = $origMethod;
-			return "No email notification for this status"; 
+			return "No email notification for this status";
 		}
 
 		// Collect Email Addresses
@@ -381,6 +382,11 @@ Class HRForms2 {
 				}
 			}
 		}
+		// Set Mail-To to "error" email if empty
+		if (sizeof($email_list['mailto']) == 0) {
+			$vars['ERROR'] = '<span style="color:#900"><strong>ERROR:</strong> No MAILTO email address specified.  There may not be any users in the group or all users have notifications disabled.</span><br>';
+			array_push($email_list['mailto'],$errorEmail);
+		}
 
 		// Set Reply-To Email Address
 		$replyto = "";
@@ -396,10 +402,8 @@ Class HRForms2 {
 				break;
 		}
 
-		// start PHP mailer
-		// if instance not prod/test then override to/cc; display original to/cc in body
-		// Concatenate Subject
-		$subject = '[HRFORMS2-'.INSTANCE.']: '.$options['subject'].' '.$subject;
+		// set subject
+		$subject = '[HRFORMS2-'.INSTANCE.']: '.($vars['ERROR']?'**ERROR** ':'').$settings[$type]['email']['subject'].' - '.$options['subject'];
 
 		// get templates
 		$partials = [];
@@ -427,8 +431,9 @@ Class HRForms2 {
 		));
 		$content = str_replace('{{&gt;','{{>',$tmpl['TEMPLATE']); // fix partial HTML entities 
 		// append notProduction and debugInformation partials to the beginning of the $content
-		$content = "{{>notProduction}}<br>{{>debugInformation}}<br><br>" . $content;
-
+		$content = "{{#ERROR}}{{{ERROR}}}{{/ERROR}}{{>notProduction}}<br>" . $content . "<br><br><hr>{{>debugInformation}}";
+		
+		// start PHP mailer
 		ob_start();
 		if ($settings[$type]['email']['enabled']) {
 			$mail = new PHPMailer();

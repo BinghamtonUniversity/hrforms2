@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { useParams, useHistory, Link } from "react-router-dom";
+import { useParams, useHistory, Link, Redirect } from "react-router-dom";
 import useFormQueries from "../../queries/forms";
 import { Row, Col, Form, Button, Popover, OverlayTrigger, Tooltip } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
@@ -7,6 +7,7 @@ import { get, sortBy } from "lodash";
 import useGroupQueries from "../../queries/groups";
 import { useAuthContext, useSettingsContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
+import { AppButton, Loading } from "../../blocks/components";
 
 export default function FormJournal() {
     const {id} = useParams();
@@ -15,6 +16,8 @@ export default function FormJournal() {
     const [formId,setFormId] = useState((!!id)?id:'');
     const [showResults,setShowResults] = useState(!!id);
     const [expandAll,setExpandAll] = useState(false);
+    const [showReturn,setShowReturn] = useState(false);
+    const [redirect,setRedirect] = useState('');
 
     const searchRef = useRef();
     useHotkeys('ctrl+f,ctrl+alt+f',e=>{
@@ -29,47 +32,54 @@ export default function FormJournal() {
         setShowResults(false);
         setFormId(e.target.value);
     }
-    const handleKeyDown = e => {
-        if (e.key == 'Escape') {
-            setShowResults(false);
-            setFormId('');
-            history.push('/form/journal/');
-        }
+    const handleClear = () => {
+        setShowResults(false);
+        setShowReturn(false);
+        setFormId('');
+        history.push('/form/journal/');
     }
+    const handleKeyDown = e => e.key == 'Escape' && handleClear();
     const handleSubmit = e => {
         e.preventDefault();
         history.push('/form/journal/'+formId);
         setShowResults(true);
     }
+    const handleReturnToList = () => setRedirect(get(history.location,'state.from',''));
+    useEffect(()=>setShowReturn(get(history.location,'state.from','').startsWith('/form/list')),[history]);
+    useEffect(()=>searchRef.current.focus(),[]);
+    if (redirect) return <Redirect to={redirect}/>;
     return (
         <>
             <Row>
-                <Col><h2>Form Journal</h2></Col>
+                <Col><h2>Form Journal {showReturn && <AppButton format="previous" onClick={handleReturnToList}>Return to List</AppButton>}</h2></Col>
             </Row>
             <Form inline onSubmit={handleSubmit}>
                 <Form.Label className="my-1 mr-2" htmlFor="journalFormIdSearch" >Form ID:</Form.Label>
-                <Form.Control ref={searchRef} className="mb-2 mr-sm-2" id="journalFormIdSearch" value={formId} onChange={handleChange} onKeyDown={handleKeyDown} autoFocus/>
-                <Button type="submit" className="mb-2">Search</Button>
+                <Form.Control ref={searchRef} className="mb-2 mr-sm-2" id="journalFormIdSearch" value={formId} onChange={handleChange} onKeyDown={handleKeyDown} placeholder="Enter a Form ID" autoFocus/>
+                <AppButton format="search" type="submit" className="mb-2 mr-2">Search</AppButton>
+                <AppButton format="clear" onClick={handleClear} className="mb-2">Clear</AppButton>
             </Form>
-            {(showResults && !formId) && <p>You must enter a form id</p>}
-            {(showResults && formId) && <JournalSearchResults formId={formId} expandAll={expandAll} setExpandAll={setExpandAll}/>}
+            {(showResults && formId) && <JournalSearchResults formId={formId} expandAll={expandAll} setExpandAll={setExpandAll} setRedirect={setRedirect}/>}
         </>
     );
 }
 
-function JournalSearchResults({formId,expandAll,setExpandAll}) {
+function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
     const {getJournal} = useFormQueries(formId);
     const { general } = useSettingsContext();
-    const journal = getJournal({onSuccess:d=>{
-        d.forEach(c=>c.id=`${c.FORM_ID}_${c.SEQUENCE}`);
-    }});
+    const journal = getJournal();
 
     const expandToggleComponent = useMemo(() => {
         const expandText = ((expandAll)?'Collapse':'Expand') + ' All';
         return(
-            <Col className="pl-0">
-                <Form.Check type="switch" id="toggle-expand" label={expandText} onChange={()=>setExpandAll(!expandAll)} checked={expandAll}/>
-            </Col>
+            <>
+                <Col className="pl-0">
+                    <Form.Check type="switch" id="toggle-expand" label={expandText} onChange={()=>setExpandAll(!expandAll)} checked={expandAll}/>
+                </Col>
+                <Col className="d-flex justify-content-end pr-0">
+                    <AppButton format="view" onClick={()=>setRedirect(`/form/${formId}`)}>View Form</AppButton>
+                </Col>
+            </>
         );
     },[expandAll]);
 
@@ -84,9 +94,10 @@ function JournalSearchResults({formId,expandAll,setExpandAll}) {
         {name:'Comment',selector:row=>row.shortComment,sortable:false,wrap:true}
     ],[general]);
 
+    if (journal.isError) return <Loading type="alert" isError>{journal.error.description}</Loading>
     return (
         <DataTable 
-            keyField="id"
+            keyField="SEQUENCE"
             title={`Journal Report for Form ID: ${formId}`}
             subHeader
             subHeaderComponent={expandToggleComponent}

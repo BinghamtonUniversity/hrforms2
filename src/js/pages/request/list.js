@@ -6,10 +6,9 @@ import useGroupQueries from "../../queries/groups";
 import { useForm, Controller } from "react-hook-form";
 import { capitalize, find, pick, get } from "lodash";
 import { Redirect } from "react-router-dom";
-import { Row, Col, Button, Modal, Form } from "react-bootstrap";
+import { Row, Col, Modal, Form } from "react-bootstrap";
 import { format } from "date-fns";
 import DataTable from 'react-data-table-component';
-import { Icon } from "@iconify/react";
 import { AppButton, Loading, ModalConfirm, WorkflowExpandedComponent } from "../../blocks/components";
 import { useUserContext, SettingsContext, NotFound, useSettingsContext, useAuthContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -199,12 +198,12 @@ function ListTable({data,list}) {
         {name:'Actions',cell:row=>{
             return (
                 <div className="button-group">
-                    {(list=='drafts')&&<Button variant="danger" className="no-label" size="sm" title="Delete Draft" onClick={()=>handleAction('delete',row)}><Icon icon="mdi:delete"/></Button>}
-                    {(list!='drafts')&&<Button variant="primary" className="no-label" size="sm" title="Show Journal" onClick={()=>handleAction('journal',row)}><Icon icon="mdi:information-variant-circle-outline"/></Button>}
+                    {(list=='drafts')&&<AppButton format="delete" size="sm" title="Delete Draft" onClick={()=>handleAction('delete',row)}></AppButton>}
+                    {(list!='drafts')&&<AppButton format="info" size="sm" title="Show Journal" onClick={()=>handleAction('journal',row)}></AppButton>}
                     {!(['drafts','pending','rejections','archived'].includes(list))&&
                         <>
-                            <Button variant="success" className="no-label" size="sm" title="Approve" onClick={()=>handleAction('approve',row)}><Icon icon="mdi:check"/></Button>
-                            <Button variant="danger" className="no-label" size="sm" title="Reject" onClick={()=>handleAction('reject',row)}><Icon icon="mdi:close-circle"/></Button>
+                            <AppButton format="approve" size="sm" title="Approve" onClick={()=>handleAction('approve',row)}></AppButton>
+                            <AppButton format="reject" size="sm" title="Reject" onClick={()=>handleAction('reject',row)}></AppButton>
                         </>
                     }
                 </div>
@@ -224,7 +223,7 @@ function ListTable({data,list}) {
         setRows(data);
     },[data]);
     useEffect(()=>searchRef.current.focus(),[]);
-    if (redirect) return <Redirect to={redirect}/>
+    if (redirect) return <Redirect to={{pathname:redirect,state:{from:`/request/list/${list}`}}}/>;
     return (
         <>
             <DataTable 
@@ -266,9 +265,9 @@ function ActionModal({action,modalCallback}) {
         setIsSaving(true);
         modalCallback(e,data.comment);
     }
-    const onHide = e => {
+    const onHide = () => {
         if(isSaving) return 0;
-        modalCallback(e);
+        modalCallback(undefined);
     }
     const onError = error => {
         console.error(error);
@@ -291,7 +290,7 @@ function ActionModal({action,modalCallback}) {
                         <Form.Control.Feedback type="invalid">{errors.comment?.message}</Form.Control.Feedback>
                 </Modal.Body>
                 <Modal.Footer>
-                    <AppButton id="cancel" format="cancel" onClick={modalCallback} disabled={isSaving}>Cancel</AppButton>
+                    <AppButton id="cancel" format="cancel" onClick={onHide} disabled={isSaving}>Cancel</AppButton>
                     <AppButton type="submit" format="approve" disabled={isSaving}>{capitalize(action)}</AppButton>
                 </Modal.Footer>
             </Form>
