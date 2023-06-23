@@ -1,0 +1,5 @@
+@media print {
+    .ReactQueryDevtools { display: none }
+    blockquote, pre { border: none; }
+    main { margin-top: 1em; }
+}

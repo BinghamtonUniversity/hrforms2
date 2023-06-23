@@ -8,6 +8,7 @@ import { useForm, Controller } from "react-hook-form";
 import { AppButton, errorToast } from "../../blocks/components";
 import { t } from "../../config/text";
 import useNewsQueries from "../../queries/news";
+import { Helmet } from "react-helmet";
 
 export default function AdminNews() {
     const queryclient = useQueryClient();
@@ -31,6 +32,9 @@ export default function AdminNews() {
     return (
         <section>
             <header>
+                <Helmet>
+                    <title>{t('admin.news.title')}</title>
+                </Helmet>
                 <Row>
                     <Col><h2>{t('admin.news.title')}</h2></Col>
                 </Row>

@@ -498,32 +498,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                                             <FormTabRouter tab={t.value} activeTab={activeTab} subTab={activeNav}/>
                                         </div>
                                         <Row as="footer" className="mt-3">
-                                            <Col className="button-group justify-content-end">
-                                                {/*
-                                                {hasErrors && <div className="d-inline-flex align-items-center text-danger mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:alert"/><span>Errors</span></div>}
-                                                {isSaving && <div className="d-inline-flex align-items-center mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:loading" className="spin"/><span>Saving...</span></div>}
-                                                {methods.getValues('lastJournal.STATUS')=="" && 
-                                                    <>
-                                                        {!isNew && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
-                                                        {isNew && <AppButton format="undo" onClick={()=>handleReset()} disabled={isSaving}>Reset</AppButton>}
-                                                        {(activeTab!='basic-info')&&<AppButton format="save" onClick={()=>handleSave('save')} disabled={isSaving}>Save &amp; Exit</AppButton>}
-                                                    </>
-                                                }
-                                                {(activeTab!='review')&&<AppButton id="next" format="next" onClick={handleNext} disabled={isSaving||!infoComplete}>Next</AppButton>}
-                                                {(activeTab=='review'&&methods.getValues('lastJournal.STATUS')=="")&&<AppButton id="submit" format="submit" onClick={()=>handleSave('submit')} disabled={isSaving||!infoComplete}>Submit</AppButton>}
-                                                {(methods.getValues('lastJournal.STATUS')!=""&&canEdit&&(activeTab=='review')) && 
-                                                    <>
-                                                        <AppButton id="reject" format="reject" onClick={()=>handleSave('reject')} disabled={isSaving}>Reject</AppButton>
-                                                        {(methods.getValues('lastJournal.STATUS')=="PF")?
-                                                            <AppButton id="final" format="approve" onClick={()=>handleSave('final')} disabled={isSaving}>Final Approve</AppButton>
-                                                        :
-                                                            <AppButton id="approve" format="approve" onClick={()=>handleSave('approve')} disabled={isSaving}>Approve</AppButton>
-                                                        }
-                                                    </>
-                                                }
-                                                <AppButton id="submit" format="submit" variant="outline-danger" onClick={()=>handleSave('test')} disabled={isSaving}>Test Submit</AppButton>
-                                                */}
-
+                                            <Col className="button-group justify-content-end d-print-none">
                                                 {isDraft && 
                                                     <>
                                                         {methods.formState.isDirty && <AppButton format="undo" onClick={handleReset} disabled={isSaving}>Reset</AppButton>}
@@ -552,7 +527,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                                         <SubmitterInfoBox/>
                                         <Row>
                                             {methods.getValues('formActions.formCode.FORM_CODE')=='TEST' &&
-                                                <Col className="d-flex justify-content-end">
+                                                <Col className="d-flex justify-content-end d-print-none">
                                                     <Form.Check type="switch" id="showHiddenToggle" className="custom-switch-lg" label="Hide/Show Fields In Test Mode" checked={showHidden} onChange={()=>setShowHidden(!showHidden)}/>
                                                 </Col>
                                             }

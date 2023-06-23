@@ -66,6 +66,7 @@ class Forms extends HRForms2 {
 	 * validate called from init()
 	 */
 	function validate() {
+        //if ($this->method == 'GET' && sizeof($this->req) != 2) $this->raiseError(E_BAD_REQUEST);
 		if ($this->method == 'DELETE' && $this->req[1] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN);
 	}
 
@@ -91,8 +92,25 @@ class Forms extends HRForms2 {
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
             $tabs = (is_object($row['TABS']))?$row['TABS']->load():"";
             $formData->formActions->TABS = json_decode($tabs);
-            $this->returnData = $formData;
-	        if ($this->retJSON) $this->toJSON($this->returnData);
+        } elseif ($this->req[0] == 'archive') {
+            $qry = "select FORM_DATA from HRFORMS2_FORMS_ARCHIVE where FORM_ID = :form_id";
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":form_id",$this->req[1]);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
+            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+            $formData = json_decode((is_object($row['FORM_DATA'])) ? $row['FORM_DATA']->load() : "");
+            oci_free_statement($stmt);
+            $qry = "select pt.paytrans_id,pt.tabs 
+                FROM HRFORMS2_PAYROLL_TRANSACTIONS pt 
+                WHERE pt.paytrans_id = :paytrans_id";
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":paytrans_id", $formData->formActions->PAYTRANS_ID);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
+            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+            $tabs = (is_object($row['TABS']))?$row['TABS']->load():"";
+            $formData->formActions->TABS = json_decode($tabs);
         } else {
             // Validation: Only submitter and group assigned to should view request
             $usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
@@ -124,9 +142,9 @@ class Forms extends HRForms2 {
             $tabs = (is_object($row['TABS']))?$row['TABS']->load():"";
             $formData->formActions->TABS = json_decode($tabs);
             $formData->lastJournal = $last_journal;
-            $this->returnData = $formData;
-	        if ($this->retJSON) $this->toJSON($this->returnData);
         }
+        $this->returnData = $formData;
+        if ($this->retJSON) $this->toJSON($this->returnData);
 	}
 
     function POST() {

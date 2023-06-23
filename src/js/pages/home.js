@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Row, Col, Card, ListGroup } from "react-bootstrap";
 import { capitalize } from "lodash";
-import { UserContext} from "../app";
+import { UserContext, useAuthContext, useUserContext} from "../app";
 import { News } from "../blocks/news";
 import { MenuCounts } from "../blocks/components";
 import { t } from "../config/text";
+import { Helmet } from "react-helmet";
 
 export default function Page() {
     return (
@@ -24,10 +25,20 @@ export default function Page() {
 }
 
 function Welcome() {
+    const { OVR_SUNY_ID } = useAuthContext();
+    const { fullname } = useUserContext();
+    const title = useMemo(() => {
+        return `${t('home.welcome')} ${fullname} ${((!OVR_SUNY_ID)?'':'[IMPERSONATING]')}`;
+    },[OVR_SUNY_ID,fullname]);
     return (
-        <UserContext.Consumer>
-            {({fullname}) => (<Row><Col><h2>{t('home.welcome')} {fullname}</h2></Col></Row>)}
-        </UserContext.Consumer>
+        <>
+            <Helmet>
+                <title>{title}</title>
+            </Helmet>
+            <Row>
+                <Col><h2>{t('home.welcome')} {fullname}</h2></Col>
+            </Row>
+        </>
     );
 }
 
