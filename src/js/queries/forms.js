@@ -31,6 +31,16 @@ export default function useFormQueries(FORM_ID) {
         }
         return useQuery(['forms',FORM_ID],q(`forms/${formIdAsPath}`),options);
     }
+    const getArchiveForm = (...args) => {
+        const options = args[0]?.options||args[0]||{};
+        if(options.select) options.select2 = options.select;
+        options.select = data => {
+            if (!data) return;
+            data.effDate = (data.effDate)?new Date(data.effDate):"";
+            return (options.select2)?options.select2(data):data;
+        }
+        return useQuery(['forms','archive',FORM_ID],q(`forms/archive/${formIdAsPath}`),options);
+    }
     const postForm = () => useMutation(d=>q(`forms/${d.action}/${formIdAsPath}`,'POST',d)());
     const putForm = () => useMutation(d=>q(`forms/${d.action}/${formIdAsPath}`,'PUT',d)());
     const patchForm = () => useMutation(d=>q(`forms/${d.action}/${formIdAsPath}`,'PATCH',d)());
@@ -79,5 +89,5 @@ export default function useFormQueries(FORM_ID) {
 
 
     return {getEducationInstitutions,getPosition,getSupervisorNames,getJournal,
-        getForm,postForm,putForm,patchForm,deleteForm,getFormList}
+        getForm,getArchiveForm,postForm,putForm,patchForm,deleteForm,getFormList}
 }

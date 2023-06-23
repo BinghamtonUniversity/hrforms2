@@ -99,7 +99,7 @@ function ListTable({data,list}) {
                 setRedirect('/form/'+row.FORM_ID.replaceAll('-','/'));
                 break;
             case 'archived':
-                console.warn('TODO: view archived');
+                setRedirect('/form/archive/'+row.FORM_ID);
                 break;
             default:
                 setRedirect('/form/'+row.FORM_ID);

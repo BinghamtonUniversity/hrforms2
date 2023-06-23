@@ -15,17 +15,21 @@ import AppHotKeys from "./blocks/apphotkeys";
 import { AppButton, formats } from "./blocks/components";
 import useSettingsQueries from "./queries/settings";
 import useSessionQueries from "./queries/session";
+import { Helmet } from "react-helmet";
 
 /* PAGES */
 const Home = lazy(()=>import("./pages/home"));
 const Request = lazy(()=>import("./pages/request"));
+const RequestArchiveView = lazy(()=>import("./pages/request/view"));
 const RequestList = lazy(()=>import("./pages/request/list"));
 const RequestJournal = lazy(()=>import("./pages/request/journal"));
 const HRForm = lazy(()=>import("./pages/form"));
+const HRFormArchiveView = lazy(()=>import("./pages/form/view"));
 const HRFormList = lazy(()=>import("./pages/form/list"));
 const HRFormJournal = lazy(()=>import("./pages/form/journal"));
 const AdminPages = lazy(()=>import("./pages/admin"));
-const Testing = lazy(()=>import("./pages/testing"));
+const VersionInfo = lazy(()=>import("./pages/version"));
+const LoginHistory = lazy(()=>import("./pages/login-history"));
 
 /* CONTEXTS */
 export const AuthContext = React.createContext();
@@ -100,6 +104,10 @@ export default function StartApp() {
                 <AuthContext.Provider value={{...authData}}>
                     <TextContext.Provider value={{}}>
                         <ErrorBoundary FallbackComponent={AppErrorFallback}>
+                            <Helmet 
+                                titleTemplate="HR Forms 2 - %s"
+                                defaultTitle="HR Forms 2"
+                            />
                             <AppContent SUNY_ID={authData.SUNY_ID} OVR_SUNY_ID={authData.OVR_SUNY_ID}/>
                             {(session.data?.DEBUG&&session.data?.isAdmin) && <ReactQueryDevtools initialIsOpen={false} />}
                         </ErrorBoundary>
@@ -134,12 +142,12 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
                         {(userData && OVR_SUNY_ID) && <ImpersonationAlert {...userData}/>}
                         <Switch>
                             <Route exact path="/" component={Home}/>
-                            <Route exact path="/testing" component={Testing}/>
 
                             <Route exact path="/request/journal" component={RequestJournal}/>
                             <Route path="/request/journal/:id" component={RequestJournal}/>
                             <Route exact path="/request/list" component={RequestList}/>
                             <Route path="/request/list/:part" component={RequestList}/>
+                            <Route path="/request/archive/:id" component={RequestArchiveView}/>
                             <Route path="/request/:id/:sunyid/:ts" component={Request}/>
                             <Route path="/request/:id" component={Request}/>
                             <Route path="/request" component={Request}/>
@@ -148,6 +156,7 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
                             <Route path="/form/journal/:id" component={HRFormJournal}/>
                             <Route exact path="/form/list" component={HRFormList}/>
                             <Route path="/form/list/:part" component={HRFormList}/>
+                            <Route path="/form/archive/:id" component={HRFormArchiveView}/>
                             <Route path="/form/:id/:sunyid/:ts" component={HRForm}/>
                             <Route path="/form/:id" component={HRForm}/>
                             <Route path="/form" component={HRForm}/>
@@ -155,6 +164,9 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
                             <Route path="/admin/:page/:subpage/:pagetab" component={AdminPages}/>
                             <Route path="/admin/:page/:subpage" component={AdminPages}/>
                             <Route path="/admin/:page" component={AdminPages}/>
+
+                            <Route path="/version-info" component={VersionInfo}/>
+                            <Route path="/login-history" component={LoginHistory}/>
 
                             <Route path="*"><NotFound/></Route>
                         </Switch>
@@ -191,6 +203,7 @@ export function ErrorFallback({error}) {
 
 function ImpersonationAlert({SUNY_ID,fullname}) {
     const history = useHistory();
+    const location = useLocation();
     const queryclient = useQueryClient();
     const { patchSession } = useSessionQueries();
     const mutation = patchSession();
@@ -198,7 +211,7 @@ function ImpersonationAlert({SUNY_ID,fullname}) {
     const endImpersonation = () => {
         mutation.mutateAsync({IMPERSONATE_SUNY_ID:''}).then(d => {
             queryclient.refetchQueries('session').then(()=>{
-                history.push('/');
+                location.pathname != '/' && history.push('/');
             });
         });        
     }
@@ -228,7 +241,7 @@ const ScrollToTop = React.memo(function ScrollToTop() {
     }
     if (!show) return null;
     return (
-        <AppButton format="top" onClick={scrollTop} size="lg" className="toTop" title="Scroll to top"></AppButton>        
+        <AppButton format="top" onClick={scrollTop} size="lg" className="toTop d-print-none" title="Scroll to top"></AppButton>        
     );
 });
 

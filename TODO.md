@@ -11,32 +11,33 @@ Bug fixes, enhancements and things still to complete.
   * Request: auto-approve next code
 
 ## In Progress Tasks:
+  * Use Helmet to change the title of the page
   * Email notification; auto-approved should not get emails (need to test/check this)
   * Request: Move config items into config/request.js file.
   * Request|Form: Control who can view/edit based on status (see TODO in file)
+  * Add CSS for printing
   * Change delete modals to component: ModalConfirm
+  * [DONE] - Remove last group from skip select list - cannot skip the last group.
+    - Handle when hiearchy/workflow changed.
   * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
   
 ## Tasks: 
-  * Request|Form: Archived should save groups, hierarchym and workflow
+  * Request|Form: Archived should save groups, hierarchy, and workflow
   * Request|Form: Approvals should have "save and exit" option?
   * Request|Form: Archived list needs date filter; default should limit range?
   * Request: User should NOT be able to approve/reject requests they submitted.
   * FormList and RequestList; drop the additional formId, requestId and just use POSTvars.
   * Forms: Auto focus fields
+  * Search for "TODO" in files
+  * Search for "console.log" in files
   * Create list of standard hotkeys for application.
   * Users: Ability to download user list for auditing
   * Admin - Forms: Delete paytrans should check to see usage and handle
   * Switch from username to B# as primary key
-  * Remove last group from skip select list - cannot skip the last one.  Need to handle when changed.
-  * Use Helmet to change the title of the page
   * Admin: Add default routing in settings
   * On app error allow "reset"; test with undefined import component.
   * Add print to PDF
-  * Add CSS for printing
   * Forms: Default WF for all payrolls/forms?
-  * Search for "TODO" in files
-  * Search for "console.log" in files
   * DataTables:
     - Add search-by-field as needed (see groups.js)
     - Global setting for paginationRowsPerPageOptions

@@ -24,14 +24,17 @@ const ReviewComments = lazy(()=>import("./review/review-comments"));
 
 export default function Review() {
     const { getValues } = useFormContext();
+    const { journalStatus } = useHRFormContext();
     useEffect(()=>{
         console.debug(getValues());
-    });
+    },[]);
     return (
         <article id="form-review" className="mt-3">
-            <Row as="header">
-                <Col as="h3">Review</Col>
-            </Row>
+            {journalStatus!='Z' && 
+                <Row as="header">
+                    <Col as="h3">Review</Col>
+                </Row>
+            }
             <ReviewFormData/>
             <ReviewSections/>
             <ReviewComments/>
@@ -62,7 +65,7 @@ function ReviewFormData() {
                 <Col as="dt" md={2} className="mb-0">Form Type:</Col>
                 <Col as="dd" md={10} className="mb-0"><FormTypeDisplay/></Col>
                 <Col as="dt" md={2} className="mb-0">Payroll:</Col>
-                <Col as="dd" md={10} className="mb-0">{payroll?.title}</Col>
+                <Col as="dd" md={10} className="mb-0">{payroll?.title||payroll.PAYROLL_TITLE}</Col>
                 <Col as="dt" md={2} className="mb-0">Effective Date:</Col>
                 <Col as="dd" md={10} className="mb-0"><DateFormat>{effDate}</DateFormat></Col>
             </Row>

@@ -19,6 +19,7 @@ import { pick } from "lodash";
 import { NotFound, useAuthContext } from "../../app";
 import { t } from "../../config/text";
 import { flattenObject } from "../../utility";
+import { Helmet } from "react-helmet";
 
 const defaultVals = {
     SUNYID:'',
@@ -43,6 +44,9 @@ export default function AdminUsers() {
     return (
         <>
             <Row>
+                <Helmet>
+                    <title>{t('admin.users.title')}</title>
+                </Helmet>
                 <Col><h2>{t('admin.users.title')} <AppButton format="add-user" onClick={()=>setNewUser(true)}>Add New</AppButton></h2></Col>
             </Row>
             <Row>
@@ -238,7 +242,12 @@ function UsersTable({users,newUser,setNewUser}) {
                 conditionalRowStyles={conditionalRowStyles}
                 noDataComponent={<p className="m-3">No Users Found Matching Your Criteria</p>}
             />
-            {(selectedRow?.SUNY_ID||newUser) && <AddEditUserForm {...selectedRow} setSelectedRow={setSelectedRow} newUser={newUser} setNewUser={setNewUser}/>}
+            {(selectedRow?.SUNY_ID||newUser) && 
+                (<>
+                    <Helmet><title>{t('admin.users.title')} - {(newUser)?'New User':`Edit User: ${selectedRow.fullName}`}</title></Helmet>
+                    <AddEditUserForm {...selectedRow} setSelectedRow={setSelectedRow} newUser={newUser} setNewUser={setNewUser}/>
+                </>)
+            }
             {impersonateUser?.SUNY_ID && <ImpersonateUser user={impersonateUser} setImpersonateUser={setImpersonateUser}/>}
             {toggleUser?.SUNY_ID && <ToggleUser user={toggleUser} setToggleUser={setToggleUser}/>}
             {deleteUser?.SUNY_ID && <DeleteUser user={deleteUser} setDeleteUser={setDeleteUser}/>}
