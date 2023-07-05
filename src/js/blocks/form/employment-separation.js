@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { Row, Col, Form, InputGroup} from "react-bootstrap";
 import { Icon } from "@iconify/react";
@@ -10,9 +10,14 @@ import { useHRFormContext } from "../../config/form";
 const name = 'employment.separation';
 
 export default function EmploymentSeparation() {
+    const { canEdit, activeNav } = useHRFormContext();
+    const ref = useRef();
+
     const { control } = useFormContext();
-    const { canEdit } = useHRFormContext();
     const watchEffectiveDate = useWatch({name:'effDate',control:control});
+
+    useEffect(()=>(canEdit&&ref.current)&&ref.current.setFocus(),[activeNav]);
+
     return (
         <article>
             <Row as="header">
@@ -33,6 +38,7 @@ export default function EmploymentSeparation() {
                             control={control}
                             render={({field}) => <Form.Control
                                 as={DatePicker}
+                                ref={ref}
                                 name={field.name}
                                 selected={field.value}
                                 closeOnScroll={true}

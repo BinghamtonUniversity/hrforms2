@@ -11,6 +11,7 @@ import useFormQueries from "../../queries/forms";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import { addDays, subDays } from "date-fns";
 import DataTable from "react-data-table-component";
+import { useHRFormContext } from "../../config/form";
 
 const name = 'employment.pay';
 
@@ -86,6 +87,7 @@ function ExistingEmploymentPayTable() {
 
 function NewEmploymentPay() {
     const blockName = `${name}.newPay`;
+    const { canEdit } = useHRFormContext();
 
     const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
@@ -171,9 +173,7 @@ function NewEmploymentPay() {
     return (
         <section className="mt-3">
             <Row as="header">
-                <Col as="h4">
-                    New Pay
-                </Col>
+                <Col as="h4">New Pay</Col>
             </Row>
             {fields.map((flds,index)=>(
                 <section key={flds.id} className="border rounded p-2 mb-2">
@@ -301,11 +301,13 @@ function NewEmploymentPay() {
                     </Row>
                 </section>
             ))}
-            <Row as="footer">
-                <Col>
-                    <AppButton format="add" size="sm" onClick={handleNew} disabled={editIndex!=undefined}>Add New Pay</AppButton>
-                </Col>
-            </Row>
+            {canEdit &&
+                <Row as="footer">
+                    <Col>
+                        <AppButton format="add" size="sm" onClick={handleNew} disabled={editIndex!=undefined}>Add New Pay</AppButton>
+                    </Col>
+                </Row>
+            }
         </section>
     );
 }

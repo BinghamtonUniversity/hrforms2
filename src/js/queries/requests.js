@@ -15,7 +15,18 @@ export default function useRequestQueries(REQUEST_ID) {
             data.tentativeEndDate = (data.tentativeEndDate)?new Date(data.tentativeEndDate):"";
             return (options.select2)?options.select2(data):data;
         }
-        return useQuery(['requests',REQUEST_ID],q(`requests/${reqIdAsPath}`),options);
+        return useQuery(['requests','archive',REQUEST_ID],q(`requests/${reqIdAsPath}`),options);
+    }
+    const getArchiveRequest = (...args) => {
+        const options = args[0]?.options||args[0]||{};
+        if(options.select) options.select2 = options.select;
+        options.select = data => {
+            if (!data) return;
+            data.effDate = (data.effDate)?new Date(data.effDate):"";
+            data.tentativeEndDate = (data.tentativeEndDate)?new Date(data.tentativeEndDate):"";
+            return (options.select2)?options.select2(data):data;
+        }
+        return useQuery(['requests',REQUEST_ID],q(`requests/archive/${reqIdAsPath}`),options);
     }
     const postRequest = () => useMutation(d=>q(`requests/${d.action}/${reqIdAsPath}`,'POST',d)());
     const putRequest = () => useMutation(d=>q(`requests/${d.action}/${reqIdAsPath}`,'PUT',d)());
@@ -61,5 +72,5 @@ export default function useRequestQueries(REQUEST_ID) {
         return useQuery(['journal',REQUEST_ID],q(`journal/request/${REQUEST_ID}`),options);
     }
 
-    return {getRequest,postRequest,putRequest,deleteRequest,getRequestList,getJournal};
+    return {getRequest,getArchiveRequest,postRequest,putRequest,deleteRequest,getRequestList,getJournal};
 }

@@ -1,15 +1,16 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef, useEffect } from "react";
 import { Row, Col, Form } from "react-bootstrap";
 import { Controller, useFormContext } from "react-hook-form";
 import { useHRFormContext } from "../../config/form";
 import useFormQueries from "../../queries/forms";
 import DataTable from 'react-data-table-component';
 
-
 export default function Comments() {
+    const ref = useRef();
     const { control, getValues } = useFormContext();
-    const { isDraft, canEdit } = useHRFormContext();
+    const { isDraft, canEdit, activeNav } = useHRFormContext();
     const formId = getValues('formId');
+    useEffect(()=>(canEdit&&ref.current)&&ref.current.focus(),[activeNav]);
     return (
         <article>
             {canEdit &&
@@ -24,7 +25,7 @@ export default function Comments() {
                                 name="comment"
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <Form.Control {...field} as="textarea" rows={5}/>}
+                                render={({field}) => <Form.Control {...field} as="textarea" ref={ref} rows={5}/>}
                             />
                         </Col>
                     </Form.Group>

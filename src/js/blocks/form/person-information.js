@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
-import { HRFormContext } from "../../config/form";
+import { HRFormContext, useHRFormContext } from "../../config/form";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
@@ -11,6 +11,7 @@ const name = 'person.information';
 
 export default function PersonInfo() {
     const { control, getValues, setValue } = useFormContext();
+    const { canEdit, activeNav } = useHRFormContext();
 
     const watchRehireRetiree = useWatch({name:`${name}.REHIRE_RETIREE`});
 
@@ -29,7 +30,7 @@ export default function PersonInfo() {
             ['retiredDate','retiredFrom'].forEach(f=>setValue(`${name}.${f}`,''));
         }
     }
-
+    useEffect(()=>canEdit&&document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true}),[activeNav]);
     return (
         <HRFormContext.Consumer>
             {({showInTest,testHighlight,canEdit}) => (

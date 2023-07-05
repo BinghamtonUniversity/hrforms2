@@ -65,23 +65,32 @@ export default function FormJournal() {
 }
 
 function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
-    const {getJournal} = useFormQueries(formId);
     const { general } = useSettingsContext();
+    const { getForm, getJournal } = useFormQueries(formId);
     const journal = getJournal();
+    const formData = getForm();
 
     const expandToggleComponent = useMemo(() => {
         const expandText = ((expandAll)?'Collapse':'Expand') + ' All';
+        let r = '';
+        if (formData.data?.lastJournal?.STATUS == 'Z') {
+            r = `/form/archive/${formId}`;
+        } else {
+            r = `/form/${formId}`;
+        }
         return(
             <>
                 <Col className="pl-0">
                     <Form.Check type="switch" id="toggle-expand" label={expandText} onChange={()=>setExpandAll(!expandAll)} checked={expandAll}/>
                 </Col>
-                <Col className="d-flex justify-content-end pr-0">
-                    <AppButton format="view" onClick={()=>setRedirect(`/form/${formId}`)}>View Form</AppButton>
-                </Col>
+                {r && 
+                    <Col className="d-flex justify-content-end pr-0">
+                        <AppButton format="view" onClick={()=>setRedirect(r)}>View Form</AppButton>
+                    </Col>
+                }
             </>
         );
-    },[expandAll]);
+    },[expandAll,formData,formId]);
 
     const columns = useMemo(() => [
         {name:'Sequence',selector:row=>row.SEQUENCE,sortable:true,width:'120px'},
@@ -119,7 +128,6 @@ function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
 
 function ExpandedComponent({data}) {
     //TODO: Consolidate with list flow?
-    //TODO: check for admin to link
     const {isAdmin} = useAuthContext();
     const {general} = useSettingsContext();
     const clickHander = e => !isAdmin && e.preventDefault();

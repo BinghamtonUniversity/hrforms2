@@ -1,5 +1,5 @@
-import React,{ useState } from "react";
-import { Link, Redirect } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Navbar, Nav, NavDropdown } from "react-bootstrap";
 import { useAuthContext } from "../app";
 import capitalize from "lodash/capitalize";
@@ -9,10 +9,9 @@ export default function AppNav() {
     const {isAdmin,OVR_SUNY_ID} = useAuthContext();
     const logout = e => {
         e.preventDefault();
+        //TODO: handle logout
         console.log('logout');
     }
-    //TODO: check a/b match; if different and isAdmin then impersonation; otherwise kickout.
-    //(!isAdmin && SUNY_ID != user.SUNY_ID)
     return (
         <header>
             <Navbar bg="main" variant="dark" expand="lg" className="mb-4 shadow" fixed="top" collapseOnSelect={true}>
@@ -27,7 +26,6 @@ export default function AppNav() {
                                 <NavDropdown key={`${single}-menu`} title={capitalize(c)} id="request-nav-dropdown" alignRight>
                                     <MenuCounts menu={c} showOn="menu" showNew/>
                                     <NavDropdown.Divider/>
-                                    {/*TODO/REMOVE:<NavDropdown.Item as={Link} to={`/${single}/list`}>My {capitalize(c)}</NavDropdown.Item>*/}
                                     <NavDropdown.Item as={Link} to={`/${single}/journal`}>{capitalize(c)} Journal</NavDropdown.Item>
                                 </NavDropdown>
                             );

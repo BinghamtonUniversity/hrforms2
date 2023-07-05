@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
@@ -6,13 +6,16 @@ import { Icon } from "@iconify/react";
 import { get } from "lodash";
 import { Loading, DepartmentSelector } from "../components";
 import DatePicker from "react-datepicker";
-import { HRFormContext, useHRFormContext } from "../../config/form";
+import { useHRFormContext } from "../../config/form";
 import useFormQueries from "../../queries/forms";
 import useListsQueries from "../../queries/lists";
 
 const name = 'employment.volunteer';
 
 export default function EmploymentSeparation() {
+    const { canEdit, activeNav } = useHRFormContext();
+    const ref = useRef();
+
     const { control, setValue, formState: { errors } } = useFormContext();
     const [subRoleId] = useWatch({name:[`${name}.subRole.id`]});
 
@@ -33,166 +36,164 @@ export default function EmploymentSeparation() {
         }
     }
 
+    useEffect(()=>(canEdit&&ref.current)&&ref.current.focus(),[activeNav,subroles]);
+
     return (
-        <HRFormContext.Consumer>
-            {({canEdit}) => (
-                <article>
-                    <Row as="header">
-                        <Col as="h3">Volunteer</Col>
-                    </Row>
-                    <Form.Group as={Row}>
-                        <Form.Label column md={2}>Sub-Role:</Form.Label>
-                        <Col xs="auto">
-                            {subroles.isLoading && <Loading>Loading Data</Loading>}
-                            {subroles.isError && <Loading isError>Failed to Load</Loading>}
-                            {subroles.data &&
-                                <Controller
-                                    name={`${name}.subRole.id`}
-                                    control={control}
-                                    render={({field}) => (
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
-                                            <option></option>
-                                            {subroles.data.map(r=><option key={r[0]} value={r[0]}>{r[1]}</option>)}
-                                        </Form.Control>
-                                    )}
-                                />
-                            }
-                        </Col>
-                    </Form.Group>
-                    <Form.Group as={Row}>
-                        <Form.Label column md={2}>Start Date:</Form.Label>
-                        <Col xs="auto">
-                            <InputGroup>
-                                <Controller
-                                    name={`${name}.startDate`}
-                                    control={control}
-                                    render={({field}) => <Form.Control
-                                        as={DatePicker}
-                                        name={field.name}
-                                        selected={field.value}
-                                        closeOnScroll={true}
-                                        onChange={field.onChange}
-                                        autoComplete="off"
-                                        disabled={!canEdit}
-                                    />}
-                                />
-                                <InputGroup.Append>
-                                    <InputGroup.Text>
-                                        <Icon icon="mdi:calendar-blank"/>
-                                    </InputGroup.Text>
-                                </InputGroup.Append>
-                            </InputGroup>
-                        </Col>
-                    </Form.Group>
-                    <Form.Group as={Row}>
-                        <Form.Label column md={2}>End Date:</Form.Label>
-                        <Col xs="auto">
-                            <InputGroup>
-                                <Controller
-                                    name={`${name}.endDate`}
-                                    control={control}
-                                    render={({field}) => <Form.Control
-                                        as={DatePicker}
-                                        name={field.name}
-                                        selected={field.value}
-                                        closeOnScroll={true}
-                                        onChange={field.onChange}
-                                        autoComplete="off"
-                                        disabled={!canEdit}
-                                    />}
-                                />
-                                <InputGroup.Append>
-                                    <InputGroup.Text>
-                                        <Icon icon="mdi:calendar-blank"/>
-                                    </InputGroup.Text>
-                                </InputGroup.Append>
-                            </InputGroup>
-                        </Col>
-                    </Form.Group>
-                    {subRoleId=='Instructor'&&
-                        <Form.Group as={Row}>
-                            <Form.Label column md={2}>Tenure Status:</Form.Label>
-                            <Col xs="auto">
-                                {tenurestatus.isLoading && <Loading>Loading Data</Loading>}
-                                {tenurestatus.isError && <Loading isError>Failed to Load</Loading>}
-                                {tenurestatus.data &&
-                                    <Controller
-                                        name={`${name}.tenureStatus.id`}
-                                        control={control}
-                                        render={({field}) => (
-                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
-                                                <option></option>
-                                                {tenurestatus.data.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}
-                                            </Form.Control>
-                                        )}
-                                    />
-                                }
-                            </Col>
-                        </Form.Group>
+        <article>
+            <Row as="header">
+                <Col as="h3">Volunteer</Col>
+            </Row>
+            <Form.Group as={Row}>
+                <Form.Label column md={2}>Sub-Role:</Form.Label>
+                <Col xs="auto">
+                    {subroles.isLoading && <Loading>Loading Data</Loading>}
+                    {subroles.isError && <Loading isError>Failed to Load</Loading>}
+                    {subroles.data &&
+                        <Controller
+                            name={`${name}.subRole.id`}
+                            control={control}
+                            render={({field}) => (
+                                <Form.Control {...field} as="select" ref={ref} onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                                    <option></option>
+                                    {subroles.data.map(r=><option key={r[0]} value={r[0]}>{r[1]}</option>)}
+                                </Form.Control>
+                            )}
+                        />
                     }
-                    <Form.Group as={Row}>
-                        <Form.Label column md={2}>Hours/Week:</Form.Label>
-                        <Col xs="auto">
+                </Col>
+            </Form.Group>
+            <Form.Group as={Row}>
+                <Form.Label column md={2}>Start Date:</Form.Label>
+                <Col xs="auto">
+                    <InputGroup>
+                        <Controller
+                            name={`${name}.startDate`}
+                            control={control}
+                            render={({field}) => <Form.Control
+                                as={DatePicker}
+                                name={field.name}
+                                selected={field.value}
+                                closeOnScroll={true}
+                                onChange={field.onChange}
+                                autoComplete="off"
+                                disabled={!canEdit}
+                            />}
+                        />
+                        <InputGroup.Append>
+                            <InputGroup.Text>
+                                <Icon icon="mdi:calendar-blank"/>
+                            </InputGroup.Text>
+                        </InputGroup.Append>
+                    </InputGroup>
+                </Col>
+            </Form.Group>
+            <Form.Group as={Row}>
+                <Form.Label column md={2}>End Date:</Form.Label>
+                <Col xs="auto">
+                    <InputGroup>
+                        <Controller
+                            name={`${name}.endDate`}
+                            control={control}
+                            render={({field}) => <Form.Control
+                                as={DatePicker}
+                                name={field.name}
+                                selected={field.value}
+                                closeOnScroll={true}
+                                onChange={field.onChange}
+                                autoComplete="off"
+                                disabled={!canEdit}
+                            />}
+                        />
+                        <InputGroup.Append>
+                            <InputGroup.Text>
+                                <Icon icon="mdi:calendar-blank"/>
+                            </InputGroup.Text>
+                        </InputGroup.Append>
+                    </InputGroup>
+                </Col>
+            </Form.Group>
+            {subRoleId=='Instructor'&&
+                <Form.Group as={Row}>
+                    <Form.Label column md={2}>Tenure Status:</Form.Label>
+                    <Col xs="auto">
+                        {tenurestatus.isLoading && <Loading>Loading Data</Loading>}
+                        {tenurestatus.isError && <Loading isError>Failed to Load</Loading>}
+                        {tenurestatus.data &&
                             <Controller
-                                name={`${name}.hoursPerWeek`}
-                                defaultValue="1"
+                                name={`${name}.tenureStatus.id`}
                                 control={control}
-                                rules={{min:{value:1,message:'Hours/Week cannot be less than 1'},max:{value:40,message:'Hours/Week cannot be greater than 40'}}}
-                                render={({field}) => <Form.Control {...field} type="number" min={1} max={40} isInvalid={get(errors,field.name,false)} disabled={!canEdit}/>}
+                                render={({field}) => (
+                                    <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                                        <option></option>
+                                        {tenurestatus.data.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}
+                                    </Form.Control>
+                                )}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}.hoursPerWeek.message`,'')}</Form.Control.Feedback>
-                        </Col>
-                    </Form.Group>
-                    <Form.Group as={Row}>
-                        <Form.Label column md={2}>Service Type:</Form.Label>
-                        <Col xs="auto">
-                            {servicetypes.isLoading && <Loading>Loading Data</Loading>}
-                            {servicetypes.isError && <Loading isError>Failed to Load</Loading>}
-                            {servicetypes.data &&
-                                <Controller
-                                    name={`${name}.serviceType.id`}
-                                    control={control}
-                                    render={({field}) => (
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
-                                            <option></option>
-                                            {servicetypes.data.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}
-                                        </Form.Control>
-                                    )}
-                                />
-                            }
-                        </Col>
-                    </Form.Group>
-                    <Form.Group as={Row}>
-                        <Form.Label column md={2}>Department:</Form.Label>
-                        <Col xs="auto">
-                            <Controller
-                                name={`${name}.department.id`}
-                                control={control}
-                                defaultValue=""
-                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}/>}
-                            />
-                        </Col>
-                    </Form.Group>
-                    {(subRoleId&&subRoleId.startsWith('CP'))&& 
-                        <VolunteerSupervisor fieldName={`${name}.univOfficial`} fieldLabel="Responsible Univ Official"/>
+                        }
+                    </Col>
+                </Form.Group>
+            }
+            <Form.Group as={Row}>
+                <Form.Label column md={2}>Hours/Week:</Form.Label>
+                <Col xs="auto">
+                    <Controller
+                        name={`${name}.hoursPerWeek`}
+                        defaultValue="1"
+                        control={control}
+                        rules={{min:{value:1,message:'Hours/Week cannot be less than 1'},max:{value:40,message:'Hours/Week cannot be greater than 40'}}}
+                        render={({field}) => <Form.Control {...field} type="number" min={1} max={40} isInvalid={get(errors,field.name,false)} disabled={!canEdit}/>}
+                    />
+                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.hoursPerWeek.message`,'')}</Form.Control.Feedback>
+                </Col>
+            </Form.Group>
+            <Form.Group as={Row}>
+                <Form.Label column md={2}>Service Type:</Form.Label>
+                <Col xs="auto">
+                    {servicetypes.isLoading && <Loading>Loading Data</Loading>}
+                    {servicetypes.isError && <Loading isError>Failed to Load</Loading>}
+                    {servicetypes.data &&
+                        <Controller
+                            name={`${name}.serviceType.id`}
+                            control={control}
+                            render={({field}) => (
+                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                                    <option></option>
+                                    {servicetypes.data.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}
+                                </Form.Control>
+                            )}
+                        />
                     }
-                    {(subRoleId&&!subRoleId.startsWith('CP'))&& 
-                        <VolunteerSupervisor fieldName={`${name}.supervisor`} fieldLabel="Supervisor"/>
-                    }
-                    <Form.Group as={Row}>
-                        <Form.Label column md={2}>Duties:</Form.Label>
-                        <Col xs={12} sm={10} md={8} lg={6}>
-                            <Controller
-                                name={`${name}.duties`}
-                                defaultValue=""
-                                control={control}
-                                render={({field}) => <Form.Control {...field} as="textarea" rows={4} disabled={!canEdit}/>}
-                            />
-                        </Col>
-                    </Form.Group>
-                </article>
-            )}
-        </HRFormContext.Consumer>
+                </Col>
+            </Form.Group>
+            <Form.Group as={Row}>
+                <Form.Label column md={2}>Department:</Form.Label>
+                <Col xs="auto">
+                    <Controller
+                        name={`${name}.department.id`}
+                        control={control}
+                        defaultValue=""
+                        render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}/>}
+                    />
+                </Col>
+            </Form.Group>
+            {(subRoleId&&subRoleId.startsWith('CP'))&& 
+                <VolunteerSupervisor fieldName={`${name}.univOfficial`} fieldLabel="Responsible Univ Official"/>
+            }
+            {(subRoleId&&!subRoleId.startsWith('CP'))&& 
+                <VolunteerSupervisor fieldName={`${name}.supervisor`} fieldLabel="Supervisor"/>
+            }
+            <Form.Group as={Row}>
+                <Form.Label column md={2}>Duties:</Form.Label>
+                <Col xs={12} sm={10} md={8} lg={6}>
+                    <Controller
+                        name={`${name}.duties`}
+                        defaultValue=""
+                        control={control}
+                        render={({field}) => <Form.Control {...field} as="textarea" rows={4} disabled={!canEdit}/>}
+                    />
+                </Col>
+            </Form.Group>
+        </article>
     );
 }
 

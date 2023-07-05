@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState, useReducer, useRef } 
 import { Row, Col, Modal, Form, Tabs, Tab, Container, Alert } from "react-bootstrap";
 import { useForm, FormProvider, Controller, useFormContext } from "react-hook-form";
 import { AppButton, CheckboxTreeComponent, DescriptionPopover, errorToast, ModalConfirm } from "../../components";
-import { useTransactionQueries, useCodesQueries } from "../../../queries/codes";
+import useTransactionQueries from "../../../queries/transactions";
+import useCodesQueries from "../../../queries/codes";
 import DataTable from "react-data-table-component";
 import { toast } from "react-toastify";
 import { useQueryClient } from "react-query";
@@ -37,8 +38,8 @@ export default function PayrollTransactionsTab() {
     const transactioncodes = getTransactionCodes();
 
     const queryclient = useQueryClient();
-    //TODO: ERROR: This is wrong, getPayTrans expects payroll code to be passed, not id.
-    const {getPayTrans,patchPayTrans,deletePayTrans} = useTransactionQueries(changeRow?.PAYTRANS_ID);
+    const {getPayTrans} = useTransactionQueries();
+    const {patchPayTrans,deletePayTrans} = useTransactionQueries(changeRow?.PAYTRANS_ID);
     const paytrans = getPayTrans({
         enabled:payrollcodes.isSuccess&&formcodes.isSuccess&&actioncodes.isSuccess&&transactioncodes.isSuccess,
         onSuccess:d=>{
@@ -58,8 +59,8 @@ export default function PayrollTransactionsTab() {
     const handleRowAction = useCallback((action,row) => {
         const r = {...row};
         r.action = action;
+        console.debug(r);
         setChangeRow(r);
-        console.log(r);
     },[]);
     const handleRowClick = useCallback(row=>setSelectedRow(row),[]);
 
@@ -170,7 +171,6 @@ export default function PayrollTransactionsTab() {
         if (changeRow?.action != 'active') return;
         toast.promise(new Promise((resolve,reject) => {
             updateActive.mutateAsync({ACTIVE:(changeRow.ACTIVE=="1"?"0":"1")}).then(()=>{
-                console.log('updated');
                 queryclient.refetchQueries('paytrans',{exact:true,throwOnError:true}).then(()=>resolve(1)).catch(err=>reject(err))
             }).catch(err=>reject(err)).finally(()=>setChangeRow({}));
         }),{

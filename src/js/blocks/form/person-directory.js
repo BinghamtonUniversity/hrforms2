@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { get, cloneDeep, endsWith } from "lodash";
@@ -7,7 +7,7 @@ import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css'
-import { HRFormContext } from "../../config/form";
+import { HRFormContext, useHRFormContext } from "../../config/form";
 import useListsQueries from "../../queries/lists";
 
 //TODO: make address form a component and pass stuff?
@@ -43,6 +43,8 @@ function PersonDirectoryAddresses() {
         name:name
     });
     const watchAddress = useWatch({name:name,control});
+
+    const { canEdit, activeNav } = useHRFormContext();
 
     const [isNew,setIsNew] = useState(false);
     const [editIndex,setEditIndex] = useState();
@@ -130,182 +132,186 @@ function PersonDirectoryAddresses() {
         setEditValues(undefined);
         setIsNew(false);
     }
+    const handleEscape = (e,index) => {
+        if (e.key == 'Escape' && editIndex != undefined) handleCancel(index);
+        if (e.key == 'Escape' && isNew) handleRemove(index);
+    }
+
+    useEffect(()=>{
+        (isNew||editIndex!=undefined) && document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true});
+    },[editIndex,isNew,activeNav]);
 
     return (
-        <HRFormContext.Consumer>
-            {({canEdit})=>(
-                <article className="py-3">
-                    <Row as="header">
-                        <Col as="h4">Addresses {canEdit&&<AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
-                    </Row>
-                    {fields.map((field,index)=>(
-                        <section key={field.id} className="border rounded p-2 mb-2">
-                            <Form.Group as={Row} className="mb-0">
-                                <Form.Label column md={2}>Type*:</Form.Label>
-                                <Col xs="auto" className="pt-1">
-                                    {addressCodes.data && 
-                                        <Controller
-                                            name={`${name}.${index}.ADDRESS_CODE`}
-                                            control={control}
-                                            render={({field}) => addressCodes.data.map(c => {
-                                                if (!c.show) return null;
-                                                return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit}/>;
-                                            })}
-                                        />
-                                    }
-                                    {!watchAddress[index]?.ADDRESS_CODE && <Form.Text muted>You must select an address type in order to edit address information</Form.Text>}
-                                </Col>
-                            </Form.Group>
-                            {testField(index,'line1') &&
-                                <Form.Group as={Row} className="mb-1">
-                                    <Form.Label column md={2}>Line 1*:</Form.Label>
-                                    <Col xs="auto">
-                                        <Controller
-                                            name={`${name}.${index}.ADDRESS_1`}
-                                            rules={{required:{value:true,message:'Address Line 1 is Required'}}}
-                                            control={control}
-                                            render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
-                                        />
-                                        <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_1.message`,'')}</Form.Control.Feedback>
-                                    </Col>
-                                </Form.Group>
+        <article className="py-3">
+            <Row as="header">
+                <Col as="h4">Addresses {canEdit&&<AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
+            </Row>
+            {fields.map((field,index)=>(
+                <section key={field.id} className="border rounded p-2 mb-2" onKeyDown={e=>handleEscape(e,index)}>
+                    <Form.Group as={Row} className="mb-0">
+                        <Form.Label column md={2}>Type*:</Form.Label>
+                        <Col xs="auto" className="pt-1">
+                            {addressCodes.data && 
+                                <Controller
+                                    name={`${name}.${index}.ADDRESS_CODE`}
+                                    control={control}
+                                    render={({field}) => addressCodes.data.map(c => {
+                                        if (!c.show) return null;
+                                        return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit}/>;
+                                    })}
+                                />
                             }
-                            {testField(index,'line2') &&
-                                <Form.Group as={Row} className="mb-1">
-                                    <Form.Label column md={2}>Line 2:</Form.Label>
-                                    <Col xs="auto">
-                                        <Controller
-                                            name={`${name}.${index}.ADDRESS_2`}
-                                            control={control}
-                                            render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)}/>}
-                                        />
-                                    </Col>
-                                </Form.Group>
-                            }
-                            {testField(index,'department') &&
-                                <Form.Group as={Row} className="mb-1">
-                                    <Form.Label column md={2}>Department*:</Form.Label>
-                                    <Col xs="auto">
-                                        <Controller
-                                            name={`${name}.${index}.ADDRESS_1`}
-                                            control={control}
-                                            rules={{required:{value:true,message:'Department is Required'}}}
-                                            render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(field)} isInvalid={get(errors,field.name,false)}/>}
-                                        />
-                                    </Col>
-                                    <Col xs="auto">
-                                        <Controller
-                                            name={`${name}.${index}.department.id`}
-                                            control={control}
-                                            render={({field}) => (
-                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,`${name}.${index}.department.text`,false)}>
-                                                    <option></option>
-                                                    {depts.data&&depts.data.map(d=><option key={d.DEPARTMENT_CODE} value={d.DEPARTMENT_CODE}>{d.DEPARTMENT_DESC}</option>)}
-                                                </Form.Control>
-                                            )}
-                                        />
-                                        <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.ADDRESS_1.message`,'')}</Form.Control.Feedback>
-                                    </Col>
-                                </Form.Group>
-                            }
-                            {testField(index,'building') &&
-                                <Form.Group as={Row} className="mb-1">
-                                    <Form.Label column md={2}>Buidling*:</Form.Label>
-                                    <Col xs="auto">
-                                        <Controller
-                                            name={`${name}.${index}.ADDRESS_2`}
-                                            control={control}
-                                            rules={{required:{value:true,message:'Building is Required'}}}
-                                            render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(field)} isInvalid={get(errors,field.name,false)}/>}
-                                        />
-                                    </Col>
-                                    <Col xs="auto">
-                                        <Controller
-                                            name={`${name}.${index}.building.id`}
-                                            control={control}
-                                            render={({field}) => (
-                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,`${name}.${index}.building.text`,false)}>
-                                                    <option></option>
-                                                    {buildings.data&&buildings.data.map(b=><option key={b[0]} value={b[0]}>{b[0]} - {b[1]}</option>)}
-                                                </Form.Control>
-                                            )}
-                                        />
-                                        <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.ADDRESS_2.message`,'')}</Form.Control.Feedback>
-                                    </Col>
-                                </Form.Group>
-                            }
-                            {testField(index,'room') &&
-                                <Form.Group as={Row} className="mb-1">
-                                    <Form.Label column md={2}>Room:</Form.Label>
-                                    <Col xs="auto">
-                                        <Controller
-                                            name={`${name}.${index}.ADDRESS_3`}
-                                            control={control}
-                                            render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)}/>}
-                                        />
-                                    </Col>
-                                </Form.Group>
-                            }
-                            {testField(index,'city') &&
-                                <Form.Group as={Row} className="mb-1">
-                                    <Form.Label column md={2}>City/State/Zip*:</Form.Label>
-                                    <Col xs="auto">
-                                        <Controller
-                                            name={`${name}.${index}.ADDRESS_CITY`}
-                                            control={control}
-                                            rules={{required:{value:true,message:'City is Required'}}}
-                                            render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
-                                        />
-                                        <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_CITY.message`,'')}</Form.Control.Feedback>
-                                    </Col>
-                                    <Col xs="auto">
-                                        <Controller
-                                            name={`${name}.${index}.STATE_CODE`}
-                                            control={control}
-                                            rules={{required:{value:true,message:'State is Required'}}}
-                                            render={({field}) => <StateSelector field={field} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
-                                        />
-                                        <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].STATE_CODE.message`,'')}</Form.Control.Feedback>
-                                    </Col>
-                                    <Col xs="auto">
-                                        <Controller
-                                            name={`${name}.${index}.ADDRESS_POSTAL_CODE`}
-                                            control={control}
-                                            rules={{required:{value:true,message:'Zip Code is Required'}}}
-                                            render={({field}) => <Form.Control {...field} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
-                                        />
-                                        <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_POSTAL_CODE.message`,'')}</Form.Control.Feedback>
-                                    </Col>
-                                </Form.Group>
-                            }
-                            {canEdit &&
-                                <Row>
-                                    <Col className="button-group-sm">
-                                        {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
-                                        {(editIndex==index&&editableType(index)) && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
-                                        {(editIndex==index&&editableType(index)&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
-                                        <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
-                                    </Col>
-                                </Row>
-                            }
-                            <Row>
-                                <Col>
-                                    <small><span className="fw-bold">Created: </span><DateFormat>{field.createDate}</DateFormat></small>
-                                </Col>
-                                <Col className="text-right">
-                                    <small>{index}:{field.id}</small>
-                                </Col>
-                            </Row>
-                        </section>
-                    ))}
-                    {fields.length>0&&canEdit && 
+                            {!watchAddress[index]?.ADDRESS_CODE && <Form.Text muted>You must select an address type in order to edit address information</Form.Text>}
+                        </Col>
+                    </Form.Group>
+                    {testField(index,'line1') &&
+                        <Form.Group as={Row} className="mb-1">
+                            <Form.Label column md={2}>Line 1*:</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.${index}.ADDRESS_1`}
+                                    rules={{required:{value:true,message:'Address Line 1 is Required'}}}
+                                    control={control}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
+                                />
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_1.message`,'')}</Form.Control.Feedback>
+                            </Col>
+                        </Form.Group>
+                    }
+                    {testField(index,'line2') &&
+                        <Form.Group as={Row} className="mb-1">
+                            <Form.Label column md={2}>Line 2:</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.${index}.ADDRESS_2`}
+                                    control={control}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)}/>}
+                                />
+                            </Col>
+                        </Form.Group>
+                    }
+                    {testField(index,'department') &&
+                        <Form.Group as={Row} className="mb-1">
+                            <Form.Label column md={2}>Department*:</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.${index}.ADDRESS_1`}
+                                    control={control}
+                                    rules={{required:{value:true,message:'Department is Required'}}}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(field)} isInvalid={get(errors,field.name,false)}/>}
+                                />
+                            </Col>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.${index}.department.id`}
+                                    control={control}
+                                    render={({field}) => (
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,`${name}.${index}.department.text`,false)}>
+                                            <option></option>
+                                            {depts.data&&depts.data.map(d=><option key={d.DEPARTMENT_CODE} value={d.DEPARTMENT_CODE}>{d.DEPARTMENT_DESC}</option>)}
+                                        </Form.Control>
+                                    )}
+                                />
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.ADDRESS_1.message`,'')}</Form.Control.Feedback>
+                            </Col>
+                        </Form.Group>
+                    }
+                    {testField(index,'building') &&
+                        <Form.Group as={Row} className="mb-1">
+                            <Form.Label column md={2}>Buidling*:</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.${index}.ADDRESS_2`}
+                                    control={control}
+                                    rules={{required:{value:true,message:'Building is Required'}}}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(field)} isInvalid={get(errors,field.name,false)}/>}
+                                />
+                            </Col>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.${index}.building.id`}
+                                    control={control}
+                                    render={({field}) => (
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,`${name}.${index}.building.text`,false)}>
+                                            <option></option>
+                                            {buildings.data&&buildings.data.map(b=><option key={b[0]} value={b[0]}>{b[0]} - {b[1]}</option>)}
+                                        </Form.Control>
+                                    )}
+                                />
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.ADDRESS_2.message`,'')}</Form.Control.Feedback>
+                            </Col>
+                        </Form.Group>
+                    }
+                    {testField(index,'room') &&
+                        <Form.Group as={Row} className="mb-1">
+                            <Form.Label column md={2}>Room:</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.${index}.ADDRESS_3`}
+                                    control={control}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)}/>}
+                                />
+                            </Col>
+                        </Form.Group>
+                    }
+                    {testField(index,'city') &&
+                        <Form.Group as={Row} className="mb-1">
+                            <Form.Label column md={2}>City/State/Zip*:</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.${index}.ADDRESS_CITY`}
+                                    control={control}
+                                    rules={{required:{value:true,message:'City is Required'}}}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
+                                />
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_CITY.message`,'')}</Form.Control.Feedback>
+                            </Col>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.${index}.STATE_CODE`}
+                                    control={control}
+                                    rules={{required:{value:true,message:'State is Required'}}}
+                                    render={({field}) => <StateSelector field={field} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
+                                />
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].STATE_CODE.message`,'')}</Form.Control.Feedback>
+                            </Col>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.${index}.ADDRESS_POSTAL_CODE`}
+                                    control={control}
+                                    rules={{required:{value:true,message:'Zip Code is Required'}}}
+                                    render={({field}) => <Form.Control {...field} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
+                                />
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_POSTAL_CODE.message`,'')}</Form.Control.Feedback>
+                            </Col>
+                        </Form.Group>
+                    }
+                    {canEdit &&
                         <Row>
-                            <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Address</AppButton></Col>
+                            <Col className="button-group-sm">
+                                {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
+                                {(editIndex==index&&editableType(index)) && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
+                                {(editIndex==index&&editableType(index)&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
+                                <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
+                            </Col>
                         </Row>
                     }
-                </article>
-            )}
-        </HRFormContext.Consumer>
+                    <Row>
+                        <Col>
+                            <small><span className="fw-bold">Created: </span><DateFormat>{field.createDate}</DateFormat></small>
+                        </Col>
+                        <Col className="text-right">
+                            <small>{index}:{field.id}</small>
+                        </Col>
+                    </Row>
+                </section>
+            ))}
+            {fields.length>0&&canEdit && 
+                <Row>
+                    <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Address</AppButton></Col>
+                </Row>
+            }
+        </article>
     );
 }
 
@@ -321,6 +327,8 @@ function PersonDirectoryPhone() {
     const [isNew,setIsNew] = useState(false);
     const [editIndex,setEditIndex] = useState();
     const [editValues,setEditValues] = useState();
+
+    const { activeNav, canEdit } = useHRFormContext();
 
     const { getListData } = useListsQueries();
     const phoneTypes = getListData('phoneTypes');
@@ -384,110 +392,115 @@ function PersonDirectoryPhone() {
         setIsNew(false);
     }
 
+    const handleEscape = (e,index) => {
+        if (e.key == 'Escape' && editIndex != undefined) handleCancel(index);
+        if (e.key == 'Escape' && isNew) handleRemove(index);
+    }
+
+    useEffect(()=>{
+        (isNew||editIndex!=undefined) && document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true});
+    },[editIndex,isNew,activeNav]);
+
     return (
-        <HRFormContext.Consumer>
-            {({canEdit}) => (
-                <article className="py-3">
-                    <Row as="header">
-                        <Col as="h4">Phone Numbers {canEdit && <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
-                    </Row>
-                    {fields.map((field,index)=>(
-                        <section key={field.id} className="border rounded p-2 mb-2">
-                            <Form.Group as={Row} className="mb-0">
-                                <Form.Label column md={2}>Type:</Form.Label>
-                                <Col xs="auto" className="pt-1">
-                                    {phoneTypes.data && 
-                                        <Controller
-                                            name={`${name}.${index}.PHONE_TYPE`}
-                                            defaultValue=""
-                                            control={control}
-                                            render={({field}) => phoneTypes.data.map(c => {
-                                                if (!c.show) return null;
-                                                return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit}/>;
-                                            })}
-                                        />
-                                    }
-                                    {!watchPhone[index]?.PHONE_TYPE && <Form.Text muted>You must select a phone type in order to edit phone information</Form.Text>}
-                                </Col>
-                            </Form.Group>
-                            {watchPhone[index]?.PHONE_TYPE &&
-                                <Form.Group as={Row} className="mb-0">
-                                    <Form.Label column md={2}>Phone*:</Form.Label>
-                                    <Col xs="auto">
-                                        <Controller
-                                            name={`${name}.${index}.PHONE_NUMBER`}
-                                            defaultValue=""
-                                            control={control}
-                                            rules={{required:{value:true,message:'Phone is Required'}}}
-                                            render={({field}) => <PhoneInput 
-                                                {...field} 
-                                                country={'us'} 
-                                                preferredCountries={['us']} 
-                                                enableLongNumbers={true}
-                                                inputClass="form-control" 
-                                                onChange={(...args)=>handlePhoneChange(args,index)} 
-                                                disabled={editIndex!=index||!editableType(index)}
-                                                isInvalid={get(errors,field.name,false)}
-                                            />}
-                                        />
-                                        <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].number`,false)?'block':'none'}}>{get(errors,`${name}[${index}].number.message`,'')}</Form.Control.Feedback>
-                                    </Col>
-                                    <Form.Label column md={2}>Effective Date*:</Form.Label>
-                                    <Col xs="auto">
-                                        <InputGroup>
-                                            <Controller
-                                                name={`${name}.${index}.effDate`}
-                                                control={control}
-                                                rules={{required:{value:true,message:'Effective Date is Required'}}}
-                                                render={({field}) => <Form.Control
-                                                    as={DatePicker}
-                                                    name={field.name}
-                                                    closeOnScroll={true}
-                                                    selected={field.value}
-                                                    onChange={field.onChange}
-                                                    disabled={editIndex!=index||!editableType(index)}
-                                                    isInvalid={get(errors,field.name,false)}
-                                                    autoComplete="off"
-                                                />}
-                                            />
-                                            <InputGroup.Append>
-                                                <InputGroup.Text>
-                                                    <Icon icon="mdi:calendar-blank"/>
-                                                </InputGroup.Text>
-                                            </InputGroup.Append>
-                                        </InputGroup>
-                                        <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].effDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].effDate.message`,'')}</Form.Control.Feedback>
-                                    </Col>
-                                </Form.Group>
+        <article className="py-3">
+            <Row as="header">
+                <Col as="h4">Phone Numbers {canEdit && <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
+            </Row>
+            {fields.map((field,index)=>(
+                <section key={field.id} className="border rounded p-2 mb-2" onKeyDown={e=>handleEscape(e,index)}>
+                    <Form.Group as={Row} className="mb-0">
+                        <Form.Label column md={2}>Type:</Form.Label>
+                        <Col xs="auto" className="pt-1">
+                            {phoneTypes.data && 
+                                <Controller
+                                    name={`${name}.${index}.PHONE_TYPE`}
+                                    defaultValue=""
+                                    control={control}
+                                    render={({field}) => phoneTypes.data.map(c => {
+                                        if (!c.show) return null;
+                                        return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit}/>;
+                                    })}
+                                />
                             }
-                            {canEdit &&
-                                <Row>
-                                    <Col className="button-group-sm">
-                                        {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
-                                        {(editIndex==index&&editableType(index)) && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
-                                        {(editIndex==index&&editableType(index)&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
-                                        <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
-                                    </Col>
-                                </Row>
-                            }
-                            <Row>
-                                <Col>
-                                    <small><span className="fw-bold">Created: </span><DateFormat>{field.createDate}</DateFormat></small>
-                                </Col>
-                                <Col className="text-right">
-                                    <small>{index}:{field.id}</small>
-                                </Col>
-                            </Row>
-                        </section>
-                    ))}
-                    {fields.length>0&&canEdit && 
+                            {!watchPhone[index]?.PHONE_TYPE && <Form.Text muted>You must select a phone type in order to edit phone information</Form.Text>}
+                        </Col>
+                    </Form.Group>
+                    {watchPhone[index]?.PHONE_TYPE &&
+                        <Form.Group as={Row} className="mb-0">
+                            <Form.Label column md={2}>Phone*:</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.${index}.PHONE_NUMBER`}
+                                    defaultValue=""
+                                    control={control}
+                                    rules={{required:{value:true,message:'Phone is Required'}}}
+                                    render={({field}) => <PhoneInput 
+                                        {...field} 
+                                        country={'us'} 
+                                        preferredCountries={['us']} 
+                                        enableLongNumbers={true}
+                                        inputClass="form-control" 
+                                        onChange={(...args)=>handlePhoneChange(args,index)} 
+                                        disabled={editIndex!=index||!editableType(index)}
+                                        isInvalid={get(errors,field.name,false)}
+                                    />}
+                                />
+                                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].number`,false)?'block':'none'}}>{get(errors,`${name}[${index}].number.message`,'')}</Form.Control.Feedback>
+                            </Col>
+                            <Form.Label column md={2}>Effective Date*:</Form.Label>
+                            <Col xs="auto">
+                                <InputGroup>
+                                    <Controller
+                                        name={`${name}.${index}.effDate`}
+                                        control={control}
+                                        rules={{required:{value:true,message:'Effective Date is Required'}}}
+                                        render={({field}) => <Form.Control
+                                            as={DatePicker}
+                                            name={field.name}
+                                            closeOnScroll={true}
+                                            selected={field.value}
+                                            onChange={field.onChange}
+                                            disabled={editIndex!=index||!editableType(index)}
+                                            isInvalid={get(errors,field.name,false)}
+                                            autoComplete="off"
+                                        />}
+                                    />
+                                    <InputGroup.Append>
+                                        <InputGroup.Text>
+                                            <Icon icon="mdi:calendar-blank"/>
+                                        </InputGroup.Text>
+                                    </InputGroup.Append>
+                                </InputGroup>
+                                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].effDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].effDate.message`,'')}</Form.Control.Feedback>
+                            </Col>
+                        </Form.Group>
+                    }
+                    {canEdit &&
                         <Row>
-                            <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Phone</AppButton></Col>
+                            <Col className="button-group-sm">
+                                {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
+                                {(editIndex==index&&editableType(index)) && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
+                                {(editIndex==index&&editableType(index)&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
+                                <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
+                            </Col>
                         </Row>
                     }
-                </article>
-            )}
-        </HRFormContext.Consumer>
+                    <Row>
+                        <Col>
+                            <small><span className="fw-bold">Created: </span><DateFormat>{field.createDate}</DateFormat></small>
+                        </Col>
+                        <Col className="text-right">
+                            <small>{index}:{field.id}</small>
+                        </Col>
+                    </Row>
+                </section>
+            ))}
+            {fields.length>0&&canEdit && 
+                <Row>
+                    <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Phone</AppButton></Col>
+                </Row>
+            }
+        </article>
     );
 }
 
@@ -499,6 +512,8 @@ function PersonDirectoryEmail() {
         name:name
     });
     const watchEmail = useWatch({name:name,control});
+
+    const { activeNav, canEdit } = useHRFormContext();
 
     const [isNew,setIsNew] = useState(false);
     const [editIndex,setEditIndex] = useState();
@@ -555,106 +570,111 @@ function PersonDirectoryEmail() {
         setIsNew(false);
     }
 
+    const handleEscape = (e,index) => {
+        if (e.key == 'Escape' && editIndex != undefined) handleCancel(index);
+        if (e.key == 'Escape' && isNew) handleRemove(index);
+    }
+
+    useEffect(()=>{
+        (isNew||editIndex!=undefined) && document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true});
+    },[editIndex,isNew,activeNav]);
+
     return (
-        <HRFormContext.Consumer>
-            {({canEdit}) => (
-                <article className="py-3">
-                    <Row as="header">
-                        <Col as="h4">Email Addresses {canEdit && <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
-                    </Row>
-                    {fields.map((field,index)=>(
-                        <section key={field.id} className="border rounded p-2 mb-2">
-                            <Form.Group as={Row} className="mb-0">
-                                <Form.Label column md={2}>Type:</Form.Label>
-                                <Col xs="auto" className="pt-1">
-                                    {emailTypes.data && 
-                                        <Controller
-                                            name={`${name}.${index}.EMAIL_TYPE`}
-                                            defaultValue=""
-                                            control={control}
-                                            render={({field}) => emailTypes.data.map(c => {
-                                                if (!c.show) return null;
-                                                return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit}/>;
-                                            })}
-                                        />
-                                    }
-                                    {!watchEmail[index]?.EMAIL_TYPE && <Form.Text muted>You must select an email type in order to edit email information</Form.Text>}
-                                </Col>
-                            </Form.Group>
-                            {watchEmail[index]?.EMAIL_TYPE &&
-                                <Form.Group as={Row} className="mb-0">
-                                    <Form.Label column md={2}>Email*:</Form.Label>
-                                    <Col xs="auto">
-                                        <Controller
-                                            name={`${name}.${index}.EMAIL_ADDRESS`}
-                                            defaultValue=""
-                                            control={control}
-                                            rules={{required:{value:true,message:'Email is Required'}}}
-                                            render={({field}) => <Form.Control
-                                                {...field} 
-                                                type="email"
-                                                disabled={editIndex!=index||!editableType(index)}
-                                                isInvalid={get(errors,field.name,false)}
-                                            />}
-                                        />
-                                        <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].email.message`,'')}</Form.Control.Feedback>
-                                    </Col>
-                                    <Form.Label column md={2}>Effective Date*:</Form.Label>
-                                    <Col xs="auto">
-                                        <InputGroup>
-                                            <Controller
-                                                name={`${name}.${index}.effDate`}
-                                                defaultValue=""
-                                                control={control}
-                                                rules={{required:{value:true,message:'Effective Date is Required'}}}
-                                                render={({field}) => <Form.Control
-                                                    as={DatePicker}
-                                                    name={field.name}
-                                                    closeOnScroll={true}
-                                                    selected={field.value}
-                                                    onChange={field.onChange}
-                                                    disabled={editIndex!=index||!editableType(index)}
-                                                    isInvalid={get(errors,field.name,false)}
-                                                    autoComplete="off"
-                                                />}
-                                            />
-                                            <InputGroup.Append>
-                                                <InputGroup.Text>
-                                                    <Icon icon="mdi:calendar-blank"/>
-                                                </InputGroup.Text>
-                                            </InputGroup.Append>
-                                        </InputGroup>
-                                        <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].effDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].effDate.message`,'')}</Form.Control.Feedback>
-                                    </Col>
-                                </Form.Group>
+        <article className="py-3">
+            <Row as="header">
+                <Col as="h4">Email Addresses {canEdit && <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
+            </Row>
+            {fields.map((field,index)=>(
+                <section key={field.id} className="border rounded p-2 mb-2" onKeyDown={e=>handleEscape(e,index)}>
+                    <Form.Group as={Row} className="mb-0">
+                        <Form.Label column md={2}>Type:</Form.Label>
+                        <Col xs="auto" className="pt-1">
+                            {emailTypes.data && 
+                                <Controller
+                                    name={`${name}.${index}.EMAIL_TYPE`}
+                                    defaultValue=""
+                                    control={control}
+                                    render={({field}) => emailTypes.data.map(c => {
+                                        if (!c.show) return null;
+                                        return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit}/>;
+                                    })}
+                                />
                             }
-                            {canEdit && 
-                                <Row>
-                                    <Col className="button-group-sm">
-                                        {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
-                                        {(editIndex==index&&editableType(index)) && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
-                                        {(editIndex==index&&editableType(index)&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
-                                        <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
-                                    </Col>
-                                </Row>
-                            }
-                            <Row>
-                                <Col>
-                                    <small><span className="fw-bold">Created: </span><DateFormat>{field.createDate}</DateFormat></small>
-                                </Col>
-                                <Col className="text-right">
-                                    <small>{index}:{field.id}</small>
-                                </Col>
-                            </Row>
-                        </section>
-                    ))}
-                    {fields.length>0&&canEdit && 
+                            {!watchEmail[index]?.EMAIL_TYPE && <Form.Text muted>You must select an email type in order to edit email information</Form.Text>}
+                        </Col>
+                    </Form.Group>
+                    {watchEmail[index]?.EMAIL_TYPE &&
+                        <Form.Group as={Row} className="mb-0">
+                            <Form.Label column md={2}>Email*:</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.${index}.EMAIL_ADDRESS`}
+                                    defaultValue=""
+                                    control={control}
+                                    rules={{required:{value:true,message:'Email is Required'}}}
+                                    render={({field}) => <Form.Control
+                                        {...field} 
+                                        type="email"
+                                        disabled={editIndex!=index||!editableType(index)}
+                                        isInvalid={get(errors,field.name,false)}
+                                    />}
+                                />
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].email.message`,'')}</Form.Control.Feedback>
+                            </Col>
+                            <Form.Label column md={2}>Effective Date*:</Form.Label>
+                            <Col xs="auto">
+                                <InputGroup>
+                                    <Controller
+                                        name={`${name}.${index}.effDate`}
+                                        defaultValue=""
+                                        control={control}
+                                        rules={{required:{value:true,message:'Effective Date is Required'}}}
+                                        render={({field}) => <Form.Control
+                                            as={DatePicker}
+                                            name={field.name}
+                                            closeOnScroll={true}
+                                            selected={field.value}
+                                            onChange={field.onChange}
+                                            disabled={editIndex!=index||!editableType(index)}
+                                            isInvalid={get(errors,field.name,false)}
+                                            autoComplete="off"
+                                        />}
+                                    />
+                                    <InputGroup.Append>
+                                        <InputGroup.Text>
+                                            <Icon icon="mdi:calendar-blank"/>
+                                        </InputGroup.Text>
+                                    </InputGroup.Append>
+                                </InputGroup>
+                                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].effDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].effDate.message`,'')}</Form.Control.Feedback>
+                            </Col>
+                        </Form.Group>
+                    }
+                    {canEdit && 
                         <Row>
-                            <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Email</AppButton></Col>
+                            <Col className="button-group-sm">
+                                {(editIndex!=index&&editableType(index)) && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
+                                {(editIndex==index&&editableType(index)) && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
+                                {(editIndex==index&&editableType(index)&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
+                                <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
+                            </Col>
                         </Row>
                     }
-                </article>
-            )}
-        </HRFormContext.Consumer>
+                    <Row>
+                        <Col>
+                            <small><span className="fw-bold">Created: </span><DateFormat>{field.createDate}</DateFormat></small>
+                        </Col>
+                        <Col className="text-right">
+                            <small>{index}:{field.id}</small>
+                        </Col>
+                    </Row>
+                </section>
+            ))}
+            {fields.length>0&&canEdit && 
+                <Row>
+                    <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Email</AppButton></Col>
+                </Row>
+            }
+        </article>
     );
 }

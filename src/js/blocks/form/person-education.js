@@ -1,14 +1,15 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import useFormQueries from "../../queries/forms";
 import { get, cloneDeep } from "lodash";
 import { AppButton, CountrySelector, DateFormat, StateSelector } from "../components";
 import DatePicker from "react-datepicker";
-import { addDays, addMonths, subMonths } from "date-fns";
+import { addDays } from "date-fns";
 import { Typeahead } from "react-bootstrap-typeahead";
 import { Icon } from "@iconify/react";
 import useListsQueries from "../../queries/lists";
+import { useHRFormContext } from "../../config/form";
 
 const name = 'person.education.institutions';
 
@@ -26,6 +27,8 @@ export default function PersonEducation() {
     });
 
     const watchEducation = useWatch({name:name,control});
+
+    const { canEdit, activeNav } = useHRFormContext();
 
     const [isNew,setIsNew] = useState(false);
     const [editIndex,setEditIndex] = useState();
@@ -52,6 +55,7 @@ export default function PersonEducation() {
             "TERMINAL_DEGREE_FLAG": "N",
             "DEGREE_VERIFIED": "N",
             "CREATE_DATE": "",
+            "awardDate":null,
             "specialization":"",
             "institutionName":[],
             "institutionCity":[],
@@ -142,7 +146,7 @@ export default function PersonEducation() {
     const getMinMaxDate = useCallback((index,type) => {
         let min = null;
         let max = null;
-        if (watchEducation[index].PENDING_DEGREE_FLAG == 'Y') {
+        if (watchEducation[index]?.PENDING_DEGREE_FLAG == 'Y') {
             min = new Date();
         } else {
             max = new Date();
@@ -151,13 +155,22 @@ export default function PersonEducation() {
         if (type == 'max') return max;
     },[watchEducation]);
 
+    const handleEscape = (e,index) => {
+        if (e.key == 'Escape' && editIndex != undefined) handleCancel(index);
+        if (e.key == 'Escape' && isNew) handleRemove(index);
+    }
+
+    useEffect(()=>{
+        editIndex!=undefined && document.querySelector(`#${activeNav} [name="${name}.${editIndex}.awardDate"]`).focus();
+    },[editIndex,isNew,activeNav]);
+
     return (
         <article className="mt-3">
             <Row as="header">
-                <Col as="h3">Education <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton></Col>
+                <Col as="h3">Education {canEdit&&<AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
             </Row>
             {fields.map((flds,index)=>(
-                <section key={flds.id} className="border rounded p-2 mb-2">
+                <section key={flds.id} className="border rounded p-2 mb-2" onKeyDown={e=>handleEscape(e,index)}>
                     <Form.Group as={Row} className="mb-1">
                         <Form.Label column md={3}>Degree Award Date*:</Form.Label>
                         <Col xs="auto">
@@ -172,7 +185,7 @@ export default function PersonEducation() {
                                         name={field.name}
                                         dateFormat="MMM yyyy"
                                         showMonthYearPicker
-                                        closeOnScroll={true}
+
                                         minDate={getMinMaxDate(index,'min')}
                                         maxDate={getMinMaxDate(index,'max')}
                                         selected={field.value}
@@ -293,14 +306,16 @@ export default function PersonEducation() {
                             </Col>
                         </Form.Group>
                     ))}
-                    <Row>
-                        <Col className="button-group-sm">
-                            {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
-                            {editIndex==index && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
-                            {(editIndex==index&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
-                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
-                        </Col>
-                    </Row>
+                    {canEdit &&
+                        <Row>
+                            <Col className="button-group-sm">
+                                {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
+                                {editIndex==index && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
+                                {(editIndex==index&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
+                                <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
+                            </Col>
+                        </Row>
+                    }
                     <Row>
                         <Col>
                             <small><span className="fw-bold">Created: </span><DateFormat>{flds.createDate}</DateFormat></small>
@@ -311,7 +326,7 @@ export default function PersonEducation() {
                     </Row>
                 </section>
             ))}
-            {fields.length>0 &&
+            {fields.length>0&&canEdit&&
                 <Row>
                     <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Education</AppButton></Col>
                 </Row>

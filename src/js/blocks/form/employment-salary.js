@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Row, Col, Form, InputGroup, Table, Alert } from "react-bootstrap";
 import { useFormContext, Controller, useWatch, useFieldArray } from "react-hook-form";
-import { HRFormContext } from "../../config/form";
+import { HRFormContext, conditionalFields, useHRFormContext } from "../../config/form";
 import DatePicker from "react-datepicker";
 import SUNYAccount, { SingleSUNYAccount } from "../sunyaccount";
 import { AppButton, CurrencyFormat, DateFormat, DepartmentSelector } from "../components";
@@ -12,9 +12,10 @@ import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import useListsQueries from "../../queries/lists";
 
 const name = 'employment.salary';
-const splitAssignFormTypes = ['EF-PAY-1'];
 
 export default function EmploymentAppointment() {
+    const { canEdit, activeNav, showInTest, testHighlight, formType } = useHRFormContext();
+
     const { control, setValue } = useFormContext();
     const watchAmounts = useWatch({name:[
         `${name}.RATE_AMOUNT`,
@@ -22,7 +23,6 @@ export default function EmploymentAppointment() {
         'employment.position.APPOINTMENT_PERCENT'
     ],control:control});
     const watchPayBasis = useWatch({name:'employment.position.positionDetails.PAY_BASIS',control:control});
-    const watchFormType = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode'],control:control});
     const rateAmountLabel = useMemo(() => {
         switch(watchPayBasis) {
             case "BIW":
@@ -37,99 +37,98 @@ export default function EmploymentAppointment() {
     useEffect(() => {
         setValue(`${name}.totalSalary`,((+watchAmounts[0]*+watchAmounts[1]) * (+watchAmounts[2]/100)).toFixed(2));
     },[watchAmounts]);
+
+    useEffect(() => canEdit&&document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true}),[activeNav]);
+
     return (
-        <HRFormContext.Consumer>
-            {({showInTest,testHighlight,canEdit}) => (
-                <article>
-                    <section className="mt-3">
-                        <Row as="header">
-                            <Col as="h3">Salary</Col>
-                        </Row>
-                        <Form.Group as={Row}>
-                            <Form.Label column md={2}>Effective Date:</Form.Label>
-                            <Col xs="auto">
-                                <InputGroup>
-                                    <Controller
-                                        name={`${name}.effDate`}
-                                        control={control}
-                                        render={({field}) => <Form.Control
-                                            as={DatePicker}
-                                            name={field.name}
-                                            selected={field.value}
-                                            closeOnScroll={true}
-                                            onChange={field.onChange}
-                                            autoComplete="off"
-                                            disabled={!canEdit}
-                                        />}
-                                    />
-                                    <InputGroup.Append>
-                                        <InputGroup.Text>
-                                            <Icon icon="mdi:calendar-blank"/>
-                                        </InputGroup.Text>
-                                    </InputGroup.Append>
-                                </InputGroup>
-                            </Col>
-                        </Form.Group>
-                        <Form.Group as={Row}>
-                            <Form.Label column md={2}>Pay Basis:</Form.Label>
-                            <Col xs="auto" className="pt-2">
-                                <p className="mb-0">{watchPayBasis}</p>
-                            </Col>
-                        </Form.Group>
-                        {(!['HRY','BIW','FEE'].includes(watchPayBasis)||showInTest) && 
-                            <Form.Group as={Row} className={testHighlight(!['HRY','BIW','FEE'].includes(watchPayBasis))}>
-                                <Form.Label column md={2}>Appointment Percent:</Form.Label>
-                                <Col xs="auto" className="pt-2">
-                                    <p className="mb-0">{watchAmounts[2]}%</p>
-                                </Col>
-                            </Form.Group>
-                        }
-                        {(['BIW','FEE'].includes(watchPayBasis)||showInTest) && 
-                            <Form.Group as={Row} className={testHighlight(['BIW','FEE'].includes(watchPayBasis))}>
-                                <Form.Label column md={2}># Payments:</Form.Label>
-                                <Col xs="auto">
-                                    <Controller
-                                        name={`${name}.NUMBER_OF_PAYMENTS`}
-                                        defaultValue=""
-                                        control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" min={1} disabled={!canEdit}/>}
-                                    />
-                                </Col>
-                            </Form.Group>
-                        }
-                        <Form.Group as={Row}>
-                            <Form.Label column md={2}>{rateAmountLabel} Rate:</Form.Label>
-                            <Col xs="auto">
-                                <Controller
-                                    name={`${name}.RATE_AMOUNT`}
-                                    defaultValue=""
-                                    control={control}
-                                    render={({field}) => <Form.Control {...field} type="text" disabled={!canEdit}/>}
-                                />
-                            </Col>
-                        </Form.Group>
-                        <Form.Group as={Row}>
-                            <Form.Label column md={2}>Total Salary:</Form.Label>
-                            <Col xs="auto" className="pt-2">
+        <article>
+            <section className="mt-3">
+                <Row as="header">
+                    <Col as="h3">Salary</Col>
+                </Row>
+                <Form.Group as={Row}>
+                    <Form.Label column md={2}>Effective Date:</Form.Label>
+                    <Col xs="auto">
+                        <InputGroup>
                             <Controller
-                                    name={`${name}.totalSalary`}
-                                    defaultValue=""
-                                    control={control}
-                                    render={({field}) => <p className="mb-0"><CurrencyFormat>{field.value}</CurrencyFormat></p>}
-                                />
-                            </Col>
-                        </Form.Group>
-                        <SUNYAccount name={`${name}.SUNYAccounts`} disabled={!canEdit}/>
-                    </section>
-                    
-                    <AdditionalSalary/>
+                                name={`${name}.effDate`}
+                                control={control}
+                                render={({field}) => <Form.Control
+                                    as={DatePicker}
+                                    name={field.name}
+                                    selected={field.value}
+                                    closeOnScroll={true}
+                                    onChange={field.onChange}
+                                    autoComplete="off"
+                                    disabled={!canEdit}
+                                />}
+                            />
+                            <InputGroup.Append>
+                                <InputGroup.Text>
+                                    <Icon icon="mdi:calendar-blank"/>
+                                </InputGroup.Text>
+                            </InputGroup.Append>
+                        </InputGroup>
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row}>
+                    <Form.Label column md={2}>Pay Basis:</Form.Label>
+                    <Col xs="auto" className="pt-2">
+                        <p className="mb-0">{watchPayBasis}</p>
+                    </Col>
+                </Form.Group>
+                {(!['HRY','BIW','FEE'].includes(watchPayBasis)||showInTest) && 
+                    <Form.Group as={Row} className={testHighlight(!['HRY','BIW','FEE'].includes(watchPayBasis))}>
+                        <Form.Label column md={2}>Appointment Percent:</Form.Label>
+                        <Col xs="auto" className="pt-2">
+                            <p className="mb-0">{watchAmounts[2]}%</p>
+                        </Col>
+                    </Form.Group>
+                }
+                {(['BIW','FEE'].includes(watchPayBasis)||showInTest) && 
+                    <Form.Group as={Row} className={testHighlight(['BIW','FEE'].includes(watchPayBasis))}>
+                        <Form.Label column md={2}># Payments:</Form.Label>
+                        <Col xs="auto">
+                            <Controller
+                                name={`${name}.NUMBER_OF_PAYMENTS`}
+                                defaultValue=""
+                                control={control}
+                                render={({field}) => <Form.Control {...field} type="number" min={1} disabled={!canEdit}/>}
+                            />
+                        </Col>
+                    </Form.Group>
+                }
+                <Form.Group as={Row}>
+                    <Form.Label column md={2}>{rateAmountLabel} Rate:</Form.Label>
+                    <Col xs="auto">
+                        <Controller
+                            name={`${name}.RATE_AMOUNT`}
+                            defaultValue=""
+                            control={control}
+                            render={({field}) => <Form.Control {...field} type="text" disabled={!canEdit}/>}
+                        />
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row}>
+                    <Form.Label column md={2}>Total Salary:</Form.Label>
+                    <Col xs="auto" className="pt-2">
+                    <Controller
+                            name={`${name}.totalSalary`}
+                            defaultValue=""
+                            control={control}
+                            render={({field}) => <p className="mb-0"><CurrencyFormat>{field.value}</CurrencyFormat></p>}
+                        />
+                    </Col>
+                </Form.Group>
+                <SUNYAccount name={`${name}.SUNYAccounts`} disabled={!canEdit}/>
+            </section>
+            
+            <AdditionalSalary/>
 
-                    {/* TODO: only show split for EF-PAY-1 */}
-                    <SplitAssignments/>
+            {/** Only show Split Assignment for Add/Update Split Assignments */}
+            {conditionalFields.splitAssignment.includes(formType) && <SplitAssignments/>}
 
-                </article>
-            )}
-        </HRFormContext.Consumer>
+        </article>
     );
 }
 

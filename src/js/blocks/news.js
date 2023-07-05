@@ -14,7 +14,7 @@ export function News() {
     const [show,setShow] = useState(true);
     const dismissNews = () => {
         // store cookie for when news was dismissed
-        setCookie('hrforms2_news',Date.now(),{path:'/'}); //TODO: move to a JSON cookie
+        setCookie('hrforms2_news',Date.now(),{path:'/'});
         setShow(false);
     }
     // add useEffect to check for cookie and see if news has been updated since last dismiss

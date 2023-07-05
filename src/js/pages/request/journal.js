@@ -65,23 +65,32 @@ export default function RequestJournal() {
 }
 
 function JournalSearchResults({reqId,expandAll,setExpandAll,setRedirect}) {
-    const {getJournal} = useRequestQueries(reqId);
     const { general } = useSettingsContext();
+    const { getRequest, getJournal } = useRequestQueries(reqId);
+    const reqData = getRequest();
     const journal = getJournal();
 
     const expandToggleComponent = useMemo(() => {
         const expandText = ((expandAll)?'Collapse':'Expand') + ' All';
+        let r = '';
+        if (reqData.data?.lastJournal?.STATUS == 'Z') {
+            r = `/request/archive/${reqId}`;
+        } else {
+            r = `/request/${reqId}`;
+        }
         return(
             <>
                 <Col className="pl-0">
                     <Form.Check type="switch" id="toggle-expand" label={expandText} onChange={()=>setExpandAll(!expandAll)} checked={expandAll}/>
                 </Col>
-                <Col className="d-flex justify-content-end pr-0">
-                    <AppButton format="view" onClick={()=>setRedirect(`/request/${reqId}`)}>View Request</AppButton>
-                </Col>
+                {r && 
+                    <Col className="d-flex justify-content-end pr-0">
+                        <AppButton format="view" onClick={()=>setRedirect(r)}>View Request</AppButton>
+                    </Col>
+                }
             </>
         );
-    },[expandAll]);
+    },[expandAll,reqData,reqId]);
 
     const columns = useMemo(() => [
         {name:'Sequence',selector:row=>row.SEQUENCE,sortable:true,width:'120px'},
@@ -119,7 +128,6 @@ function JournalSearchResults({reqId,expandAll,setExpandAll,setRedirect}) {
 
 function ExpandedComponent({data}) {
     //TODO: Consolidate with list flow?
-    //TODO: check for admin to link
     const { isAdmin } = useAuthContext();
     const { general } = useSettingsContext();
     const clickHander = e => !isAdmin && e.preventDefault();
@@ -139,7 +147,9 @@ function ExpandedComponent({data}) {
                         <dt>Group From:</dt>
                         <dd>
                             <OverlayTrigger placement="right" delay={{show:500,hide:500}} overlay={<GroupPopover sequence={data.SEQUENCE} groupId={data.GROUP_FROM} groupName={data.GROUP_FROM_NAME}/>}>
-                                <Link onClick={clickHander} to={`/admin/groups/${data.GROUP_FROM}`}>{data.GROUP_FROM_NAME} ({data.GROUP_FROM})</Link>
+                                <Link onClick={clickHander} to={`/admin/groups/${data.GROUP_FROM}`}>
+                                    {data.GROUP_FROM_NAME} ({data.GROUP_FROM})
+                                </Link>
                             </OverlayTrigger>
                         </dd>
                     </>

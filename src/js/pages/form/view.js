@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Row, Col, Alert } from "react-bootstrap";
 import { initFormValues, allTabs, HRFormContext } from "../../config/form";
 import { useForm, FormProvider } from "react-hook-form";
@@ -42,9 +42,12 @@ export default function HRFormArchiveView() {
     );
 }
 
-
 function HRFormViewData({data}) {
     const methods = useForm({defaultValues: merge({},initFormValues,data)});
+    const formType = useMemo(()=>{
+        const formActions = methods.getValues('formActions');
+        return [formActions?.formCode?.FORM_CODE,formActions?.actionCode?.ACTION_CODE,formActions?.transactionCode?.TRANSACTION_CODE].join('-');
+    },[methods]);
     return (
         <FormProvider {...methods}>
             <HRFormContext.Provider value={{
@@ -54,7 +57,7 @@ function HRFormViewData({data}) {
                 infoComplete:true,
                 journalStatus:'Z',
                 canEdit:false,
-                formActions:methods.getValues('formActions'),
+                formType:formType,
                 sunyId:methods.getValues('person.information.SUNY_ID'),
                 hrPersonId:methods.getValues('person.information.HR_PERSON_ID'),
                 isTest:methods.getValues('formActions.formCode.id')=='TEST',

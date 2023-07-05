@@ -37,8 +37,59 @@ const text = {
             'title': 'Admin: Users',
         },
     },
-    'form':{},
-    'request':{},
+    'form':{
+        'actions':{
+            'save':{
+                'pending': 'Saving Form',
+                'success': 'Form Saved Successfully',
+                'error': 'Error Saving Form'
+            },
+            'submit':{
+                'pending': 'Submittig Form',
+                'success': 'Form Submitted Successfully',
+                'error': 'Error Submitting Form'
+            },
+            'approve':{
+                'pending': 'Approving Form',
+                'success': 'Form Approved Successfully',
+                'error': 'Error Approving Form'
+            },
+            'reject': {
+                'pending': 'Rejecting Form',
+                'success': 'Form Rejected Successfully',
+                'error': 'Error Rejecting Form'
+            }
+        }
+    },
+    'request':{
+        'actions':{
+            'save':{
+                'pending': 'Saving Request',
+                'success': 'Request Saved Successfully',
+                'error': 'Error Saving Request'
+            },
+            'submit':{
+                'pending': 'Submittig Request',
+                'success': 'Request Submitted Successfully',
+                'error': 'Error Submitting Request'
+            },
+            'resubmit':{
+                'pending': 'Re-Submittig Request',
+                'success': 'Request Re-Submitted Successfully',
+                'error': 'Error Re-Submitting Request'
+            },
+            'approve':{
+                'pending': 'Approving Request',
+                'success': 'Request Approved Successfully',
+                'error': 'Error Approving Request'
+            },
+            'reject': {
+                'pending': 'Rejecting Request',
+                'success': 'Request Rejected Successfully',
+                'error': 'Error Rejecting Request'
+            }
+        }
+    },
     'home': {
         'welcome': 'Welcome',
         'news': {

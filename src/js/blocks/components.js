@@ -18,7 +18,7 @@ import useListsQueries from "../queries/lists";
  * ModalConfirm
  * AppButton
  * MenuCounts
- * DashBoardListComponent (TODO: this should probably be moved back to home)
+ * DashBoardListComponent
  * errorToast
  * ErrorToastComponent
  * CheckboxTreeComponent
@@ -54,6 +54,7 @@ export const formats = {
     'loading':{icon:'mdi:loading',variant:'secondary',spin:true},
     'next':{icon:'mdi:arrow-right-thick',variant:'primary'},
     'previous':{icon:'mdi:arrow-left-thick',variant:'secondary'},
+    'print':{icon:'mdi:printer',variant:'primary'},
     'remove':{icon:'mdi:minus',variant:'danger'},
     'reject':{icon:'mdi:close-circle',variant:'danger'},
     'run':{icon:'mdi:run',variant:'danger'},

@@ -122,7 +122,20 @@ class PayTrans extends HRForms2 {
 			if (!$r) $this->raiseError();
 			$row = oci_fetch_array($stmt,OCI_RETURN_NULLS);
 			if ($row[0] == 0) $this->raiseError(400,array("errMsg"=>"Dependency is not Active, cannot activate"));
-	
+
+			// Check to see if any forms are using the paytrans_id
+			$qry = "select sum(c) from (
+				select count(*) as c from hrforms2_forms_drafts d where d.data.formActions.PAYTRANS_ID = :paytrans_id
+				union
+				select count(*) as c from hrforms2_forms f where f.form_data.formActions.PAYTRANS_ID = :paytrans_id
+			)";
+			$stmt = oci_parse($this->db,$qry);
+			oci_bind_by_name($stmt,":paytrans_id", $this->req[0]);
+			$r = oci_execute($stmt);
+			if (!$r) $this->raiseError();
+			$row = oci_fetch_array($stmt,OCI_NUM+OCI_RETURN_NULLS);
+			if ($row[0] != "0") $this->raiseError(E_FORBIDDEN,array("errMsg"=>"Payroll Transaction in use"));
+			
 			$qry = "UPDATE HRFORMS2_PAYROLL_TRANSACTIONS SET active = :active WHERE paytrans_id = :paytrans_id";
 			$stmt = oci_parse($this->db,$qry);
 			oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
@@ -135,6 +148,18 @@ class PayTrans extends HRForms2 {
 		$this->done();
 	}
 	function DELETE() {
+		//check to make sure there are no forms with the code (does not check archived)
+		$qry = "select sum(c) from (
+			select count(*) as c from hrforms2_forms_drafts d where d.data.formActions.PAYTRANS_ID = :paytrans_id
+			union
+			select count(*) as c from hrforms2_forms f where f.form_data.formActions.PAYTRANS_ID = :paytrans_id
+		)";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt,":paytrans_id", $this->req[0]);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		$row = oci_fetch_array($stmt,OCI_NUM+OCI_RETURN_NULLS);
+		if ($row[0] != "0") $this->raiseError(E_FORBIDDEN,array("errMsg"=>"Payroll Transaction in use"));
 		$qry = "DELETE FROM HRFORMS2_PAYROLL_TRANSACTIONS where paytrans_id = :paytrans_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":paytrans_id", $this->req[0]);

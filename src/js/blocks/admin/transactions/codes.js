@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useReducer, useEffect, useRef } from "react";
-import { useCodesQueries } from "../../../queries/codes";
+import useCodesQueries from "../../../queries/codes";
 import { startCase, toUpper } from "lodash";
 import DataTable from 'react-data-table-component';
 import { Row, Col, Form, Modal, Alert, Tabs, Tab } from "react-bootstrap";
@@ -121,7 +121,7 @@ export default function CodesTab({tab,tabName}) {
             </DescriptionPopover>
         ),sortable:true},
         {name:'Active',selector:row=>row.ACTIVE,cell:row=><Form.Check aria-label="Active" name="active" id={`active_${row[vars.code.upper]}`} value={row[vars.code.upper]} checked={row.ACTIVE==1} onChange={e=>handleRowEvents(e,row)}/>,sortable:true,ignoreRowClick:true},
-        {name:'Order',selector:row=>row.ORDERBY,cell:row=><Form.Control type="number" name="orderby" defaultValue={row.ORDERBY} onBlur={e=>handleRowEvents(e,row)}/>,sortable:true,ignoreRowClick:true}
+        {name:'Order',selector:row=>row.ORDERBY,cell:row=><Form.Control type="number" name="orderby" defaultValue={row.ORDERBY} onBlur={e=>handleRowEvents(e,row)}/>,sortable:true,ignoreRowClick:true,sortFunction:(a,b)=>a-b}
     ],[codes.data]);
 
     const nextOrder = useMemo(() => {
@@ -141,7 +141,6 @@ export default function CodesTab({tab,tabName}) {
             callback:() => {
                 toast.promise(new Promise((resolve,reject) => {
                     deleteCode.mutateAsync().then(()=>{
-                        setChangedRow({...defaultChangedRow});
                         Promise.all([
                             queryclient.refetchQueries(['codes',tab],{exact:true,throwOnError:true}),
                             queryclient.refetchQueries('paytrans',{exact:true,throwOnError:true})

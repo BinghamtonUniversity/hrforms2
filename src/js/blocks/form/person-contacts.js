@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Row, Col, Form } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { get, cloneDeep } from "lodash";
 import { AppButton, CountrySelector, DateFormat, StateSelector } from "../components";
 import PhoneInput from 'react-phone-input-2';
 import useListsQueries from "../../queries/lists";
+import { useHRFormContext } from "../../config/form";
 
 import 'react-phone-input-2/lib/style.css'
 
@@ -24,6 +25,8 @@ export default function PersonContacts() {
     });
 
     const watchContact = useWatch({name:name,control});
+
+    const { canEdit, activeNav } = useHRFormContext();
 
     const [isNew,setIsNew] = useState(false);
     const [editIndex,setEditIndex] = useState();
@@ -112,13 +115,22 @@ export default function PersonContacts() {
         return false;
     },[watchContact]);
 
+    const handleEscape = (e,index) => {
+        if (e.key == 'Escape' && editIndex != undefined) handleCancel(index);
+        if (e.key == 'Escape' && isNew) handleRemove(index);
+    }
+
+    useEffect(()=>{
+        (isNew||editIndex!=undefined) && document.querySelector(`#${activeNav} input:not([disabled]):not([readonly])`).focus({focusVisible:true});
+    },[editIndex,isNew,activeNav]);
+
     return (
         <article className="mt-3">
             <Row as="header">
-                <Col as="h3">Contacts <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton></Col>
+                <Col as="h3">Contacts {canEdit && <AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New</AppButton>}</Col>
             </Row>
             {fields.map((flds,index)=>(
-                <section key={flds.id} className="border rounded p-2 mb-2">
+                <section key={flds.id} className="border rounded p-2 mb-2" onKeyDown={e=>handleEscape(e,index)}>
                     <Form.Group as={Row} className="mb-1">
                         <Form.Label column md={2}>Primary:</Form.Label>
                         <Col xs="auto" className="pt-2">
@@ -295,14 +307,16 @@ export default function PersonContacts() {
                             <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].relationship.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
-                    <Row>
-                        <Col className="button-group-sm">
-                            {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
-                            {editIndex==index && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
-                            {(editIndex==index&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
-                            <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
-                        </Col>
-                    </Row>
+                    {canEdit && 
+                        <Row>
+                            <Col className="button-group-sm">
+                                {editIndex!=index && <AppButton format="edit" className="mr-1" size="sm" onClick={()=>handleEdit(index)} disabled={editIndex!=undefined&&editIndex!=index}>Edit</AppButton>}
+                                {editIndex==index && <AppButton format="save" className="mr-1" size="sm" onClick={()=>handleSave(index)} disabled={editIndex!=undefined&&editIndex!=index}>Save</AppButton>}
+                                {(editIndex==index&&!isNew) && <AppButton format="cancel" className="mr-1" size="sm" onClick={()=>handleCancel(index)} variant="secondary" disabled={editIndex!=undefined&&editIndex!=index}>Cancel</AppButton>}
+                                <AppButton format="delete" className="mr-1" size="sm" onClick={()=>handleRemove(index)} disabled={editIndex!=undefined&&editIndex!=index}>Remove</AppButton>
+                            </Col>
+                        </Row>
+                    }
                     <Row>
                         <Col>
                             <small><span className="fw-bold">Created: </span><DateFormat>{flds.createDate}</DateFormat></small>
@@ -313,7 +327,7 @@ export default function PersonContacts() {
                     </Row>
                 </section>
             ))}
-            {fields.length>0 &&
+            {fields.length>0&&canEdit &&
                 <Row>
                     <Col><AppButton format="add" size="sm" onClick={handleNew} disabled={fields.length>2||editIndex!=undefined}>New Contact</AppButton></Col>
                 </Row>

@@ -2,21 +2,27 @@ import React from "react";
 import { Row, Col } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { Icon } from '@iconify/react';
-import { DateFormat } from "../components";
+import { AppButton, DateFormat } from "../components";
 import { CommentsTable } from "./comments";
 import { useRequestContext } from "../../config/request";
 
-export default function Review({isNew}) {
-    const {getValues} = useFormContext();
-    const {isDraft} = useRequestContext();
+export default function Review() {
+    const { getValues } = useFormContext();
     const formValues = getValues();
+    const { isDraft, isNew } = useRequestContext();
     return (
-        <>
+        <article>
+            <Row>
+                <Col className="button-group justify-content-end d-print-none">
+                    <AppButton format="print" title="Print Page" onClick={()=>window.print()}></AppButton>
+                </Col>
+            </Row>
+
             <section className="mb-4">
                 <header>
                     <Row>
                         <Col>
-                            <h4>Position Request Information</h4>
+                            <h4 className="border-bottom border-main">Position Request Information</h4>
                         </Col>
                     </Row>
                 </header>
@@ -41,7 +47,7 @@ export default function Review({isNew}) {
                 <header>
                     <Row>
                         <Col>
-                            <h4>Position Data</h4>
+                            <h4 className="border-bottom border-main">Position Data</h4>
                         </Col>
                     </Row>
                 </header>
@@ -84,7 +90,7 @@ export default function Review({isNew}) {
                 <header>
                     <Row>
                         <Col>
-                            <h4>Account Data</h4>
+                            <h4 className="border-bottom border-main">Account Data</h4>
                         </Col>
                     </Row>
                 </header>
@@ -104,31 +110,27 @@ export default function Review({isNew}) {
                 </Row>
             </section>
             <section className="mb-4">
-                <header>
-                    <Row>
-                        <Col>
-                            <h4>Comments</h4>
-                        </Col>
-                    </Row>
-                </header>
-                <Row className="mb-0">
-                    <Col md={12} className="mb-0">
-                        <pre>{formValues.comment}</pre>
+                <Row as="header">
+                    <Col>
+                        <h4 className="border-bottom border-main">Comments</h4>
                     </Col>
                 </Row>
-            </section>
-            {!isDraft &&
-                <section className="mb-4">
-                    <header>
-                        <Row>
-                            <Col>
-                                <h4>Comments History</h4>
-                            </Col>
-                        </Row>
-                    </header>
+                <article>
+                    <Row className="mb-0">
+                        <Col md={12} className="mb-0">
+                            <pre>{formValues.comment}</pre>
+                        </Col>
+                    </Row>
+                </article>
+                {!isDraft &&
+                <article className="mb-4">
+                    <Row as="header">
+                        <Col as="h5">History</Col>
+                    </Row>
                     <CommentsTable reqId={formValues.reqId}/>
-                </section>
+                </article>
             }
-        </>
+            </section>
+        </article>
     );
 }

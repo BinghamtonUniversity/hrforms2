@@ -191,7 +191,7 @@ function EditTemplate({selectedTemplate,setSelectedTemplate}) {
                 <Row>
                     <Col className="button-group">
                         <AppButton format="save" type="submit" disabled={!!Object.keys(errors).length}>Save</AppButton>
-                        {(locked!="1"&&!isNew) && <AppButton format="delete" onClick={()=>console.warn('TODO: delete template')}>Delete</AppButton>}
+                        {/*TODO:(locked!="1"&&!isNew) && <AppButton format="delete" onClick={()=>console.warn('delete template')}>Delete</AppButton>*/}
                         <AppButton format="cancel" variant="secondary" type="reset">Cancel</AppButton>
                     </Col>
                 </Row>
