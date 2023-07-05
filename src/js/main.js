@@ -25,7 +25,7 @@ const queryClient = new QueryClient({
                 return 0;
             },
             retryDelay:attempt=>Math.min(attempt > 0 ? 2 ** attempt * 2000 : 1000, 30 * 1000),
-            refetchOnWindowFocus:false, //for testing only.
+            refetchOnWindowFocus:false, //TODO: for testing only, remove/change to true
         }
     }
 });

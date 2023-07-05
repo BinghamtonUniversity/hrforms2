@@ -82,9 +82,7 @@ class Forms extends HRForms2 {
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
             $formData = json_decode((is_object($row['DATA'])) ? $row['DATA']->load() : "");
             oci_free_statement($stmt);
-            $qry = "select pt.paytrans_id,pt.tabs 
-                FROM HRFORMS2_PAYROLL_TRANSACTIONS pt 
-                WHERE pt.paytrans_id = :paytrans_id";
+            $qry = "select pt.paytrans_id,pt.tabs FROM HRFORMS2_PAYROLL_TRANSACTIONS pt WHERE pt.paytrans_id = :paytrans_id";
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":paytrans_id", $formData->formActions->PAYTRANS_ID);
             $r = oci_execute($stmt);
@@ -123,24 +121,26 @@ class Forms extends HRForms2 {
                     $this->raiseError(403);
             }
             $last_journal['SUBMITTER_SUNY_ID'] = $submitter['SUNY_ID'];
-            $qry = "select FORM_DATA from HRFORMS2_FORMS where FORM_ID = :form_id";
-            $stmt = oci_parse($this->db,$qry);
-            oci_bind_by_name($stmt,":form_id",$this->req[0]);
-            $r = oci_execute($stmt);
-			if (!$r) $this->raiseError();
-            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-            $formData = json_decode((is_object($row['FORM_DATA'])) ? $row['FORM_DATA']->load() : "");
-            oci_free_statement($stmt);
-            $qry = "select pt.paytrans_id,pt.tabs 
-                FROM HRFORMS2_PAYROLL_TRANSACTIONS pt 
-                WHERE pt.paytrans_id = :paytrans_id";
-            $stmt = oci_parse($this->db,$qry);
-            oci_bind_by_name($stmt,":paytrans_id", $formData->formActions->PAYTRANS_ID);
-            $r = oci_execute($stmt);
-            if (!$r) $this->raiseError();
-            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-            $tabs = (is_object($row['TABS']))?$row['TABS']->load():"";
-            $formData->formActions->TABS = json_decode($tabs);
+            if ($last_journal['STATUS'] != 'Z') {
+                $qry = "select FORM_DATA from HRFORMS2_FORMS where FORM_ID = :form_id";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":form_id",$this->req[0]);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
+                $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+                $formData = json_decode((is_object($row['FORM_DATA'])) ? $row['FORM_DATA']->load() : "");
+                oci_free_statement($stmt);
+                $qry = "select pt.paytrans_id,pt.tabs 
+                    FROM HRFORMS2_PAYROLL_TRANSACTIONS pt 
+                    WHERE pt.paytrans_id = :paytrans_id";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":paytrans_id", $formData->formActions->PAYTRANS_ID);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
+                $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+                $tabs = (is_object($row['TABS']))?$row['TABS']->load():"";
+                $formData->formActions->TABS = json_decode($tabs);
+            }
             $formData->lastJournal = $last_journal;
         }
         $this->returnData = $formData;
@@ -213,7 +213,11 @@ class Forms extends HRForms2 {
                     $hgroups = explode(',',$v['HIERARCHY_GROUPS']);
                     return ($v['PAYTRANS_ID']==$paytransId&&in_array($group['GROUP_ID'],$hgroups));
                 });
-                if (count($j)<1) $this->raiseError(400);
+                if (count($j)<1) {
+                    //TODO: default route?
+                    $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"No hierarchy defined for Form Type")); // no hierarchy
+                }
+
                 $hierarchy = array_shift($j); //get the first record
                 $groups = $hierarchy['WORKFLOW_GROUPS'];
                 $groups_array = explode(",",$groups);
@@ -507,6 +511,10 @@ class Forms extends HRForms2 {
     }
 
     function PUT() {
+        // Format: /{action}/{form_id}
+        // When draft: /save/draft/51645/123456789
+        // When form: /save/48
+        // When approval: /approve/48
         if ($this->req[1] == 'draft') {
             $qry = "update HRFORMS2_FORMS_DRAFTS set data = EMPTY_CLOB() 
                 where SUNY_ID = :suny_id and unix_ts = :unix_ts
@@ -528,7 +536,7 @@ class Forms extends HRForms2 {
                 returning FORM_DATA into :data";
             $stmt = oci_parse($this->db,$qry);
             $clob = oci_new_descriptor($this->db, OCI_D_LOB);
-            oci_bind_by_name($stmt, ":form_id", $this->req[2]);
+            oci_bind_by_name($stmt, ":form_id", $this->req[1]);
             oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
             $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
             if (!$r) $this->raiseError();

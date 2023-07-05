@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Row, Col, Form, Alert, InputGroup } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { AppButton, DateFormat, Loading } from "../components";
@@ -30,8 +30,10 @@ export default function EmploymentPosition() {
 }
 
 function EmploymentPositionSearch({setShowResults}) {
+    const { canEdit, activeNav } = useHRFormContext();
+    const ref = useRef();
+
     const { control, setValue } = useFormContext();
-    const { canEdit } = useHRFormContext();
     const handleSearch = () => {
         setShowResults(true);
     }
@@ -41,6 +43,9 @@ function EmploymentPositionSearch({setShowResults}) {
         setValue(`${name}.positionDetails`,{});
     }
     const handleKeyDown = e => e.key=='Enter' && handleSearch(e);
+
+    useEffect(() => (canEdit&&ref.current)&&ref.current.focus(),[activeNav]);
+    
     return (
         <section className="mt-3">
             <Row as="header">
@@ -52,11 +57,11 @@ function EmploymentPositionSearch({setShowResults}) {
                     <Controller
                         name={`${name}.LINE_ITEM_NUMBER`}
                         control={control}
-                        render={({field})=><Form.Control {...field} type="search" onKeyDown={handleKeyDown} disabled={!canEdit}/>}
+                        render={({field})=><Form.Control {...field} ref={ref} type="search" onKeyDown={handleKeyDown} disabled={!canEdit}/>}
                     />
                 </Col>
             </Form.Group>
-            {!canEdit &&
+            {canEdit &&
                 <Row>
                     <Col className="button-group">
                         <AppButton format="search" className="mr-1" onClick={handleSearch}>Search</AppButton>
@@ -106,7 +111,6 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
 function EmploymentAppointmentInformation() {
     const { control, setValue } = useFormContext();
     const { canEdit } = useHRFormContext();
-    //TODO: get payroll and effDate from HRFormContext?
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
     const watchEffectiveDate = useWatch({name:`${name}.apptEffDate`,control:control,defaultValue:new Date(0)});
     const watchApptPercent = useWatch({name:`${name}.APPOINTMENT_PERCENT`,control:control})||100;

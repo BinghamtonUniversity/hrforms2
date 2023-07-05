@@ -10,6 +10,7 @@ import useFormQueries from "../queries/forms";
 import { flattenObject } from "../utility";
 import { allTabs, fetchFormData, initFormValues, HRFormContext } from "../config/form";
 import { t } from "../config/text";
+import { toast } from "react-toastify";
 
 /* TABS */
 const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
@@ -188,7 +189,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
 
     const defaultVals = merge({},initFormValues,{formId:formId});
     const methods = useForm({defaultValues: merge({},defaultVals,data)});
-    const watchFormActions = useWatch({name:'formActions.formCode',control:methods.control});
+    const watchFormActions = useWatch({name:'formActions',control:methods.control});
     const watchIds = useWatch({name:['person.information.HR_PERSON_ID','person.information.SUNY_ID','person.information.LOCAL_CAMPUS_ID'],control:methods.control});
 
     const {SUNY_ID, USER_GROUPS} = useUserContext();
@@ -234,46 +235,88 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const handleSubmit = data => {
         console.debug(data);
         //setHasErrors(false);
-        if (!data.action||data.action=='test') return; // just validating the form, not saving
+        const action = data.action;
         setIsSaving(true);
         setIsBlocking(true); //TODO: when true should be full block with no prompt?
         setLockTabs(true);
         //TODO: switch? save, submit, appove, reject?
-        //TODO: on approve need to handle changes to form.  PUT (update)
         if (isDraft) {
             if (isNew || data.action=='submit') {
-                createForm.mutateAsync(data).then(d => {
-                    console.debug(d);
-                    handleRedirect();
-                }).catch(e => {
-                    //TODO: for testing
-                    //TODO: need to handle errors better
-                    setIsSaving(false);
-                    setLockTabs(false);
-                    //end testing
-                    console.error(e);
+                // submit draft form
+                toast.promise(new Promise((resolve,reject) => {
+                    createForm.mutateAsync(data).then(d=>resolve(d)).catch(e=>reject(e));
+                }),{
+                    pending:t(`form.actions.${action}.pending`),
+                    success: {render({data}){
+                        console.debug(data);
+                        handleRedirect();
+                        return t(`form.actions.${action}.success`)
+                    }},
+                    error:{render({data}){
+                        setIsSaving(false);
+                        setLockTabs(false);
+                        return data?.description||t(`form.actions.${action}.error`)
+                    }}
                 });
             } else {
-                updateForm.mutateAsync(data).then(() => {
-                    handleRedirect();
-                }).catch(e => {
-                    console.error(e);
-                    setIsSaving(false);
-                    setLockTabs(false);    
+                // save draft form
+                toast.promise(new Promise((resolve,reject) => {
+                    updateForm.mutateAsync(data).then(()=>resolve()).catch(e=>reject(e));
+                }),{
+                    pending: t(`form.actions.${action}.pending`),
+                    success: {render(){
+                        handleRedirect();
+                        return t(`form.actions.${action}.success`)
+                    }},
+                    error:{render({data}){
+                        setIsSaving(false);
+                        setLockTabs(false);
+                        return data?.description||t(`form.actions.${action}.error`)
+                    }}
                 });
             }    
         } else {
-            createForm.mutateAsync(data).then(d => {
-                console.debug(d);
-                handleRedirect();
-            }).catch(e => {
-                //TODO: for testing
-                //TODO: need to handle errors better
-                setIsSaving(false);
-                setLockTabs(false);
-                //end testing
-                console.error(e);
-            });
+            if (data.action == 'save') {
+                // approver save form
+                toast.promise(new Promise((resolve,reject) => {
+                    updateForm.mutateAsync(data).then(()=>resolve()).catch(e=>reject(e));
+                }),{
+                    pending: t(`form.actions.${action}.pending`),
+                    success: {render(){
+                        handleRedirect();
+                        return t(`form.actions.${action}.success`)
+                    }},
+                    error:{render({data}){
+                        setIsSaving(false);
+                        setLockTabs(false);
+                        return data?.description||t(`form.actions.${action}.error`)
+                    }}
+                });
+            } else {
+                // submit saved form, approve, or reject
+                toast.promise(new Promise((resolve,reject) => {
+                        new Promise((res,rej) => {
+                            if (Object.keys(methods.formState.dirtyFields).length > 0) {
+                                updateForm.mutateAsync(data).then(()=>res()).catch(e=>rej(e));
+                            }
+                            res();
+                        }).then(()=>{
+                            createForm.mutateAsync(data).then(d=>resolve(d)).catch(e=>reject(e));
+                        }).catch(e=>reject(e));
+                }),{
+                    pending: t(`form.actions.${action}.pending`),
+                    success: {render({data}){
+                        console.debug(data);
+                        handleRedirect();
+                        return t(`form.actions.${action}.success`)
+                    }},
+                    error:{render({data}){
+                        setIsSaving(false);
+                        setLockTabs(false);
+                        return data?.description||t(`form.actions.${action}.error`)
+                    }}
+                });
+            }
         }
     }
     const handleError = error => {
@@ -390,8 +433,8 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                             case "employment-leave": promiseList.push({tab:tab,func:fetchData.employmentleave.refetch}); break;
                             case "employment-pay": promiseList.push({tab:tab,func:fetchData.employmentpay.refetch}); break;
                             case "employment-volunteer":
-                                console.warn('TODO; Load Tab: ',tab);
-                                //promiseList.push({tab:tab,func:()=>new Promise(resolve=>resolve({}))})
+                                // no data needed
+                                promiseList.push({tab:tab,func:()=>new Promise(resolve=>resolve({}))})
                                 break;
                             case "basic-info":
                             case "employment-separation":
@@ -437,7 +480,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     },[tabList,watchIds]);
 
     const testHighlight = useCallback(testCondition=>(testCondition)?'':'test-highlight',[]);
-    const showInTest = useMemo(()=>watchFormActions?.FORM_CODE=='TEST'&&showHidden,[watchFormActions,showHidden]);
+    const showInTest = useMemo(()=>watchFormActions?.formCode?.FORM_CODE=='TEST'&&showHidden,[watchFormActions,showHidden]);
     const canEdit = useMemo(()=>{
         if (isDraft && SUNY_ID == get(data,'CREATED_BY_SUNY_ID',SUNY_ID)) return true;
         if (!isDraft && SUNY_ID == data.lastJournal.CREATED_BY_SUNY_ID && data.lastJournal.STATUS == 'R') return true;
@@ -446,6 +489,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         if (userGroups.includes(get(data,'lastJournal.GROUP_TO'))) return true;
         return false;
     },[SUNY_ID,USER_GROUPS,data,isDraft]);
+    const formType = useMemo(()=>[watchFormActions?.formCode?.FORM_CODE,watchFormActions?.actionCode?.ACTION_CODE,watchFormActions?.transactionCode?.TRANSACTION_CODE].join('-'),[watchFormActions]);
 
     useEffect(()=>!isNew && handleTabs(data.formActions.TABS),[formId]);
     useEffect(()=>(isNew&&!data.hasOwnProperty('formId'))&&handleReset(),[isNew,reset,data]); //reset form when "New"
@@ -455,19 +499,19 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     if (dataLoadError) return <ErrorFallback error={dataLoadError}/>;
     return(
         <>
-            {/* TODO: should we pass form type composite and payroll through HRFormsContent Provider?*/}
             <FormProvider {...methods}>
                 <HRFormContext.Provider value={{
                     tabs:tabList,
+                    handleTabs:handleTabs,
+                    activeNav:activeNav,
                     isDraft:isDraft,
                     isNew:isNew,
                     infoComplete:infoComplete,
                     journalStatus:methods.getValues('lastJournal.STATUS'),
                     canEdit:canEdit,
-                    formActions:methods.getValues('formActions'),
+                    formType:formType,
                     sunyId:methods.getValues('person.information.SUNY_ID'),
                     hrPersonId:methods.getValues('person.information.HR_PERSON_ID'),
-                    handleTabs:handleTabs,
                     isTest:methods.getValues('formActions.formCode.id')=='TEST',
                     testHighlight:testHighlight,
                     showInTest:showInTest
@@ -494,21 +538,24 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                                         <PendingReviewAlert/>
                                         {!['basic-info','review'].includes(activeTab) && <FormInfoBox/>}
                                         {(activeTab == 'employment'&&['employment-appointment','employment-salary'].includes(activeNav)) && <EmploymentPositionInfoBox as="alert"/>}
-                                        <div className="px-2">
+                                        <section id={`${activeNav}`} className="px-2">
                                             <FormTabRouter tab={t.value} activeTab={activeTab} subTab={activeNav}/>
-                                        </div>
+                                        </section>
                                         <Row as="footer" className="mt-3">
                                             <Col className="button-group justify-content-end d-print-none">
                                                 {isDraft && 
                                                     <>
                                                         {methods.formState.isDirty && <AppButton format="undo" onClick={handleReset} disabled={isSaving}>Reset</AppButton>}
                                                         {!isNew && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
-                                                        {!(isNew&&lockTabs)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
-                                                        {activeTab=='review'&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}>Submit</AppButton>}
                                                     </>
                                                 }
                                                 {(get(data,'lastJournal.STATUS')=='R'&&canEdit) && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
-                                                {activeTab!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
+
+                                                {!(isNew&&lockTabs)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
+
+                                                {activeTab!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}                                                
+                                                
+                                                {activeTab=='review'&&isDraft&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}>Submit</AppButton>}
                                                 {(activeTab=='review'&&!isDraft&&canEdit&&get(data,'lastJournal.STATUS')!='R') && 
                                                     <>
                                                         <AppButton format="reject" id="reject" onClick={()=>handleSave('reject')} disabled={hasErrors||isSaving}>Reject</AppButton>

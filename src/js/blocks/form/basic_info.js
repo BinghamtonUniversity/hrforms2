@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback, useReducer } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { useIsFetching } from 'react-query';
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
@@ -7,7 +7,8 @@ import sub from "date-fns/sub";
 import { assign, keyBy, orderBy } from "lodash";
 import { AppButton, Loading } from "../components";
 import usePersonQueries from "../../queries/person";
-import { useCodesQueries, useTransactionQueries } from "../../queries/codes";
+import useCodesQueries from "../../queries/codes";
+import useTransactionQueries from "../../queries/transactions";
 import DataTable from 'react-data-table-component';
 import { useQueryClient } from "react-query";
 import { Icon } from "@iconify/react";
@@ -289,15 +290,22 @@ function LookupResults({data}) {
         {name:'End Date',selector:row=>row.endDateFmt,sortable:true,wrap:true}
     ]);
 
+    useEffect(() => {
+        if (selectedId) return; 
+        const el = document.querySelector('#lookupResults .rdt_TableBody .rdt_TableRow input[type=checkbox');
+        el.scrollIntoView();
+        el.focus();
+    },[data]);
+
     return (
         <>
-            <article className="mt-3">
+            <article id="lookupResults" className="mt-3">
                 <Row as="header">
                     <Col as="h3">{(!infoComplete)?'Results':'Selected Record'}</Col>
                 </Row>
                 <Row>
                     <Col>
-                        <DataTable 
+                        <DataTable
                             className="compact"
                             keyField="id"
                             columns={columns} 
@@ -328,7 +336,8 @@ function PayrollDate({selectedId,selectedPayroll}) {
 
     const watchPayrollDate = useWatch({name:['payroll.PAYROLL_CODE','effDate']});
 
-    //const effDateRef = useRef();
+    const payrollRef = useRef();
+    const effDateRef = useRef();
     const [payrollDescription,setPayrollDescription] = useState('');
 
     const {getCodes} = useCodesQueries('payroll');
@@ -374,13 +383,16 @@ function PayrollDate({selectedId,selectedPayroll}) {
             } else {
                 const p = payrollcodes.data.find(p=>p.PAYROLL_CODE==selectedPayroll);
                 setValue('payroll',(!p)?{PAYROLL_CODE:''}:p);
-                /*if (!p) {
-                    setValue('payroll',{PAYROLL_CODE:''});
-                } else {
-                    setValue('payroll',p);
-                }*/
                 setPayrollDescription(p?.PAYROLL_DESCRIPTION);
             }
+        }
+        // set field focus
+        if (!payrollRef.current || !effDateRef.current) return;
+        if (payrollRef.current.disabled) {
+            effDateRef.current.setFocus(); //Datepicker method; cannot scrollIntoView because of popover conflict
+        } else {
+            payrollRef.current.scrollIntoView();
+            payrollRef.current.focus();
         }
     },[payrollcodes.data,selectedId,selectedPayroll]);
     return (
@@ -401,7 +413,7 @@ function PayrollDate({selectedId,selectedPayroll}) {
                                 defaultValue={selectedPayroll}
                                 rules={{required:{value:true,message:'Payroll is required'}}}
                                 render={({field}) => (
-                                    <Form.Control {...field} as="select" onChange={e=>handleFieldChange(e,field)} isInvalid={errors.payroll} disabled={selectedPayroll!=''||journalStatus!=""} aria-describedby="payrollDescription">
+                                    <Form.Control {...field} as="select" ref={payrollRef} onChange={e=>handleFieldChange(e,field)} isInvalid={errors.payroll} disabled={selectedPayroll!=''||journalStatus!=""} aria-describedby="payrollDescription">
                                         <option></option>
                                         {payrollcodes.data.map(p=><option key={p.PAYROLL_CODE} value={p.PAYROLL_CODE}>{p.PAYROLL_TITLE}</option>)}
                                     </Form.Control>
@@ -426,6 +438,7 @@ function PayrollDate({selectedId,selectedPayroll}) {
                                 rules={{required:{value:true,message:'Effective Date is required'}}}
                                 render={({field}) => <Form.Control
                                     as={DatePicker}
+                                    ref={effDateRef}
                                     name={field.name}
                                     selected={field.value}
                                     closeOnScroll={true}
@@ -454,7 +467,7 @@ function FormActionsWrapper({payroll}) {
     const [filter,setFilter] = useState('000');
     
     const { getValues, setValue } = useFormContext();
-    const { handleTabs, actionsComplete } = useHRFormContext();
+    const { handleTabs } = useHRFormContext();
     const [watchFormCode,watchActionCode,watchTransactionCode] = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode']});
     const watchRoleType = useWatch({name:'selectedRow.EMPLOYMENT_ROLE_TYPE'});
 
@@ -485,7 +498,6 @@ function FormActionsWrapper({payroll}) {
                         TRANSACTIONS:new Map()
                     };
                 }).forEach(a=>a.ACTION_CODE&&actionMap.set(a.ACTION_CODE,a));
-                //f.ACTIONS = Array.from(actionMap.values());
                 f.ACTIONS = actionMap;
             });
             //Build Transaction Codes:
@@ -499,11 +511,9 @@ function FormActionsWrapper({payroll}) {
                             TRANSACTION_DESCRIPTION:t.TRANSACTION_DESCRIPTION
                         };
                     }).forEach(t=>t.TRANSACTION_CODE&&transactionMap.set(t.TRANSACTION_CODE,t));
-                    //a.TRANSACTIONS = Array.from(transactionMap.values());
                     a.TRANSACTIONS = transactionMap;
                 });
             });
-            //return Array.from(codeMap.entries());
             return codeMap;
         },[paytrans.data,filter]);
 
@@ -571,7 +581,7 @@ function FormActionsWrapper({payroll}) {
             <FormActionsFormCode formCodes={codes} description={watchFormCode.FORM_DESCRIPTION}/>
             <FormActionsActionCode actionCodes={getCodes('action').codes} description={watchActionCode.ACTION_DESCRIPTION} formCode={watchFormCode.FORM_CODE} actionSize={getCodes('action').size}/>
             <FormActionsTransactionCode transactionCodes={getCodes('transaction').codes} description={watchTransactionCode.TRANSACTION_DESCRIPTION} formCode={watchFormCode.FORM_CODE} actionCode={watchActionCode.ACTION_CODE} actionSize={getCodes('action').size} transactionSize={getCodes('transaction').size}/>
-            {/**<p>{getCodes('form').size},{getCodes('action').size},{getCodes('transaction').size}</p>*/}
+            {/**TESTING: <p>{getCodes('form').size},{getCodes('action').size},{getCodes('transaction').size}</p>*/}
             <LoadingFormTabs/>
         </article>
     );
@@ -579,6 +589,7 @@ function FormActionsWrapper({payroll}) {
 function FormActionsFormCode({formCodes,description}) {
     const { control, setValue } = useFormContext();
     const { journalStatus } = useHRFormContext();
+    const ref = useRef();
 
     const handleSelectChange = (e,field) => {
         field.onChange(e);
@@ -593,6 +604,13 @@ function FormActionsFormCode({formCodes,description}) {
         setValue('formActions.transactionCode',defaultFormActions.transactionCode);
     }
 
+    useEffect(()=>{
+        if (ref.current) {
+            //TODO: To use KB nav will need more work to disable auto-tab data load and auto-next
+            //ref.current.focus();
+            ref.current.scrollIntoView();
+        }
+    },[formCodes]);
     return (
         <Form.Group as={Row}>
             <Form.Label column md={2}>Form Code:</Form.Label>
@@ -601,7 +619,7 @@ function FormActionsFormCode({formCodes,description}) {
                     name="formActions.formCode.FORM_CODE"
                     control={control}
                     render={({field}) => (
-                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} aria-describedby="formCodeDescription" disabled={journalStatus!=""}>
+                        <Form.Control {...field} as="select" ref={ref} onChange={e=>handleSelectChange(e,field)} aria-describedby="formCodeDescription" disabled={journalStatus!=""}>
                             <option></option>
                             {Array.from(formCodes.values()).map(f=><option key={f.FORM_CODE} value={f.FORM_CODE}>{f.FORM_TITLE}</option>)}
                         </Form.Control>

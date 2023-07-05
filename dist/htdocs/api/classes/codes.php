@@ -116,6 +116,15 @@ class Codes extends HRForms2 {
     function PATCH() {
         //update active
         if (isset($this->POSTvars['ACTIVE'])) {
+            // check to make sure the code is not in use
+			$qry = "select count(*) from HRFORMS2_PAYROLL_TRANSACTIONS WHERE ".$this->req[0]."_code = :code";
+			$stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":code", $this->req[1]);
+			$r = oci_execute($stmt);
+			if (!$r) $this->raiseError();
+			$row = oci_fetch_array($stmt,OCI_NUM+OCI_RETURN_NULLS);
+			if ($row[0] != "0") $this->raiseError(E_FORBIDDEN,array("errMsg"=>ucfirst($this->req[0])." Code in use"));
+
             $qry = "UPDATE HRFORMS2_".$this->req[0]."_CODES SET active = :active WHERE ".$this->req[0]."_code = :code";
 			$stmt = oci_parse($this->db,$qry);
 			oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
@@ -149,6 +158,15 @@ class Codes extends HRForms2 {
         $this->done();
     }
     function DELETE() {
+        // check to make sure the code is not in use; do not need to check for forms because cannot delete/deactivate the transaction if there are forms.
+        $qry = "select count(*) from HRFORMS2_PAYROLL_TRANSACTIONS WHERE ".$this->req[0]."_code = :code";
+        $stmt = oci_parse($this->db,$qry);
+        oci_bind_by_name($stmt,":code", $this->req[1]);
+        $r = oci_execute($stmt);
+        if (!$r) $this->raiseError();
+        $row = oci_fetch_array($stmt,OCI_NUM+OCI_RETURN_NULLS);
+        if ($row[0] != "0") $this->raiseError(E_FORBIDDEN,array("errMsg"=>ucfirst($this->req[0])." Code in use"));
+
         $qry = "DELETE FROM HRFORMS2_".$this->req[0]."_CODES where ".$this->req[0]."_code = :code";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":code", $this->req[1]);

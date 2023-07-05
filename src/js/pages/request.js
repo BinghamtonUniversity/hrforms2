@@ -10,11 +10,9 @@ import { Loading, AppButton } from "../blocks/components";
 import format from "date-fns/format";
 import get from "lodash/get";
 import { Icon } from '@iconify/react';
-import { RequestContext, tabs, requiredFields, resetFields, defaultVals } from "../config/request";
+import { RequestContext, tabs, requiredFields, resetFields, defaultVals, useRequestContext } from "../config/request";
 import { t } from "../config/text";
-
-
-//TODO: need to look at the status of the request; who can edit?
+import { toast } from "react-toastify";
 
 /* TABS */
 const Information = lazy(()=>import("../blocks/request/information"));
@@ -226,55 +224,108 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         });
     }
     const handleSubmit = data => {
+        console.debug(data);
         setHasErrors(false);
         if (!data.action) return; // just validating the form, not saving
+        const action = data.action;
         setIsSaving(true);
         setIsBlocking(true); //TODO: when true should be full block with no prompt
         setLockTabs(true);
         //TODO: switch? save, submit, appove, reject?
-        if (data.action == 'resubmit') {
-            createReq.mutateAsync(data).then(()=>{
-                queryclient.refetchQueries(SUNY_ID).then(()=>handleRedirect());
-            });
-            return;
-        }
-        if (data.action=='approve'||data.action=='reject') {
-            createReq.mutateAsync(data).then(()=>{
-                queryclient.refetchQueries(SUNY_ID).then(()=>handleRedirect());
+        if (['resubmit','approve','reject'].includes(action)) {
+            toast.promise(new Promise((resolve,reject) => {
+                createReq.mutateAsync(data).then(()=>{
+                    queryclient.refetchQueries(SUNY_ID).then(()=>resolve()).catch(e=>reject(e));
+                }).catch(e=>reject(e));
+            }),{
+                pending:t(`request.actions.${action}.pending`),
+                success: {render({data}){
+                    console.debug(data);
+                    handleRedirect();
+                    return t(`request.actions.${action}.success`)
+                }},
+                error:{render({data}){
+                    setIsSaving(false);
+                    setLockTabs(false);
+                    return data?.description||t(`request.actions.${action}.error`)
+                }}
             });
             return;
         }
         if (isDraft) {
             if (isNew || data.action=='submit') {
-                createReq.mutateAsync(data).then(d => {
-                    console.debug(d);
-                    handleRedirect();
-                }).catch(e => {
-                    //TODO: for testing
-                    //TODO: need to handle errors better
-                    //setIsSaving(false);
-                    //setLockTabs(false);
-                    //end testing
-                    console.error(e);
+                // submit draft request
+                toast.promise(new Promise((resolve,reject) => {
+                    createReq.mutateAsync(data).then(d=>resolve(d)).catch(e=>reject(e));
+                }),{
+                    pending:t(`request.actions.${action}.pending`),
+                    success: {render({data}){
+                        console.debug(data);
+                        handleRedirect();
+                        return t(`request.actions.${action}.success`)
+                    }},
+                    error:{render({data}){
+                        setIsSaving(false);
+                        setLockTabs(false);
+                        return data?.description||t(`request.actions.${action}.error`)
+                    }}
                 });
             } else {
-                updateReq.mutateAsync(data).then(() => {
-                    handleRedirect();
-                }).catch(e => {
-                    console.error(e);
+                // save draft request
+                toast.promise(new Promise((resolve,reject) => {
+                    updateReq.mutateAsync(data).then(()=>resolve()).catch(e=>reject(e));
+                }),{
+                    pending: t(`request.actions.${action}.pending`),
+                    success: {render(){
+                        handleRedirect();
+                        return t(`request.actions.${action}.success`)
+                    }},
+                    error:{render({data}){
+                        setIsSaving(false);
+                        setLockTabs(false);
+                        return data?.description||t(`request.actions.${action}.error`)
+                    }}
                 });
             }
         } else {
-            createReq.mutateAsync(data).then(() =>{
-                handleRedirect();
-            }).catch(e => {
-                    //TODO: for testing
-                    //TODO: need to handle errors better
-                    setIsSaving(false);
-                    setLockTabs(false);
-                    //end testing
-                    console.error(e);
-            });
+            if (data.action == 'save') {
+                // approver save form
+                toast.promise(new Promise((resolve,reject) => {
+                    updateReq.mutateAsync(data).then(()=>resolve()).catch(e=>reject(e))
+                }),{
+                    pending: t(`request.actions.${action}.pending`),
+                    success: {render(){
+                        handleRedirect();
+                        return t(`request.actions.${action}.success`)
+                    }},
+                    error:{render({data}){
+                        setIsSaving(false);
+                        setLockTabs(false);
+                        return data?.description||t(`request.actions.${action}.error`)
+                    }}
+                });
+            } else {
+                // submit saved form, approve, or reject
+                toast.promise(new Promise((resolve,reject) => {
+                        createReq.mutateAsync(data).then(d=>resolve(d)).catch(e=>reject(e));
+                }),{
+                    pending: t(`request.actions.${action}.pending`),
+                    success: {render(){
+                        handleRedirect();
+                        return t(`request.actions.${action}.success`)
+                    }},
+                    error:{render({data}){
+                        setIsSaving(false);
+                        setLockTabs(false);
+                        return data?.description||t(`request.actions.${action}.error`)
+                    }}
+                })
+                createReq.mutateAsync(data).then(() =>{
+                    handleRedirect();
+                }).catch(e => {
+                        console.error(e);
+                });
+            }
         }
     }
     const handleError = errors => {
@@ -335,6 +386,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
             <RequestContext.Provider value={{
                 reqId:reqId,
                 posTypes:postypes.data,
+                isNew: isNew,
                 isDraft:isDraft,
                 lastJournal:data.lastJournal,
                 canEdit:canEdit
@@ -344,13 +396,13 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                         {tabs.map(t=>(
                             <Tab key={t.id} eventKey={t.id} title={t.title} disabled={t.id!='information'&&lockTabs}>
                                 <Container as="article" className="mt-3" fluid>
+                                    {hasErrors && <RequestFormErrors/>}
+                                    <PendingReviewAlert/>
                                     <Row as="header">
                                         <Col as="h3">{t.title}</Col>
                                     </Row>
-                                    {hasErrors && <RequestFormErrors/>}
-                                    <PendingReviewAlert/>
-                                    {(t.id!='information'&&t.id!='review')&& <RequestInfoBox isNew={isNew}/>}
-                                    <RequestTabRouter tab={t.id} isNew={isNew}/>
+                                    {(t.id!='information'&&t.id!='review')&& <RequestInfoBox/>}
+                                    <RequestTabRouter tab={t.id}/>
                                     <Row as="footer">
                                         <Col className="button-group justify-content-end">
                                             {hasErrors && <div className="d-inline-flex align-items-center text-danger mr-2" style={{fontSize:'20px'}}><Icon icon="mdi:alert"/><span>Errors</span></div>}
@@ -359,12 +411,15 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                                                 <>
                                                     {methods.formState.isDirty && <AppButton format="undo" onClick={handleReset} disabled={isSaving}>Reset</AppButton>}
                                                     {!isNew && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
-                                                    {!(isNew&&lockTabs)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
-                                                    {t.id=='review'&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}>Submit</AppButton>}
                                                 </>
                                             }
                                             {(get(data,'lastJournal.STATUS')=='R'&&canEdit) && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
+
+                                            {!(isNew&&lockTabs)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
+
                                             {t.id!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
+                                            
+                                            {t.id=='review'&&isDraft&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}>Submit</AppButton>}
                                             {(t.id=='review'&&!isDraft&&canEdit&&get(data,'lastJournal.STATUS')!='R') && 
                                                 <>
                                                     <AppButton format="reject" id="reject" onClick={()=>handleSave('reject')} disabled={hasErrors||isSaving}>Reject</AppButton>
@@ -438,9 +493,10 @@ function PendingReviewAlert() {
     )
 }
 
-function RequestInfoBox({isNew}) {
+function RequestInfoBox() {
     const { getValues } = useFormContext();
     const [reqId,effDate,posType,reqType,candidateName] = getValues(['reqId','effDate','posType','reqType','candidateName']);
+    const { isNew } = useRequestContext();
     return (
         <Alert variant="secondary">
             <Row as="dl" className="mb-0">
@@ -459,13 +515,13 @@ function RequestInfoBox({isNew}) {
     );
 }
 
-function RequestTabRouter({tab,isNew}) {
+function RequestTabRouter({tab}) {
     switch(tab) {
         case "information": return <Information/>;
         case "position": return <Position/>;
         case "account": return <Account/>;
         case "comments": return <Comments/>;
-        case "review": return <Review isNew={isNew}/>;
+        case "review": return <Review/>;
         default: return <NotFound/>;
     }
 }

@@ -9,6 +9,12 @@ export const HRFormContext = React.createContext();
 HRFormContext.displayName = 'HRFormContext';
 export function useHRFormContext() { return useContext(HRFormContext); }
 
+/** CONDITIONAL FIELDS */
+export const conditionalFields = {
+    partialLeave:['EF-LOA-PPEL','EF-LOA-PPS'],
+    splitAssignment:['EF-PAY-ASCA']
+};
+
 /** TABS */
 // Format constructed for react-checkbox-tree (see:https://www.npmjs.com/package/react-checkbox-tree)
 const allTabs = [

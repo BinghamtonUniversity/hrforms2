@@ -12,8 +12,9 @@ import useListsQueries from "../../queries/lists";
 const baseName = 'employment.appointment';
 
 export default function EmploymentAppointment() {
-    const { control, getValues, setValue, formState: { errors } } = useFormContext();
+    const { canEdit, activeNav } = useHRFormContext();
 
+    const { control, getValues, setValue } = useFormContext();
     const watchPayroll = useWatch({name:['payroll.PAYROLL_CODE','selectedRow.PAYROLL_AGENCY_CODE'],control:control});
     const watchFaculty = useWatch({name:`${baseName}.DERIVED_FAC_TYPE`,control:control});
     const watchTermDuration = useWatch({name:`${baseName}.TERM_DURATION`,control:control,defaultValue:0});
@@ -41,6 +42,11 @@ export default function EmploymentAppointment() {
         }
         return false;
     },[watchFields]);
+
+    useEffect(() => {
+        canEdit&&document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true});
+    },[activeNav]);
+    
     return (
         <HRFormContext.Consumer>
             {({showInTest,testHighlight,canEdit}) => (

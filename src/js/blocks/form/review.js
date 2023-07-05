@@ -2,7 +2,7 @@ import React, { useEffect, lazy } from "react";
 import { Row, Col } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { Icon } from "@iconify/react";
-import { DateFormat } from "../components";
+import { AppButton, DateFormat } from "../components";
 import { EmploymentPositionInfoBox, FormTypeDisplay } from "../../pages/form";
 import { useHRFormContext } from "../../config/form";
 import { find, get, startCase } from "lodash";
@@ -25,9 +25,7 @@ const ReviewComments = lazy(()=>import("./review/review-comments"));
 export default function Review() {
     const { getValues } = useFormContext();
     const { journalStatus } = useHRFormContext();
-    useEffect(()=>{
-        console.debug(getValues());
-    },[]);
+    useEffect(()=>console.debug(getValues()),[]);
     return (
         <article id="form-review" className="mt-3">
             {journalStatus!='Z' && 
@@ -35,6 +33,11 @@ export default function Review() {
                     <Col as="h3">Review</Col>
                 </Row>
             }
+            <Row>
+                <Col className="button-group justify-content-end d-print-none">
+                    <AppButton format="print" title="Print Page" onClick={()=>window.print()}></AppButton>
+                </Col>
+            </Row>
             <ReviewFormData/>
             <ReviewSections/>
             <ReviewComments/>
@@ -50,7 +53,7 @@ export function NewLine({gap}) {
 
 function ReviewFormData() {
     const { getValues } = useFormContext();
-    const { isNew } = useHRFormContext(); //TODO:change isNew to isDraft
+    const { isNew } = useHRFormContext(); //TODO:change isNew to isDraft?
     const [formId,payroll,effDate] = getValues(['formId','payroll','effDate']);
     return (
         <section className="mb-4">

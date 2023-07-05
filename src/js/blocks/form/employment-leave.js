@@ -1,6 +1,6 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
-import { HRFormContext } from "../../config/form";
+import { HRFormContext, conditionalFields, useHRFormContext } from "../../config/form";
 import { Row, Col, Form, InputGroup} from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
@@ -10,6 +10,8 @@ import useListsQueries from "../../queries/lists";
 const name = 'employment.leave';
 
 export default function EmploymentLeave() {
+    const { canEdit, activeNav, formType } = useHRFormContext();
+
     const { control, getValues, setValue } = useFormContext();
     const watchLeavePercent = useWatch({name:`${name}.leavePercent`,control:control})||0;
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
@@ -31,6 +33,8 @@ export default function EmploymentLeave() {
         return newSal;
     },[watchLeavePercent]);
 
+    useEffect(() => canEdit&&document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true}),[activeNav]);
+
     return (
         <HRFormContext.Consumer>
             {({canEdit}) => (
@@ -49,31 +53,34 @@ export default function EmploymentLeave() {
                         </Col>
                     </Form.Group>
 
-                    {/* TODO: on show Leave Pct and Leave Sal for EF-L-7 and EF-L-9 */}
-
-                    <Form.Group as={Row}>
-                        <Form.Label column md={2}>Leave Percent:</Form.Label>
-                        <Col xs="auto">
-                            <Controller
-                                name={`${name}.leavePercent`}
-                                defaultValue="0"
-                                control={control}
-                                rules={{min:{value:0,message:'Leave Percent cannot be less than 0%'},max:{value:100,message:'Leave Percent cannot be greater than 100%'}}}
-                                render={({field}) => <Form.Control {...field} type="number" min={0} max={100} disabled={!canEdit}/>}
-                            />
-                        </Col>
-                        <Col sm={8} md={6} className="pt-2">
-                            <Form.Control type="range" name="leavePercentRange" id="leavePercentRange" min={0} max={100} value={watchLeavePercent} onChange={handleRangeChange} disabled={!canEdit}/>
-                        </Col>
-                    </Form.Group>
-                    <Form.Group as={Row}>
-                        <Form.Label column md={2}>Leave Salary:</Form.Label>
-                        <Col xs="auto" className="pt-2">
-                            <p className="mb-0">
-                                <CurrencyFormat>{calcLeaveSalary()}</CurrencyFormat>
-                            </p>
-                        </Col>
-                    </Form.Group>
+                    {/* Show Leave Pct and Leave Sal for Partial Paid Leaves */}
+                    {conditionalFields.partialLeave.includes(formType) && 
+                        <>
+                            <Form.Group as={Row}>
+                                <Form.Label column md={2}>Leave Percent:</Form.Label>
+                                <Col xs="auto">
+                                    <Controller
+                                        name={`${name}.leavePercent`}
+                                        defaultValue="0"
+                                        control={control}
+                                        rules={{min:{value:0,message:'Leave Percent cannot be less than 0%'},max:{value:100,message:'Leave Percent cannot be greater than 100%'}}}
+                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={100} disabled={!canEdit}/>}
+                                    />
+                                </Col>
+                                <Col sm={8} md={6} className="pt-2">
+                                    <Form.Control type="range" name="leavePercentRange" id="leavePercentRange" min={0} max={100} value={watchLeavePercent} onChange={handleRangeChange} disabled={!canEdit}/>
+                                </Col>
+                            </Form.Group>
+                            <Form.Group as={Row}>
+                                <Form.Label column md={2}>Leave Salary:</Form.Label>
+                                <Col xs="auto" className="pt-2">
+                                    <p className="mb-0">
+                                        <CurrencyFormat>{calcLeaveSalary()}</CurrencyFormat>
+                                    </p>
+                                </Col>
+                            </Form.Group>
+                        </>
+                    }
 
                     <Form.Group as={Row}>
                         <Form.Label column md={2}>Leave End Date:</Form.Label>

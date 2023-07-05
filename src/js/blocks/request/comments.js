@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Row, Col, Form } from "react-bootstrap";
 import { Controller, useFormContext } from "react-hook-form";
 import useRequestQueries from "../../queries/requests";
@@ -9,8 +9,7 @@ import { orderBy } from "lodash";
 
 export default function Comments() {
     const { control, getValues, formState:{ errors }} = useFormContext();
-    const { canEdit, isDraft } = useRequestContext();
-    const reqId = getValues('reqId');
+    const { reqId, canEdit, isDraft } = useRequestContext();
     return (
         <>
             <Form.Group as={Row}>
@@ -26,24 +25,25 @@ export default function Comments() {
                     <Form.Control.Feedback type="invalid">{errors.comment?.message}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
-            {!isDraft && <CommentsHistory reqId={reqId}/>}
+            {!isDraft && <CommentsHistory/>}
         </>
     );
 }
 
-function CommentsHistory({reqId}) {
+function CommentsHistory() {
     return (
         <section className="my-3">
             <Row as="header">
                 <Col as="h3">Comment History</Col>
             </Row>
-            <CommentsTable reqId={reqId}/>
+            <CommentsTable/>
         </section>
     );
 }
 
-export function CommentsTable({reqId}) {
-    const {getJournal} = useRequestQueries(reqId);
+export function CommentsTable() {
+    const { reqId } = useRequestContext();
+    const { getJournal } = useRequestQueries(reqId);
     const journal = getJournal({select:d=>orderBy(d.filter(c=>{
         c.id = `${c.REQUEST_ID}_${c.SEQUENCE}`;
         return !['X','PA','PF'].includes(c.STATUS);

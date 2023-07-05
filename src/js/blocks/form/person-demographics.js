@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
-import { HRFormContext } from "../../config/form";
+import { HRFormContext, useHRFormContext } from "../../config/form";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
@@ -10,8 +10,9 @@ import useListsQueries from "../../queries/lists";
 const name = 'person.demographics';
 
 export default function PersonDemographics() {
-    const { control, setValue } = useFormContext();
+    const { canEdit, activeNav } = useHRFormContext();
 
+    const { control, setValue } = useFormContext();
     const watchCitizen = useWatch({name:`${name}.US_CITIZEN_INDICATOR`});
     const watchVeteran = useWatch({name:`${name}.VETERAN_INDICATOR`});
 
@@ -23,7 +24,7 @@ export default function PersonDemographics() {
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
     }
-
+    useEffect(()=>canEdit&&document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true}),[activeNav]);
     return (
         <HRFormContext.Consumer>
             {({showInTest,canEdit}) => (

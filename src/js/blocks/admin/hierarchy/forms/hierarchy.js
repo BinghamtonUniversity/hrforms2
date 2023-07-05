@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, useReducer } from "react";
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/form";
 import { useHierarchyQueries } from "../../../../queries/hierarchy";
-import { useCodesQueries } from "../../../../queries/codes";
-import { useTransactionQueries } from "../../../../queries/codes";
+import useCodesQueries from "../../../../queries/codes";
+import useTransactionQueries from "../../../../queries/transactions";
 import { find, truncate, orderBy, difference, pick, intersection } from 'lodash';
 import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Badge } from "react-bootstrap";
 import { Loading, errorToast, DescriptionPopover, AppButton } from "../../../../blocks/components";
@@ -505,7 +505,7 @@ function HierarchyFormFormCode({payrollCode}) {
                             {!payrollCode&&<p className="text-muted font-italic">Select A Payroll</p>}
                             {paytrans.isError && <p><Loading isError>Error Loading Forms</Loading></p>}
                             {paytrans.isLoading && <p><Loading>Loading Forms...</Loading></p>}
-                            {paytrans.data &&
+                            {payrollCode&&paytrans.data &&
                                 <Form.Control {...field} as="select" disabled={!isNew} isInvalid={errors.posType}>
                                     <option></option>
                                     {paytrans.data&&paytrans.data.map(c=>(
