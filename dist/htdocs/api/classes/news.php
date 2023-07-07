@@ -44,7 +44,7 @@ class News extends HRForms2 {
 		$stmt = oci_parse($this->db,$qry);
 		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
 		oci_bind_by_name($stmt, ":news", $clob, -1, OCI_B_CLOB);
-		oci_execute($stmt,OCI_DEFAULT);
+		oci_execute($stmt,OCI_NO_AUTO_COMMIT);
 		$clob->save($this->POSTvars['NEWS_TEXT']);
 		oci_commit($this->db);
 		oci_free_statement($stmt);

@@ -45,7 +45,7 @@ const text = {
                 'error': 'Error Saving Form'
             },
             'submit':{
-                'pending': 'Submittig Form',
+                'pending': 'Submitting Form',
                 'success': 'Form Submitted Successfully',
                 'error': 'Error Submitting Form'
             },
@@ -69,12 +69,12 @@ const text = {
                 'error': 'Error Saving Request'
             },
             'submit':{
-                'pending': 'Submittig Request',
+                'pending': 'Submitting Request',
                 'success': 'Request Submitted Successfully',
                 'error': 'Error Submitting Request'
             },
             'resubmit':{
-                'pending': 'Re-Submittig Request',
+                'pending': 'Re-Submitting Request',
                 'success': 'Request Re-Submitted Successfully',
                 'error': 'Error Re-Submitting Request'
             },

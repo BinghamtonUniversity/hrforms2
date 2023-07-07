@@ -17,7 +17,13 @@ export function qErr(key,options={},message='Bad Data') {
 export default function q(u,m,b) {
     return d => {
         const bd = d || b;
-        let opts = {Accept:'application/json',headers:{ContentType:'application/json'},method:m||'GET'};
+        let opts = {
+            Accept:'application/json',
+            headers:{
+                ContentType:'application/json',
+            },
+            method:m||'GET'
+        };
         if (['POST','PUT','PATCH'].includes(m)) opts.body = bd && JSON.stringify(bd);
         return new Promise((res,rej) => {
             //TODO: check window.sessionStorage; combine with cookie to handle expiration.

@@ -22,8 +22,6 @@ Bug fixes, enhancements and things still to complete.
   * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
   
 ## Tasks: 
-  * Request: Add toast notifications for submit, save, and reject
-  * Request: Approvals should have "save and exit" option
   * Archive - Request|Form: Should save groups, hierarchy, and workflow
   * Archive - Request|Form: List needs date filter; default should limit range?
   * Request: User should NOT be able to approve/reject requests they submitted.
@@ -32,18 +30,19 @@ Bug fixes, enhancements and things still to complete.
   * Search for "console.log" in files
   * Create list of standard hotkeys for application.
   * Users: Ability to download user list for auditing
-  * Switch from username to B# as primary key
+  * Switch from username to B# as primary key [DONE?]
   * Admin: Add default routing in settings
   * On app error allow "reset"; test with undefined import component.
-  * Add print to PDF
   * Forms: Default WF for all payrolls/forms?
   * DataTables:
     - Add search-by-field as needed (see groups.js)
     - Global setting for paginationRowsPerPageOptions
+  * Create Departments Admin page    
 
 ## Upgrades:
+  * Convert to apereo/phpcas
   * Upgrade to Bootstrap v5
-  * Upgrade to React Query v4
+  * Upgrade to React Query v4/5?
   * Upgrade to React Router v6
 
 ## Future Enhancements
@@ -90,4 +89,24 @@ Bug fixes, enhancements and things still to complete.
     * PF -> BP (Batch Pending)
     * if Batch is successful BP -> Z
     * if Batch has error BP -> BE (Batch Error)
+
+gender -> legal sex M/F
+gender identity (add)
+"female","male","X"
+Need to add to MV and add to query
+
+employment-position: appt pct cannot be greater than what comes from suny
+
+check journal for admin to search all
+
+add: submitter info on review at bottom
+
+employment data on review when not selected
+
+default hierarchy: go to HR (send error notification)
+
+add: group description as hover/popup
+depts: active/inactive is not clear active/inactive (3 326)
+
+add new user: 687005 (error)
 

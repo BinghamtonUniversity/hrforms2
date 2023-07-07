@@ -64,8 +64,11 @@ function ReviewEmploymentAppointmentFacultyDetails({details}) {
                         {id:'springCourses',label:'Spring Courses'}
                     ].map(c => (
                         <React.Fragment key={c.id}>
+                            <NewLine gap={3}/>
                             <Col as="dt" md={2} className="mb-0">{c.label}:</Col>
-                            <Col as="dd" md={10} className="mb-0">{details[c.id].count}</Col>
+                            <Col as="dd" md={4} className="mb-0">{details[c.id].count}</Col>
+                            <Col as="dt" md={2} className="mb-0">{c.label} Credits:</Col>
+                            <Col as="dd" md={4} className="mb-0">{details[c.id].credits}</Col>
                             <Col as="dt" md={2} className="mb-0">{c.label} List:</Col>
                             <Col as="dd" md={10} className="mb-0"><pre>{details[c.id].list}</pre></Col>
                         </React.Fragment>

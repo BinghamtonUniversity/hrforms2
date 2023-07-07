@@ -57,6 +57,7 @@ class User extends HRForms2 {
 		} else {
 			// Get data from HRFORMS2_USERS, refresh as needed
 			$refresh = false;
+			$existing = false;
 
 			$qry = "select suny_id,
 			to_char(end_date,'DD-MON-YYYY') as end_date,
@@ -70,7 +71,11 @@ class User extends HRForms2 {
 			$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
 			$userInfo = (is_object($row['USER_INFO']))?$row['USER_INFO']->load():"";
 			$userOpts = (is_object($row['USER_OPTIONS']))?$row['USER_OPTIONS']->load():null;
-			$row = $this->null2Empty($row);
+			if ($row) {
+				$row = $this->null2Empty($row);
+				$existing = true;
+			}
+
 			if ($userInfo == "") $refresh = true;
 			// check refresh date and end date
 			$now = new DateTime();
@@ -111,19 +116,21 @@ class User extends HRForms2 {
 				$row['USER_OPTIONS'] = (is_object($row['USER_OPTIONS']))?$row['USER_OPTIONS']->load():null;
 				oci_free_statement($stmt);
 
-				$qry = "update HRFORMS2_USERS set 
-				refresh_date = sysdate, user_info = EMPTY_CLOB() 
-				where suny_id = :suny_id
-				returning user_info into :user_info";
-				$stmt = oci_parse($this->db,$qry);
-				oci_bind_by_name($stmt,":suny_id", $this->req[0]);
-				$clob = oci_new_descriptor($this->db, OCI_D_LOB);
-				oci_bind_by_name($stmt,":user_info", $clob, -1, OCI_B_CLOB);
-		        $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
-				if (!$r) $this->raiseError();
-				$clob->save(json_encode($row));
-				oci_commit($this->db);
-				oci_free_statement($stmt);
+				if ($existing) { // can only update existing users, skip if new
+					$qry = "update HRFORMS2_USERS set 
+					refresh_date = sysdate, user_info = EMPTY_CLOB() 
+					where suny_id = :suny_id
+					returning user_info into :user_info";
+					$stmt = oci_parse($this->db,$qry);
+					oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+					$clob = oci_new_descriptor($this->db, OCI_D_LOB);
+					oci_bind_by_name($stmt,":user_info", $clob, -1, OCI_B_CLOB);
+					$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+					if (!$r) $this->raiseError();
+					$clob->save(json_encode($row));
+					oci_commit($this->db);
+					oci_free_statement($stmt);
+				}
 
 				$row['REFRESH_DATE'] = strtoupper($now->format('d-M-Y'));
 				$this->_arr = $row;
@@ -157,14 +164,19 @@ class User extends HRForms2 {
 
 	function POST() {
 		//TODO: need to store JSON info of user on last field
-		$qry = "insert into hrforms2_users values(:suny_id, sysdate, :created_by, :start_date, :end_date, null, EMPTY_CLOB())";
+		$options = json_encode($this->POSTvars['OPTIONS']);
+		$qry = "insert into hrforms2_users values(:suny_id, sysdate, :created_by, :start_date, :end_date, null, EMPTY_CLOB(), :options) returning user_info into :user_info";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":suny_id", $this->POSTvars['SUNY_ID']);
 		oci_bind_by_name($stmt,":created_by", $this->sessionData['EFFECTIVE_SUNY_ID']);
 		oci_bind_by_name($stmt,":start_date", $this->POSTvars['START_DATE']);
 		oci_bind_by_name($stmt,":end_date", $this->POSTvars['END_DATE']);
-		$r = oci_execute($stmt);
+		oci_bind_by_name($stmt,":options", $options);
+		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
+		oci_bind_by_name($stmt,":user_info", $clob, -1, OCI_B_CLOB);
+		$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
 		if (!$r) $this->raiseError();
+		$clob->save('{}');
 		oci_commit($this->db);
 		oci_free_statement($stmt);
 		new usergroups(array($this->POSTvars['SUNY_ID']));

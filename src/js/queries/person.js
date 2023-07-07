@@ -18,7 +18,7 @@ export default function usePersonQueries() {
             case "bNumber": path.push(data.values.bNumber); break;
             case "lastNameDOB":
                 path.push(data.values.lastName);
-                if (data.values.dob) path.push(format(data.values.dob,'dd-MMM-yyyy')); 
+                if (data.values.dob) path.push(format(new Date(data.values.dob),'dd-MMM-yyyy')); 
                 break;
             default: return qErr('Bad Data');
         }

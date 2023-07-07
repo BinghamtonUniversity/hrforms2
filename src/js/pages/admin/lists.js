@@ -170,7 +170,7 @@ export default function AdminLists() {
         setSlugHint('');
         setRunSQL('');
         if (!selectedList){
-            ['LIST_ID','LIST_NAME','LIST_TYPE','LIST_SLUG','PROTECTED','LIST_DATA'].forEach(k=>methods.setValue(k,''));
+            ['LIST_ID','LIST_NAME','LIST_DESCRIPTION','LIST_TYPE','LIST_SLUG','PROTECTED','LIST_DATA'].forEach(k=>methods.setValue(k,''));
         }
     }
     const cancelList = () => {

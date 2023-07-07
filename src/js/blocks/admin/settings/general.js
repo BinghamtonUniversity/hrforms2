@@ -4,7 +4,7 @@ import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { useSettingsContext } from "../../../app";
 
 export default function SettingsGeneral() {
-    const {control,formState:{errors}} = useFormContext();
+    const { control, formState:{ errors }} = useFormContext();
     const watchHideNews = useWatch({name:'general.hideNews'});
     return (
         <>
@@ -67,17 +67,17 @@ export default function SettingsGeneral() {
                     <Col xs="auto">
                         <Controller
                             name="general.showReqWF"
+                            defaultValue="Y"
                             control={control}
-                            defaultValue="a"
                             render={({field}) => (
                                 <>
-                                    <Form.Check {...field} inline type="radio" id="showSkipped-all" label="All" value='y' checked={field.value=='y'}/>
-                                    <Form.Check {...field} inline type="radio" id="showSkipped-admin" label="Admin Only" value='a' checked={field.value=='a'}/>
-                                    <Form.Check {...field} inline type="radio" id="showSkipped-none" label="None" value='n' checked={field.value=='n'}/>
-                                    <Form.Text id="showReqWFHelp" muted>Toggle display of workflow on Requests lists</Form.Text>
+                                    <Form.Check {...field} inline type="radio" id="showReqWF-all" label="All" value='Y' checked={field.value==='Y'}/>
+                                    <Form.Check {...field} inline type="radio" id="showReqWF-admin" label="Admin Only" value='A' checked={field.value==='A'}/>
+                                    <Form.Check {...field} inline type="radio" id="showReqWF-none" label="None" value='N' onChange={()=>field.onChange('N')} checked={field.value==='N'}/>
                                 </>
                             )}
                         />
+                        <Form.Text id="showReqWFHelp" muted>Toggle display of workflow on Requests lists</Form.Text>
                     </Col>
                 </Form.Group>
                 <Form.Group as={Row}>
@@ -86,12 +86,12 @@ export default function SettingsGeneral() {
                         <Controller
                             name="general.showFormWF"
                             control={control}
-                            defaultValue="a"
+                            defaultValue="A"
                             render={({field}) => (
                                 <>
-                                    <Form.Check {...field} inline type="radio" id="showSkipped-all" label="All" value='y' checked={field.value=='y'}/>
-                                    <Form.Check {...field} inline type="radio" id="showSkipped-admin" label="Admin Only" value='a' checked={field.value=='a'}/>
-                                    <Form.Check {...field} inline type="radio" id="showSkipped-none" label="None" value='n' checked={field.value=='n'}/>
+                                    <Form.Check {...field} inline type="radio" id="showFormWF-all" label="All" value='Y' checked={field.value=='Y'}/>
+                                    <Form.Check {...field} inline type="radio" id="showFormWF-admin" label="Admin Only" value='A' checked={field.value=='A'}/>
+                                    <Form.Check {...field} inline type="radio" id="showFormWF-none" label="None" value='N' checked={field.value=='N'}/>
                                     <Form.Text id="showFormWFHelp" muted>Toggle display of workflow on Forms lists</Form.Text>
                                 </>
                             )}
@@ -104,12 +104,12 @@ export default function SettingsGeneral() {
                         <Controller
                             name="general.showSkipped"
                             control={control}
-                            defaultValue="n"
+                            defaultValue="N"
                             render={({field}) => (
                                 <>
-                                    <Form.Check {...field} inline type="radio" id="showSkipped-all" label="All" value='y' checked={field.value=='y'}/>
-                                    <Form.Check {...field} inline type="radio" id="showSkipped-admin" label="Admin Only" value='a' checked={field.value=='a'}/>
-                                    <Form.Check {...field} inline type="radio" id="showSkipped-none" label="None" value='n' checked={field.value=='n'}/>
+                                    <Form.Check {...field} inline type="radio" id="showSkipped-all" label="All" value='Y' checked={field.value=='Y'}/>
+                                    <Form.Check {...field} inline type="radio" id="showSkipped-admin" label="Admin Only" value='A' checked={field.value=='A'}/>
+                                    <Form.Check {...field} inline type="radio" id="showSkipped-none" label="None" value='N' checked={field.value=='N'}/>
                                     <Form.Text id="showSkippedHelp" muted>Toggle display of skipped hierarchy groups</Form.Text>
                                 </>
                             )}

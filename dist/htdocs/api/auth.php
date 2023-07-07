@@ -55,7 +55,6 @@
         oci_bind_by_name($stmt, ":id", $sessionData['UDC_IDENTIFIER']);
         oci_execute($stmt);
         $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-        print_r($row);
         if (!isset($row['SUNY_ID'])) die('no suny id');
         $now = time();
         $qry = "insert into hrforms2_sessions values(SYS_GUID(),:cas_session_id,:user_id,:bnumber,:suny_id,:remote_ip,:login_date,:user_agent) returning session_id into :sid";

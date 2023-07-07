@@ -58,7 +58,7 @@ class Journal extends HRForms2 {
         $qry = "select 1 from ".$this->k['master']." where ".$this->k['id']." = :id";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt,":id",$this->req[1]);
-        oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
+        //oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']); //TODO: why is this here?
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
         $row = oci_fetch_array($stmt,OCI_NUM);
@@ -68,7 +68,7 @@ class Journal extends HRForms2 {
             $qry = "select 2 from ".$this->k['master']."_archive where ".$this->k['id']." = :id";
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":id",$this->req[1]);
-            oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
+            //oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']); //TODO: why is this here?
             $r = oci_execute($stmt);
             if (!$r) $this->raiseError();
             $row = oci_fetch_array($stmt,OCI_NUM);

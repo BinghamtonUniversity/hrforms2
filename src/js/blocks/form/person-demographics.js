@@ -17,6 +17,7 @@ export default function PersonDemographics() {
     const watchVeteran = useWatch({name:`${name}.VETERAN_INDICATOR`});
 
     const {getListData} = useListsQueries();
+    const legalsex = getListData('legalSex');
     const gender = getListData('gender');
 
     const handleSelectChange = (e,field) => {
@@ -58,13 +59,32 @@ export default function PersonDemographics() {
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row}>
-                        <Form.Label column md={2}>Gender:</Form.Label>
+                        <Form.Label column md={2}>Legal Sex:</Form.Label>
+                        <Col xs="auto">
+                            {legalsex.isLoading && <Loading>Loading Data</Loading>}
+                            {legalsex.isError && <Loading isError>Failed to Load</Loading>}
+                            {legalsex.data &&
+                                <Controller
+                                    name={`${name}.GENDER.id`}
+                                    control={control}
+                                    render={({field})=>(
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                                            <option></option>
+                                            {legalsex.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
+                                        </Form.Control>
+                                    )}
+                                />
+                            }
+                        </Col>
+                    </Form.Group>
+                    <Form.Group as={Row}>
+                        <Form.Label column md={2}>Gender Identity:</Form.Label>
                         <Col xs="auto">
                             {gender.isLoading && <Loading>Loading Data</Loading>}
                             {gender.isError && <Loading isError>Failed to Load</Loading>}
                             {gender.data &&
                                 <Controller
-                                    name={`${name}.GENDER.id`}
+                                    name={`${name}.GENDER_IDENTITY.id`}
                                     control={control}
                                     render={({field})=>(
                                         <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
