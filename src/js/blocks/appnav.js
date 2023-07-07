@@ -41,8 +41,8 @@ export default function AppNav() {
                             <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/admin/hierarchy/request">Request Hierarchy</NavDropdown.Item>
                             <NavDropdown.Divider/>
-                            <NavDropdown.Item as={Link} to="/admin/hierarchy/form">Form Hierarchy</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/transactions">Form Transactions</NavDropdown.Item>
+                            <NavDropdown.Item as={Link} to="/admin/hierarchy/form">Form Hierarchy</NavDropdown.Item>
                             <NavDropdown.Divider/>
                             <NavDropdown.Item as={Link} to="/admin/templates">Templates</NavDropdown.Item>
                             <NavDropdown.Item as={Link} to="/admin/settings">Settings</NavDropdown.Item>

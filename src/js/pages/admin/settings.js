@@ -8,6 +8,8 @@ import { t } from "../../config/text";
 import { NotFound } from "../../app";
 import useSettingsQueries from "../../queries/settings";
 
+/* must use t.id instead of activeTab or radio options will not work */
+
 const SettingsRequests = lazy(()=>import("../../blocks/admin/settings/requests"));
 const SettingsForms = lazy(()=>import("../../blocks/admin/settings/forms"));
 const SettingsGeneral = lazy(()=>import("../../blocks/admin/settings/general"));
@@ -17,6 +19,7 @@ export default function AdminSettings() {
     const settings = getSettings();
     if (settings.isError) return <Loading isError>Error Loading Settings</Loading>
     if (settings.isLoading) return <Loading>Loading Settings</Loading>
+    if (!settings.isSuccess) return null;
     return <AdminSettingsTabs settingsData={settings.data}/>
 }
 
@@ -68,7 +71,7 @@ function AdminSettingsTabs({settingsData}) {
                                             <Row as="header">
                                                 <Col as="h3">{t.title}</Col>
                                             </Row>
-                                            <SettingsRouter tab={activeTab}/>
+                                            <SettingsRouter tab={t.id}/>
                                         </Container>
                                     </Tab>
                                 ))}

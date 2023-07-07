@@ -277,6 +277,18 @@ function FacultyDetails({watchFaculty}) {
                                 </Col>
                             </Form.Group>
                             <Form.Group as={Row}>
+                                <Form.Label column md={2}>Credits:</Form.Label>
+                                <Col xs="auto">
+                                    <Controller
+                                        name={`${name}.${c.id}.credits`}
+                                        defaultValue=""
+                                        control={control}
+                                        rules={{min:{value:0,message:`${c.label} cannot be less than 0`}}}
+                                        render={({field}) => <Form.Control {...field} type="number" min={0} disabled={!canEdit}/>}
+                                    />
+                                </Col>
+                            </Form.Group>
+                            <Form.Group as={Row}>
                                 <Form.Label column md={2}>{c.label} List:</Form.Label>
                                 <Col md={9}>
                                     <Controller

@@ -76,7 +76,8 @@ class Hierarchy extends HRForms2 {
 					left join (select * from hrforms2_action_codes) a on (p.action_code = a.action_code)
 					left join (select * from hrforms2_transaction_codes) t on (p.transaction_code = t.transaction_code)";
 				$stmt = oci_parse($this->db,$qry);
-				if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $id);
+				//TODO: what is this for? there is no where clause or bind var defined.
+				//if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $id);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {

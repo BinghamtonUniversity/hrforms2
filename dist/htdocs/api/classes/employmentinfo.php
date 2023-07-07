@@ -175,9 +175,11 @@ class EmploymentInfo extends HRForms2 {
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+				if (!$row) $row = array();
 
 				// Line Item Details:
 				$pos = (new position(array($row['PAYROLL_AGENCY_CODE'],$row['LINE_ITEM_NUMBER']),false))->returnData;
+				if (!$pos) $pos = array();
 				$row = array_merge($row,$pos);
 
 				if ($row['PAY_BASIS'] == 'FEE') {
@@ -201,6 +203,7 @@ class EmploymentInfo extends HRForms2 {
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				$pay = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+				if (!$pay) $pay = array();
 				$row = array_merge($row,$pay);
 
 				//TODO: add suny account info

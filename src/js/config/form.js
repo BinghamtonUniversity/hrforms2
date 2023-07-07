@@ -88,6 +88,7 @@ const initFormValues = {
             "VISA_CODE": {"id": "","label": ""},
             "CITIZENSHIP_COUNTRY_CODE": {"id": "","label": ""},
             "GENDER": {"id": "","label": ""},
+            "GENDER_IDENTITY":{"id": "","label":""},
             "HISPANIC_FLAG": "N",
             "ETHNICITY_MULT_CODES": "",
             "ETHNICITY_SOURCE_DSC": "",
@@ -140,8 +141,8 @@ const initFormValues = {
             "noticeDate": "",
             "contPermDate": "",
             "facultyDetails": {
-                "fallCourses":{count:0,list:""},
-                "springCourses":{count:0,list:""}
+                "fallCourses":{count:0,credits:0,list:""},
+                "springCourses":{count:0,credits:0,list:""}
             },
             "studentDetails": {
                 ACAD_HIST: "",

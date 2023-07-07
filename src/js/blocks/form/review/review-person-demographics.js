@@ -15,8 +15,10 @@ export default function ReviewPersonDemographics() {
             <Row as="dl" className="mb-0">
                 <Col as="dt" md={2} className="mb-0">Date of Birth:</Col>
                 <Col as="dd" md={4} className="mb-0"><DateFormat>{demo.birthDate}</DateFormat></Col>
-                <Col as="dt" md={2} className="mb-0">Gender:</Col>
+                <Col as="dt" md={2} className="mb-0">Legal Sex:</Col>
                 <Col as="dd" md={4} className="mb-0">{demo.GENDER.label}</Col>
+                <Col as="dt" md={2} className="mb-0">Gender Identity:</Col>
+                <Col as="dd" md={4} className="mb-0">{demo.GENDER_IDENTITY.label}</Col>
                 <Col as="dt" md={2} className="mb-0">US Citizen:</Col>
                 <Col as="dd" md={4} className="mb-0">{(demo.US_CITIZEN_INDICATOR=="Y")?"Yes":"No"}</Col>
                 {(demo.US_CITIZEN_INDICATOR!="Y")&&
