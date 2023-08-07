@@ -139,7 +139,7 @@ function NewEmploymentPay() {
         const checkFields = Object.keys(fields[index]).map(f=>`${blockName}.${index}.${f}`);
         trigger(checkFields).then(valid => {
             if (!valid) {
-                console.log('Errors!',errors);
+                console.error('Errors!',errors);
             } else {
                 setMinDate(undefined);
                 setMaxDate(undefined);

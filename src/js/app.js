@@ -87,10 +87,17 @@ export default function StartApp() {
     const { getSession } = useSessionQueries();
     const { getSettings } = useSettingsQueries();
 
+    const queryclient = useQueryClient();
     const session = getSession();
     const settings = getSettings({
         enabled:session.isSuccess,
-        onSettled:() => loadAppIcons(Object.keys(formats).map(k=>formats[k]?.icon))
+        onSettled:() => {
+            //TODO: for testing; use config or instance to set
+            queryclient.setDefaultOptions({
+                refetchOnWindowFocus:false
+            });
+            loadAppIcons(Object.keys(formats).map(k=>formats[k]?.icon));
+        }
     });
 
     useEffect(() => {

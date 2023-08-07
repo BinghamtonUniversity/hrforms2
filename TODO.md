@@ -9,10 +9,11 @@ Bug fixes, enhancements and things still to complete.
 ## Test:
   * Request: auto-approve next code
   * Form: Create Archive view
+  * Email notification; auto-approved should not get emails (need to test/check this)
 
 ## In Progress Tasks:
+  * Search for "console.log" in files
   * Use Helmet to change the title of the page
-  * Email notification; auto-approved should not get emails (need to test/check this)
   * Request|Form: Control who can view/edit based on status (see TODO in file)
   * Add CSS for printing
   * Change delete modals to component: ModalConfirm
@@ -24,20 +25,17 @@ Bug fixes, enhancements and things still to complete.
 ## Tasks: 
   * Archive - Request|Form: Should save groups, hierarchy, and workflow
   * Archive - Request|Form: List needs date filter; default should limit range?
-  * Request: User should NOT be able to approve/reject requests they submitted.
+  * Request: User should NOT be able to approve/reject requests they submitted. [DONE?]
   * FormList and RequestList; drop the additional formId, requestId and just use POSTvars.
   * Search for "TODO" in files
-  * Search for "console.log" in files
-  * Create list of standard hotkeys for application.
   * Users: Ability to download user list for auditing
   * Switch from username to B# as primary key [DONE?]
-  * Admin: Add default routing in settings
+  * Admin: Add default hierarchy routing in settings
   * On app error allow "reset"; test with undefined import component.
   * Forms: Default WF for all payrolls/forms?
   * DataTables:
     - Add search-by-field as needed (see groups.js)
     - Global setting for paginationRowsPerPageOptions
-  * Create Departments Admin page    
 
 ## Upgrades:
   * Convert to apereo/phpcas
@@ -46,11 +44,16 @@ Bug fixes, enhancements and things still to complete.
   * Upgrade to React Router v6
 
 ## Future Enhancements
+  * Create list of standard hotkeys for application.
+  * Request|Form: Reassign
+  * Request|Form: Allow same org/group to take ownership?
   * Forms: Keyboard navigation.  Selecting a form code auto loads tab data and auto-nexts
     - Convert focus effect on each tab to a global callback or memo?
   * Request|Form: Allow copy/create as draft from archived/submitted?
   * Forms: Search by Form Type (admin?) across all users and lists
+  * Multiple appointment listings - how to display (students, faculty, etc)
   * Add Help menu with Help, About items
+  * All Tables: Put filter into URL and save/use on reload.
   * Admin Lists: make list data an l/v pair
   * Users: Search/Filter by group in users (need to add group info in query)
   * Custom context (right-click) menu (https://fkhadra.github.io/react-contexify/)

@@ -59,7 +59,7 @@ function EditTemplate({selectedTemplate,setSelectedTemplate}) {
     const { general } = useSettingsContext();
     useHotkeys('ctrl+s,ctrl+alt+s',e=>{
         e.preventDefault();
-        console.log('do save');
+        console.log('TODO: do save');
     },{
         enableOnTags:['INPUT','TEXTAREA'],
     });

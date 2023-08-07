@@ -131,9 +131,6 @@ function ExpandedComponent({data}) {
     const {isAdmin} = useAuthContext();
     const {general} = useSettingsContext();
     const clickHander = e => !isAdmin && e.preventDefault();
-    useEffect(()=>{
-        console.log(data);
-    },[data]);
     return (
         <div className="p-3" style={{backgroundColor:'#ddd'}}>
             <dl className="journal-list" style={{'display':'grid','gridTemplateColumns':'120px auto'}}>

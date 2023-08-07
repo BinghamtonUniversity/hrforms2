@@ -80,7 +80,7 @@ export default function PersonEducation() {
         const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
         trigger(checkFields).then(valid => {
             if (!valid) {
-                console.log('Errors!',errors);
+                console.error('Errors!',errors);
             } else {
                 if (watchEducation.length > 1) {
                     yesNoOptions.filter(yn=>yn.unique).map(yn=>yn.id).forEach(k=>{

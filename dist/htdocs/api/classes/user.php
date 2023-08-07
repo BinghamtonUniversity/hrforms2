@@ -53,7 +53,6 @@ class User extends HRForms2 {
 			oci_free_statement($stmt);
 			$this->returnData = $this->_arr;
 			if ($this->retJSON) $this->toJSON($this->returnData);
-	
 		} else {
 			// Get data from HRFORMS2_USERS, refresh as needed
 			$refresh = false;

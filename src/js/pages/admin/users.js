@@ -4,7 +4,7 @@ import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
 import useSessionQueries from "../../queries/session";
 import { Loading, ModalConfirm, AppButton, errorToast, DescriptionPopover } from "../../blocks/components";
-import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup } from "react-bootstrap";
+import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, Button } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { orderBy, sortBy, difference, capitalize, startsWith } from "lodash";
 import DataTable from 'react-data-table-component';
@@ -20,6 +20,7 @@ import { NotFound, useAuthContext } from "../../app";
 import { t } from "../../config/text";
 import { flattenObject } from "../../utility";
 import { Helmet } from "react-helmet";
+import { CSVLink } from "react-csv";
 
 const defaultVals = {
     SUNYID:'',
@@ -137,22 +138,6 @@ function UsersTable({users,newUser,setNewUser}) {
         );
     },[filterText,statusFilter,useHotkeys]);
 
-    // maybe make this an API endpoint and let PHP handle the content type and data
-    // testing for export
-/*    const actionsMemo = useMemo(() => {
-        const filtered = rows.filter(row => {
-            if (row.active && statusFilter == 'inactive') return false;
-            if (!row.active && statusFilter == 'active') return false;
-
-            if (startsWith(filterText,'id:')) {
-                return row.SUNY_ID == filterText.split(':')[1];
-            }
-            return Object.values(pick(row,['B_NUMBER','SUNY_ID','email','endDate','endDateFmt','fullName','sortName','GROUP_NAME','startDate','startDateFmt'])).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
-        });
-        console.log(filtered.map(row=>pick(row,['B_NUMBER','SUNY_ID','fullName','email'])));
-        return <a href="">Test</a>;
-    },[filteredRows,statusFilter,filterText,rows]);*/
-
     const filteredRows = useMemo(() => {
         return rows.filter(row => {
             if (row.active && statusFilter == 'inactive') return false;
@@ -176,7 +161,10 @@ function UsersTable({users,newUser,setNewUser}) {
                 </div>
             );
         },ignoreRowClick:true},
-        {name:'SUNY ID',selector:row=>row.USER_SUNY_ID,sortable:true,sortField:'USER_SUNY_ID'},
+        {name:'SUNY ID',selector:row=>{
+            if (row.active) return row.USER_SUNY_ID;
+            return <><del>{row.USER_SUNY_ID}</del> <em>(inactive)</em></>;
+        },sortable:true,sortField:'USER_SUNY_ID'},
         {name:'Name',selector:row=>(
             <div><DescriptionPopover
                 id={`${row.SUNY_ID}_details`}
@@ -204,6 +192,12 @@ function UsersTable({users,newUser,setNewUser}) {
         {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
     ],[users,SUNY_ID]);
 
+    const actionsMemo = useMemo(() => {
+        let data = filteredRows || [];
+        if (!data.length) return <Button disabled>No Data Available</Button>;
+        return <CSVLink data={data} filename="HRForms2_Users.csv" className="btn btn-primary" target="_blank">Dowload CSV</CSVLink>
+    },[filteredRows,statusFilter,filterText,rows]);
+
     const conditionalRowStyles = [
         {
             when: row => !row.active,
@@ -225,6 +219,7 @@ function UsersTable({users,newUser,setNewUser}) {
                 keyField="USER_SUNY_ID"
                 columns={columns} 
                 data={filteredRows}
+                actions={actionsMemo}
                 pagination 
                 striped 
                 responsive
@@ -407,7 +402,7 @@ function AddEditUserForm(props) {
     }
     
     const handleSave = data => {
-        console.log(data);
+        console.debug(data);
         if (!Object.keys(methods.formState.dirtyFields).length &&!props.newUser) {
             toast.info('No changes to user data');
             closeModal();
@@ -513,7 +508,7 @@ function AddEditUserForm(props) {
                     </Modal.Body>
                     <Modal.Footer>
                         {status.state != 'error' && <p>{status.message}</p>}
-                        <AppButton format="close" onClick={closeModal}  disabled={!status.cancel}>Cancel</AppButton>
+                        <AppButton format="close" onClick={closeModal} disabled={!status.cancel}>Cancel</AppButton>
                         <AppButton format="save" type="submit" disabled={!(status.save&&Object.keys(methods.formState.errors).length==0)} icon={status.icon} spin={status.spin}>Save</AppButton>
                     </Modal.Footer>
                 </Form>

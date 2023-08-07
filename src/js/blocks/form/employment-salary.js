@@ -182,7 +182,7 @@ function AdditionalSalary() {
             if (!valid) {
                 console.log('Errors!',errors);
             } else {
-                console.log
+                console.log('valid');
                 setEditIndex(undefined);
                 setEditValues(undefined);
                 setIsNew(false);
@@ -258,10 +258,7 @@ function AdditionalSalary() {
                                                 onChange={field.onChange}
                                                 autoComplete="off"
                                                 disabled={editIndex!=index}
-                                                maxDate={()=>{
-                                                    console.log(watchFieldArray);
-                                                    return new Date();
-                                                }}
+                                                maxDate={()=>new Date()}
                                             />}
                                         />
                                         <InputGroup.Append>
@@ -452,9 +449,8 @@ function SplitAssignments() {
         const checkFields = Object.keys(fields[index]).map(f=>`${blockName}.${index}.${f}`);
         trigger(checkFields).then(valid => {
             if (!valid) {
-                console.log('Errors!',errors);
+                console.error('Errors!',errors);
             } else {
-                console.log('ok');
                 if (changePrimary) {
                     watchFieldArray.forEach((a,i) => {
                         if (index!=i&&a.COMMITMENT_PRIMARY_FLAG=='Y') {
@@ -574,10 +570,7 @@ function SplitAssignments() {
                                                 autoComplete="off"
                                                 disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""}
                                                 isInvalid={get(errors,field.name,false)}
-                                                maxDate={()=>{
-                                                    console.log(watchFieldArray);
-                                                    return new Date();
-                                                }}
+                                                maxDate={()=>new Date()}
                                             />}
                                         />
                                         <InputGroup.Append>

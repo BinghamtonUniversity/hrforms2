@@ -205,6 +205,23 @@ Class HRForms2 {
 		echo json_encode($out);
 	}
 
+	protected function toCSV($filename,$headers,$data) {
+		header('X-App-Version:'.VERSION);
+		header('X-App-Revision:'.REVISION);
+
+		header("Content-type: application/csv");
+		header("Content-Disposition: attachment; filename=$filename");
+		header("Pragma: no-cache");
+		header("Expires: 0");
+
+		$output = fopen("php://output",'w') or die("Can't open php://output");
+		fputcsv($output, $headers);
+		foreach($data as $row) {
+    		fputcsv($output, $row);
+		}
+		fclose($output) or die("Can't close php://output");
+	}
+
 	protected function done() {
 		$this->toJSON(array("success" => true));
 	}

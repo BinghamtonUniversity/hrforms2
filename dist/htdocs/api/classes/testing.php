@@ -42,7 +42,7 @@ Last Line
 EOF;
 		echo $m->render($template, array('PROD'=>false));*/
 
-		$partials = [];
+		/*$partials = [];
 		$email_template = "";
 		$templates = (new template(array(),false))->returnData;
 		foreach ($templates as $template) {
@@ -74,6 +74,14 @@ EOF;
 			'SUBJECT' => '['.INSTANCE.']: This is the subject'
 		);
 		$content = str_replace('{{&gt;','{{>',$tmpl['TEMPLATE']); // fix partial HTML entities 
-		echo $m->render($content,$vars);
+		echo $m->render($content,$vars);*/
+
+		$users = (new user(array(),false))->returnData;
+		$headers = array_keys($users[0]);
+		$data = array();
+		foreach($users as $k=>$user) {
+			array_push($data,array_values($user));
+		}
+		$this->toCSV('test.csv',$headers,$data);
 	}
 }
