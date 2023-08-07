@@ -354,7 +354,6 @@ function PayrollDate({selectedId,selectedPayroll}) {
                 values[0] = e.target.value;
                 const payroll = payrollcodes.data.find(p=>p.PAYROLL_CODE==e.target.value);
                 if (!payroll) {
-                    console.log('handleFieldChange');
                     setValue('payroll',{PAYROLL_CODE:''});
                 } else {
                     setValue('payroll',payroll);

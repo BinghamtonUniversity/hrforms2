@@ -44,6 +44,5 @@ class Supervisor extends HRForms2 {
             return array_change_key_case($a);
         },$this->_arr);
         if ($this->retJSON) $this->toJSON($this->returnData);
-
 	}
 }

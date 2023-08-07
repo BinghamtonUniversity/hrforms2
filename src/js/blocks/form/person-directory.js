@@ -118,7 +118,7 @@ function PersonDirectoryAddresses() {
         const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
         trigger(checkFields).then(valid => {
             if (!valid) {
-                console.log('Errors!',errors);
+                console.error('Errors!',errors);
             } else {
                 setEditIndex(undefined);
                 setEditValues(undefined);
@@ -377,7 +377,7 @@ function PersonDirectoryPhone() {
         const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
         trigger(checkFields).then(valid => {
             if (!valid) {
-                console.log('Errors!',errors);
+                console.error('Errors!',errors);
             } else {
                 setEditIndex(undefined);
                 setEditValues(undefined);
@@ -555,7 +555,7 @@ function PersonDirectoryEmail() {
         const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
         trigger(checkFields).then(valid => {
             if (!valid) {
-                console.log('Errors!',errors);
+                console.error('Errors!',errors);
             } else {
                 setEditIndex(undefined);
                 setEditValues(undefined);

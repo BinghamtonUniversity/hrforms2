@@ -267,7 +267,7 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
     }
 
     const handleFormSubmit = data => {
-        console.log(data);
+        console.debug(data);
         if (isNew || selectedRow.isCopy) {
             const test = paytransdata.find(p=>p.PAYROLL_CODE==data.PAYROLL_CODE&&
                 p.FORM_CODE==data.FORM_CODE&&
@@ -302,7 +302,7 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
             });
         } else {
             //check to see if changes, if none then just exit
-            console.log('update',selectedRow,data);
+            console.debug('update',selectedRow,data);
             if ((selectedRow.ACTIVE==1)!=data.ACTIVE||selectedRow.AVAILABLE_FOR!=data.AVAILABLE_FOR) {
                 updatePayTrans.mutateAsync(d).then(()=>{
                     queryclient.refetchQueries('paytrans').then(()=>{

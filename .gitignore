@@ -1,5 +1,7 @@
 node_modules/
 extra/
+vendor/
+db/
 dist/htdocs/css/
 dist/htdocs/js/
 dist/htdocs/index.php
@@ -10,7 +12,6 @@ package-lock.json
 *OLD.js
 *.code-workspace
 install.sh
-vendor/
 composer.phar
 composer.lock
-extra/
+dist/htdocs/api/classes/testing.php

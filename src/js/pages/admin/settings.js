@@ -38,7 +38,7 @@ function AdminSettingsTabs({settingsData}) {
     const { putSettings } = useSettingsQueries();
     const update = putSettings();
     const handleSubmit = data => {
-        console.debug(data);
+        console.debug('Save Settings: ',data);
         toast.promise(update.mutateAsync(data),{
             pending:'Saving Settings...',
             success:{

@@ -76,7 +76,7 @@ export default function PersonContacts() {
         const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
         trigger(checkFields).then(valid => {
             if (!valid) {
-                console.log('Errors!',errors);
+                console.error('Errors!',errors);
             } else {
                 if (watchContact.length > 1) {
                     const m = watchContact.map(c=>c['isPrimary']).filter(v=>v=='Y');

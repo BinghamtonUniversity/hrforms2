@@ -3,7 +3,7 @@ import { useQueryClient } from "react-query";
 import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
 import { Loading, AppButton, errorToast } from "../../blocks/components";
-import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, DropdownButton, Dropdown } from "react-bootstrap";
+import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, DropdownButton, Dropdown, Button } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { orderBy, sortBy, difference, differenceWith, isEqual, capitalize, filter } from "lodash";
 import DataTable from 'react-data-table-component';
@@ -17,6 +17,7 @@ import { useHistory, useParams } from "react-router-dom";
 import { flattenObject } from "../../utility";
 import { t } from "../../config/text";
 import { NotFound } from "../../app";
+import { CSVLink } from "react-csv";
 
 export default function AdminGroups() {
     const [newGroup,setNewGroup] = useState(false);
@@ -161,11 +162,11 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
             if (row.active && statusFilter == 'inactive') return false;
             if (!row.active && statusFilter == 'active') return false;
             if (filterField!='all'&&!filterText) return true; //return all records until something is entered
-            if (filterField=='id') return row.GROUP_ID.includes(filterText);
+            if (filterField=='id') return row.GROUP_ID == filterText;
             if (filterField=='name') return row.GROUP_NAME.toLowerCase().includes(filterText.toLowerCase());
             return Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
         });
-    },[rows,filterText,filterField]);
+    },[rows,filterText,filterField,statusFilter]);
 
     const columns = useMemo(() => [
         {name:'Actions',cell:row=>{
@@ -178,11 +179,20 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
             );
         },ignoreRowClick:true},
         {name:'Group ID',selector:row=>row.GROUP_ID,sortable:true,sortField:'GROUP_ID'},
-        {name:'Group Name',selector:row=>row.GROUP_NAME,sortable:true,sortField:'GROUP_NAME'},
+        {name:'Group Name',selector:row=>{
+            if (row.active) return row.GROUP_NAME;
+            return <><del>{row.GROUP_NAME}</del> <em>(inactive)</em></>;
+        },sortable:true,sortField:'GROUP_NAME'},
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
         {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
     ],[groups]);
-    
+
+    const actionsMemo = useMemo(() => {
+        let data = filteredRows || [];
+        if (!data.length) return <Button disabled>No Data Available</Button>;
+        return <CSVLink data={data} filename="HRForms2_Groups.csv" className="btn btn-primary" target="_blank">Dowload CSV</CSVLink>
+    },[filteredRows,statusFilter,filterText,rows,columns]);
+
     const conditionalRowStyles = [
         {
             when: row => !row.active,
@@ -209,6 +219,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
             <DataTable 
                 keyField="GROUP_ID"
                 columns={columns} 
+                actions={actionsMemo}
                 data={filteredRows}
                 pagination 
                 striped 

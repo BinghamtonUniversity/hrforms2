@@ -142,7 +142,7 @@ function ListTable({data,list}) {
     };
 
     const expandRow = useMemo(()=>{
-        if ((isAdmin && general.showReqWF == 'a')||general.showReqWF == 'y') {
+        if ((isAdmin && general.showReqWF == 'A')||general.showReqWF == 'Y') {
             if (list !== 'drafts') return true;
         }
         return false;
