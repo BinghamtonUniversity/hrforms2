@@ -11,6 +11,7 @@ import { flattenObject } from "../utility";
 import { allTabs, fetchFormData, initFormValues, HRFormContext } from "../config/form";
 import { t } from "../config/text";
 import { toast } from "react-toastify";
+import { Helmet } from "react-helmet";
 
 /* TABS */
 const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
@@ -67,8 +68,21 @@ function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete,reset}
     const [formData,setFormData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
 
+    const {general} = useSettingsContext();
+
     const {getForm} = useFormQueries(formId);
     const form = getForm({enabled:false});
+
+    const title = useMemo(() => {
+        //if (isDraft) return "Draft Form"
+        if (!form.data) return null;
+        const status = form.data.lastJournal.STATUS;
+        const statusText = get(general.status,status,{list:(isDraft)?'Draft':''});
+        let tl = `Form #${formId}`;
+        if (statusText.list) tl += ' - ' + statusText.list;
+        return tl;
+    },[formId,isDraft,form,general])
+
     useEffect(()=>{
         if (!isNew) {
             form.refetch({throwOnError:true,cancelRefetch:true}).then(f=>{
@@ -94,6 +108,9 @@ function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete,reset}
         <section>
             <header>
                 <Row>
+                    <Helmet>
+                        <title>{title}</title>
+                    </Helmet>
                     <Col>
                         <h2>{isNew&&'New '}HR Form</h2>
                     </Col>

@@ -8,7 +8,6 @@ import { useForm, Controller } from "react-hook-form";
 import JoditEditor from "jodit-react";
 import { editorConfig } from "../../config";
 import { useSettingsContext } from "../../app";
-import { useHotkeys } from "react-hotkeys-hook";
 import { t } from "../../config/text";
 
 export default function AdminTemplates() {
@@ -57,12 +56,6 @@ function EditTemplate({selectedTemplate,setSelectedTemplate}) {
     const config = editorConfig('source');
     const editor = useRef();
     const { general } = useSettingsContext();
-    useHotkeys('ctrl+s,ctrl+alt+s',e=>{
-        e.preventDefault();
-        console.log('TODO: do save');
-    },{
-        enableOnTags:['INPUT','TEXTAREA'],
-    });
     
     const { control, setValue, handleSubmit, formState: { errors } } = useForm({defaultValues:{
         TEMPLATE_ID:'',
@@ -191,7 +184,6 @@ function EditTemplate({selectedTemplate,setSelectedTemplate}) {
                 <Row>
                     <Col className="button-group">
                         <AppButton format="save" type="submit" disabled={!!Object.keys(errors).length}>Save</AppButton>
-                        {/*TODO:(locked!="1"&&!isNew) && <AppButton format="delete" onClick={()=>console.warn('delete template')}>Delete</AppButton>*/}
                         <AppButton format="cancel" variant="secondary" type="reset">Cancel</AppButton>
                     </Col>
                 </Row>
@@ -199,4 +191,3 @@ function EditTemplate({selectedTemplate,setSelectedTemplate}) {
         </section>
     );
 }
-/*<JoditEditor ref={editor} config={config} onBlur={field.onBlur} value={template.data?.TEMPLATE} onChange={field.onChange}/>*/

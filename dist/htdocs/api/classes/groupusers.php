@@ -30,17 +30,25 @@ class GroupUsers extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		//TODO: get user info first, if null then get persemp
-		//TODO: add in user settings
-
-		$qry = "select distinct u.*, " . $this->BASE_PERSEMP_FIELDS . " from buhr.buhr_persemp_mv@banner.cc.binghamton.edu p
-        join (select suny_id as ug_suny_id, group_id from hrforms2_user_groups) ug on (p.suny_id = ug.ug_suny_id and ug.group_id = :group_id)
-        join (select suny_id as user_suny_id, start_date, end_date, u1.user_options.notifications as notifications from hrforms2_users u1) u on (p.suny_id = u.user_suny_id)";
+		$qry = "select u.suny_id as user_suny_id, u.start_date, u.end_date, 
+			u.user_options.notifications as notifications, u.user_info
+			from hrforms2_users u, hrforms2_user_groups ug
+			where u.suny_id = ug.suny_id
+			and ug.group_id = :group_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":group_id", $this->req[0]);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+			$userInfo = json_decode((is_object($row['USER_INFO']))?$row['USER_INFO']->load():"",true);
+			unset($row['USER_INFO']);
+			if ($userInfo != null) {
+				$row = array_merge($row,$userInfo);
+			} else {
+				$user = (new user(array($row['USER_SUNY_ID']),false))->returnData[0];
+				$row = array_merge($row,$user);
+			}
+			if (!isset($row['SUNY_ID'])) continue; // no user data returned
 			$this->_arr[] = $row;
 		}
 		oci_free_statement($stmt);

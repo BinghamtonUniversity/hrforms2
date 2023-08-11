@@ -23,12 +23,14 @@ Bug fixes, enhancements and things still to complete.
   * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
   
 ## Tasks: 
+  * Change queries to use Global ID?
+  * Account Numbers: do we need to include the Fiscal Year?
   * Archive - Request|Form: Should save groups, hierarchy, and workflow
   * Archive - Request|Form: List needs date filter; default should limit range?
+  * Forms: SUNY Account data needs to be completed
   * Request: User should NOT be able to approve/reject requests they submitted. [DONE?]
   * FormList and RequestList; drop the additional formId, requestId and just use POSTvars.
   * Search for "TODO" in files
-  * Users: Ability to download user list for auditing
   * Switch from username to B# as primary key [DONE?]
   * Admin: Add default hierarchy routing in settings
   * On app error allow "reset"; test with undefined import component.
@@ -38,14 +40,17 @@ Bug fixes, enhancements and things still to complete.
     - Global setting for paginationRowsPerPageOptions
 
 ## Upgrades:
+  * Upgrade to React 18
   * Convert to apereo/phpcas
   * Upgrade to Bootstrap v5
-  * Upgrade to React Query v4/5?
+  * Upgrade to React Query v4/5? (TanStack Query)
   * Upgrade to React Router v6
+  * run: npm outdated
 
 ## Future Enhancements
+  * Deactivating Users: Disable notifications
   * Create list of standard hotkeys for application.
-  * Request|Form: Reassign
+  * Request|Form: Reassign ??
   * Request|Form: Allow same org/group to take ownership?
   * Forms: Keyboard navigation.  Selecting a form code auto loads tab data and auto-nexts
     - Convert focus effect on each tab to a global callback or memo?
@@ -54,6 +59,7 @@ Bug fixes, enhancements and things still to complete.
   * Multiple appointment listings - how to display (students, faculty, etc)
   * Add Help menu with Help, About items
   * All Tables: Put filter into URL and save/use on reload.
+  * All Tables: Add CSV download option/button (see users, groups, department)
   * Admin Lists: make list data an l/v pair
   * Users: Search/Filter by group in users (need to add group info in query)
   * Custom context (right-click) menu (https://fkhadra.github.io/react-contexify/)

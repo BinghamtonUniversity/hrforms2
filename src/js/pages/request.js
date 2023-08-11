@@ -13,6 +13,7 @@ import { Icon } from '@iconify/react';
 import { RequestContext, tabs, requiredFields, resetFields, defaultVals, useRequestContext } from "../config/request";
 import { t } from "../config/text";
 import { toast } from "react-toastify";
+import { Helmet } from "react-helmet";
 
 /* TABS */
 const Information = lazy(()=>import("../blocks/request/information"));
@@ -48,8 +49,20 @@ function RequestWrapper({reqId,isDraft,isNew,reset}) {
     const [reqData,setReqData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
 
+    const {general} = useSettingsContext();
+
     const {getRequest} = useRequestQueries(reqId);
     const request = getRequest({enabled:false});
+
+    const title = useMemo(() => {
+        if (!request.data) return "Position Request";
+        const status = request.data?.lastJournal?.STATUS;
+        const statusText = get(general.status,status,{list:(isDraft)?'Draft':''});
+        let tl = `Position Request #${reqId}`;
+        if (statusText.list) tl += ' - ' + statusText.list;
+        return tl;
+    },[reqId,request,general,isNew]);
+
     useEffect(()=>{
         if (!isNew) {
             request.refetch({throwOnError:true,cancelRefetch:true}).then(r=>{
@@ -68,6 +81,9 @@ function RequestWrapper({reqId,isDraft,isNew,reset}) {
         <section>
             <header>
                 <Row>
+                    <Helmet>
+                        <title>{title}</title>
+                    </Helmet>
                     <Col>
                         <h2>{isNew&&'New '}Position Request</h2>
                     </Col>

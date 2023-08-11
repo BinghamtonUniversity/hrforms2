@@ -3,8 +3,10 @@ import { Row, Col, Table } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { CurrencyFormat, DateFormat } from "../../components";
 import { NewLine } from "../review";
+import { useHRFormContext, conditionalFields } from "../../../config/form";
 
 export default function ReviewEmploymentSalary() {
+    const { formType } = useHRFormContext();
     const { getValues } = useFormContext();
     const [salary] = getValues(['employment.salary']);
     return (
@@ -26,22 +28,22 @@ export default function ReviewEmploymentSalary() {
                 <Col as="dt" md={2} className="mb-0">Total:</Col>
                 <Col as="dd" md={4} className="mb-0"><CurrencyFormat>{salary.totalSalary}</CurrencyFormat></Col>
                 <NewLine/>
-                {(!salary.SUNYAccountsSplit) && 
+                {(!salary.SUNY_ACCOUNTSSplit) && 
                     <>
                         <Col as="dt" md={2} className="mb-0">Account:</Col>
-                        <Col as="dd" md={4} className="mb-0">{salary.SUNYAccounts[0].account[0].label}</Col>
+                        <Col as="dd" md={4} className="mb-0">{salary.SUNY_ACCOUNTS[0].account[0].label}</Col>
                     </>
                 }
-                {(salary.SUNYAccountsSplit) && 
+                {(salary.SUNY_ACCOUNTSSplit) && 
                     <>
                         <Col as="dt" md={2} className="mb-0">Split Account:</Col>
                         <Col as="dd" md={4} className="mb-0">Yes</Col>
                     </>
                 }
             </Row>
-            {(salary.SUNYAccountsSplit) && <SplitSalary accounts={salary.SUNYAccounts} total={salary.totalSalary}/>}
+            {(salary.SUNY_ACCOUNTSSplit) && <SplitSalary accounts={salary.SUNY_ACCOUNTS} total={salary.totalSalary}/>}
             {(salary.ADDITIONAL_SALARY.length > 0) && <AdditionalSalary additional={salary.ADDITIONAL_SALARY}/>}
-            {(salary.SPLIT_ASSIGNMENTS.length > 0) && <SplitAssignment assignments={salary.SPLIT_ASSIGNMENTS}/>}
+            {(conditionalFields.splitAssignment.includes(formType) && salary.SPLIT_ASSIGNMENTS.length > 0) && <SplitAssignment assignments={salary.SPLIT_ASSIGNMENTS}/>}
         </article>
     );
 }
@@ -122,7 +124,7 @@ function SplitAssignment({assignments}) {
     return (
         <section className="mt-2">
             <Row>
-                <Col><h6>Split Salary:</h6></Col>
+                <Col><h6>Split Assignment:</h6></Col>
             </Row>
             <Row>
                 <Col>

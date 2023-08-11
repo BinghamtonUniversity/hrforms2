@@ -63,6 +63,27 @@ export default function SettingsGeneral() {
                     </Col>
                 </Form.Group>
                 <Form.Group as={Row}>
+                    <Form.Label column md={2}>User Refresh:</Form.Label>
+                    <Col xs="auto">
+                        <Controller
+                            name="general.userRefresh"
+                            control={control}
+                            defaultValue={7}
+                            rules={{
+                                min:{value:1,message:'User Refresh must be greater than 0'},
+                                required: 'User Refresh cannot be empty'
+                            }}
+                            render={({field}) => (
+                                <>
+                                    <Form.Control {...field} type="number" isInvalid={errors?.general?.userRefresh}/>
+                                    <Form.Text id="userRefreshHelp" muted>Minimum time (in days) before user information may be refreshed from SUNY HR data.</Form.Text>
+                                </>
+                            )}
+                        />
+                        <Form.Control.Feedback type="invalid">{errors?.general?.userRefresh?.message}</Form.Control.Feedback>
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row}>
                     <Form.Label column md={2}>Show Request Workflow:</Form.Label>
                     <Col xs="auto">
                         <Controller
