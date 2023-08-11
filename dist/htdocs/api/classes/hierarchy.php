@@ -24,14 +24,11 @@ class Hierarchy extends HRForms2 {
 	 * validate called from init()
 	 */
 	function validate() {
-		//TODO: check this, do regular users need to GET? yes - form submit needs it
-		//if (!$this->sessionData['isAdmin']) $this->raiseError(403);
 		if (in_array($this->method,array('PUT','PATCH','DELETE')) && !isset($this->req[1])) $this->raiseError(400);
 	}
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		//TODO: Allow for lookup with groupID
 		switch($this->req[0]) {
 			case "request": /** Request Hierarchy */
 				$qry = "select h.HIERARCHY_ID,h.POSITION_TYPE,h.GROUP_ID,g.GROUP_NAME,h.WORKFLOW_ID,w.GROUPS,w.CONDITIONS
@@ -76,8 +73,6 @@ class Hierarchy extends HRForms2 {
 					left join (select * from hrforms2_action_codes) a on (p.action_code = a.action_code)
 					left join (select * from hrforms2_transaction_codes) t on (p.transaction_code = t.transaction_code)";
 				$stmt = oci_parse($this->db,$qry);
-				//TODO: what is this for? there is no where clause or bind var defined.
-				//if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $id);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {

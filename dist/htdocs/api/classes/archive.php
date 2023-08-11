@@ -31,6 +31,10 @@ class Archive extends HRForms2 {
     function POST() {
         switch($this->req[0]) {
             case "request":
+                // select from HRFORMS2_REQUESTS and get the JSON data
+                // add the workflow with group detail to the JSON
+                // insert into the archive table.
+
                 $qry = "insert into HRFORMS2_REQUESTS_ARCHIVE select * from HRFORMS2_REQUESTS where request_id = :request_id";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":request_id",$this->req[1]);

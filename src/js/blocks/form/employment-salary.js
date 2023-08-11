@@ -120,7 +120,7 @@ export default function EmploymentAppointment() {
                         />
                     </Col>
                 </Form.Group>
-                <SUNYAccount name={`${name}.SUNYAccounts`} disabled={!canEdit}/>
+                <SUNYAccount name={`${name}.SUNY_ACCOUNTS`} disabled={!canEdit}/>
             </section>
             
             <AdditionalSalary/>

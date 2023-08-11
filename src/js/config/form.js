@@ -179,17 +179,16 @@ const initFormValues = {
             "RATE_EFFECTIVE_DATE": "",
             "RATE_AMOUNT": "",
             "NUMBER_OF_PAYMENTS":"1",
-            "SUNY_ACCOUNTS": [],
-            "EXISTING_ADDITIONAL_SALARY": [],
-            "ADDITIONAL_SALARY": [],
-            "SPLIT_ASSIGNMENTS":[],
-            "SUNYAccountsSplit":false,
-            "SUNYAccounts": [
+            "SUNY_ACCOUNTS": [
                 {
                     account:[{id:'',label:''}],
                     pct:'100'
                 }
             ],
+            "SUNY_ACCOUNTSSplit":false,
+            "EXISTING_ADDITIONAL_SALARY": [],
+            "ADDITIONAL_SALARY": [],
+            "SPLIT_ASSIGNMENTS":[],
             "totalSalary": ""
         },
         separation: {
@@ -323,6 +322,7 @@ export function fetchFormData({watchIds,effectiveDate,payrollCode}) {
         onSuccess:d=>{
             const effDate = new Date(d?.RATE_EFFECTIVE_DATE);
             d.effDate = isValid(effDate)?effDate:effectiveDate;
+            d.SUNY_ACCOUNTSSplit = d.SUNY_ACCOUNTS.length > 1;
             d.SPLIT_ASSIGNMENTS.map(a => {
                 const commitmentEffDate = new Date(a?.COMMITMENT_EFFECTIVE_DATE);
                 a.commitmentEffDate = isValid(commitmentEffDate)?commitmentEffDate:"";
@@ -332,6 +332,7 @@ export function fetchFormData({watchIds,effectiveDate,payrollCode}) {
                 a.createDate = isValid(createDate)?createDate:"";
             });
             d.totalSalary = ((+d.RATE_AMOUNT*+d.NUMBER_OF_PAYMENTS) * (+d.APPOINTMENT_PERCENT/100)).toFixed(2);
+            console.log(d);
         }
     });
     const employmentleave = getEmploymentInfo([watchIds[1],'leave',effectiveDate],{

@@ -29,7 +29,7 @@ class Counts extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		//TODO: create a view that counts and query that
+		//TODO: create a view that counts and query that?
 		$request_drafts = count((new requestlist(array('drafts'),false))->returnData);
 		$request_pending = count((new requestlist(array('pending'),false))->returnData);
 		$request_approvals = count((new requestlist(array('approvals'),false))->returnData);
@@ -42,7 +42,6 @@ class Counts extends HRForms2 {
 		$form_rejections = count((new formlist(array('rejections'),false))->returnData);
 		$form_final = count((new formlist(array('final'),false))->returnData);
 
-		//TODO: use settings to get array list?
 		$counts = array(
             "requests" => array(
                 "drafts"=>$request_drafts,

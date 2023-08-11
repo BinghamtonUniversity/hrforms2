@@ -205,7 +205,7 @@ Class HRForms2 {
 		echo json_encode($out);
 	}
 
-	protected function toCSV($filename,$headers,$data) {
+	/*protected function toCSV($filename,$headers,$data) {
 		header('X-App-Version:'.VERSION);
 		header('X-App-Revision:'.REVISION);
 
@@ -220,7 +220,7 @@ Class HRForms2 {
     		fputcsv($output, $row);
 		}
 		fclose($output) or die("Can't close php://output");
-	}
+	}*/
 
 	protected function done() {
 		$this->toJSON(array("success" => true));
@@ -305,6 +305,97 @@ Class HRForms2 {
 			array_push($arr,$user['EMAIL_ADDRESS_WORK']);
 		}
 		return $arr;
+	}
+
+	function sendError($message,$subject="HRForms2 Error") {
+		$origMethod = $_SERVER['REQUEST_METHOD'];
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+		//$settings = (new settings(array(),false))->returnData; // TODO: get email, subject, etc.
+
+		$vars = array(
+			'ERROR'=> false,
+			'PROD' => (INSTANCE=='PROD'),
+			'INSTANCE' => INSTANCE,
+			'DEBUG' => DEBUG,
+			'SMTP_DEBUG' => SMTP_DEBUG,
+		);
+
+		$email_list = array(
+			"mailto"=>"geigers+hrforms2-error@binghamton.edu",
+			"mailcc"=>""
+		);
+		$replyto = "no-reply@binghamton.edu";
+
+		// get templates
+		$partials = [];
+		$email_template = "error";
+		$templates = (new template(array(),false))->returnData;
+		foreach ($templates as $template) {
+			if ($template['TEMPLATE_TYPE'] == 'S') $partials[$template['TEMPLATE_SLUG']] = "";
+			
+		}
+		foreach ($partials as $key=>$val) {
+			$rv = (new template(array($key),false))->returnData;
+			$partials[$key] = $rv['TEMPLATE'];
+		}
+		$tmpl = (new template(array($email_template),false))->returnData;
+
+		//build variables array
+		$vars = array_merge($vars,array(
+			'SUBJECT' => $subject,
+			'MAILTO' => function() use ($email_list) { return implode(', ',$email_list['mailto']); },
+			'MAILCC' => function() use ($email_list) { return implode(', ',$email_list['mailcc']); },
+			'REPLYTO' => $replyto,
+			'ERROR_MESSAGE' => $message
+		));
+		$vars = array_merge($vars,$this->sessionData);
+		$m = new Mustache_Engine(array(
+			'partials' => $partials
+		));
+		$content = str_replace('{{&gt;','{{>',$tmpl['TEMPLATE']); // fix partial HTML entities 
+		// append notProduction and debugInformation partials to the beginning of the $content
+		$content = "{{>notProduction}}<br>" . $content . "<br><br><hr>{{>errorDebugInformation}}";
+		
+		// start PHP mailer
+		ob_start();
+		
+		$mail = new PHPMailer();
+		$mail->isSMTP();
+		if (SMTP_DEBUG) {
+			$mail->SMTPDebug = SMTP::DEBUG_SERVER;
+		} else {
+			$mail->SMTPDebug = SMTP::DEBUG_OFF;
+		}
+		$mail->Host = SMTP_HOST;
+		$mail->Port = SMTP_PORT;
+		$mail->SMTPAuth = SMTP_AUTH;
+		$mail->Username = SMTP_USERNAME;
+		$mail->Password = SMTP_PASSWORD;
+
+		$mail->setFrom("no-reply@binghamton.edu");
+		if (INSTANCE == 'PROD') {
+			foreach($email_list['mailto'] as $email) {
+				$mail->addAddress($email);
+			}
+			foreach($email_list['mailcc'] as $email) {
+				$mail->addCC($email);
+			}
+		} else {
+			$emailTo = empty($this->sessionData['EMAIL'])?$errorEmail:$this->sessionData['EMAIL'];
+			$mail->addAddress($emailTo);
+		}
+		if (!!$replyto) $mail->addReplyTo($replyto);
+		
+		$mail->Subject = $subject;
+		$htmlBody = $m->render($content,$vars);
+		$mail->msgHTML($htmlBody);
+		$mail->send();
+	
+		$output = ob_get_contents();
+		ob_end_clean();
+
+		$_SERVER['REQUEST_METHOD'] = $origMethod;
+		return $output;
 	}
 
 	/**

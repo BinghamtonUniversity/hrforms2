@@ -30,15 +30,14 @@ export default function AdminFormTransactions() {
         history.push('/admin/transactions/'+tab);
     }
 
-    /*
-    TODO: FIX, this skips tabs
     useHotkeys('ctrl+right,ctrl+left',(_,handler)=>{
         const tabIds = tabs.map(t=>t.id);
         const idx = tabIds.indexOf(activeTab);
-        let newIdx = (handler.key=='ctrl+left')?idx-1:idx+1;
-        if (newIdx>=tabIds.length) newIdx = 0;
+        let newIdx = (handler.key == 'ctrl+right')?idx+1:idx-1;
+        if (newIdx < 0) newIdx = tabIds.length - 1;
+        if (newIdx > tabIds.length - 1) newIdx = 0;
         navigate(tabIds.at(newIdx));
-    },{enableOnTags:['INPUT']},[activeTab]);*/
+    },{enableOnTags:['INPUT']},[activeTab]);
 
     useEffect(()=>setActiveTab(tabs.map(t=>t.id).includes(subpage)?subpage:'paytrans'),[subpage]);
     return (

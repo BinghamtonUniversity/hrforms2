@@ -682,7 +682,7 @@ function GroupUsersList({filteredUsers,filterText}) {
                                         onDoubleClick={handleDblClick}
                                         data-list="assigned" data-idx={i}
                                     >
-                                        {u.sortName}
+                                        {(u.active)?u.sortName:<><del>{u.sortName}</del> <em>(inactive)</em></>}
                                     </div>
                                 )}
                             </Draggable>

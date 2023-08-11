@@ -206,8 +206,32 @@ class EmploymentInfo extends HRForms2 {
 				if (!$pay) $pay = array();
 				$row = array_merge($row,$pay);
 
-				//TODO: add suny account info
-				$row['SUNY_ACCOUNTS'] = array();
+				// SUNY Account Information
+				$accounts = (new listdata(array('accounts'),false))->returnData;
+				$qry = "select acc_nbr, acc_pct
+					from BUHR.BUHR_PAYROLL_DIST_MV@banner.cc.binghamton.edu
+					where lin_itm_nbr = :line_number
+					and data_sts = 'C'
+					and osc_ern_cd in ('RGS','RGH','FEE')
+					and end_chk_dt >= :effective_date
+					order by eff_chk_dt desc";
+				$stmt = oci_parse($this->db,$qry);
+				oci_bind_by_name($stmt,":line_number", $row['LINE_ITEM_NUMBER']);
+				oci_bind_by_name($stmt,":effective_date", $row['EFFECTIVE_DATE']);
+				$r = oci_execute($stmt);
+				if (!$r) $this->raiseError();
+				$acct = array();
+				while ($a = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					$key = array_search($a['ACC_NBR'],array_column($accounts,'ACCOUNT_CODE'));
+					$a['ACCOUNT_INFO'] = $accounts[$key];
+					$acct[] = array(
+						"account"=>array(
+							array("id"=>$a['ACC_NBR'],"label"=>$a['ACC_NBR'] . " - " . $accounts[$key]['ACCOUNT_DESCRIPTION'])
+						),
+						"pct"=>$a['ACC_PCT']
+					);
+				};
+				$row['SUNY_ACCOUNTS'] = $acct;
 
 				// Existing Additional Salary Data:
 				$additionalSalaryTypes = (new listdata(array('additionalSalaryTypes'),false))->returnData;
@@ -315,7 +339,7 @@ class EmploymentInfo extends HRForms2 {
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
-					$key = array_search(row['ACCOUNT_NUMBER'],array_column($accounts,'ACCOUNT_CODE'));
+					$key = array_search($row['ACCOUNT_NUMBER'],array_column($accounts,'ACCOUNT_CODE'));
 					$row['ACCOUNT_NUMBER'] = $accounts[$key];
 					$this->_arr[] = $row;
 				};

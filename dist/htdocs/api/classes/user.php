@@ -33,8 +33,6 @@ class User extends HRForms2 {
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
 		if (!isset($this->req[0])) {
-			// TODO: try to fetch from HRFORMS2_USERS first, fallback to SUNY if data is too old or no data
-			// TODO: update of HRFORMS2_USERS should only happen for individual?
 			$qry = "select p.*, u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date,
 				d.group_id, g.group_name, u.user_options.notifications
 			from hrforms2_users u
@@ -59,7 +57,7 @@ class User extends HRForms2 {
 			$existing = false;
 
 			$qry = "select suny_id,
-			to_char(end_date,'DD-MON-YYYY') as end_date,
+			to_char(end_date,'DD-MON-YYYY HH24:MI') as end_date,
 			to_char(refresh_date,'DD-MON-YYYY') as refresh_date,
 			user_info, user_options
 			from HRFORMS2_USERS u where suny_id = :suny_id";
@@ -79,17 +77,19 @@ class User extends HRForms2 {
 			// check refresh date and end date
 			$now = new DateTime();
 			if ($row['REFRESH_DATE'] != "") {
+				$settings = (new settings(array(),false))->returnData;
 				$refresh_date = DateTime::createFromFormat('d-M-Y',$row['REFRESH_DATE']);
 				$diff = $refresh_date->diff($now);
 				$refresh_diff = ($diff->invert == 1)?$diff->d*-1:$diff->d;
-				if ($refresh_diff > 7) $refresh = true;
+				if ($refresh_diff > $settings['general']['userRefresh']) $refresh = true;
 			} else {
 				$refresh = true; // refresh when there is no refresh date set
 			}
 			if ($row['END_DATE'] != "") {
-				$end_date = DateTime::createFromFormat('d-M-Y',$row['END_DATE']);
+				$end_date = DateTime::createFromFormat('d-M-Y H:i',$row['END_DATE']);
 				$diff = $end_date->diff($now);
-				$end_diff = ($diff->invert == 1)?$diff->d*-1:$diff->d;
+				$end_diff = $diff->d*1440+$diff->h*60+$diff->i;
+				$end_diff = ($diff->invert == 1)?$end_diff*-1:$end_diff;
 				if ($end_diff > 0) $refresh = false; // Do not refresh if user has ended
 			}
 
@@ -115,7 +115,20 @@ class User extends HRForms2 {
 				$row['USER_OPTIONS'] = (is_object($row['USER_OPTIONS']))?$row['USER_OPTIONS']->load():null;
 				oci_free_statement($stmt);
 
-				if ($existing) { // can only update existing users, skip if new
+				if (!isset($row['SUNY_ID'])) {
+					$qry = "update hrforms2_users set end_date = systimestamp where suny_id = :suny_id";
+					$stmt = oci_parse($this->db,$qry);				
+					oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+					$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+					if (!$r) $this->raiseError();
+					oci_commit($this->db);
+					oci_free_statement($stmt);
+					$message = "An error while updating user information in the script <code>user.php</code> at line <strong>118</strong>.<br>";
+					$message .= "The SUNY ID <strong>" . $this->req[0] . "</strong> does not exist.";
+					$this->sendError($message,'HRForms2 Error: Missing SUNY ID');
+				}
+
+				if ($existing && isset($row['SUNY_ID'])) { // can only update existing users with PERSEMP data, skip if new
 					$qry = "update HRFORMS2_USERS set 
 					refresh_date = sysdate, user_info = EMPTY_CLOB() 
 					where suny_id = :suny_id
@@ -162,7 +175,6 @@ class User extends HRForms2 {
 	}
 
 	function POST() {
-		//TODO: need to store JSON info of user on last field
 		$options = json_encode($this->POSTvars['OPTIONS']);
 		$qry = "insert into hrforms2_users values(:suny_id, sysdate, :created_by, :start_date, :end_date, null, EMPTY_CLOB(), :options) returning user_info into :user_info";
 		$stmt = oci_parse($this->db,$qry);
@@ -175,11 +187,13 @@ class User extends HRForms2 {
 		oci_bind_by_name($stmt,":user_info", $clob, -1, OCI_B_CLOB);
 		$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
 		if (!$r) $this->raiseError();
-		$clob->save('{}');
+		$clob->save('');
 		oci_commit($this->db);
 		oci_free_statement($stmt);
-		new usergroups(array($this->POSTvars['SUNY_ID']));
-		$this->done();
+		new usergroups(array($this->POSTvars['SUNY_ID']),false);
+		// Fetch user to force the refresh action and return the user data in JSON response.
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+		new user(array($this->POSTvars['SUNY_ID']));
 	}
 
 	function PATCH() {

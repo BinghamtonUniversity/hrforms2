@@ -14,7 +14,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
-import { useParams, useHistory, Link } from "react-router-dom";
+import { useParams, useHistory, useLocation, Link } from "react-router-dom";
 import { pick } from "lodash";
 import { NotFound, useAuthContext } from "../../app";
 import { t } from "../../config/text";
@@ -65,6 +65,7 @@ function UsersTable({users,newUser,setNewUser}) {
     const { subpage } = useParams();
     const { SUNY_ID } = useAuthContext();
     const history = useHistory();
+    const { search } = useLocation();
     const [filterText,setFilterText] = useState((!!subpage)?`id:${subpage}`:'');
     const [statusFilter,setStatusFilter] = useState('all');
     const [sortField,setsortField] = useState('sortName');
@@ -213,6 +214,11 @@ function UsersTable({users,newUser,setNewUser}) {
 
     useEffect(()=>setRows(orderBy(users,[sortField],[sortDir])),[users]);
     useEffect(()=>searchRef.current.focus(),[]);
+    useEffect(()=>{
+        const s = new URLSearchParams(search);
+        setStatusFilter(s.get('status')||'all');
+        setFilterText(s.get('search')||'');
+    },[search]);
     return (
         <>
             <DataTable 
@@ -388,7 +394,7 @@ function AddEditUserForm(props) {
     const {getUserGroups,postUser,putUser} = useUserQueries(props.SUNY_ID);
     const {getGroups} = useGroupQueries();
     const groups = getGroups({enabled:false,select:data=>sortBy(data.filter(g=>g.active),['GROUP_NAME'])});
-    const usergroups = getUserGroups({enabled:false,select:data=>sortBy(data.filter(g=>g.active),['GROUP_NAME'])});
+    const usergroups = getUserGroups({enabled:false,select:data=>sortBy(data,['GROUP_NAME'])});
     const updateuser = putUser();
     const createuser = postUser();
 
@@ -867,7 +873,7 @@ function UserGroupsList({filteredGroups,filterText}) {
                                         onDoubleClick={handleDblClick}
                                         data-list="assigned" data-idx={i}
                                     >
-                                        {g.GROUP_NAME}
+                                        {(g.active)?g.GROUP_NAME:<><del>{g.GROUP_NAME}</del> <em>(inactive)</em></>}
                                     </div>
                                 )}
                             </Draggable>

@@ -18,10 +18,14 @@ class Session extends HRForms2 {
 		$this->retJSON = $rjson;
 		$this->req = $req;
 		$this->init();
+
+        $this->gcProb = 10; // chance of cleaning the session_override table in percentage (use integer).
+        $this->gcStart = 366; // Cleanup records older than this value in days.
 	}
 
 	function validate() {
-        if ($this->method == 'PATCH') {
+        
+        if (in_array($this->method,array('PATCH','DELETE'))) {
             if (!$this->checkAuth()) $this->raiseError(401);
             if (!$this->sessionData['isAdmin']) $this->raiseError(403);
             if (!isset($this->POSTvars['IMPERSONATE_SUNY_ID'])) $this->raiseError(400);
@@ -58,7 +62,13 @@ class Session extends HRForms2 {
 
     function PATCH() {
         // insert/update into session_override
-        // TODO: need some GC cleanup
+        // Clean up the session_override table
+        $gcp = rand(0,100);
+        if ($gcp <= $this->gcProb) {
+            $_SERVER['REQUEST_METHOD'] = 'DELETE';
+            $del = (new session(array(),false))->returnData;
+            $_SERVER['REQUEST_METHOD'] = 'PATCH';
+        }
         $now = time();
         if ($this->POSTvars['IMPERSONATE_SUNY_ID'] != '') {
             $qry = "insert into hrforms2_session_override values(:session_id,:cas_session_id,:suny_id,:ovr_by,:start_ovr,null)";
@@ -84,6 +94,14 @@ class Session extends HRForms2 {
     }
 
     function DELETE() {
-        $this->done();
+        $start_time = time() - $this->gcStart*86400; //86400 seconds = 1 day
+        $qry = "DELETE FROM hrforms2_session_override where start_override < :start_time and end_override is not null";
+        $stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt, ":start_time", $start_time);
+		oci_execute($stmt,OCI_DEFAULT);
+        $count = oci_num_rows($stmt);
+		oci_commit($this->db);
+        $this->returnData = array("start_time"=>$start_time,"deleted"=>$count);
+        if ($this->retJSON) $this->toJSON($this->returnData);
     }
 }

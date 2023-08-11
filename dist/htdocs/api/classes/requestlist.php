@@ -128,9 +128,9 @@ class RequestList extends HRForms2 {
 				$this->raiseError(E_BAD_REQUEST);
 		}
 		$stmt = oci_parse($this->db,$qry);
-		//TODO: remove for testing:
-		$id = (isset($this->req[1]))?$this->req[1]:$this->sessionData['EFFECTIVE_SUNY_ID'];
-		oci_bind_by_name($stmt,":suny_id",$id);
+		//TESTING: remove for testing:
+		//$id = (isset($this->req[1]))?$this->req[1]:$this->sessionData['EFFECTIVE_SUNY_ID'];
+		oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
 		oci_execute($stmt);
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
 			$row['POSTYPE'] = json_decode($row['POSTYPE']);
