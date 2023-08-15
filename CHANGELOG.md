@@ -1,13 +1,12 @@
 # Changelog
 
-## Version 2.0.0 (DEV-20230815.????)
+## Version 2.0.0 (DEV-20230815)
   * Fixed logic error in new user caching and completed error email notification. 
   * Moved workflow settings to new tab in the Admin Settings page.
   * Added popover to Admin Groups page to display description of the group.
   * Added Markdown rendering support and loaded CHANGELOG.md into the versions page.  The version page will list updates and changes.
 
-
-## Version 2.0.0 (DEV-20230811.1557)
+## Version 2.0.0 (DEV-20230811)
   * Added Admin Departments page. Individual departments allow the promary group to be set/changed.
   * Better indication of inactive users and groups in lists.  Inactive items are marked with a strikethrough and the label "(inactive)"
   * SUNY Account information is now populating forms; this was an outstanding item from the original work.  Testing and vaidation are still needed.
