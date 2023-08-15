@@ -13,6 +13,7 @@ import useSettingsQueries from "../../queries/settings";
 const SettingsRequests = lazy(()=>import("../../blocks/admin/settings/requests"));
 const SettingsForms = lazy(()=>import("../../blocks/admin/settings/forms"));
 const SettingsGeneral = lazy(()=>import("../../blocks/admin/settings/general"));
+const SettingsWorkflow = lazy(()=>import("../../blocks/admin/settings/workflow"));
 
 export default function AdminSettings() {
     const { getSettings } = useSettingsQueries();
@@ -26,6 +27,7 @@ export default function AdminSettings() {
 function AdminSettingsTabs({settingsData}) {
     const tabs = [
         {id:'general',title:'General'},
+        {id:'workflow',title:'Workflow'},
         {id:'requests',title:'Requests'},
         {id:'forms',title:'Forms'}
     ];
@@ -92,6 +94,7 @@ function AdminSettingsTabs({settingsData}) {
 const SettingsRouter = React.memo(({tab}) => {
     switch(tab) {
         case "general": return <SettingsGeneral/>;
+        case "workflow": return <SettingsWorkflow/>;
         case "requests": return <SettingsRequests/>;
         case "forms": return <SettingsForms/>;
         default: return <NotFound/>;
