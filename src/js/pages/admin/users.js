@@ -585,6 +585,12 @@ function UserInfo({newUser,setStatus,closeModal}) {
                 setError("SUNYID",{type:'manual',message:'Invalid SUNY ID'});
                 return false;    
             }
+            if (!userData.data.SUNY_ID) {
+                setLookupState('error');
+                setStatus({save:false});
+                setError("SUNYID",{type:'manual',message:'SUNY ID Not Found'});
+                return false;
+            }
             setLookupState('valid');
             setStatus({save:true});
             reset(Object.assign({},defaultVals,{

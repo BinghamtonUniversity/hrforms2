@@ -20,6 +20,41 @@ class User extends HRForms2 {
 		$this->init();
 	}
 
+	private function getSUNYHRUser() {
+		$qry = "select ".$this->BASE_PERSEMP_FIELDS.", 
+		r.recent_campus_date, g.user_groups, u.user_options
+		from buhr.buhr_persemp_mv@banner.cc.binghamton.edu p
+		left join (select suny_id as recent_suny_id, recent_campus_date from buhr.buhr_general_info_mv@banner.cc.binghamton.edu) r on (r.recent_suny_id = p.suny_id)
+		left join (select suny_id as groups_suny_id, listagg(group_id,',') within group (order by group_id) as user_groups from hrforms2_user_groups group by suny_id) g on (g.groups_suny_id = p.suny_id)
+		left join (select suny_id as user_suny_id, user_options from hrforms2_users) u on (u.user_suny_id = p.suny_id)
+		where p.role_status = 'C' and p.suny_id = :suny_id";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+		if (isset($row['SUNY_ID'])) $row['USER_OPTIONS'] = (is_object($row['USER_OPTIONS']))?$row['USER_OPTIONS']->load():null;
+		oci_free_statement($stmt);
+		return $row;
+	}
+
+	private function updateUserInfo($data) {
+		$qry = "update HRFORMS2_USERS set 
+		refresh_date = sysdate, user_info = EMPTY_CLOB() 
+		where suny_id = :suny_id
+		returning user_info into :user_info";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
+		oci_bind_by_name($stmt,":user_info", $clob, -1, OCI_B_CLOB);
+		$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+		if (!$r) $this->raiseError();
+		$clob->save(json_encode($data));
+		oci_commit($this->db);
+		oci_free_statement($stmt);
+		return $r;
+	}
+
 	/**
 	 * validate called from init()
 	 */
@@ -52,101 +87,101 @@ class User extends HRForms2 {
 			$this->returnData = $this->_arr;
 			if ($this->retJSON) $this->toJSON($this->returnData);
 		} else {
-			// Get data from HRFORMS2_USERS, refresh as needed
-			$refresh = false;
-			$existing = false;
+			//$refresh = false;
+			//$existing = false;
 
-			$qry = "select suny_id,
-			to_char(end_date,'DD-MON-YYYY HH24:MI') as end_date,
-			to_char(refresh_date,'DD-MON-YYYY') as refresh_date,
-			user_info, user_options
-			from HRFORMS2_USERS u where suny_id = :suny_id";
+			$qry = "select suny_id, to_char(end_date,'DD-MON-YYYY HH24:MI') as end_date,
+				to_char(refresh_date,'DD-MON-YYYY') as refresh_date, user_info, user_options
+				from HRFORMS2_USERS u where suny_id = :suny_id";
 			$stmt = oci_parse($this->db,$qry);
 			oci_bind_by_name($stmt,":suny_id", $this->req[0]);
 			$r = oci_execute($stmt);
 			if (!$r) $this->raiseError();
-			$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-			$userInfo = (is_object($row['USER_INFO']))?$row['USER_INFO']->load():"";
-			$userOpts = (is_object($row['USER_OPTIONS']))?$row['USER_OPTIONS']->load():null;
-			if ($row) {
-				$row = $this->null2Empty($row);
+			$user = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+			if (isset($user['SUNY_ID'])) {
 				$existing = true;
+				$user['USER_INFO'] = (is_object($user['USER_INFO']))?$user['USER_INFO']->load():"";
+				$user['USER_OPTIONS'] = (is_object($user['USER_OPTIONS']))?$user['USER_OPTIONS']->load():null;
 			}
-
-			if ($userInfo == "") $refresh = true;
-			// check refresh date and end date
-			$now = new DateTime();
-			if ($row['REFRESH_DATE'] != "") {
-				$settings = (new settings(array(),false))->returnData;
-				$refresh_date = DateTime::createFromFormat('d-M-Y',$row['REFRESH_DATE']);
-				$diff = $refresh_date->diff($now);
-				$refresh_diff = ($diff->invert == 1)?$diff->d*-1:$diff->d;
-				if ($refresh_diff > $settings['general']['userRefresh']) $refresh = true;
-			} else {
-				$refresh = true; // refresh when there is no refresh date set
-			}
-			if ($row['END_DATE'] != "") {
-				$end_date = DateTime::createFromFormat('d-M-Y H:i',$row['END_DATE']);
-				$diff = $end_date->diff($now);
-				$end_diff = $diff->d*1440+$diff->h*60+$diff->i;
-				$end_diff = ($diff->invert == 1)?$end_diff*-1:$end_diff;
-				if ($end_diff > 0) $refresh = false; // Do not refresh if user has ended
-			}
-
 			oci_free_statement($stmt);
-			
-			if (!$refresh) {
-				$this->_arr = json_decode($userInfo);
-				$this->_arr->REFRESH_DATE = $row['REFRESH_DATE'];
-				$this->_arr->USER_OPTIONS = json_decode($userOpts);
+
+			// User does not exist
+			if (!$existing) {
+				$this->_arr = $this->getSUNYHRUser();
+				if (!$this->_arr) $this->raiseError(E_BAD_REQUEST,array('errMsg'=>'SUNY ID Not Found'));
+				// done; return JSON
+
+			// User exists
 			} else {
-				$qry = "select ".$this->BASE_PERSEMP_FIELDS.", 
-				r.recent_campus_date, g.user_groups, u.user_options
-				from buhr.buhr_persemp_mv@banner.cc.binghamton.edu p
-				left join (select suny_id as recent_suny_id, recent_campus_date from buhr.buhr_general_info_mv@banner.cc.binghamton.edu) r on (r.recent_suny_id = p.suny_id)
-				left join (select suny_id as groups_suny_id, listagg(group_id,',') within group (order by group_id) as user_groups from hrforms2_user_groups group by suny_id) g on (g.groups_suny_id = p.suny_id)
-				left join (select suny_id as user_suny_id, user_options from hrforms2_users) u on (u.user_suny_id = p.suny_id)
-				where p.role_status = 'C' and p.suny_id = :suny_id";
-				$stmt = oci_parse($this->db,$qry);
-				oci_bind_by_name($stmt,":suny_id", $this->req[0]);
-				$r = oci_execute($stmt);
-				if (!$r) $this->raiseError();
-				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-				$row['USER_OPTIONS'] = (is_object($row['USER_OPTIONS']))?$row['USER_OPTIONS']->load():null;
-				oci_free_statement($stmt);
-
-				if (!isset($row['SUNY_ID'])) {
-					$qry = "update hrforms2_users set end_date = systimestamp where suny_id = :suny_id";
-					$stmt = oci_parse($this->db,$qry);				
-					oci_bind_by_name($stmt,":suny_id", $this->req[0]);
-					$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
-					if (!$r) $this->raiseError();
-					oci_commit($this->db);
-					oci_free_statement($stmt);
-					$message = "An error while updating user information in the script <code>user.php</code> at line <strong>118</strong>.<br>";
-					$message .= "The SUNY ID <strong>" . $this->req[0] . "</strong> does not exist.";
-					$this->sendError($message,'HRForms2 Error: Missing SUNY ID');
+				$now = new DateTime();
+				$end_date = DateTime::createFromFormat('d-M-Y H:i',$user['END_DATE']);
+				$end_diff = -1;
+				if ($end_date) {
+					$diff = $end_date->diff($now);
+					$end_diff = $diff->d*1440+$diff->h*60+$diff->i;
+					$end_diff = ($diff->invert == 1)?$end_diff*-1:$end_diff;
 				}
+				// User is Inactive/Ended
+				if ($end_diff > 0) {
+					if ($user['USER_INFO']) { // user has user_info
+						$this->_arr = json_decode($user['USER_INFO'], true);
+						
+					} else { // user does not have user_info
+						if ($end_diff > 259200) { // user ended more than 6 months ago
+								// User is Inactive, does not have user_info, and was ended more than 6 months ago.
+								$message = "The SUNY ID <strong>" . $this->req[0] . "</strong> does not have cached information and was ended more than 6 months ago.  Will not update cached information";
+								$this->sendError($message,'HRForms2 Error: Old User With No Data');
+								$this->raiseError(E_NOT_FOUND);	
+						} else {
+							$this->_arr = $this->getSUNYHRUser();
+							if (!$this->_arr) {
+								// User is Inactive, does not have user_info, and does not have SUNY HR data; User DNE
+								$message = "The SUNY ID <strong>" . $this->req[0] . "</strong> does not exist in SUNY HR, but exists in HRForms2.  Cannot update cached information.";
+								$this->sendError($message,'HRForms2 Error: Missing SUNY ID in SUNY HR');
+								$this->raiseError(E_NOT_FOUND);	
+							} else {
+								$this->updateUserInfo($this->_arr);
+							}
+						}
+					}
 
-				if ($existing && isset($row['SUNY_ID'])) { // can only update existing users with PERSEMP data, skip if new
-					$qry = "update HRFORMS2_USERS set 
-					refresh_date = sysdate, user_info = EMPTY_CLOB() 
-					where suny_id = :suny_id
-					returning user_info into :user_info";
-					$stmt = oci_parse($this->db,$qry);
-					oci_bind_by_name($stmt,":suny_id", $this->req[0]);
-					$clob = oci_new_descriptor($this->db, OCI_D_LOB);
-					oci_bind_by_name($stmt,":user_info", $clob, -1, OCI_B_CLOB);
-					$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
-					if (!$r) $this->raiseError();
-					$clob->save(json_encode($row));
-					oci_commit($this->db);
-					oci_free_statement($stmt);
+				// User is Active
+				} else {
+					// check refresh date
+					$settings = (new settings(array(),false))->returnData;
+					$refresh_date = DateTime::createFromFormat('d-M-Y',$row['REFRESH_DATE']);
+					$refresh_diff = -1;
+					if ($refresh_date) {
+						$diff = $refresh_date->diff($now);
+						$refresh_diff = ($diff->invert == 1)?$diff->d*-1:$diff->d;
+					}
+					if ($refresh_diff > $settings['general']['userRefresh']) { // user_info is "stale"
+						$this->_arr = $this->getSUNYHRUser();
+						if (!$this->_arr) { // No SUNY HR data; use existing cached data
+							// if refresh diff is greater than $userRefresh setting + 14 days; set end date on user and send error
+							$refresh_timeout = $settings['general']['userRefresh']+14;
+							if ($refresh_diff > $refresh_timeout) {
+								$qry = "update HRFORMS2_USERS set END_DATE = systimestamp where suny_id = :suny_id";
+								$stmt = oci_parse($this->db,$qry);
+								oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+								$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+								if (!$r) $this->raiseError();
+								oci_commit($this->db);
+								oci_free_statement($stmt);
+								$message = "The SUNY ID <strong>" . $this->req[0] . "</strong> is active, but has not been able to be refreshed in ". $refresh_timeout . " days.  The user has been deactivated.";
+								$this->sendError($message,'HRForms2 Error: User Deactivated');
+							}
+							$this->_arr = json_decode($user['USER_INFO'], true);
+						} else { // update cached data and refresh date
+							$this->updateUserInfo($this->_arr);
+						}
+
+					} else { // user_info is "fresh"
+						$this->_arr = json_decode($user['USER_INFO'], true);
+					}
 				}
-
-				$row['REFRESH_DATE'] = strtoupper($now->format('d-M-Y'));
-				$this->_arr = $row;
 			}
+
 			$this->returnData = array((array)$this->_arr); // Need to cast as array instead of object
 			if ($this->retJSON) $this->toJSON($this->returnData);
 		}
