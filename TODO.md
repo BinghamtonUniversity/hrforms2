@@ -25,9 +25,10 @@ Bug fixes, enhancements and things still to complete.
   * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
   
 ## Tasks: 
-  * See Notes at bottom of page...
+  * Request|Form: Default hierarchy to HR and send error notice.
+  * Admin: Add default hierarchy routing in settings
   * Admin: Admin users should be able to query journal of any request or form.
-  * CHECK: Users who are inactive should not be included in the email list.
+  * CHECK: Users who are inactive should not be included in the email list.[DONE?]
   * Change queries to use Global ID?
   * Account Numbers: do we need to include the Fiscal Year?
   * Archive - Request|Form: List needs date filter; default should limit range?
@@ -35,7 +36,6 @@ Bug fixes, enhancements and things still to complete.
   * Request: User should NOT be able to approve/reject requests they submitted. [DONE?]
   * FormList and RequestList; drop the additional formId, requestId and just use POSTvars.
   * Switch from username to B# as primary key [DONE?]
-  * Admin: Add default hierarchy routing in settings
   * On app error allow "reset"; test with undefined import component.
   * Forms: Default WF for all payrolls/forms?
   * DataTables:
@@ -79,20 +79,14 @@ Bug fixes, enhancements and things still to complete.
 
 ## Notes:
 ### Requests|Forms: 
-  * Default Routing or error?
-
   * can approvers edit?
     * if so, what fields? all? yes (except 3 reqd fields)
   * can HR edit (final approval)?
     * if so, what fields? all? yes (except 3 reqd fields)
   * if approvers can edit, do we need to track changes?
         * future phase
-  * resubmit rejections: 
-    * do we need to save previous chain of approvals/comments: yes
-    * should submitter be able to save changes and resubmit later (i.e. make it a "draft" again): yes
-    * Can rejected be deleted? (i.e. submitter does not want to resubmit): yes
 
-### Note: 
+### Hierarchy/Workflow: 
   * In theory all the hierarchy, workflow, and tab information is stored, so the paytrans could be delete.
   * PF will go right to Z (Archived)
   * There will be no "F" (Final Approved)
@@ -100,22 +94,3 @@ Bug fixes, enhancements and things still to complete.
     * PF -> BP (Batch Pending)
     * if Batch is successful BP -> Z
     * if Batch has error BP -> BE (Batch Error)
-
-gender -> legal sex M/F
-gender identity (add)
-"female","male","X"
-Need to add to MV and add to query
-
-employment-position: appt pct cannot be greater than what comes from suny
-
-add: submitter info on review at bottom
-
-employment data on review when not selected
-
-default hierarchy: go to HR (send error notification)
-
-add: group description as hover/popup
-depts: active/inactive is not clear active/inactive (3 326)
-
-add new user: 687005 (error)
-

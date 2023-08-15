@@ -5,6 +5,8 @@
   * Moved workflow settings to new tab in the Admin Settings page.
   * Added popover to Admin Groups page to display description of the group.
   * Added Markdown rendering support and loaded CHANGELOG.md into the versions page.  The version page will list updates and changes.
+  * Completed addition of Gender Identity to person demographics pulling data from SUNY HR.
+  * Appointment Percent (on Forms > Position) can now only go as high as what comes from SUNY HR. 
 
 ## Version 2.0.0 (DEV-20230811)
   * Added Admin Departments page. Individual departments allow the promary group to be set/changed.
