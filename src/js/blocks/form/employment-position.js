@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Row, Col, Form, Alert, InputGroup } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { AppButton, DateFormat, Loading } from "../components";
@@ -83,7 +83,10 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
         effDate: effDate,
         options: {
             enabled:lineNumber!=getValues(`${name}.positionDetails.LINE_NUMBER`),
-            onSuccess:d=>setValue(`${name}.positionDetails`,d),
+            onSuccess:d=>{
+                console.log(d);
+                setValue(`${name}.positionDetails`,d);
+            },
             onError:e=>console.warn(e)
         }
     });
@@ -101,7 +104,7 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
             {getValues(`${name}.positionDetails.POSITION_ID`) && 
                 <>
                     <EmploymentPositionInfoBox as="alert"/>
-                    <EmploymentAppointmentInformation data={position.data}/>
+                    <EmploymentAppointmentInformation/>
                 </>
             }
         </>
@@ -109,16 +112,22 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
 }
 
 function EmploymentAppointmentInformation() {
-    const { control, setValue } = useFormContext();
+    const { control, setValue, getValues } = useFormContext();
     const { canEdit } = useHRFormContext();
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
     const watchEffectiveDate = useWatch({name:`${name}.apptEffDate`,control:control,defaultValue:new Date(0)});
-    const watchApptPercent = useWatch({name:`${name}.APPOINTMENT_PERCENT`,control:control})||100;
-    const handleRangeChange = e => setValue(`${name}.APPOINTMENT_PERCENT`,e.target.value);
+    const watchApptPercent = useWatch({name:`${name}.apptPercent`,control:control})||100;
+    const handleRangeChange = e => {
+        const value = (e.target.value<=maxPercent)?e.target.value:maxPercent;
+        setValue(`${name}.apptPercent`,value);
+    }
+    const maxPercent = useMemo(() => {
+        return getValues(`${name}.APPOINTMENT_PERCENT`) || 100;
+    },[]);
     return (
         <section className="mt-3">
             <Row as="header">
-                <Col as="h4">Appointment Information</Col>
+                <Col as="h4">Appointment Information ({maxPercent})</Col>
             </Row>
             
             <AppointmentType/>
@@ -127,11 +136,14 @@ function EmploymentAppointmentInformation() {
                 <Form.Label column md={2}>Apointment Percent:</Form.Label>
                 <Col xs="auto">
                     <Controller
-                        name={`${name}.APPOINTMENT_PERCENT`}
-                        defaultValue="100"
+                        name={`${name}.apptPercent`}
+                        defaultValue={maxPercent}
                         control={control}
-                        rules={{min:{value:1,message:'Appointment Percent cannot be less than 1%'},max:{value:100,message:'Appointment Percent cannot be greater than 100%'}}}
-                        render={({field}) => <Form.Control {...field} type="number" min={1} max={100} disabled={!canEdit}/>}
+                        rules={{
+                            min:{value:1,message:'Appointment Percent cannot be less than 1%'},
+                            max:{value:maxPercent,message:`Appointment Percent cannot be greater than ${maxPercent}%`}
+                        }}
+                        render={({field}) => <Form.Control {...field} type="number" min={1} max={maxPercent} disabled={!canEdit}/>}
                     />
                 </Col>
                 <Col sm={8} md={6} className="pt-2">
@@ -152,7 +164,7 @@ function EmploymentAppointmentInformation() {
                 <Col xs="auto">
                     <InputGroup>
                         <Controller
-                            name={`${name}.APPOINTMENT_END_DATE`}
+                            name={`${name}.apptEndDate`}
                             control={control}
                             render={({field}) => <Form.Control
                                 as={DatePicker}

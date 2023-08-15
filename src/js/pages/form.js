@@ -732,7 +732,7 @@ export function EmploymentPositionInfoBox({as}) {
 }
 function EmploymentPositionInfoBoxList() {
     const { control, getValues } = useFormContext();
-    const watchApptPercent = useWatch({name:'employment.position.APPOINTMENT_PERCENT',control:control});
+    const watchApptPercent = useWatch({name:'employment.position.apptPercent',control:control});
     const positionDetails = getValues('employment.position.positionDetails');
     return (
         <Row as="dl" className="mb-0">

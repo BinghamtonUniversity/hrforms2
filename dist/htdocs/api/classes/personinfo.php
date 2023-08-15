@@ -56,13 +56,14 @@ class PersonInfo extends HRForms2 {
 
 				break;
 			case "demographics":
+				$legalSex = (new listdata(array('legalSex'),false))->returnData;
 				$gender = (new listdata(array('gender'),false))->returnData;
 				$countryCodes = (new listdata(array('countryCodes'),false))->returnData;
 				$militaryStatus = (new listdata(array('militaryStatus'),false))->returnData;
 				$protectedVeteranStatus = (new listdata(array('protectedVeteranStatus'),false))->returnData;
 			
 				// hispanic_flag, ethnicity_mult_codes, ethnicity_source_dsc, disability_indicator - not currently using
-				$qry = "select distinct birth_date, gender, 
+				$qry = "select distinct birth_date, gender, gender_identity,
 						us_citizen_indicator, non_citizen_type, emp_authorize_card_indicator, visa_code, citizenship_country_code, 
 						--hispanic_flag, ethnicity_mult_codes, ethnicity_source_dsc, disability_indicator, 
 						military_status_code, veteran_indicator, protected_vet_status_code, military_separation_date
@@ -75,9 +76,13 @@ class PersonInfo extends HRForms2 {
 				if (!$r) $this->raiseError();
 				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
 
-				// Gender Code and Description
-				$key = array_search($row['GENDER'],array_column($gender,0));
-				$row['GENDER'] = array("id"=>$row['GENDER'],"label"=>($key!==false)?$gender[$key][1]:"");
+				// Gender/Legal Sex Code and Description
+				$key = array_search($row['GENDER'],array_column($legalSex,0));
+				$row['GENDER'] = array("id"=>$row['GENDER'],"label"=>($key!==false)?$legalSex[$key][1]:"");
+
+				// Gender Identity Code and Description
+				$key = array_search($row['GENDER_IDENTITY'],array_column($gender,0));
+				$row['GENDER_IDENTITY'] = array("id"=>$row['GENDER_IDENTITY'],"label"=>($key!==false)?$gender[$key][1]:"");
 
 				// Country Code
 				$fields = array_keys($countryCodes[0]);
