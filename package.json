@@ -1,6 +1,7 @@
 {
   "name": "hrforms2",
   "version": "2.0.0",
+  "revision": "20230811.1557",
   "description": "HR Forms 2.0",
   "main": "index.php",
   "author": "Scott Geiger",

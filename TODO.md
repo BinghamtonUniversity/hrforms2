@@ -13,7 +13,9 @@ Bug fixes, enhancements and things still to complete.
 
 ## In Progress Tasks:
   * Search for "console.log" in files
+  * Search for "TODO" in files
   * Use Helmet to change the title of the page
+  * Archive - Request|Form: Should save groups, hierarchy, and workflow
   * Request|Form: Control who can view/edit based on status (see TODO in file)
   * Add CSS for printing
   * Change delete modals to component: ModalConfirm
@@ -23,14 +25,15 @@ Bug fixes, enhancements and things still to complete.
   * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
   
 ## Tasks: 
+  * See Notes at bottom of page...
+  * Admin: Admin users should be able to query journal of any request or form.
+  * CHECK: Users who are inactive should not be included in the email list.
   * Change queries to use Global ID?
   * Account Numbers: do we need to include the Fiscal Year?
-  * Archive - Request|Form: Should save groups, hierarchy, and workflow
   * Archive - Request|Form: List needs date filter; default should limit range?
   * Forms: SUNY Account data needs to be completed
   * Request: User should NOT be able to approve/reject requests they submitted. [DONE?]
   * FormList and RequestList; drop the additional formId, requestId and just use POSTvars.
-  * Search for "TODO" in files
   * Switch from username to B# as primary key [DONE?]
   * Admin: Add default hierarchy routing in settings
   * On app error allow "reset"; test with undefined import component.
@@ -48,7 +51,6 @@ Bug fixes, enhancements and things still to complete.
   * run: npm outdated
 
 ## Future Enhancements
-  * Deactivating Users: Disable notifications
   * Create list of standard hotkeys for application.
   * Request|Form: Reassign ??
   * Request|Form: Allow same org/group to take ownership?
@@ -105,8 +107,6 @@ gender identity (add)
 Need to add to MV and add to query
 
 employment-position: appt pct cannot be greater than what comes from suny
-
-check journal for admin to search all
 
 add: submitter info on review at bottom
 
