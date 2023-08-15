@@ -92,10 +92,11 @@ export default function StartApp() {
     const settings = getSettings({
         enabled:session.isSuccess,
         onSettled:() => {
-            //TODO: for testing; use config or instance to set
-            queryclient.setDefaultOptions({
-                refetchOnWindowFocus:false
-            });
+            // Get defaults set in main.js and merge/override
+            /*const defaultOptions = queryclient.getDefaultOptions();
+            defaultOptions.queries.refetchOnWindowFocus = true;
+            queryclient.setDefaultOptions(defaultOptions);*/
+            // pre-load icons for improved performance.
             loadAppIcons(Object.keys(formats).map(k=>formats[k]?.icon));
         }
     });
