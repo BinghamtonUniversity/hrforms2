@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect, useRef, useReducer } 
 import { useQueryClient } from "react-query";
 import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
-import { Loading, AppButton, errorToast } from "../../blocks/components";
+import { Loading, AppButton, errorToast, DescriptionPopover } from "../../blocks/components";
 import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, DropdownButton, Dropdown, Button } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { orderBy, sortBy, difference, differenceWith, isEqual, capitalize, filter } from "lodash";
@@ -180,8 +180,20 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
         },ignoreRowClick:true},
         {name:'Group ID',selector:row=>row.GROUP_ID,sortable:true,sortField:'GROUP_ID'},
         {name:'Group Name',selector:row=>{
-            if (row.active) return row.GROUP_NAME;
-            return <><del>{row.GROUP_NAME}</del> <em>(inactive)</em></>;
+            const name = (row.active)?row.GROUP_NAME:<><del>{row.GROUP_NAME}</del> <em>(inactive)</em></>;
+            const description = row.GROUP_DESCRIPTION || <em>No Description</em>;
+            return (
+                <div><DescriptionPopover
+                    id={`${row.GROUP_ID}_description`}
+                    title="Group Description"
+                    width={25}
+                    content={
+                        <p>{description}</p>
+                    }
+                >
+                    <Icon className="iconify-inline" icon="mdi:information-variant-box" width={24} height={24}/>
+                </DescriptionPopover>{name}</div>
+            );
         },sortable:true,sortField:'GROUP_NAME'},
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
         {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
