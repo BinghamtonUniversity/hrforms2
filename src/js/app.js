@@ -65,7 +65,7 @@ function loadAppIcons(icons) {
 const CenterPage = ({children}) => <div className="center-page">{children}</div>;
 const LoadingApp = React.memo(() => (
     <CenterPage>
-        <p className="display-4"><Icon icon="mdi:loading" className="spin iconify-inline"/>Starting App...</p>
+        <p className="display-4"><Icon icon="mdi:loading" className="spin iconify-inline"/>Starting HR Forms 2...</p>
     </CenterPage>
 ));
 const LoadingAppError = ({children}) => (
