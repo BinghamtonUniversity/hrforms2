@@ -19,6 +19,11 @@ export default function useUserQueries(SUNY_ID) {
 
     const lookupUser = (...args) => {
         const options = args[0]?.options||args[0]||{};
+        options.retry = (count,error)=>{
+            // don't retry unless the error code/name less than 200 or 408 (timeout).
+            if (error?.name < 300 || error?.name == '408') return 2 - count;
+            return 0;
+        }
         return useQuery(['user',SUNY_ID],q(`user/${SUNY_ID}`),options);
     }
 
