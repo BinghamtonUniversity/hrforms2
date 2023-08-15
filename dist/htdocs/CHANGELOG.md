@@ -4,7 +4,6 @@
   * Fixed logic error in new user caching and completed error email notification. 
   * Moved workflow settings to new tab in the Admin Settings page.
   * Added popover to Admin Groups page to display description of the group.
-  * Added Markdown rendering support and loaded CHANGELOG.md into the versions page.  The version page will list updates and changes.
 
 
 ## Version 2.0.0 (DEV-20230811.1557)
