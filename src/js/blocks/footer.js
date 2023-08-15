@@ -15,10 +15,10 @@ export default function Footer() {
                 <Col className="d-flex justify-content-center">&copy; 2021 - {currYear} Binghamton University</Col>
             </Row>
             <Row>
-                <Col className="d-flex justify-content-center"><small><Link to="/login-history">Last Login: </Link><DateFormat inFmt="t" outFmt="E, MMM d, yyyy h:mm a" nvl={<span className="font-italic">Never</span>}>{LAST_LOGIN_DATE}</DateFormat> {LAST_IP_ADDRESS && `from ${LAST_IP_ADDRESS}`}</small></Col>
+                <Col className="d-flex justify-content-center"><small><Link to="/login-history">Last Login</Link>: <DateFormat inFmt="t" outFmt="E, MMM d, yyyy h:mm a" nvl={<span className="font-italic">Never</span>}>{LAST_LOGIN_DATE}</DateFormat> {LAST_IP_ADDRESS && `from ${LAST_IP_ADDRESS}`}</small></Col>
             </Row>
             <Row>
-                <Col className="d-flex justify-content-center"><small><Link to="/version-info">version:</Link> {VERSION} ({REVISION})</small></Col>
+                <Col className="d-flex justify-content-center"><small><Link to="/version-info">Version</Link>: {VERSION} ({REVISION})</small></Col>
             </Row>
             <Row className="py-3 d-none d-print-block">
                 <Col className="d-flex justify-content-center"><small>[{INSTANCE}]:{pathname}</small></Col>
