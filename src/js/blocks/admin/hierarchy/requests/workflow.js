@@ -301,7 +301,7 @@ function WorkflowForm() {
         <>
             <Form.Row>
                 <Form.Group as={Col}>
-                    <Form.Label>Filter Users:</Form.Label>
+                    <Form.Label>Filter Groups:</Form.Label>
                     <Form.Control ref={ref} type="search" placeholder="filter available groups..." value={filterText} onChange={handleOnChange} onKeyDown={handleOnKeyDown}/>
                 </Form.Group>
             </Form.Row>
