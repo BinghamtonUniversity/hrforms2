@@ -1,5 +1,8 @@
 # Changelog
 
+## Version 2.0.0 (DEV-202308xx)
+  * Added ability to reset Error message.
+
 ## Version 2.0.0 (DEV-20230815)
   * Fixed logic error in new user caching and completed error email notification. 
   * Moved workflow settings to new tab in the Admin Settings page.
