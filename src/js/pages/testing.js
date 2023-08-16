@@ -1,15 +1,15 @@
-import React from "react";
-import { Button } from "react-bootstrap";
-import { toast } from "react-toastify";
+import React,{ lazy } from "react";
+import {useParams} from "react-router-dom";
+import { NotFound, useAuthContext} from "../app";
 
-export default function Testing() {
-    const notify = () => {
-        toast.info('It Worked!');
-        toast.error('It did not work',{autoClose:10000}); 
+const TestError = lazy(()=>import("./test/error"));
+
+export default function TestPages() {
+    const { page } = useParams();
+    const { isAdmin } = useAuthContext();
+    if (!isAdmin) return <NotFound/>;
+    switch(page) {
+        case "error": return <TestError/>;
+        default: return <NotFound/>;
     }
-    return (
-        <div>
-            <Button onClick={notify}>Toast!</Button>
-        </div>
-    );
 }
