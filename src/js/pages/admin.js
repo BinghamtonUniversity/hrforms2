@@ -1,4 +1,4 @@
-import React,{lazy} from "react";
+import React, { lazy } from "react";
 import {useParams} from "react-router-dom";
 import { NotFound, useAuthContext} from "../app";
 
@@ -14,7 +14,7 @@ const AdminFormHierarchy = lazy(()=>import("./admin/hierarchy/form"));
 const AdminTemplates = lazy(()=>import("./admin/templates"));
 
 export default function AdminPages() {
-    const {page,subpage} = useParams();
+    const { page, subpage } = useParams();
     const { isAdmin } = useAuthContext();
     if (!isAdmin) return <NotFound/>;
     switch(page) {
@@ -37,7 +37,6 @@ export default function AdminPages() {
                 default: return <NotFound/>;
             }
         case "transactions": return <AdminFormTransactions/>;
-        default: return <p>{page},{subpage}</p>;
-            //return <NotFound/>;
+        default: return <NotFound/>;
     }
 }
