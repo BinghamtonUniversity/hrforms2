@@ -1,8 +1,8 @@
-import React,{ useContext, useState, useEffect, lazy, Suspense } from "react";
+import React,{ useContext, useState, useEffect, lazy, Suspense, useCallback } from "react";
 import { Switch, Route, useLocation, useHistory } from "react-router-dom";
 import { useQueryClient } from "react-query";
 import { ReactQueryDevtools } from 'react-query/devtools'
-import { Container, Alert } from "react-bootstrap";
+import { Container, Alert, Button } from "react-bootstrap";
 import { ToastContainer } from "react-toastify";
 import { useScrollPosition } from "@n8tb1t/use-scroll-position";
 import { ErrorBoundary } from "react-error-boundary";
@@ -28,6 +28,7 @@ const HRFormArchiveView = lazy(()=>import("./pages/form/view"));
 const HRFormList = lazy(()=>import("./pages/form/list"));
 const HRFormJournal = lazy(()=>import("./pages/form/journal"));
 const AdminPages = lazy(()=>import("./pages/admin"));
+const TestPages = lazy(()=>import("./pages/testing"));
 const VersionInfo = lazy(()=>import("./pages/version"));
 const LoginHistory = lazy(()=>import("./pages/login-history"));
 
@@ -173,6 +174,8 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
                             <Route path="/admin/:page/:subpage" component={AdminPages}/>
                             <Route path="/admin/:page" component={AdminPages}/>
 
+                            <Route path="/test/:page" component={TestPages}/>
+
                             <Route path="/version-info" component={VersionInfo}/>
                             <Route path="/login-history" component={LoginHistory}/>
 
@@ -198,13 +201,24 @@ function AppErrorFallback({error}) {
     );
 }
 
-export function ErrorFallback({error}) {
-    //TODO: allow for reset
+export function ErrorFallback({error,resetErrorBoundary}) {
+    const history = useHistory();
+    const location = useLocation();
+    const reset = useCallback(() => {
+        history.push('/');
+        resetErrorBoundary();
+    },[resetErrorBoundary]);
     return (
         <Alert variant="danger">
             <Alert.Heading>Error</Alert.Heading>
-            <p>The application encounted the following error.  If the problem persists please contact technical support</p>
+            <p>The application encounted the following error.  If the problem persists please contact technical support.</p>
             <pre>{error.message}</pre>
+            {location.pathname != '/' && 
+                <>
+                    <p>Clicking the "Reset" button will clear the error message and return you to the homepage.  Your work has not been saved.</p>
+                    <Button onClick={reset} variant="danger">Reset</Button>
+                </>
+            }
         </Alert>
     );
 }

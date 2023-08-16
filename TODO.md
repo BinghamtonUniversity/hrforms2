@@ -25,18 +25,15 @@ Bug fixes, enhancements and things still to complete.
   * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
   
 ## Tasks: 
-  * Request|Form: Default hierarchy to HR and send error notice.
-  * Admin: Add default hierarchy routing in settings
+  * Admin: Add default hierarchy routing in settings - Default hierarchy to HR and send error notice.
   * Admin: Admin users should be able to query journal of any request or form.
   * CHECK: Users who are inactive should not be included in the email list.[DONE?]
   * Change queries to use Global ID?
   * Account Numbers: do we need to include the Fiscal Year?
   * Archive - Request|Form: List needs date filter; default should limit range?
-  * Forms: SUNY Account data needs to be completed
   * Request: User should NOT be able to approve/reject requests they submitted. [DONE?]
   * FormList and RequestList; drop the additional formId, requestId and just use POSTvars.
   * Switch from username to B# as primary key [DONE?]
-  * On app error allow "reset"; test with undefined import component.
   * Forms: Default WF for all payrolls/forms?
   * DataTables:
     - Add search-by-field as needed (see groups.js)
