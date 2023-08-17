@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, u
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/request";
 import { useHierarchyQueries } from "../../../../queries/hierarchy";
 import { find, truncate, orderBy } from 'lodash';
-import { Row, Col, Modal, Form, Alert } from "react-bootstrap";
+import { Row, Col, Modal, Form, Alert, ListGroup } from "react-bootstrap";
 import { AppButton, Loading, errorToast } from "../../../../blocks/components";
 import DataTable from 'react-data-table-component';
 import { toast } from "react-toastify";
@@ -214,7 +214,8 @@ function AddEditHierarchy(props) {
         posType: props.POSITION_TYPE,
         groupId: props.GROUP_ID,
         groupName: props.GROUP_NAME,
-        workflowId: props.WORKFLOW_ID||''
+        workflowId: props.WORKFLOW_ID||'',
+        workflowSearch:''
     }});
 
     const closeModal = () => {
@@ -291,14 +292,30 @@ function AddEditHierarchy(props) {
 }
 
 function HierarchyForm() {
-    const {control,formState:{errors}} = useFormContext();
-    const {groups,workflows,isNew} = useContext(WorkflowContext);
-    const {position} = useContext(HierarchyContext);
+    const [searchText,setSearchText] = useState('');
+    const { control, formState:{ errors } } = useFormContext();
+    const { groups, workflows, isNew} = useContext(WorkflowContext);
+    const { position } = useContext(HierarchyContext);
+
+    const searchWorkFlows = (e,field) => {
+        field.onChange(e.target.value);
+        setSearchText(e.target.value);
+    };
+
+    const filteredWorkflows = useMemo(() => {
+        return workflows.filter(w => w.GROUPS_ARRAY.map(g=>g.GROUP_NAME.toLowerCase()).join(' ').includes(searchText.toLocaleLowerCase()));
+    },[searchText,workflows]);
+
+    const listItemClick = (e,field) => {
+        e.preventDefault();
+        field.onChange(e.target.value);
+    };
+
     return (
         <>
             <Form.Row>
                 <Form.Group as={Col} controlId="posType">
-                    <Form.Label>Position Type</Form.Label>
+                    <Form.Label>Position Type:</Form.Label>
                     <Controller
                         name="posType"
                         control={control}
@@ -315,7 +332,7 @@ function HierarchyForm() {
             </Form.Row>
             <Form.Row>
                 <Form.Group as={Col} controlId="groupId">
-                    <Form.Label>Group Name</Form.Label>
+                    <Form.Label>Group Name:</Form.Label>
                     <Controller
                         name="groupId"
                         control={control}
@@ -332,21 +349,47 @@ function HierarchyForm() {
             </Form.Row>            
             <Form.Row>
                 <Form.Group as={Col} controlId="workflowId">
-                    <Form.Label>Workflow</Form.Label>
+                    <Form.Label>Current Workflow:</Form.Label>
                     <Controller
                         name="workflowId"
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} as="select">
-                                <option value=""></option>
-                                {workflows.map(w => <option key={w.WORKFLOW_ID} value={w.WORKFLOW_ID}>{w.WORKFLOW_ID}:{' '}
-                                    {truncate(w.GROUPS_ARRAY.map(g=>g.GROUP_NAME).join(' > '),{length:65,separator:' > '})}
-                                </option>)}
-                            </Form.Control>
+                            <div>
+                                <HierarchyChain list={workflows.filter(w=>w.WORKFLOW_ID==field.value)[0].GROUPS_ARRAY} conditions={workflows.filter(w=>w.WORKFLOW_ID==field.value)[0].CONDITIONS}/>
+                            </div>
                         )}
                     />
                 </Form.Group>
             </Form.Row>            
+            <Form.Row>
+                <Form.Group as={Col} controlId="workflowSearch">
+                    <Form.Label>Workflow Search:</Form.Label>
+                    <Controller
+                        name="workflowSearch"
+                        control={control}
+                        render={({field}) => (
+                            <Form.Control {...field} type="search" placeholder="search available workflows..." onChange={e=>searchWorkFlows(e,field)}/>
+                        )}
+                    />
+                </Form.Group>
+            </Form.Row>
+            <Form.Row>
+                <Form.Group as={Col} controlId="workflowListGroup">
+                <Controller
+                    name="workflowId"
+                    control={control}
+                    render={({field}) => (
+                        <ListGroup className="border" style={{height:'30vh',overflow:'scroll'}}>
+                            {filteredWorkflows.map(w =>( 
+                                <ListGroup.Item key={w.WORKFLOW_ID} action active={field.value==w.WORKFLOW_ID} onClick={e=>listItemClick(e,field)} value={w.WORKFLOW_ID}>{w.WORKFLOW_ID}:{' '}
+                                    {truncate(w.GROUPS_ARRAY.map(g=>g.GROUP_NAME).join(' > '),{length:65,separator:' > '})}
+                                </ListGroup.Item>))
+                            }
+                        </ListGroup>
+                    )}
+                />
+                </Form.Group>
+            </Form.Row>
         </>
     );
 }
