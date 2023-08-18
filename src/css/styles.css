@@ -337,3 +337,9 @@ div.form-check-input-lg input[type="checkbox"].form-check-input {
 #form-review {
   font-size: 0.9em
 }
+
+/* Condensed List Group */
+.list-group-condensed button {
+  padding: 6px 10px;
+  font-size: 0.9rem;
+}
