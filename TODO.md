@@ -34,10 +34,10 @@ Bug fixes, enhancements and things still to complete.
   * Request: User should NOT be able to approve/reject requests they submitted. [DONE?]
   * FormList and RequestList; drop the additional formId, requestId and just use POSTvars.
   * Switch from username to B# as primary key [DONE?]
-  * Forms: Default WF for all payrolls/forms?
   * DataTables:
     - Add search-by-field as needed (see groups.js)
     - Global setting for paginationRowsPerPageOptions
+  * Add "initialData" value to query options and remove checked form !data. Caveat: setting initialData will set the query status to successful.
 
 ## Upgrades:
   * Upgrade to React 18
