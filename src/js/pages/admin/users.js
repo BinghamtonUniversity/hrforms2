@@ -532,6 +532,8 @@ const TabRouter = React.memo(({tab,newUser,setStatus,closeModal}) => {
 });
 
 function UserInfo({newUser,setStatus,closeModal}) {
+    const { SUNY_ID } = useAuthContext();
+
     const lookupStateDefault = {
         state:'',
         icon:'mdi:account-search',
@@ -745,7 +747,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
                             defaultValue=""
                             control={control}
                             rules={{required:{value:true,message:'Start Date is required'}}}
-                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.startDate}/>}
+                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.startDate} disabled={sunyid==SUNY_ID}/>}
                         />
                         <InputGroup.Append>
                             <InputGroup.Text>
@@ -762,7 +764,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
                             name="endDate"
                             defaultValue=""
                             control={control}
-                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} autoComplete="off"/>}
+                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} disabled={sunyid==SUNY_ID} autoComplete="off"/>}
                         />
                         <InputGroup.Append>
                             <InputGroup.Text>
