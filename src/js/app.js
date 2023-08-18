@@ -201,7 +201,7 @@ function AppErrorFallback({error}) {
     );
 }
 
-export function ErrorFallback({error,resetErrorBoundary}) {
+export function ErrorFallback({error,componentStack,resetErrorBoundary}) {
     const history = useHistory();
     const location = useLocation();
     const reset = useCallback(() => {
@@ -213,6 +213,7 @@ export function ErrorFallback({error,resetErrorBoundary}) {
             <Alert.Heading>Error</Alert.Heading>
             <p>The application encounted the following error.  If the problem persists please contact technical support.</p>
             <pre>{error.message}</pre>
+            <pre>{componentStack}</pre>
             {location.pathname != '/' && 
                 <>
                     <p>Clicking the "Reset" button will clear the error message and return you to the homepage.  Your work has not been saved.</p>
