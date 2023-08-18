@@ -3,6 +3,8 @@
 ## Version 2.0.0 (DEV-202308xx)
   * Added ability to reset Error message.
   * Changed the display of workflow selection for Request Hierarchy.  A scrollable list that can be filtered is now available.  The selected workflow is displayed using the graphical representation.
+  * Disabled Start and End dates in user profile edit screen when editing your own profile; a user should not be able to change their own values.
+  * Added default workflow selection for Requests.  Backend code still needs to be developed to use the selection.
 
 ## Version 2.0.0 (DEV-20230815)
   * Fixed logic error in new user caching and completed error email notification. 
