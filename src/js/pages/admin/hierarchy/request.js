@@ -94,6 +94,7 @@ const HierarchyRouter = React.memo(({tab}) => {
  * Component to display hierarchy chain on both tabs
  */
 export function HierarchyChain({list,conditions}) {
+    if (!list) return null;
     return (
         <>
             {list.map((g,i) => {

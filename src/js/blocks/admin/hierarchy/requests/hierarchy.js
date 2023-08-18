@@ -18,8 +18,8 @@ HierarchyContext.displayName = 'HierarchyContext';
 
 export default function HierarchyTab() {
     const { getListData } = useListsQueries();
-    const {getHierarchy} = useHierarchyQueries('request');
-    const {groups} = useContext(WorkflowContext);
+    const { getHierarchy } = useHierarchyQueries('request');
+    const { groups } = useContext(WorkflowContext);
     const position = getListData('posTypes');
     const hierarchy = getHierarchy({select:d=>{
         return d.map(w => {
@@ -306,6 +306,8 @@ function HierarchyForm() {
         return workflows.filter(w => w.GROUPS_ARRAY.map(g=>g.GROUP_NAME.toLowerCase()).join(' ').includes(searchText.toLocaleLowerCase()));
     },[searchText,workflows]);
 
+    const selectedWorkflow = useCallback((workflowId) => workflows.filter(w=>w.WORKFLOW_ID==workflowId)[0],[workflows]);
+
     const listItemClick = (e,field) => {
         e.preventDefault();
         field.onChange(e.target.value);
@@ -355,7 +357,7 @@ function HierarchyForm() {
                         control={control}
                         render={({field}) => (
                             <div>
-                                <HierarchyChain list={workflows.filter(w=>w.WORKFLOW_ID==field.value)[0].GROUPS_ARRAY} conditions={workflows.filter(w=>w.WORKFLOW_ID==field.value)[0].CONDITIONS}/>
+                                <HierarchyChain list={selectedWorkflow(field.value)?.GROUPS_ARRAY} conditions={selectedWorkflow(field.value)?.CONDITIONS}/>
                             </div>
                         )}
                     />
@@ -368,7 +370,7 @@ function HierarchyForm() {
                         name="workflowSearch"
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} type="search" placeholder="search available workflows..." onChange={e=>searchWorkFlows(e,field)}/>
+                            <Form.Control {...field} type="search" placeholder="search workflows..." onChange={e=>searchWorkFlows(e,field)}/>
                         )}
                     />
                 </Form.Group>
@@ -379,10 +381,10 @@ function HierarchyForm() {
                     name="workflowId"
                     control={control}
                     render={({field}) => (
-                        <ListGroup className="border" style={{height:'30vh',overflow:'scroll'}}>
+                        <ListGroup className="border list-group-condensed" style={{height:'30vh',overflow:'scroll'}}>
                             {filteredWorkflows.map(w =>( 
                                 <ListGroup.Item key={w.WORKFLOW_ID} action active={field.value==w.WORKFLOW_ID} onClick={e=>listItemClick(e,field)} value={w.WORKFLOW_ID}>{w.WORKFLOW_ID}:{' '}
-                                    {truncate(w.GROUPS_ARRAY.map(g=>g.GROUP_NAME).join(' > '),{length:65,separator:' > '})}
+                                    {truncate(w.GROUPS_ARRAY.map(g=>g.GROUP_NAME).join(' > '),{length:70,separator:' > '})}
                                 </ListGroup.Item>))
                             }
                         </ListGroup>
