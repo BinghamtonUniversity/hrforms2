@@ -1,12 +1,15 @@
-import React, { useState, lazy } from "react";
+import React, { useState, lazy, useEffect } from "react";
 import { useQueryClient } from "react-query";
-import { Row, Col, Form, Tabs, Tab, Container } from "react-bootstrap";
+import { Row, Col, Form, Tabs, Tab, Container, Alert } from "react-bootstrap";
 import { useForm, FormProvider } from "react-hook-form";
 import { AppButton, Loading, errorToast } from "../../blocks/components";
 import { toast } from "react-toastify";
 import { t } from "../../config/text";
 import { NotFound } from "../../app";
 import useSettingsQueries from "../../queries/settings";
+import { useHistory, useParams } from "react-router-dom";
+import { Helmet } from "react-helmet";
+import { get } from "lodash";
 
 /* must use t.id instead of activeTab or radio options will not work */
 
@@ -31,8 +34,15 @@ function AdminSettingsTabs({settingsData}) {
         {id:'requests',title:'Requests'},
         {id:'forms',title:'Forms'}
     ];
+    const { subpage } = useParams();
+    const history = useHistory();
 
     const [activeTab,setActiveTab] = useState('general');
+
+    const navigate = tab => {
+        setActiveTab(tab);
+        history.push('/admin/settings/'+tab);
+    }
 
     const methods = useForm({defaultValues:settingsData});
 
@@ -55,18 +65,32 @@ function AdminSettingsTabs({settingsData}) {
     const handleError = error => {
         console.error(error);
     }
+
+    useEffect(()=>setActiveTab(tabs.map(t=>t.id).includes(subpage)?subpage:'general'),[subpage]);
     return (
         <>
             <header>
                 <Row>
                     <Col><h2>{t('admin.settings.title')}</h2></Col>
+                    <Helmet>
+                        <title>{t('admin.settings.title')} - {tabs.filter(t=>t.id==activeTab).at(0)?.title}</title>
+                    </Helmet>
                 </Row>
+                {methods.formState.isDirty && 
+                    <Row>
+                        <Col>
+                            <Alert variant="warning">
+                                Unsaved Changes
+                            </Alert>
+                        </Col>
+                    </Row>
+                }
             </header>
             <FormProvider {...methods}>
                 <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
                     <Row>
                         <Col>
-                            <Tabs activeKey={activeTab} onSelect={tab=>setActiveTab(tab)} id="settings-tabs">
+                            <Tabs activeKey={activeTab} onSelect={navigate} id="settings-tabs">
                                 {tabs.map(t=>(
                                     <Tab key={t.id} eventKey={t.id} title={t.title}>
                                         <Container as="article" className="mt-3" fluid>
