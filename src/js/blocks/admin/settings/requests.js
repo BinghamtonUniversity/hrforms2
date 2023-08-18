@@ -1,7 +1,12 @@
-import React, { useCallback } from "react";
-import { Form, Row, Col, Table } from "react-bootstrap";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
+import { Form, Row, Col, Table, ListGroup, Button } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { useSettingsContext } from "../../../app";
+import useGroupQueries from "../../../queries/groups";
+import { useWorkflowQueries } from "../../../queries/hierarchy";
+import { find, sortBy,truncate } from 'lodash';
+import { HierarchyChain } from "../../../pages/admin/hierarchy/request";
+import { Loading } from "../../components";
 
 export default function SettingsRequests() {
     const { control } = useFormContext();
@@ -60,8 +65,91 @@ export default function SettingsRequests() {
                     </Form.Group>
                 ))}
             </section>
+            <SettingsRequestsDefaultRouting/>
             <SettingsRequestsEmail/>
         </>
+    );
+}
+
+function SettingsRequestsDefaultRouting() {
+    const [searchText,setSearchText] = useState('');
+
+    const { control, setValue } = useFormContext();
+
+    const { getGroups } = useGroupQueries();
+    const { getWorkflow } = useWorkflowQueries('request');
+    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME'])});
+    const workflows = getWorkflow({
+        enabled:!!groups.data,
+        select:d=>{
+            return d.map(w => {
+                w.GROUPS_ARRAY = w.GROUPS.split(',').map(g => {
+                    const name = find(groups.data,{GROUP_ID:g})
+                    return {GROUP_ID:g,GROUP_NAME:name?.GROUP_NAME}
+                });
+                return w;
+            });
+        },
+        initialData:[]
+    });
+
+    const listItemClick = (e,field) => {
+        e.preventDefault();
+        field.onChange(e.target.value);
+    };
+
+    const filteredWorkflows = useMemo(() => workflows.data.filter(w => w.GROUPS_ARRAY.map(g=>g.GROUP_NAME.toLowerCase()).join(' ').includes(searchText.toLocaleLowerCase())),[searchText,workflows]);
+    const selectedWorkflow = useCallback((workflowId) => workflows.data.filter(w=>w.WORKFLOW_ID==workflowId)[0],[workflows]);
+    const clearDefault = ()=>setValue('requests.workflow.default','');
+    return (
+        <section>
+            <Row as="header" className="mt-3">
+                <Col as="h4">Default Routing</Col>
+            </Row>
+            {(workflows.data.length == 0) && <Loading type="alert">Loading Workflows...</Loading>}
+            {workflows.isError && <Loading type="alert" isError>Error Loading Workflows</Loading>}
+            {workflows.data.length > 0 &&
+                <>
+                    <Form.Row>
+                        <Form.Group as={Col} controlId="requestWorkflowId">
+                            <Form.Label>Current Workflow: <Button size="sm" onClick={clearDefault}>Clear</Button></Form.Label>
+                            <Controller
+                                name="requests.workflow.default"
+                                control={control}
+                                render={({field}) => (
+                                    <div>
+                                        <HierarchyChain list={selectedWorkflow(field.value)?.GROUPS_ARRAY} conditions={selectedWorkflow(field.value)?.CONDITIONS}/>
+                                    </div>
+                                )}
+                            />
+                        </Form.Group>
+                    </Form.Row>            
+                    <Form.Group as={Row} controlId="requestWorkflowSearch">
+                        <Form.Label column md={2}>Workflow Search:</Form.Label>
+                        <Col xs="auto">
+                            <Form.Control type="search" placeholder="search workflows..." onChange={e=>setSearchText(e.target.value)} />
+                        </Col>
+                    </Form.Group>
+                    <Form.Row>
+                        <Form.Group as={Col} sm={{offset:2}} controlId="workflowListGroup">
+                        <Controller
+                            name="requests.workflow.default"
+                            control={control}
+                            render={({field}) => (
+                                <ListGroup className="border list-group-condensed" style={{height:'30vh',overflow:'scroll'}}>
+                                    {filteredWorkflows.map(w =>( 
+                                        <ListGroup.Item key={w.WORKFLOW_ID} action active={field.value==w.WORKFLOW_ID} onClick={e=>listItemClick(e,field)} value={w.WORKFLOW_ID}>{w.WORKFLOW_ID}:{' '}
+                                            {truncate(w.GROUPS_ARRAY.map(g=>g.GROUP_NAME).join(' > '),{length:80,separator:' > '})}
+                                        </ListGroup.Item>))
+                                    }
+                                </ListGroup>
+                            )}
+                        />
+                        </Form.Group>
+                    </Form.Row>
+                </>
+            }
+        </section>
     );
 }
 
