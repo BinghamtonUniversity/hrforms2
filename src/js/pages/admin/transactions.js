@@ -30,6 +30,7 @@ export default function AdminFormTransactions() {
         history.push('/admin/transactions/'+tab);
     }
 
+    // ctrl+shift+left[right] are already built into tab navigation by the component
     useHotkeys('ctrl+right,ctrl+left',(_,handler)=>{
         const tabIds = tabs.map(t=>t.id);
         const idx = tabIds.indexOf(activeTab);
