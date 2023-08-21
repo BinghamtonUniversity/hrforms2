@@ -9,9 +9,9 @@ import { NotFound } from "../../app";
 import useSettingsQueries from "../../queries/settings";
 import { useHistory, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import { get } from "lodash";
+import { tabs, defaultVals } from "../../config/settings";
 
-/* must use t.id instead of activeTab or radio options will not work */
+/* N.B. Must use t.id instead of activeTab or radio options will not work */
 
 const SettingsRequests = lazy(()=>import("../../blocks/admin/settings/requests"));
 const SettingsForms = lazy(()=>import("../../blocks/admin/settings/forms"));
@@ -28,12 +28,6 @@ export default function AdminSettings() {
 }
 
 function AdminSettingsTabs({settingsData}) {
-    const tabs = [
-        {id:'general',title:'General'},
-        {id:'workflow',title:'Workflow'},
-        {id:'requests',title:'Requests'},
-        {id:'forms',title:'Forms'}
-    ];
     const { subpage } = useParams();
     const history = useHistory();
 
@@ -44,7 +38,7 @@ function AdminSettingsTabs({settingsData}) {
         history.push('/admin/settings/'+tab);
     }
 
-    const methods = useForm({defaultValues:settingsData});
+    const methods = useForm({defaultValues:defaultVals,values:settingsData});
 
     const queryclient = useQueryClient();
     const { putSettings } = useSettingsQueries();
@@ -65,6 +59,9 @@ function AdminSettingsTabs({settingsData}) {
     const handleError = error => {
         console.error(error);
     }
+    useEffect(() => {
+        console.log(methods.formState.dirtyFields);
+    },[methods.formState]);
 
     useEffect(()=>setActiveTab(tabs.map(t=>t.id).includes(subpage)?subpage:'general'),[subpage]);
     return (
@@ -76,7 +73,7 @@ function AdminSettingsTabs({settingsData}) {
                         <title>{t('admin.settings.title')} - {tabs.filter(t=>t.id==activeTab).at(0)?.title}</title>
                     </Helmet>
                 </Row>
-                {methods.formState.isDirty && 
+                {!!Object.keys(methods.formState.dirtyFields).length && 
                     <Row>
                         <Col>
                             <Alert variant="warning">

@@ -112,12 +112,13 @@ function SettingsRequestsDefaultRouting() {
                 <>
                     <Form.Row>
                         <Form.Group as={Col} controlId="requestWorkflowId">
-                            <Form.Label>Current Workflow: <Button size="sm" onClick={clearDefault}>Clear</Button></Form.Label>
+                            <Form.Label>Current Workflow: <Button title="Clear" variant="danger" style={{padding:'0.1rem 0.25rem',fontSize:'0.8rem'}} onClick={clearDefault}>X</Button></Form.Label>
                             <Controller
                                 name="requests.workflow.default"
+                                defaultValue={undefined}
                                 control={control}
                                 render={({field}) => (
-                                    <div>
+                                    <div className="border rounded p-3 bg-secondary-light">
                                         <HierarchyChain list={selectedWorkflow(field.value)?.GROUPS_ARRAY} conditions={selectedWorkflow(field.value)?.CONDITIONS}/>
                                     </div>
                                 )}
@@ -136,7 +137,7 @@ function SettingsRequestsDefaultRouting() {
                             name="requests.workflow.default"
                             control={control}
                             render={({field}) => (
-                                <ListGroup className="border list-group-condensed" style={{height:'30vh',overflow:'scroll'}}>
+                                <ListGroup className="border list-group-condensed list-group-scrollable-25">
                                     {filteredWorkflows.map(w =>( 
                                         <ListGroup.Item key={w.WORKFLOW_ID} action active={field.value==w.WORKFLOW_ID} onClick={e=>listItemClick(e,field)} value={w.WORKFLOW_ID}>{w.WORKFLOW_ID}:{' '}
                                             {truncate(w.GROUPS_ARRAY.map(g=>g.GROUP_NAME).join(' > '),{length:80,separator:' > '})}

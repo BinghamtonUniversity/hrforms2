@@ -30,6 +30,7 @@ $theme-colors: (
   "success-light":scale-color($success,$saturation:-30%,$lightness:50%),
   "warning-light":scale-color($warning,$saturation:-30%,$lightness:50%),
   "danger-light":scale-color($danger,$saturation:-30%,$lightness:50%),
+  "secondary-light":scale-color($secondary,$saturation:-30%,$lightness:50%),
 );
 
 $table-hover-bg: rgba($main, .15);

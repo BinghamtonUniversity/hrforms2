@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, u
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/request";
 import { useHierarchyQueries } from "../../../../queries/hierarchy";
 import { find, truncate, orderBy } from 'lodash';
-import { Row, Col, Modal, Form, Alert, ListGroup } from "react-bootstrap";
+import { Row, Col, Modal, Form, Alert, ListGroup, Button } from "react-bootstrap";
 import { AppButton, Loading, errorToast } from "../../../../blocks/components";
 import DataTable from 'react-data-table-component';
 import { toast } from "react-toastify";
@@ -293,7 +293,7 @@ function AddEditHierarchy(props) {
 
 function HierarchyForm() {
     const [searchText,setSearchText] = useState('');
-    const { control, formState:{ errors } } = useFormContext();
+    const { control, setValue, formState:{ errors } } = useFormContext();
     const { groups, workflows, isNew} = useContext(WorkflowContext);
     const { position } = useContext(HierarchyContext);
 
@@ -307,6 +307,9 @@ function HierarchyForm() {
     },[searchText,workflows]);
 
     const selectedWorkflow = useCallback((workflowId) => workflows.filter(w=>w.WORKFLOW_ID==workflowId)[0],[workflows]);
+    const clearWorkflow = useCallback(() => {
+        setValue('workflowId','');
+    },[setValue]);
 
     const listItemClick = (e,field) => {
         e.preventDefault();
@@ -351,12 +354,12 @@ function HierarchyForm() {
             </Form.Row>            
             <Form.Row>
                 <Form.Group as={Col} controlId="workflowId">
-                    <Form.Label>Current Workflow:</Form.Label>
+                    <Form.Label>Current Workflow: <Button title="Clear" variant="danger" style={{padding:'0.1rem 0.25rem',fontSize:'0.8rem'}} onClick={clearWorkflow}>X</Button></Form.Label>
                     <Controller
                         name="workflowId"
                         control={control}
                         render={({field}) => (
-                            <div>
+                            <div className="border rounded p-3 bg-secondary-light">
                                 <HierarchyChain list={selectedWorkflow(field.value)?.GROUPS_ARRAY} conditions={selectedWorkflow(field.value)?.CONDITIONS}/>
                             </div>
                         )}
@@ -381,7 +384,7 @@ function HierarchyForm() {
                     name="workflowId"
                     control={control}
                     render={({field}) => (
-                        <ListGroup className="border list-group-condensed" style={{height:'30vh',overflow:'scroll'}}>
+                        <ListGroup className="border list-group-condensed list-group-scrollable-25">
                             {filteredWorkflows.map(w =>( 
                                 <ListGroup.Item key={w.WORKFLOW_ID} action active={field.value==w.WORKFLOW_ID} onClick={e=>listItemClick(e,field)} value={w.WORKFLOW_ID}>{w.WORKFLOW_ID}:{' '}
                                     {truncate(w.GROUPS_ARRAY.map(g=>g.GROUP_NAME).join(' > '),{length:70,separator:' > '})}

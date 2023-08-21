@@ -343,3 +343,9 @@ div.form-check-input-lg input[type="checkbox"].form-check-input {
   padding: 6px 10px;
   font-size: 0.9rem;
 }
+
+/* Scrollable List Group */
+.list-group-scrollable-25 { overflow: scroll; height: 25vh; }
+.list-group-scrollable-30 { overflow: scroll; height: 30vh; }
+.list-group-scrollable-40 { overflow: scroll; height: 40vh; }
+.list-group-scrollable-50 { overflow: scroll; height: 50vh; }
