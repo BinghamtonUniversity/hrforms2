@@ -87,9 +87,6 @@ class User extends HRForms2 {
 			$this->returnData = $this->_arr;
 			if ($this->retJSON) $this->toJSON($this->returnData);
 		} else {
-			//$refresh = false;
-			//$existing = false;
-
 			$qry = "select suny_id, to_char(end_date,'DD-MON-YYYY HH24:MI') as end_date,
 				to_char(refresh_date,'DD-MON-YYYY') as refresh_date, user_info, user_options
 				from HRFORMS2_USERS u where suny_id = :suny_id";
