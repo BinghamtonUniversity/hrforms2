@@ -36,7 +36,7 @@ class Hierarchy extends HRForms2 {
 					left join (select * from hrforms2_groups) g on (h.group_id = g.group_id)
 					left join (select * from hrforms2_requests_workflow) w on (h.workflow_id = w.workflow_id)";	
 				if ($this->req[1] == 'group') {
-					$qry .= " where h.group_id = :id";
+					$qry .= " where h.group_id = :id ";
 					$id = $this->req[2];
 				} elseif (isset($this->req[1])) {
 					$qry .= " where h.hierarchy_id = :id";
@@ -53,6 +53,27 @@ class Hierarchy extends HRForms2 {
 					$this->_arr[] = $row;
 				}
 				oci_free_statement($stmt);
+				
+				// get default when selecting for group:
+				if ($this->req[1] == 'group') {
+					$qry = "select 0 as HIERARCHY_ID,null as POSITION_TYPE,g.group_id,g.group_name,
+						w.workflow_id, w.groups, w.conditions
+						from hrforms2_requests_workflow w
+						left join (select * from hrforms2_groups) g on (g.group_id = :id)
+						where w.workflow_id = (select s.settings.requests.defaultWorkflow from hrforms2_settings s)";
+					$stmt = oci_parse($this->db,$qry);
+					if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $id);
+					$r = oci_execute($stmt);
+					if (!$r) $this->raiseError();
+					while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+						$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
+						unset($row['CONDITIONS']);
+						$row['CONDITIONS'] = json_decode($conditions);
+						$this->_arr[] = $row;
+					}
+					oci_free_statement($stmt);
+				}
+
 				break;
 
 			case "form": /** Form Hierarchy */
