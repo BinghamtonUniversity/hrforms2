@@ -202,7 +202,7 @@ function AddEditWorkflow(props) {
                 return false;
             }
             setStatus({state:'saving'});
-            create.mutateAsync({GROUPS:newGroups}).then(d=>{
+            create.mutateAsync({GROUPS:newGroups,CONDITIONS:data.conditions}).then(d=>{
                 Promise.all([
                     queryclient.refetchQueries(['hierarchy','request']),
                     queryclient.refetchQueries(['workflow','request'])
