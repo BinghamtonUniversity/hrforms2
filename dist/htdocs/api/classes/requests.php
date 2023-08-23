@@ -182,8 +182,41 @@ class Requests extends HRForms2 {
                 //get hierarchy for group
                 $h = (new hierarchy(array('request','group',$group['GROUP_ID']),false))->returnData;
                 $idx = array_search($this->POSTvars['posType']['id'],array_column($h,'POSITION_TYPE'));
-                if($idx == -1) $this->raiseError(); //TODO: handle error
-                $hierarchy = $h[$idx];
+                if (!$idx) {
+                    // get default (hiearchy_id = 0); if no default raise error
+                    $idx = array_search('0',array_column($h,'HIERARCHY_ID'));
+                    if (!$idx) {
+                        // send error message
+                        $message = "An attempt to submit a Posoition Request failed due to no hierarchy and no default routing configured.  Information about the request is below.<br>";
+                        foreach($this->POSTvars as $key => $val) {
+                            $message .= "<strong>$key</strong> = ";
+                            if (gettype($val) == 'array') {
+                                $message .= implode(', ',$val);
+                            } else {
+                                $message .= $val;
+                            }
+                            $message .= "<br>";
+                        }
+                        $message .= "<p>User Information:</p>";
+                        foreach($group as $key => $val) {
+                            $message .= "<strong>$key</strong> = ";
+                            if (gettype($val) == 'array') {
+                                $message .= implode(', ',$val);
+                            } else {
+                                $message .= $val;
+                            }
+                            $message .= "<br>";
+                        }
+                        
+                        $this->sendError($message,'HRForms2 Error: No Default Request Workflow');
+                        $this->raiseError(E_BAD_REQUEST,array('errMsg'=>'No Request Hierarchy Found.  No Default Workflow Set.'));
+                    }
+                    // send "warning" message
+
+                    $hierarchy = $h[$idx];
+                } else {
+                    $hierarchy = $h[$idx];
+                }
                 $groups = $hierarchy['GROUPS'];
                 $groups_array = explode(",",$groups);
                 array_unshift($groups_array,"-99");

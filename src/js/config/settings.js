@@ -136,9 +136,7 @@ export const defaultVals = {
                 }
             }
         },
-        "workflow": {
-            "default": ""
-        }
+        "defaultWorkflow": ""
     },
     "forms": {
         "menu": {

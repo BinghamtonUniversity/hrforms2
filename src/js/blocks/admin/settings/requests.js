@@ -114,7 +114,7 @@ function SettingsRequestsDefaultRouting() {
                         <Form.Group as={Col} controlId="requestWorkflowId">
                             <Form.Label>Current Workflow: <Button title="Clear" variant="danger" style={{padding:'0.1rem 0.25rem',fontSize:'0.8rem'}} onClick={clearDefault}>X</Button></Form.Label>
                             <Controller
-                                name="requests.workflow.default"
+                                name="requests.defaultWorkflow"
                                 defaultValue={undefined}
                                 control={control}
                                 render={({field}) => (
