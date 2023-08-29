@@ -73,7 +73,7 @@ export default function AdminFormHierarchy() {
                                 <Row as="header">
                                     <Col as="h3">{t.title} <AppButton format="add" onClick={()=>setIsNew(t.id)}>New</AppButton></Col>
                                 </Row>
-                                <HierarchyRouter tab={activeTab}/>
+                                <HierarchyRouter tab={t.id}/>
                             </Container>
                         </Tab>
                     ))}

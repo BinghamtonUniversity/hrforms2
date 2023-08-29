@@ -224,6 +224,7 @@ export const defaultVals = {
                     "replyto": "none"
                 }
             }
-        }
+        },
+        "defaultWorkflow": ""
     }
 };
