@@ -208,17 +208,55 @@ class Forms extends HRForms2 {
 
                 //get hierarchy for group
                 $h = (new hierarchy(array('form','group',$group['GROUP_ID']),false))->returnData;
-                $paytransId = $this->POSTvars['formActions']['PAYTRANS_ID'];
-                $j = array_filter($h,function($v) use($group,$paytransId) {
-                    $hgroups = explode(',',$v['HIERARCHY_GROUPS']);
+                //$paytransId = $this->POSTvars['formActions']['PAYTRANS_ID'];
+                $idx = array_search($this->POSTvars['formActions']['PAYTRANS_ID'],array_column($h,'PAYTRANS_ID'));
+                if ($idx===false) {
+                    // get default (hiearchy_id = 0); if no default raise error
+                    $idx = array_search('0',array_column($h,'HIERARCHY_ID'));
+                    if ($idx===false) {
+                        // send error message
+                        $message = "An attempt to submit a Form failed due to no hierarchy and no default routing configured.  Information about the form is below.<br>";
+                        $message .= "<pre>";
+                        ob_start();
+                        echo "Form ID => " . $this->POSTvars['formId'] ."<br>";
+                        echo "Effective Date => " . $this->POSTvars['effDate'] . "<br>";
+                        print_r($this->POSTvars['formActions']);
+                        echo "Comment => " . $this->POSTvars['comment'] . "<br>";
+                        $message .= ob_get_contents();
+                        ob_end_clean();
+                        $message .= "</pre>";
+                        $message .= "<p>User Information:</p>";
+                        foreach($group as $key => $val) {
+                            $message .= "<strong>$key</strong> = ";
+                            if (gettype($val) == 'array') {
+                                $message .= implode(', ',$val);
+                            } else {
+                                $message .= $val;
+                            }
+                            $message .= "<br>";
+                        }
+                        
+                        $this->sendError($message,'HRForms2 Error: No Default Form Workflow');
+                        $this->raiseError(E_BAD_REQUEST,array('errMsg'=>'No Form Hierarchy Found.  No Default Workflow Set.'));
+                    }
+                    // TODO: send "warning" message; needed to use the default
+
+                    $hierarchy = $h[$idx];
+                } else {
+                    $hierarchy = $h[$idx];
+                }
+                
+                /*$j = array_filter($h,function($v) use($group,$paytransId) {
+                    //$hgroups = explode(',',$v['HIERARCHY_GROUPS']);
                     return ($v['PAYTRANS_ID']==$paytransId&&in_array($group['GROUP_ID'],$hgroups));
                 });
                 if (count($j)<1) {
                     //TODO: default route?
                     $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"No hierarchy defined for Form Type")); // no hierarchy
-                }
+                }*/
 
-                $hierarchy = array_shift($j); //get the first record
+                //$hierarchy = array_shift($j); //get the first record
+
                 $groups = $hierarchy['WORKFLOW_GROUPS'];
                 $groups_array = explode(",",$groups);
 

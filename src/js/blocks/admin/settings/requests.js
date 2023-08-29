@@ -1,10 +1,10 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Form, Row, Col, Table, ListGroup, Button } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { useSettingsContext } from "../../../app";
 import useGroupQueries from "../../../queries/groups";
 import { useWorkflowQueries } from "../../../queries/hierarchy";
-import { find, sortBy,truncate } from 'lodash';
+import { find, sortBy, truncate } from 'lodash';
 import { HierarchyChain } from "../../../pages/admin/hierarchy/request";
 import { Loading } from "../../components";
 
@@ -100,7 +100,7 @@ function SettingsRequestsDefaultRouting() {
 
     const filteredWorkflows = useMemo(() => workflows.data.filter(w => w.GROUPS_ARRAY.map(g=>g.GROUP_NAME.toLowerCase()).join(' ').includes(searchText.toLocaleLowerCase())),[searchText,workflows]);
     const selectedWorkflow = useCallback((workflowId) => workflows.data.filter(w=>w.WORKFLOW_ID==workflowId)[0],[workflows]);
-    const clearDefault = ()=>setValue('requests.workflow.default','');
+    const clearDefault = ()=>setValue('requests.defaultWorkflow','');
     return (
         <section>
             <Row as="header" className="mt-3">
@@ -115,7 +115,6 @@ function SettingsRequestsDefaultRouting() {
                             <Form.Label>Current Workflow: <Button title="Clear" variant="danger" style={{padding:'0.1rem 0.25rem',fontSize:'0.8rem'}} onClick={clearDefault}>X</Button></Form.Label>
                             <Controller
                                 name="requests.defaultWorkflow"
-                                defaultValue={undefined}
                                 control={control}
                                 render={({field}) => (
                                     <div className="border rounded p-3 bg-secondary-light">
@@ -134,7 +133,7 @@ function SettingsRequestsDefaultRouting() {
                     <Form.Row>
                         <Form.Group as={Col} sm={{offset:2}} controlId="workflowListGroup">
                         <Controller
-                            name="requests.workflow.default"
+                            name="requests.defaultWorkflow"
                             control={control}
                             render={({field}) => (
                                 <ListGroup className="border list-group-condensed list-group-scrollable-25">
@@ -163,6 +162,17 @@ function SettingsRequestsEmail() {
                 <Row as="header" className="mt-3">
                     <Col as="h4">Email Configuration</Col>
                 </Row>
+                <Form.Group as={Row} controlId="emailErrors">
+                    <Form.Label column md={2}>Errors Email:</Form.Label>
+                    <Col xs="auto">
+                        <Controller
+                            name='requests.email.errors'
+                            control={control}
+                            render={({field}) => <Form.Control {...field} type="email" placeholder="Enter Email Address" aria-describedby="emailErrorsHelp" />}
+                        />
+                        <Form.Text id="emailErrorsHelp" className="pt-1" muted>Email used when errors are encountered in the Request process</Form.Text>
+                    </Col>
+                </Form.Group>
                 <Form.Group as={Row} controlId="emailEnabled">
                     <Form.Label column md={2}>Enable Notifications:</Form.Label>
                     <Col xs="auto" className="pt-2">
@@ -201,32 +211,6 @@ function SettingsRequestsEmail() {
                             control={control}
                             render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Email Subject" disabled={!enabled} />}
                         />
-                    </Col>
-                </Form.Group>
-                <Form.Group as={Row} controlId="emailDefault">
-                    <Form.Label column md={2}>Default Email:</Form.Label>
-                    <Col xs="auto">
-                        <Controller
-                            name='requests.email.default'
-                            control={control}
-                            render={({field}) => <Form.Control {...field} type="email" placeholder="Enter Default To Email Address" aria-describedby="emailDefaultHelp" disabled={!enabled}/>}
-                        />
-                    </Col>
-                    <Col>
-                        <Form.Text id="emailDefaultHelp" className="pt-1" muted>Default email to send to when there are no approval group members or no members set to receive email notifications.</Form.Text>
-                    </Col>
-                </Form.Group>
-                <Form.Group as={Row} controlId="emailErrors">
-                    <Form.Label column md={2}>Errors Email:</Form.Label>
-                    <Col xs="auto">
-                        <Controller
-                            name='requests.email.errors'
-                            control={control}
-                            render={({field}) => <Form.Control {...field} type="email" placeholder="Enter Email Address" aria-describedby="emailErrorsHelp" disabled={!enabled}/>}
-                        />
-                    </Col>
-                    <Col>
-                        <Form.Text id="emailErrorsHelp" className="pt-1" muted>Email to send errors to.</Form.Text>
                     </Col>
                 </Form.Group>
             </section>

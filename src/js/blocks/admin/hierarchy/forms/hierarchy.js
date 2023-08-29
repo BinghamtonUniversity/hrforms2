@@ -4,7 +4,7 @@ import { useHierarchyQueries } from "../../../../queries/hierarchy";
 import useCodesQueries from "../../../../queries/codes";
 import useTransactionQueries from "../../../../queries/transactions";
 import { find, truncate, orderBy, difference, pick, intersection } from 'lodash';
-import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Badge } from "react-bootstrap";
+import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Badge, Button, ListGroup } from "react-bootstrap";
 import { Loading, errorToast, DescriptionPopover, AppButton } from "../../../../blocks/components";
 import { Icon } from "@iconify/react";
 import DataTable from 'react-data-table-component';
@@ -198,7 +198,8 @@ function HierarchyTable() {
                 onRowClicked={handleRowClick}
                 noDataComponent={<p className="m-3">No Form Hierarchies Found Matching Your Criteria</p>}
             />
-            {(selectedRow?.HIERARCHY_ID||isNew=='hierarchy') && <AddEditHierarchy {...selectedRow} setSelectedRow={setSelectedRow} isNew={isNew}/>}
+            {isNew && <AddEditHierarchy {...selectedRow} setSelectedRow={setSelectedRow} isNew={isNew}/>}
+            {selectedRow?.HIERARCHY_ID && <AddEditHierarchy {...selectedRow} setSelectedRow={setSelectedRow}/>}
             {deleteHierarchy?.HIERARCHY_ID && <DeleteHierarchy {...deleteHierarchy} setDeleteHierarchy={setDeleteHierarchy}/>}
         </>
     );
@@ -273,6 +274,7 @@ function AddEditHierarchy(props) {
         payroll: props.PAYROLL_CODE,
         formCode: props.PAYTRANS_ID,
         workflowId: props.WORKFLOW_ID||'',
+        workflowSearch: '',
         assignedGroups:props.HIERARCHY_GROUPS_ARRAY||[],
         availableGroups:[]
     }});
@@ -403,7 +405,7 @@ function AddEditHierarchy(props) {
                         </Row>
                         <Tabs activeKey={activeTab} onSelect={navigate} id="form-hierarchy-tabs">
                                 {tabs.map(t=>(
-                                    <Tab key={t.id} eventKey={t.id} title={t.title}>
+                                    <Tab key={t.id} eventKey={t.id} title={t.title} disabled={t.id=='hierarchy-groups'&&disableGroupsTab}>
                                         <Container className="mt-3" fluid>
                                             <TabRouter tab={activeTab}/>
                                         </Container>
@@ -431,10 +433,11 @@ const TabRouter = React.memo(({tab}) => {
 
 function HierarchyForm() {
     const [filter,setFilter] = useState([]);
-    const {control,getValues,formState:{errors}} = useFormContext();
-    const {workflows,isNew} = useContext(WorkflowContext);
-    const {payrolls,hierarchy} = useContext(HierarchyContext);
+    const { control, getValues, formState:{ errors }} = useFormContext();
+    const { isNew } = useContext(WorkflowContext);
+    const { payrolls, hierarchy } = useContext(HierarchyContext);
     const [watchPayroll,watchFormCode] = useWatch({name:['payroll','formCode']});
+
     useEffect(() => {
         const wfId = getValues('workflowId');
         const f = hierarchy.filter(h=>h.PAYTRANS_ID==watchFormCode).map(h=>h.WORKFLOW_ID).filter(w=>w!=wfId);
@@ -450,7 +453,7 @@ function HierarchyForm() {
                         control={control}
                         rules={{required:{value:true,message:'Payroll is required'}}}
                         render={({field}) => (
-                            <Form.Control {...field} as="select" disabled={!isNew} isInvalid={errors.posType}>
+                            <Form.Control {...field} as="select" disabled={!isNew} isInvalid={errors.payroll}>
                                 <option></option>
                                 {payrolls.map(p=>{
                                     return p.ACTIVE==1 && <option key={p.PAYROLL_CODE} value={p.PAYROLL_CODE}>{p.PAYROLL_TITLE}</option>
@@ -458,32 +461,11 @@ function HierarchyForm() {
                             </Form.Control>
                         )}
                     />
-                    <Form.Control.Feedback type="invalid">{errors.posType?.message}</Form.Control.Feedback>
+                    <Form.Control.Feedback type="invalid">{errors.payroll?.message}</Form.Control.Feedback>
                 </Form.Group>
             </Form.Row>
             <HierarchyFormFormCode payrollCode={watchPayroll}/>
-            <Form.Row>
-                <Form.Group as={Col} controlId="workflowId">
-                    <Form.Label>Workflow:</Form.Label>
-                    <Controller
-                        name="workflowId"
-                        control={control}
-                        render={({field}) => {
-                            if (!watchPayroll) return <p className="text-muted font-italic">Select A Payroll</p>;
-                            if (!watchFormCode) return <p className="text-muted font-italic">Select A Form</p>;
-                            if (filter.length==workflows.length) return <p className="text-muted font-italic mb-0">All available workflows assigned</p>;
-                            return (
-                                <Form.Control {...field} as="select">
-                                    <option value=""></option>
-                                    {workflows.map(w => !filter.includes(w.WORKFLOW_ID)&&<option key={w.WORKFLOW_ID} value={w.WORKFLOW_ID}>{w.WORKFLOW_ID}:{' '}
-                                        {truncate(w.GROUPS_ARRAY.map(g=>g.GROUP_NAME).join(' > '),{length:65,separator:' > '})}
-                                    </option>)}
-                                </Form.Control>
-                            );
-                        }}
-                    />
-                </Form.Group>
-            </Form.Row>            
+            <HierarchyFormWorkflow payrollCode={watchPayroll} formCode={watchFormCode} filter={filter}/>
         </>
     );
 }
@@ -506,7 +488,7 @@ function HierarchyFormFormCode({payrollCode}) {
                             {paytrans.isError && <p><Loading isError>Error Loading Forms</Loading></p>}
                             {paytrans.isLoading && <p><Loading>Loading Forms...</Loading></p>}
                             {payrollCode&&paytrans.data &&
-                                <Form.Control {...field} as="select" disabled={!isNew} isInvalid={errors.posType}>
+                                <Form.Control {...field} as="select" disabled={!isNew} isInvalid={errors.formCode}>
                                     <option></option>
                                     {paytrans.data&&paytrans.data.map(c=>(
                                         <option key={c.PAYTRANS_ID} value={c.PAYTRANS_ID}>{displayFormCode({variant:"list",separator:" | ",codes:[c.FORM_CODE,c.ACTION_CODE,c.TRANSACTION_CODE],titles:[c.FORM_TITLE,c.ACTION_TITLE,c.TRANSACTION_TITLE]})}</option>
@@ -516,11 +498,103 @@ function HierarchyFormFormCode({payrollCode}) {
                         </>
                     )}
                 />
-                <Form.Control.Feedback type="invalid">{errors.posType?.message}</Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">{errors.formCode?.message}</Form.Control.Feedback>
             </Form.Group>
         </Form.Row>
     );
 }
+
+function HierarchyFormWorkflow({payrollCode,formCode,filter}) {
+    const [searchText,setSearchText] = useState('');
+    const { control, setValue, formState:{ errors }} = useFormContext();
+    const { workflows } = useContext(WorkflowContext);
+
+    const searchWorkFlows = (e,field) => {
+        field.onChange(e.target.value);
+        setSearchText(e.target.value);
+    };
+
+    const filteredWorkflows = useMemo(() => {
+        return workflows.filter(w => !filter.includes(w.WORKFLOW_ID)&&w.GROUPS_ARRAY.map(g=>g.GROUP_NAME.toLowerCase()).join(' ').includes(searchText.toLocaleLowerCase()));
+    },[searchText,workflows,filter]);
+
+    const selectedWorkflow = useCallback((workflowId) => {
+        const w = workflows.filter(w=>w.WORKFLOW_ID==workflowId)[0];
+        return (!w)?{GROUPS_ARRAY:[],CONDITIONS:[]}:w;
+    },[workflows]);
+    const clearWorkflow = useCallback(() => {
+        setValue('workflowId','');
+    },[setValue]);
+
+    const listItemClick = (e,field) => {
+        e.preventDefault();
+        field.onChange(e.target.value);
+    };
+
+    if (!payrollCode) return <HierarchyRequiredFieldMessage><p className="text-muted font-italic">Select A Payroll</p></HierarchyRequiredFieldMessage>;
+    if (!formCode) return <HierarchyRequiredFieldMessage><p className="text-muted font-italic">Select A Form</p></HierarchyRequiredFieldMessage>;
+    if (filter.length==workflows.length) return <HierarchyRequiredFieldMessage><p className="text-muted font-italic mb-0">All available workflows assigned</p></HierarchyRequiredFieldMessage>;
+
+    return (
+        <>
+            <Form.Row>
+                <Form.Group as={Col} controlId="workflowId">
+                    <Form.Label>Current Workflow: <Button title="Clear" variant="danger" style={{padding:'0.1rem 0.25rem',fontSize:'0.8rem'}} onClick={clearWorkflow}>X</Button></Form.Label>
+                    <Controller
+                        name="workflowId"
+                        control={control}
+                        render={({field}) => (
+                            <div className="border rounded p-3 bg-secondary-light">
+                                {<HierarchyChain list={selectedWorkflow(field.value)?.GROUPS_ARRAY} conditions={selectedWorkflow(field.value)?.CONDITIONS}/>}
+                            </div>
+                        )}
+                    />
+                </Form.Group>
+            </Form.Row>
+            <Form.Row>
+                <Form.Group as={Col} controlId="workflowSearch">
+                    <Form.Label>Workflow Search:</Form.Label>
+                    <Controller
+                        name="workflowSearch"
+                        control={control}
+                        render={({field}) => (
+                            <Form.Control {...field} type="search" placeholder="search workflows..." onChange={e=>searchWorkFlows(e,field)}/>
+                        )}
+                    />
+                </Form.Group>
+            </Form.Row>
+            <Form.Row>
+                <Form.Group as={Col} controlId="workflowListGroup">
+                <Controller
+                    name="workflowId"
+                    control={control}
+                    render={({field}) => (
+                        <ListGroup className="border list-group-condensed list-group-scrollable-25">
+                            {filteredWorkflows.map(w =>( 
+                                <ListGroup.Item key={w.WORKFLOW_ID} action active={field.value==w.WORKFLOW_ID} onClick={e=>listItemClick(e,field)} value={w.WORKFLOW_ID}>{w.WORKFLOW_ID}:{' '}
+                                    {truncate(w.GROUPS_ARRAY.map(g=>g.GROUP_NAME).join(' > '),{length:70,separator:' > '})}
+                                </ListGroup.Item>))
+                            }
+                        </ListGroup>
+                    )}
+                />
+                </Form.Group>
+            </Form.Row>
+        </>
+    );
+}
+
+function HierarchyRequiredFieldMessage({children}) {
+    return (
+        <Form.Row>
+            <Form.Group as={Col}>
+                <Form.Label>Workflow:</Form.Label>
+                {children}
+            </Form.Group>
+        </Form.Row>
+    );
+}
+
 
 function HierarchyGroups() {
     const ref = useRef();

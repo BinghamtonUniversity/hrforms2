@@ -15,6 +15,7 @@ Bug fixes, enhancements and things still to complete.
   * Search for "console.log" in files
   * Search for "TODO" in files
   * Use Helmet to change the title of the page
+  * Admin: Add default hierarchy routing in settings - Default hierarchy to HR and send error notice.
   * Archive - Request|Form: Should save groups, hierarchy, and workflow
   * Request|Form: Control who can view/edit based on status (see TODO in file)
   * Add CSS for printing
@@ -25,7 +26,6 @@ Bug fixes, enhancements and things still to complete.
   * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
   
 ## Tasks: 
-  * Admin: Add default hierarchy routing in settings - Default hierarchy to HR and send error notice.
   * Admin: Admin users should be able to query journal of any request or form.
   * CHECK: Users who are inactive should not be included in the email list.[DONE?]
   * Change queries to use Global ID?

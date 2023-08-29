@@ -97,12 +97,36 @@ class Hierarchy extends HRForms2 {
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					if ($this->req[1] == 'group') {
+						$hgroups = explode(',',$row['HIERARCHY_GROUPS']);
+						if (!in_array($this->req[2],$hgroups)) continue;
+					}
 					$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
 					unset($row['CONDITIONS']);
 					$row['CONDITIONS'] = json_decode($conditions);
 					$this->_arr[] = $row;
 				}
 				oci_free_statement($stmt);
+
+				// get default when selecting for group:
+				if ($this->req[1] == 'group') {
+					$qry = "select 0 as HIERARCHY_ID,w.workflow_id, w.groups as WORKFLOW_GROUPS, 
+						'N' as SENDTOGROUP, w.conditions
+						from hrforms2_forms_workflow w
+						left join (select * from hrforms2_groups) g on (g.group_id = :id)
+						where w.workflow_id = (select s.settings.forms.defaultWorkflow from hrforms2_settings s)";
+					$stmt = oci_parse($this->db,$qry);
+					if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $id);
+					$r = oci_execute($stmt);
+					if (!$r) $this->raiseError();
+					while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+						$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
+						unset($row['CONDITIONS']);
+						$row['CONDITIONS'] = json_decode($conditions);
+						$this->_arr[] = $row;
+					}
+					oci_free_statement($stmt);
+				}
 				break;
 			default:
 				$this->raiseError(E_BAD_REQUEST);

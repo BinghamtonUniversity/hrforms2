@@ -42,7 +42,7 @@ class Workflow extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		$qry = "select * from $this->table";
+		$qry = "select * from $this->table order by workflow_id";
 		if (isset($this->req[1])) $qry .= " where workflow_id = :id";
 		$stmt = oci_parse($this->db,$qry);
 		if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $this->req[1]);

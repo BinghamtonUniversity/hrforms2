@@ -182,21 +182,19 @@ class Requests extends HRForms2 {
                 //get hierarchy for group
                 $h = (new hierarchy(array('request','group',$group['GROUP_ID']),false))->returnData;
                 $idx = array_search($this->POSTvars['posType']['id'],array_column($h,'POSITION_TYPE'));
-                if (!$idx) {
+                if ($idx===false) {
                     // get default (hiearchy_id = 0); if no default raise error
                     $idx = array_search('0',array_column($h,'HIERARCHY_ID'));
-                    if (!$idx) {
+                    if ($idx===false) {
                         // send error message
-                        $message = "An attempt to submit a Posoition Request failed due to no hierarchy and no default routing configured.  Information about the request is below.<br>";
-                        foreach($this->POSTvars as $key => $val) {
-                            $message .= "<strong>$key</strong> = ";
-                            if (gettype($val) == 'array') {
-                                $message .= implode(', ',$val);
-                            } else {
-                                $message .= $val;
-                            }
-                            $message .= "<br>";
-                        }
+                        $message = "An attempt to submit a Position Request failed due to no hierarchy and no default routing configured.  Information about the request is below.<br>";
+                        $message .= "<pre>";
+                        ob_start();
+                        //TODO: need to selectively print values.
+                        print_r($this->POSTvars);
+                        $message .= ob_get_contents();
+                        ob_end_clean();
+                        $message .= "</pre>";
                         $message .= "<p>User Information:</p>";
                         foreach($group as $key => $val) {
                             $message .= "<strong>$key</strong> = ";
@@ -211,7 +209,7 @@ class Requests extends HRForms2 {
                         $this->sendError($message,'HRForms2 Error: No Default Request Workflow');
                         $this->raiseError(E_BAD_REQUEST,array('errMsg'=>'No Request Hierarchy Found.  No Default Workflow Set.'));
                     }
-                    // send "warning" message
+                    // TODO: send "warning" message; needed to use the default
 
                     $hierarchy = $h[$idx];
                 } else {
