@@ -59,10 +59,6 @@ function AdminSettingsTabs({settingsData}) {
     const handleError = error => {
         console.error(error);
     }
-    useEffect(() => {
-        console.log(methods.formState.dirtyFields);
-    },[methods.formState]);
-
     useEffect(()=>setActiveTab(tabs.map(t=>t.id).includes(subpage)?subpage:'general'),[subpage]);
     return (
         <>
