@@ -380,7 +380,7 @@ function AddEditUserForm(props) {
             firstName:props.LEGAL_FIRST_NAME||'',
             lastName:props.LEGAL_LAST_NAME||'',
             email:props.email||'',
-            notifications:props.NOTIFICATIONS,
+            notifications:props.NOTIFICATIONS||'N',
             dept:props.REPORTING_DEPARTMENT_NAME||'No Department',
             deptGroupId:props.GROUP_ID||'',
             deptGroup:props.GROUP_NAME||'N/A',
@@ -474,14 +474,14 @@ function AddEditUserForm(props) {
                     const filtered = groupsData.filter(g=>!assignedIds.includes(g.GROUP_ID));
                     methods.reset({
                         SUNYID:props.SUNY_ID,
-                        bNumber:props.B_NUMBER,
-                        firstName:props.LEGAL_FIRST_NAME,
-                        lastName:props.LEGAL_LAST_NAME,
+                        bNumber:props.B_NUMBER||'',
+                        firstName:props.LEGAL_FIRST_NAME||'',
+                        lastName:props.LEGAL_LAST_NAME||'',
                         dept:props.REPORTING_DEPARTMENT_NAME||'',
                         deptGroupId:props.GROUP_ID||'',
                         deptGroup:props.GROUP_NAME||'',
-                        email:props.email,
-                        notifications:props.NOTIFICATIONS,
+                        email:props.email||'',
+                        notifications:props.NOTIFICATIONS||'N',
                         startDate: props.startDate,
                         endDate: props.endDate,
                         assignedGroups:usergroupData,
@@ -541,7 +541,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
         spin:false
     };
     const { control, watch, reset, getValues, setValue, setError, formState: { errors } } = useFormContext();
-    const sunyid = watch('SUNYID');
+    const watchSUNYID = watch('SUNYID');
 
     const [lookupState,setLookupState] = useReducer((state,action) => {
         switch(action) {
@@ -554,18 +554,18 @@ function UserInfo({newUser,setStatus,closeModal}) {
     },lookupStateDefault);
 
     const queryclient = useQueryClient();
-    const {lookupUser} = useUserQueries(sunyid);
+    const {lookupUser} = useUserQueries(watchSUNYID);
     const lookupuser = lookupUser({enabled:false});
     const ref = useRef();
     
     const handleLookup = () => {
-        if (!sunyid) {
+        if (!watchSUNYID) {
             setLookupState('invalid');
             setStatus({save:false});
             setError("SUNYID",{type:'required',message:'You must enter a SUNY ID'});
             return;
         }
-        const userExists = queryclient.getQueryData('users').find(u=>u.SUNY_ID==sunyid);
+        const userExists = queryclient.getQueryData('users').find(u=>u.SUNY_ID==watchSUNYID);
         if (userExists) {
             setLookupState('invalid');
             setStatus({save:false});
@@ -587,7 +587,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
                 setError("SUNYID",{type:'manual',message:'Invalid SUNY ID'});
                 return false;    
             }
-            if (!userData.data.SUNY_ID) {
+            if (!userData.SUNYHR_SUNY_ID) {
                 setLookupState('error');
                 setStatus({save:false});
                 setError("SUNYID",{type:'manual',message:'SUNY ID Not Found'});
@@ -596,12 +596,12 @@ function UserInfo({newUser,setStatus,closeModal}) {
             setLookupState('valid');
             setStatus({save:true});
             reset(Object.assign({},defaultVals,{
-                SUNYID:userData.SUNY_ID||'',
+                SUNYID:userData.SUNYHR_SUNY_ID||'',
                 bNumber:userData.B_NUMBER||'',
                 firstName:userData.LEGAL_FIRST_NAME||'',
                 lastName:userData.LEGAL_LAST_NAME||'',
                 email:userData.EMAIL_ADDRESS_WORK||'',
-                notifications:userData.NOTIFICATIONS,
+                notifications:(!userData.EMAIL_ADDRESS_WORK)?'N':userData.NOTIFICATIONS,
                 dept:userData.REPORTING_DEPARTMENT_NAME||'',
                 deptGroupId:userData.GROUP_ID||'',
                 deptGroup:userData.GROUP_NAME||'',
@@ -625,7 +625,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
         }
         if (e.key == 'Escape') {
             e.preventDefault();
-            if (!sunyid) {
+            if (!watchSUNYID) {
                 closeModal();
             } else {
                 setLookupState('clear');
@@ -711,9 +711,11 @@ function UserInfo({newUser,setStatus,closeModal}) {
                     <Form.Label>Email Notifications:</Form.Label>
                     <Controller
                         name="notifications"
-                        defaultValue=""
+                        defaultValue="N"
                         control={control}
-                        render={({field}) => <Form.Check {...field} type="checkbox" onChange={e=>handleCheck(e,field)} value="Y" checked={field.value=="Y"} aria-describedby="notificationHelp"/>}
+                        render={({field}) => {
+                            return <Form.Check {...field} type="checkbox" onChange={e=>handleCheck(e,field)} value="Y" checked={field.value=="Y"} disabled={!getValues('email')} aria-describedby="notificationHelp"/>;
+                        }}
                     />
                     <Form.Text id="notificationHelp" muted>Users in approval groups will receive email notification when a new approval is assigned to the group.</Form.Text>
                 </Form.Group>
@@ -747,7 +749,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
                             defaultValue=""
                             control={control}
                             rules={{required:{value:true,message:'Start Date is required'}}}
-                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.startDate} disabled={sunyid==SUNY_ID}/>}
+                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.startDate} disabled={watchSUNYID==SUNY_ID}/>}
                         />
                         <InputGroup.Append>
                             <InputGroup.Text>
@@ -764,7 +766,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
                             name="endDate"
                             defaultValue=""
                             control={control}
-                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} disabled={sunyid==SUNY_ID} autoComplete="off"/>}
+                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} disabled={watchSUNYID==SUNY_ID} autoComplete="off"/>}
                         />
                         <InputGroup.Append>
                             <InputGroup.Text>
