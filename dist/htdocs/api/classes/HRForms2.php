@@ -28,12 +28,6 @@ Class HRForms2 {
 	protected $userData = array();
 	public $returnData;
 
-	protected $BASE_PERSEMP_FIELDS = "suny_id,regexp_substr(b_number,'(B[0-9]{8})',1,1,'i',1) as b_number,legal_last_name,legal_first_name,legal_middle_name,alias_first_name,
-	email_address_work,title_description,campus_title,derived_fac_type,card_affil,negotiating_unit,salary_grade,
-	appointment_type,appointment_effective_date,appointment_end_date,appointment_percent,continuing_permanency_date,
-	reporting_department_code,reporting_department_name,
-	supervisor_suny_id,supervisor_last_name,supervisor_first_name";	
-
 	function init(array $args = array()) {
 		$this->AppPath = $_SERVER['DOCUMENT_ROOT'];
 		// Set Allow response header indicating what methods are allowed.
@@ -174,22 +168,6 @@ Class HRForms2 {
 		return $this->sessionData;
 	}
 
-	// may not need this; call new User instead...
-	protected function userInfo() {
-		// do query, if no results get saved data from user table.  If results, update user table data.
-		if (isset($this->userData)) return $this->userData;
-		$qry = "select ".$this->BASE_PERSEMP_FIELDS.", r.recent_campus_date
-		from buhr.buhr_persemp_mv@banner.cc.binghamton.edu p
-		left join (select suny_id as recent_suny_id, recent_campus_date from buhr.buhr_general_info_mv@banner.cc.binghamton.edu) r on (r.recent_suny_id = p.suny_id)
-		where p.role_status = 'C' and p.suny_id = :suny_id";
-        $stmt = oci_parse($this->db,$qry);
-        oci_bind_by_name($stmt, ":sid", $this->sessionData['SUNY_ID']);
-        oci_execute($stmt);
-        $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-		$this->userData = (!$row)?array():array_merge($this->userData,$row);
-		return $this->userData;
-	}
-
   	protected function notAllowed() {
 		$this->raiseError(E_METHOD_NOT_ALLOWED);
 	}
@@ -305,6 +283,16 @@ Class HRForms2 {
 			array_push($arr,$user['EMAIL_ADDRESS_WORK']);
 		}
 		return $arr;
+	}
+
+	/**
+	 * Returns an array of email addresses for users from a group
+	 * @param string|int $id - a GROUP_ID
+	 * @return array
+	 */
+	protected function getGroupEmails($ids) {
+		$groupusers = (new groupusers(array($id),false))->returnData;
+		return array();
 	}
 
 	function sendError($message,$subject="HRForms2 Error") {

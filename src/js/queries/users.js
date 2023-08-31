@@ -44,6 +44,7 @@ export default function useUserQueries(SUNY_ID) {
                 d.endDateUnix = d.END_DATE && format(d.endDate,'t');
                 d.active = !(d.END_DATE&&d.endDateUnix<Date.now());
                 d.userOptions = d.USER_OPTIONS&&JSON.parse(d.USER_OPTIONS);
+                d.NOTIFICATIONS = (!d.EMAIL_ADDRESS_WORK)?'N':d.NOTIFICATIONS;
             });
             return (options.select2)?options.select2(data):data;
         };

@@ -12,6 +12,12 @@ NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 class User extends HRForms2 {
 	private $_arr = array();
 
+	protected $BASE_PERSEMP_FIELDS = "suny_id as SUNYHR_SUNY_ID,regexp_substr(b_number,'(B[0-9]{8})',1,1,'i',1) as b_number,legal_last_name,legal_first_name,legal_middle_name,alias_first_name,
+	email_address_work,title_description,campus_title,derived_fac_type,card_affil,negotiating_unit,salary_grade,
+	appointment_type,appointment_effective_date,appointment_end_date,appointment_percent,continuing_permanency_date,
+	reporting_department_code,reporting_department_name,
+	supervisor_suny_id,supervisor_last_name,supervisor_first_name";	
+
 	function __construct($req,$rjson=true) {
 		$this->allowedMethods = "GET,POST,PUT,PATCH,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
 		$this->reqAuth = true; //default: true - NB: See note above
@@ -68,10 +74,11 @@ class User extends HRForms2 {
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
 		if (!isset($this->req[0])) {
-			$qry = "select p.*, u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date,
+			$qry = "select u.suny_id, p.*,
+				u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date,
 				d.group_id, g.group_name, u.user_options.notifications
 			from hrforms2_users u
-			left join (select distinct ".$this->BASE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.suny_id)
+			left join (select distinct ".$this->BASE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.sunyhr_suny_id)
 			left join (select department_code, group_id from hrforms2_group_departments) d on (p.REPORTING_DEPARTMENT_CODE = d.DEPARTMENT_CODE)
 			left join (select group_id, group_name from hrforms2_groups) g on (d.group_id = g.group_id)";
 			$stmt = oci_parse($this->db,$qry);
@@ -105,8 +112,10 @@ class User extends HRForms2 {
 			// User does not exist
 			if (!$existing) {
 				$this->_arr = $this->getSUNYHRUser();
-				if (!$this->_arr) $this->raiseError(E_BAD_REQUEST,array('errMsg'=>'SUNY ID Not Found'));
-				// done; return JSON
+				if (!$this->_arr) {
+					//if (!$this->retJSON) return;
+					$this->raiseError(E_BAD_REQUEST,array('errMsg'=>'SUNY ID Not Found'));
+				}
 
 			// User exists
 			} else {
@@ -125,6 +134,7 @@ class User extends HRForms2 {
 						
 					} else { // user does not have user_info
 						if ($end_diff > 259200) { // user ended more than 6 months ago
+								if (!$this->retJSON) return;
 								// User is Inactive, does not have user_info, and was ended more than 6 months ago.
 								$message = "The SUNY ID <strong>" . $this->req[0] . "</strong> does not have cached information and was ended more than 6 months ago.  Will not update cached information";
 								$this->sendError($message,'HRForms2 Error: Old User With No Data');
@@ -133,9 +143,10 @@ class User extends HRForms2 {
 							$this->_arr = $this->getSUNYHRUser();
 							if (!$this->_arr) {
 								// User is Inactive, does not have user_info, and does not have SUNY HR data; User DNE
+								if (!$this->retJSON) return;
 								$message = "The SUNY ID <strong>" . $this->req[0] . "</strong> does not exist in SUNY HR, but exists in HRForms2.  Cannot update cached information.";
 								$this->sendError($message,'HRForms2 Error: Missing SUNY ID in SUNY HR');
-								$this->raiseError(E_NOT_FOUND);	
+								$this->raiseError(E_NOT_FOUND);
 							} else {
 								$this->updateUserInfo($this->_arr);
 							}
