@@ -78,7 +78,7 @@ function SettingsRequestsDefaultRouting() {
 
     const { getGroups } = useGroupQueries();
     const { getWorkflow } = useWorkflowQueries('request');
-    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME'])});
+    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME']),initialData:[]});
     const workflows = getWorkflow({
         enabled:!!groups.data,
         select:d=>{
@@ -154,6 +154,8 @@ function SettingsRequestsDefaultRouting() {
 }
 
 function SettingsRequestsEmail() {
+    const { getGroups } = useGroupQueries();
+    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME']),initialData:[]});
     const { control } = useFormContext();
     const enabled = useWatch({name:'requests.email.enabled',control:control});
     return (
@@ -171,6 +173,22 @@ function SettingsRequestsEmail() {
                             render={({field}) => <Form.Control {...field} type="email" placeholder="Enter Email Address" aria-describedby="emailErrorsHelp" />}
                         />
                         <Form.Text id="emailErrorsHelp" className="pt-1" muted>Email used when errors are encountered in the Request process</Form.Text>
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row} controlId="emailErrors">
+                    <Form.Label column md={2}>Errors Group:</Form.Label>
+                    <Col xs="auto">
+                        <Controller
+                            name='requests.email.errorsGroup'
+                            control={control}
+                            render={({field}) => (
+                                <Form.Control as="select" {...field} aria-describedby="emailErrorsGroupHelp">
+                                    <option></option>
+                                    {groups.data.map(g=><option value={g.GROUP_ID} key={g.GROUP_ID}>{g.GROUP_NAME}</option>)}
+                                </Form.Control>
+                            )}
+                        />
+                        <Form.Text id="emailErrorsGroupHelp" className="pt-1" muted>Group notified when errors are encountered in the Request process</Form.Text>
                     </Col>
                 </Form.Group>
                 <Form.Group as={Row} controlId="emailEnabled">
