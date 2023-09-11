@@ -100,8 +100,9 @@ class Requests extends HRForms2 {
             $last_journal = (count($journal) == 0)?$submitter:array_pop($journal);
             unset($last_journal['COMMENTS']); // We don't need commments
             if (!(in_array($last_journal['GROUP_TO'],array_column($usergroups,'GROUP_ID'))) && 
-                !($submitter['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID'])) {
-                    $this->raiseError(403);
+                !($submitter['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID'])
+            ) {
+                if (!($this->sessionData['isAdmin'] && $this->sessionData['OVR_SUNY_ID'] == "")) $this->raiseError(E_NOT_FOUND);
             }
             if ($last_journal['STATUS'] != 'Z') {
                 $qry = "select REQUEST_DATA from HRFORMS2_REQUESTS where REQUEST_ID = :request_id";

@@ -79,7 +79,8 @@ class Journal extends HRForms2 {
 
     private function validateUser() {
         // If isAdmin and not impersonating short-circuit return true;
-        //TODO:if ($this->sessionData['isAdmin'] && $this->sessionData['OVR_SUNY_ID'] == "") return true;
+        //TODO: also need to allow /requests/{id} and /forms/{id}
+        if ($this->sessionData['isAdmin'] && $this->sessionData['OVR_SUNY_ID'] == "") return true;
 
         $qry = "select 1
             from ".$this->k['journal']."
@@ -114,7 +115,7 @@ class Journal extends HRForms2 {
             // Verify the ID is valid/exists
             if (!$this->validateID()) $this->raiseError(E_NOT_FOUND);
             // Verify effective user is permitted to access information
-            if (!$this->validateUser()) $this->raiseError(E_FORBIDDEN);
+            if (!$this->validateUser()) $this->raiseError(E_NOT_FOUND);
         }
 	}
 
