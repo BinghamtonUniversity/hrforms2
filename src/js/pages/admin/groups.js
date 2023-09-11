@@ -443,6 +443,7 @@ function AddEditGroupForm(props) {
                 ]).then(([{data:groupuserData},{data:groupdeptData}]) => {
                     const assignedIds = groupuserData.map(u=>u.SUNY_ID);
                     const filtered = usersData.filter(u=>!assignedIds.includes(u.SUNY_ID));
+                    const filteredAvailable = usersData.filter(u=>!assignedIds.includes(u.SUNY_ID)&&u.LEGAL_LAST_NAME!=null);
                     methods.reset({
                         groupId: props.GROUP_ID,
                         groupName: props.GROUP_NAME,
@@ -450,7 +451,7 @@ function AddEditGroupForm(props) {
                         startDate: props.startDate,
                         endDate: props.endDate,
                         assignedUsers:groupuserData,
-                        availableUsers:filtered,
+                        availableUsers:filteredAvailable,
                         filteredUsers:filtered,
                         assignedDepts:groupdeptData,
                         availableDepts:deptData

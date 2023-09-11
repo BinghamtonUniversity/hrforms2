@@ -48,7 +48,18 @@ class GroupUsers extends HRForms2 {
 				$user = (new user(array($row['USER_SUNY_ID']),false))->returnData[0];
 				$row = array_merge($row,$user);
 			}
-			if (!isset($row['SUNY_ID'])) continue; // no user data returned
+			if (!isset($row['SUNY_ID'])) {
+				if (!isset($row['USER_SUNY_ID'])) continue;
+				$row['SUNY_ID'] = $row['USER_SUNY_ID'];
+				$row['LEGAL_FIRST_NAME'] = $row['USER_SUNY_ID'];
+				$row['LEGAL_LAST_NAME'] = null;
+			}
+			/*if (!isset($row['SUNY_ID'])) {
+				$row['SUNY_ID'] = $row['USER_SUNY_ID'];
+				$row['LEGAL_FIRST_NAME'] = null;
+				$row['LEGAL_LAST_NAME'] = null;
+				//continue; // no user data returned
+			}*/
 			$this->_arr[] = $row;
 		}
 		oci_free_statement($stmt);
