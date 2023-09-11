@@ -91,6 +91,7 @@ export const defaultVals = {
             "subject": "Requests",
             "default": "",
             "errors": "",
+            "errorsGroup":"",
             "status": {
                 "S": {
                     "subject": "Submitted",
@@ -180,6 +181,7 @@ export const defaultVals = {
             "subject": "Forms",
             "default": "",
             "errors": "",
+            "errorsGroup":"",
             "status": {
                 "S": {
                     "subject": "Submitted",

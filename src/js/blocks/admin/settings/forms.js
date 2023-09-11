@@ -8,7 +8,6 @@ import { find, sortBy, truncate } from 'lodash';
 import { HierarchyChain } from "../../../pages/admin/hierarchy/request";
 import { Loading } from "../../components";
 
-
 export default function SettingsForms() {
     const { control } = useFormContext();
     const menuFields = useWatch({name:'forms.menu',control:control});
@@ -79,7 +78,7 @@ function SettingsFormsDefaultRouting() {
 
     const { getGroups } = useGroupQueries();
     const { getWorkflow } = useWorkflowQueries('form');
-    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME'])});
+    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME']),initialData:[]});
     const workflows = getWorkflow({
         enabled:!!groups.data,
         select:d=>{
@@ -155,6 +154,8 @@ function SettingsFormsDefaultRouting() {
 }
 
 function SettingsFormsEmail() {
+    const { getGroups } = useGroupQueries();
+    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME']),initialData:[]});
     const { control } = useFormContext();
     const enabled = useWatch({name:'forms.email.enabled',control:control});
     return (
@@ -172,6 +173,22 @@ function SettingsFormsEmail() {
                             render={({field}) => <Form.Control {...field} type="email" placeholder="Enter Email Address" aria-describedby="emailErrorsHelp" />}
                         />
                         <Form.Text id="emailErrorsHelp" className="pt-1" muted>Email used when errors are encountered in the Forms process</Form.Text>
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row} controlId="emailErrors">
+                    <Form.Label column md={2}>Errors Group:</Form.Label>
+                    <Col xs="auto">
+                        <Controller
+                            name='forms.email.errorsGroup'
+                            control={control}
+                            render={({field}) => (
+                                <Form.Control as="select" {...field} aria-describedby="emailErrorsGroupHelp">
+                                    <option></option>
+                                    {groups.data.map(g=><option value={g.GROUP_ID} key={g.GROUP_ID}>{g.GROUP_NAME}</option>)}
+                                </Form.Control>
+                            )}
+                        />
+                        <Form.Text id="emailErrorsGroupHelp" className="pt-1" muted>Group notified when errors are encountered in the Request process</Form.Text>
                     </Col>
                 </Form.Group>
                 <Form.Group as={Row} controlId="emailEnabled">
