@@ -201,7 +201,7 @@ function AddEditWorkflow(props) {
         workflowId:props.WORKFLOW_ID,
         assignedGroups:props.GROUPS_ARRAY||[],
         conditions:props.CONDITIONS||[],
-        sendToGroup:props.SENDTOGROUP
+        sendToGroup:(isNew)?'Y':props.SENDTOGROUP
     }});
 
     const handleSubmit = data => {
