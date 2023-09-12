@@ -31,7 +31,7 @@ export default function ReviewEmploymentSalary() {
                 {(!salary.SUNY_ACCOUNTSSplit) && 
                     <>
                         <Col as="dt" md={2} className="mb-0">Account:</Col>
-                        <Col as="dd" md={4} className="mb-0">{salary.SUNY_ACCOUNTS[0].account[0].label}</Col>
+                        <Col as="dd" md={4} className="mb-0">{salary.SUNY_ACCOUNTS?.at(0)?.account?.at(0)?.label}</Col>
                     </>
                 }
                 {(salary.SUNY_ACCOUNTSSplit) && 
