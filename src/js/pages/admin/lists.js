@@ -364,7 +364,7 @@ function ListRunSQL({runSQL}) {
                     <Col>
                         {results.isLoading&&<p>Loading...</p>}
                         {results.isError&&<p>Error Loading</p>}
-                        {results.data && <pre>{JSON.stringify(results.data.slice(0,19))}</pre>}
+                        {results.data && <pre>{JSON.stringify(results.data.slice(0,19),null,2)}</pre>}
                     </Col>
                 </Row>
             </article>
