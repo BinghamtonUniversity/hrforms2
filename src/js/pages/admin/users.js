@@ -4,7 +4,7 @@ import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
 import useSessionQueries from "../../queries/session";
 import { Loading, ModalConfirm, AppButton, errorToast, DescriptionPopover } from "../../blocks/components";
-import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, Button } from "react-bootstrap";
+import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { orderBy, sortBy, difference, capitalize, startsWith } from "lodash";
 import DataTable from 'react-data-table-component';
@@ -173,24 +173,37 @@ function UsersTable({users,newUser,setNewUser}) {
                 width={25}
                 content={
                     <dl>
-                        <dt className="mb-1 float-left">SUNY ID:</dt>
+                        <dt className="mb-1 float-left pr-1">SUNY ID:</dt>
                         <dd className="mb-1">{row.SUNY_ID}</dd>
-                        <dt className="mb-1 float-left">B#:</dt>
+                        <dt className="mb-1 float-left pr-1">B#:</dt>
                         <dd className="mb-1">{row.B_NUMBER}</dd>
-                        <dt className="mb-1 float-left">Name:</dt>
+                        <dt className="mb-1 float-left pr-1">Name:</dt>
                         <dd className="mb-1">{row.fullName}</dd>
-                        <dt className="mb-1 float-left">Email:</dt>
+                        <dt className="mb-1 float-left pr-1">Email:</dt>
                         <dd className="mb-1">{row.email}</dd>
+                        <dt className="mb-1 float-left pr-1">Last Refresh:</dt>
+                        <dd className="mb-1">{row.refreshDateFmt}</dd>
                     </dl>
                 }
             >
                 <Icon className="iconify-inline" icon="mdi:clipboard-account" width={24} height={24}/>
             </DescriptionPopover> {row.sortName}</div>
-        ),sortable:true,sortField:'sortName'},
+        ),sortable:true,sortField:'sortName',minWidth:'15rem'},
         {name:'Email',selector:row=>row.email,sortable:true,sortField:'email'},
         {name:'Dept Group',selector:row=>row.GROUP_NAME,sortable:true},
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
-        {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
+        {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'},
+        {name:'Last Refresh',selector:row=>{
+            if (!row.refreshDateUnix) return <em>never</em>;
+            return (
+                <div><DescriptionPopover
+                    id={`${row.SUNY_ID}_refresh_date`}
+                    content={<p className="m-0 p-1">{row.refreshDateFmt}</p>}
+                >
+                    <div>{row.refreshDateDuration} ago</div>
+                </DescriptionPopover></div>
+            );
+        },sortable:true,sortField:'refreshDateUnix'}
     ],[users,SUNY_ID]);
 
     const actionsMemo = useMemo(() => {
@@ -292,7 +305,7 @@ function ImpersonateUser({user,setImpersonateUser}) {
     );
 }
 
-function ToggleUser({user,setToggleUser}) {
+function ToggleUser({user}) {
     const {patchUser} = useUserQueries(user.SUNY_ID);
     const queryclient = useQueryClient();
     const update = patchUser();
@@ -385,7 +398,8 @@ function AddEditUserForm(props) {
             deptGroupId:props.GROUP_ID||'',
             deptGroup:props.GROUP_NAME||'N/A',
             startDate: props.startDate||new Date(),
-            endDate: props.endDate||''
+            endDate: props.endDate||'',
+            refreshDate: props.refreshDateFmt||'never'
         })
     });
     const [firstName,lastName] = methods.watch(['firstName','lastName']);
@@ -484,6 +498,7 @@ function AddEditUserForm(props) {
                         notifications:props.NOTIFICATIONS||'N',
                         startDate: props.startDate,
                         endDate: props.endDate,
+                        refreshDate: props.refreshDateFmt||'never',
                         assignedGroups:usergroupData,
                         availableGroups:filtered
                     });
@@ -603,6 +618,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
                 email:userData.EMAIL_ADDRESS_WORK||'',
                 notifications:(!userData.EMAIL_ADDRESS_WORK)?'N':userData.NOTIFICATIONS,
                 dept:userData.REPORTING_DEPARTMENT_NAME||'',
+                refreshDate: userData.refreshDateFmt||'never',
                 deptGroupId:userData.GROUP_ID||'',
                 deptGroup:userData.GROUP_NAME||'',
             }));
@@ -714,7 +730,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
                         defaultValue="N"
                         control={control}
                         render={({field}) => {
-                            return <Form.Check {...field} type="checkbox" onChange={e=>handleCheck(e,field)} value="Y" checked={field.value=="Y"} disabled={!getValues('email')} aria-describedby="notificationHelp"/>;
+                            return <Form.Check {...field} className="ml-2" type="checkbox" inline onChange={e=>handleCheck(e,field)} value="Y" checked={field.value=="Y"} disabled={!getValues('email')} aria-describedby="notificationHelp"/>;
                         }}
                     />
                     <Form.Text id="notificationHelp" muted>Users in approval groups will receive email notification when a new approval is assigned to the group.</Form.Text>
@@ -776,6 +792,11 @@ function UserInfo({newUser,setStatus,closeModal}) {
                     </InputGroup>
                 </Form.Group>
             </Form.Row>
+            <Row>
+                <Col>
+                    <p className="font-size-90 font-italic m-0 mt-3 mb-1">Last Refresh: {getValues('refreshDate')}</p>
+                </Col>
+            </Row>
         </>
     );
 }
