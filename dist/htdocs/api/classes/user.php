@@ -39,12 +39,17 @@ class User extends HRForms2 {
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
 		$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-		if (isset($row['SUNY_ID'])) $row['USER_OPTIONS'] = (is_object($row['USER_OPTIONS']))?$row['USER_OPTIONS']->load():null;
+		if (isset($row['SUNYHR_SUNY_ID'])) $row['USER_OPTIONS'] = json_decode((is_object($row['USER_OPTIONS']))?$row['USER_OPTIONS']->load():"",true);
 		oci_free_statement($stmt);
 		return $row;
 	}
 
 	private function updateUserInfo($data) {
+		// Remove USER_OPTIONS and REFRESH_DATE from $data
+		unset($data['USER_OPTIONS']);
+		unset($data['REFRESH_DATE']);
+		// Add SUNY_ID if not set
+		if (!isset($data['SUNY_ID'])) $data['SUNY_ID'] = $data['SUNYHR_SUNY_ID'];
 		$qry = "update HRFORMS2_USERS set 
 		refresh_date = sysdate, user_info = EMPTY_CLOB() 
 		where suny_id = :suny_id
@@ -66,8 +71,8 @@ class User extends HRForms2 {
 	 */
 	function validate() {
 		if (!isset($this->req[0]) && !$this->sessionData['isAdmin']) $this->raiseError(400);
-		// req[0] == session user SUNY ID unless admin; only admin can get other SUNYID
-		if ($this->method != "GET" && !$this->sessionData['isAdmin']) $this->raiseError(403);
+		//need to allow non-admin users to query user data
+		//if ($this->method != "GET" && !$this->sessionData['isAdmin']) $this->raiseError(403);
 		if ($this->method == 'PUT' && !isset($this->req[0])) $this->raiseError(400);
 	}
 
@@ -76,6 +81,7 @@ class User extends HRForms2 {
 		if (!isset($this->req[0])) {
 			$qry = "select u.suny_id, p.*,
 				u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date,
+				to_char(u.refresh_date,'dd-MON-yy hh:mi:ss AM') as refresh_date,
 				d.group_id, g.group_name, u.user_options.notifications
 			from hrforms2_users u
 			left join (select distinct ".$this->BASE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.sunyhr_suny_id)
@@ -95,7 +101,7 @@ class User extends HRForms2 {
 			if ($this->retJSON) $this->toJSON($this->returnData);
 		} else {
 			$qry = "select suny_id, to_char(end_date,'DD-MON-YYYY HH24:MI') as end_date,
-				to_char(refresh_date,'DD-MON-YYYY') as refresh_date, user_info, user_options
+				to_char(refresh_date,'DD-MON-YYYY HH:MI:SS AM') as refresh_date, user_info, user_options
 				from HRFORMS2_USERS u where suny_id = :suny_id";
 			$stmt = oci_parse($this->db,$qry);
 			oci_bind_by_name($stmt,":suny_id", $this->req[0]);
@@ -131,7 +137,8 @@ class User extends HRForms2 {
 				if ($end_diff > 0) {
 					if ($user['USER_INFO']) { // user has user_info
 						$this->_arr = json_decode($user['USER_INFO'], true);
-						
+						$this->_arr['REFRESH_DATE'] = $user['REFRESH_DATE'];
+						//$this->_arr['X'] = 3;
 					} else { // user does not have user_info
 						if ($end_diff > 259200) { // user ended more than 6 months ago
 								if (!$this->retJSON) return;
@@ -148,7 +155,10 @@ class User extends HRForms2 {
 								$this->sendError($message,'HRForms2 Error: Missing SUNY ID in SUNY HR');
 								$this->raiseError(E_NOT_FOUND);
 							} else {
+								if (!isset($this->_arr['SUNY_ID'])) $this->_arr['SUNY_ID'] = $this->_arr['SUNYHR_SUNY_ID'];
 								$this->updateUserInfo($this->_arr);
+								$this->_arr['REFRESH_DATE'] = date('d-M-y h:i:s A', time());
+								//$this->_arr['X'] = 4;
 							}
 						}
 					}
@@ -157,11 +167,11 @@ class User extends HRForms2 {
 				} else {
 					// check refresh date
 					$settings = (new settings(array(),false))->returnData;
-					$refresh_date = DateTime::createFromFormat('d-M-Y',$row['REFRESH_DATE']);
-					$refresh_diff = -1;
+					$refresh_date = DateTime::createFromFormat('d-M-Y h:i:s A',$user['REFRESH_DATE']);
+					$refresh_diff = INF;
 					if ($refresh_date) {
 						$diff = $refresh_date->diff($now);
-						$refresh_diff = ($diff->invert == 1)?$diff->d*-1:$diff->d;
+						$refresh_diff = ($diff->invert == 1)?$diff->days*-1:$diff->days;
 					}
 					if ($refresh_diff > $settings['general']['userRefresh']) { // user_info is "stale"
 						$this->_arr = $this->getSUNYHRUser();
@@ -181,14 +191,20 @@ class User extends HRForms2 {
 							}
 							$this->_arr = json_decode($user['USER_INFO'], true);
 						} else { // update cached data and refresh date
+							if (!isset($this->_arr['SUNY_ID'])) $this->_arr['SUNY_ID'] = $this->_arr['SUNYHR_SUNY_ID'];
 							$this->updateUserInfo($this->_arr);
+							$this->_arr['REFRESH_DATE'] = date('d-M-y h:i:s A', time());
+							//$this->_arr['X'] = 2;
 						}
 
 					} else { // user_info is "fresh"
 						$this->_arr = json_decode($user['USER_INFO'], true);
+						$this->_arr['REFRESH_DATE'] = $user['REFRESH_DATE'];
+						//$this->_arr['X'] = 1;
 					}
 				}
 			}
+			$this->_arr['USER_OPTIONS'] = json_decode($user['USER_OPTIONS']);
 
 			$this->returnData = array((array)$this->_arr); // Need to cast as array instead of object
 			if ($this->retJSON) $this->toJSON($this->returnData);
