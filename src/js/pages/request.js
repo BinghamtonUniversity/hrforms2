@@ -431,7 +431,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                                             }
                                             {(get(data,'lastJournal.STATUS')=='R'&&canEdit) && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
 
-                                            {!(isNew&&lockTabs)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
+                                            {(!(isNew&&lockTabs)&&canEdit)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
 
                                             {t.id!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
                                             
