@@ -49,6 +49,7 @@ export default function AppNav() {
                         </NavDropdown>}
                         {INSTANCE == 'LOCAL' &&
                             <NavDropdown title="Testing" id="testing-nav-dropdown" alignRight>
+                                <NavDropdown.Item as={Link} to="/test/users">Users</NavDropdown.Item>
                                 <NavDropdown.Item as={Link} to="/test/error">Error Test</NavDropdown.Item>
                             </NavDropdown>
                         }
