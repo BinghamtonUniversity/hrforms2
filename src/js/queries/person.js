@@ -1,5 +1,4 @@
 /**
- * NOT TRUE... userLookup doesn't, but it requires SUNY_ID
  * This is different than user queries (queries/user.js).
  * Users are persons with a record in the HR_FORMS2_USERS table.
  * Persons are any person record in the SUNY HR system
@@ -20,6 +19,7 @@ export default function usePersonQueries() {
                 path.push(data.values.lastName);
                 if (data.values.dob) path.push(format(new Date(data.values.dob),'dd-MMM-yyyy')); 
                 break;
+            case "sunyid":path.push(data.values.suny_id); break;
             default: return qErr('Bad Data');
         }
         if(options.select) options.select2 = options.select;
