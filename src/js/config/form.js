@@ -325,7 +325,7 @@ export function fetchFormData({watchIds,effectiveDate,payrollCode}) {
             const effDate = new Date(d?.RATE_EFFECTIVE_DATE);
             d.effDate = isValid(effDate)?effDate:effectiveDate;
             d.SUNY_ACCOUNTSSplit = d.SUNY_ACCOUNTS.length > 1;
-            d.SPLIT_ASSIGNMENTS.map(a => {
+            d.SPLIT_ASSIGNMENTS && d.SPLIT_ASSIGNMENTS.map(a => {
                 const commitmentEffDate = new Date(a?.COMMITMENT_EFFECTIVE_DATE);
                 a.commitmentEffDate = isValid(commitmentEffDate)?commitmentEffDate:"";
                 const commitmentEndDate = new Date(a?.COMMITMENT_END_DATE);
