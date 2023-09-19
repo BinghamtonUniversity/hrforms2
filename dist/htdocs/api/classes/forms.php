@@ -91,13 +91,15 @@ class Forms extends HRForms2 {
             $tabs = (is_object($row['TABS']))?$row['TABS']->load():"";
             $formData->formActions->TABS = json_decode($tabs);
         } elseif ($this->req[0] == 'archive') {
-            $qry = "select FORM_DATA from HRFORMS2_FORMS_ARCHIVE where FORM_ID = :form_id";
+            $qry = "select CREATED_BY, FORM_DATA from HRFORMS2_FORMS_ARCHIVE where FORM_ID = :form_id";
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":form_id",$this->req[1]);
             $r = oci_execute($stmt);
             if (!$r) $this->raiseError();
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
             $formData = json_decode((is_object($row['FORM_DATA'])) ? $row['FORM_DATA']->load() : "");
+            $createdByData = json_decode((is_object($row['CREATED_BY'])) ? $row['CREATED_BY']->load() : "");
+            $formData->createdBy = $createdByData;
             oci_free_statement($stmt);
             $qry = "select pt.paytrans_id,pt.tabs 
                 FROM HRFORMS2_PAYROLL_TRANSACTIONS pt 
@@ -122,13 +124,15 @@ class Forms extends HRForms2 {
             }
             $last_journal['SUBMITTER_SUNY_ID'] = $submitter['SUNY_ID'];
             if ($last_journal['STATUS'] != 'Z') {
-                $qry = "select FORM_DATA from HRFORMS2_FORMS where FORM_ID = :form_id";
+                $qry = "select CREATED_BY,FORM_DATA from HRFORMS2_FORMS where FORM_ID = :form_id";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":form_id",$this->req[0]);
                 $r = oci_execute($stmt);
                 if (!$r) $this->raiseError();
                 $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
                 $formData = json_decode((is_object($row['FORM_DATA'])) ? $row['FORM_DATA']->load() : "");
+                $createdByData = json_decode((is_object($row['CREATED_BY'])) ? $row['CREATED_BY']->load() : "");
+                $formData->createdBy = $createdByData;
                 oci_free_statement($stmt);
                 $qry = "select pt.paytrans_id,pt.tabs 
                     FROM HRFORMS2_PAYROLL_TRANSACTIONS pt 
@@ -210,38 +214,40 @@ class Forms extends HRForms2 {
                 $h = (new hierarchy(array('form','group',$group['GROUP_ID']),false))->returnData;
                 //$paytransId = $this->POSTvars['formActions']['PAYTRANS_ID'];
                 $idx = array_search($this->POSTvars['formActions']['PAYTRANS_ID'],array_column($h,'PAYTRANS_ID'));
+                $message = "";
                 if ($idx===false) {
                     // get default (hiearchy_id = 0); if no default raise error
                     $idx = array_search('0',array_column($h,'HIERARCHY_ID'));
+
+                    // TODO: collect key/value pairs to send in message and assign in template or run ob_start in function
+                    $message = "<pre>";
+                    ob_start();
+                    echo "Form ID => " . $this->POSTvars['formId'] ."<br>"; //This is the draft ID, not form ID
+                    echo "Effective Date => " . $this->POSTvars['effDate'] . "<br>";
+                    print_r($this->POSTvars['formActions']);
+                    echo "Comment => " . $this->POSTvars['comment'] . "<br>";
+                    $message .= ob_get_contents();
+                    ob_end_clean();
+                    $message .= "</pre>";
+                    $message .= "<p>User Information:</p>";
+                    foreach($group as $key => $val) {
+                        $message .= "<strong>$key</strong> = ";
+                        if (gettype($val) == 'array') {
+                            $message .= implode(', ',$val);
+                        } else {
+                            $message .= $val;
+                        }
+                        $message .= "<br>";
+                    }
+
                     if ($idx===false) {
                         // send error message
-                        $message = "An attempt to submit a Form failed due to no hierarchy and no default routing configured.  Information about the form is below.<br>";
-                        $message .= "<pre>";
-                        ob_start();
-                        echo "Form ID => " . $this->POSTvars['formId'] ."<br>";
-                        echo "Effective Date => " . $this->POSTvars['effDate'] . "<br>";
-                        print_r($this->POSTvars['formActions']);
-                        echo "Comment => " . $this->POSTvars['comment'] . "<br>";
-                        $message .= ob_get_contents();
-                        ob_end_clean();
-                        $message .= "</pre>";
-                        $message .= "<p>User Information:</p>";
-                        foreach($group as $key => $val) {
-                            $message .= "<strong>$key</strong> = ";
-                            if (gettype($val) == 'array') {
-                                $message .= implode(', ',$val);
-                            } else {
-                                $message .= $val;
-                            }
-                            $message .= "<br>";
-                        }
-                        
-                        $this->sendError($message,'HRForms2 Error: No Default Form Workflow');
+                        $message = "An attempt to submit a Form failed due to no hierarchy and no default routing configured.  Information about the form is below.<br>" . $message;
+                        $this->sendError($message,'HRForms2 Error: No Default Form Workflow','forms');
                         $this->raiseError(E_BAD_REQUEST,array('errMsg'=>'No Form Hierarchy Found.  No Default Workflow Set.'));
+                    } else {
+                        $hierarchy = $h[$idx];
                     }
-                    // TODO: send "warning" message; needed to use the default
-
-                    $hierarchy = $h[$idx];
                 } else {
                     $hierarchy = $h[$idx];
                 }
@@ -344,6 +350,13 @@ class Forms extends HRForms2 {
                         array_shift($this->req);
                         $del_draft = (new forms($this->req,false));
                     }
+                }
+
+                // If Default Hierarchy was used send warning/error message
+                if ($message != "") {
+                    $message .= "<strong>Form ID:</strong> " . $form_id . "<br>";
+                    $message = "A Form was submitted, but there is no hierarchy defined - using default routing.  Information about the form is below.<br>" . $message;
+                    $this->sendError($message,'HRForms2 Warning: Default Routing Used For Form','forms');
                 }
 
                 $this->toJSON($return_data);

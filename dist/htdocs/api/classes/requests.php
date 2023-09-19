@@ -83,15 +83,16 @@ class Requests extends HRForms2 {
             oci_free_statement($stmt);
             $this->returnData = json_decode($this->_arr['DATA']);
         } elseif ($this->req[0] == 'archive') {
-            $qry = "select REQUEST_DATA from HRFORMS2_REQUESTS_ARCHIVE where REQUEST_ID = :request_id";
+            $qry = "select CREATED_BY, REQUEST_DATA from HRFORMS2_REQUESTS_ARCHIVE where REQUEST_ID = :request_id";
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":request_id",$this->req[1]);
             $r = oci_execute($stmt);
 			if (!$r) $this->raiseError();
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-            $this->_arr['REQUEST_DATA'] = (is_object($row['REQUEST_DATA'])) ? $row['REQUEST_DATA']->load() : "";
+            $requestData = json_decode((is_object($row['REQUEST_DATA'])) ? $row['REQUEST_DATA']->load() : "");
+            $requestData->createdBy = json_decode((is_object($row['CREATED_BY'])) ? $row['CREATED_BY']->load() : "");
             oci_free_statement($stmt);
-            $this->returnData = json_decode($this->_arr['REQUEST_DATA']);
+            $this->returnData = $requestData;
         } else {
             // TODO?? Validation: Only submitter and group assigned to should view request
             $usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
@@ -105,15 +106,16 @@ class Requests extends HRForms2 {
                 if (!($this->sessionData['isAdmin'] && $this->sessionData['OVR_SUNY_ID'] == "")) $this->raiseError(E_NOT_FOUND);
             }
             if ($last_journal['STATUS'] != 'Z') {
-                $qry = "select REQUEST_DATA from HRFORMS2_REQUESTS where REQUEST_ID = :request_id";
+                $qry = "select CREATED_BY, REQUEST_DATA from HRFORMS2_REQUESTS where REQUEST_ID = :request_id";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":request_id",$this->req[0]);
                 $r = oci_execute($stmt);
                 if (!$r) $this->raiseError();
                 $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-                $this->_arr['REQUEST_DATA'] = (is_object($row['REQUEST_DATA'])) ? $row['REQUEST_DATA']->load() : "";
+                $requestData = json_decode((is_object($row['REQUEST_DATA'])) ? $row['REQUEST_DATA']->load() : "");
+                $requestData->createdBy = json_decode((is_object($row['CREATED_BY'])) ? $row['CREATED_BY']->load() : "");
                 oci_free_statement($stmt);
-                $this->returnData = json_decode($this->_arr['REQUEST_DATA']);
+                $this->returnData = $requestData;
             }
             $this->returnData->submittedBy = $submitter['SUNY_ID'];
             $this->returnData->lastJournal = $last_journal;
@@ -183,36 +185,37 @@ class Requests extends HRForms2 {
                 //get hierarchy for group
                 $h = (new hierarchy(array('request','group',$group['GROUP_ID']),false))->returnData;
                 $idx = array_search($this->POSTvars['posType']['id'],array_column($h,'POSITION_TYPE'));
+                $message = "";
                 if ($idx===false) {
                     // get default (hiearchy_id = 0); if no default raise error
                     $idx = array_search('0',array_column($h,'HIERARCHY_ID'));
+
+                    // TODO: collect key/value pairs to send in message and assign in template or run ob_start in function
+                    $message = "<pre>";
+                    ob_start();
+                    print_r($this->POSTvars);
+                    $message .= ob_get_contents();
+                    ob_end_clean();
+                    $message .= "</pre>";
+                    $message .= "<p>User Information:</p>";
+                    foreach($group as $key => $val) {
+                        $message .= "<strong>$key</strong> = ";
+                        if (gettype($val) == 'array') {
+                            $message .= implode(', ',$val);
+                        } else {
+                            $message .= $val;
+                        }
+                        $message .= "<br>";
+                    }
+
                     if ($idx===false) {
                         // send error message
-                        $message = "An attempt to submit a Position Request failed due to no hierarchy and no default routing configured.  Information about the request is below.<br>";
-                        $message .= "<pre>";
-                        ob_start();
-                        //TODO: need to selectively print values.
-                        print_r($this->POSTvars);
-                        $message .= ob_get_contents();
-                        ob_end_clean();
-                        $message .= "</pre>";
-                        $message .= "<p>User Information:</p>";
-                        foreach($group as $key => $val) {
-                            $message .= "<strong>$key</strong> = ";
-                            if (gettype($val) == 'array') {
-                                $message .= implode(', ',$val);
-                            } else {
-                                $message .= $val;
-                            }
-                            $message .= "<br>";
-                        }
-                        
-                        $this->sendError($message,'HRForms2 Error: No Default Request Workflow');
+                        $message = "An attempt to submit a Position Request failed due to no hierarchy and no default routing configured.  Information about the request is below.<br>" . $message;
+                        $this->sendError($message,'HRForms2 Error: No Default Request Workflow','requests');
                         $this->raiseError(E_BAD_REQUEST,array('errMsg'=>'No Request Hierarchy Found.  No Default Workflow Set.'));
+                    } else {
+                        $hierarchy = $h[$idx];
                     }
-                    // TODO: send "warning" message; needed to use the default
-
-                    $hierarchy = $h[$idx];
                 } else {
                     $hierarchy = $h[$idx];
                 }
@@ -295,6 +298,13 @@ class Requests extends HRForms2 {
                         array_shift($this->req);
                         $del_draft = (new requests($this->req,false));
                     }
+                }
+                
+                // If Default Hierarchy was used send warning/error message
+                if ($message != "") {   
+                    $message .= "<strong>Request ID:</strong> " . $request_id . "<br>";
+                    $message = "A Position Request was submitted, but there is no hierarchy defined - using default routing.  Information about the request is below.<br>" . $message;
+                    $this->sendError($message,'HRForms2 Warning: Default Routing Used For Request','requests');
                 }
 
                 $this->toJSON($return_data);

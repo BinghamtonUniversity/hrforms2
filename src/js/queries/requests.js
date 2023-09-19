@@ -13,6 +13,10 @@ export default function useRequestQueries(REQUEST_ID) {
             if (!data) return;
             data.effDate = (data.effDate)?new Date(data.effDate):"";
             data.tentativeEndDate = (data.tentativeEndDate)?new Date(data.tentativeEndDate):"";
+            if (data.createdBy) {
+                const fName = (data.createdBy?.ALIAS_FIRST_NAME)?data.createdBy.ALIAS_FIRST_NAME:(data.createdBy?.LEGAL_FIRST_NAME)?data.createdBy.LEGAL_FIRST_NAME:'';
+                data.createdBy.fullName = (fName)?`${fName} ${data.createdBy.LEGAL_LAST_NAME}`:'';
+            }
             return (options.select2)?options.select2(data):data;
         }
         return useQuery(['requests','archive',REQUEST_ID],q(`requests/${reqIdAsPath}`),options);

@@ -9,7 +9,8 @@ import { useRequestContext } from "../../config/request";
 export default function Review() {
     const { getValues } = useFormContext();
     const formValues = getValues();
-    const { isDraft, isNew } = useRequestContext();
+    const { isDraft, isNew, createdBy } = useRequestContext();
+
     return (
         <article>
             <Row>
@@ -123,14 +124,60 @@ export default function Review() {
                     </Row>
                 </article>
                 {!isDraft &&
-                <article className="mb-4">
-                    <Row as="header">
-                        <Col as="h5">History</Col>
-                    </Row>
-                    <CommentsTable reqId={formValues.reqId}/>
-                </article>
-            }
+                    <article className="mb-4">
+                        <Row as="header">
+                            <Col as="h5">History</Col>
+                        </Row>
+                        <CommentsTable reqId={formValues.reqId}/>
+                    </article>
+                }
             </section>
+            {(!isDraft&&createdBy) &&
+                <section className="mb-4">
+                    <header>
+                        <Row>
+                            <Col>
+                                <h4 className="border-bottom border-main">Submitter Information</h4>
+                            </Col>
+                        </Row>
+                    </header>
+                    <Row as="dl" className="mb-0">
+                        <Col as="dt" md={2} className="mb-0">SUNY ID:</Col>
+                        <Col as="dd" md={10} className="mb-0">{createdBy.SUNY_ID}</Col>
+                        <Col as="dt" md={2} className="mb-0">Name:</Col>
+                        <Col as="dd" md={10} className="mb-0">{createdBy.fullName}</Col>
+                        <Col as="dt" md={2} className="mb-0">Email:</Col>
+                        <Col as="dd" md={10} className="mb-0">{createdBy.EMAIL_ADDRESS_WORK}</Col>
+                        <Col as="dt" md={2} className="mb-0">Department:</Col>
+                        <Col as="dd" md={10} className="mb-0">{createdBy.REPORTING_DEPARTMENT_NAME}</Col>
+                    </Row>
+                </section>
+            }
         </article>
     );
 }
+
+/*function ReviewSubmitterInformation({SUNY_ID}) {
+    const { lookupUser } = useUserQueries(SUNY_ID);
+    const user = lookupUser({
+        select:d=>head(d),
+        initialData:[{
+            LEGAL_FIRST_NAME:'',
+            LEGAL_LAST_NAME:'',
+            EMAIL_ADDRESS_WORK:'',
+            REPORTING_DEPARTMENT_NAME:''
+        }]
+    });
+    return (
+        <Row as="dl" className="mb-0">
+            <Col as="dt" md={2} className="mb-0">SUNY ID:</Col>
+            <Col as="dd" md={10} className="mb-0">{SUNY_ID}</Col>
+            <Col as="dt" md={2} className="mb-0">Name:</Col>
+            <Col as="dd" md={10} className="mb-0">{user.data.fullName}</Col>
+            <Col as="dt" md={2} className="mb-0">Email:</Col>
+            <Col as="dd" md={10} className="mb-0">{user.data.EMAIL_ADDRESS_WORK}</Col>
+            <Col as="dt" md={2} className="mb-0">Department:</Col>
+            <Col as="dd" md={10} className="mb-0">{user.data.REPORTING_DEPARTMENT_NAME}</Col>
+        </Row>
+    );
+}*/

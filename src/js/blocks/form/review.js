@@ -21,11 +21,12 @@ const ReviewEmploymentLeave = lazy(()=>import("./review/review-employment-leave"
 const ReviewEmploymentPay = lazy(()=>import("./review/review-employment-pay"));
 const ReviewEmploymentVolunteer = lazy(()=>import("./review/review-employment-volunteer"));
 const ReviewComments = lazy(()=>import("./review/review-comments"));
+const ReviewSubmitterInfo = lazy(()=>import("./review/review-submitter"));
 
 export default function Review() {
     const { getValues } = useFormContext();
     const { journalStatus } = useHRFormContext();
-    useEffect(()=>console.debug(getValues()),[]);
+    useEffect(()=>console.debug('Review Form Data:',getValues()),[]);
     return (
         <article id="form-review" className="mt-3">
             {journalStatus!='Z' && 
@@ -41,6 +42,7 @@ export default function Review() {
             <ReviewFormData/>
             <ReviewSections/>
             <ReviewComments/>
+            <ReviewSubmitterInfo/>
         </article>
     );
 }
