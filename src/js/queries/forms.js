@@ -27,6 +27,10 @@ export default function useFormQueries(FORM_ID) {
         options.select = data => {
             if (!data) return;
             data.effDate = (data.effDate)?new Date(data.effDate):"";
+            if (data.createdBy) {
+                const fName = (data.createdBy?.ALIAS_FIRST_NAME)?data.createdBy.ALIAS_FIRST_NAME:(data.createdBy?.LEGAL_FIRST_NAME)?data.createdBy.LEGAL_FIRST_NAME:'';
+                data.createdBy.fullName = (fName)?`${fName} ${data.createdBy.LEGAL_LAST_NAME}`:'';
+            }
             return (options.select2)?options.select2(data):data;
         }
         return useQuery(['forms',FORM_ID],q(`forms/${formIdAsPath}`),options);

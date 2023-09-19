@@ -240,9 +240,9 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         });
     }
     const handleSubmit = data => {
-        console.debug(data);
         setHasErrors(false);
         if (!data.action) return; // just validating the form, not saving
+        console.debug('Submitting Request Data:',data);
         const action = data.action;
         setIsSaving(true);
         setIsBlocking(true); //TODO: when true should be full block with no prompt
@@ -401,6 +401,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         <FormProvider {...methods}>
             <RequestContext.Provider value={{
                 reqId:reqId,
+                createdBy:data.createdBy,
                 posTypes:postypes.data,
                 isNew: isNew,
                 isDraft:isDraft,
