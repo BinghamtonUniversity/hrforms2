@@ -290,15 +290,23 @@ Class HRForms2 {
 	 * @param string|int $id - a GROUP_ID
 	 * @return array
 	 */
-	protected function getGroupEmails($ids) {
+	protected function getGroupEmails($id) {
+		$emails = array();
 		$groupusers = (new groupusers(array($id),false))->returnData;
-		return array();
+		foreach ($groupusers as $user) {
+			if ($user['NOTIFICATIONS'] == 'Y') {
+				if (isset($user['EMAIL_ADDRESS_WORK'])&&$user['EMAIL_ADDRESS_WORK']!="") array_push($emails,$user['EMAIL_ADDRESS_WORK']);
+			}
+		}
+		return $emails;
 	}
 
-	function sendError($message,$subject="HRForms2 Error") {
+	function sendError($message,$subject="HRForms2 Error",$type) {
 		$origMethod = $_SERVER['REQUEST_METHOD'];
 		$_SERVER['REQUEST_METHOD'] = 'GET';
-		//$settings = (new settings(array(),false))->returnData; // TODO: get email, subject, etc.
+		// if type != 'requests' or 'forms' then throw error
+		$settings = (new settings(array(),false))->returnData;
+		$email_settings = $settings[$type]['email'];
 
 		$vars = array(
 			'ERROR'=> false,
@@ -309,10 +317,10 @@ Class HRForms2 {
 		);
 
 		$email_list = array(
-			"mailto"=>"geigers+hrforms2-error@binghamton.edu",
-			"mailcc"=>""
+			"mailto"=>$this->getGroupEmails($email_settings['errorsGroup']),
+			"mailcc"=>"geigers+hrforms2-errors@binghamton.edu"
 		);
-		$replyto = "no-reply@binghamton.edu";
+		$replyto = $email_settings['from'];
 
 		// get templates
 		$partials = [];
@@ -360,7 +368,7 @@ Class HRForms2 {
 		$mail->Username = SMTP_USERNAME;
 		$mail->Password = SMTP_PASSWORD;
 
-		$mail->setFrom("no-reply@binghamton.edu");
+		$mail->setFrom($email_settings['from']);
 		if (INSTANCE == 'PROD') {
 			foreach($email_list['mailto'] as $email) {
 				$mail->addAddress($email);
