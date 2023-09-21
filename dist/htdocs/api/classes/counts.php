@@ -48,18 +48,43 @@ class Counts extends HRForms2 {
 				"pending"=>$request_pending,
                 "approvals"=>$request_approvals,
 				"rejections"=>$request_rejections,
-                "final"=>$request_final,
-				"archived"=>null
+                "final"=>$request_final
             ),
             "forms" => array(
                 "drafts"=>$form_drafts,
 				"pending"=>$form_pending,
                 "approvals"=>$form_approvals,
                 "rejections"=>$form_rejections,
-                "final"=>$form_final,
-				"archived"=>null
+                "final"=>$form_final
             )
         );
+
+		if ($this->sessionData['isAdmin']) {
+			$counts['admin'] = array('requests'=>array(),'forms'=>array());
+
+			foreach ($counts['admin'] as $key => $value) {
+				$qry = "with ddiff as (select trunc(sysdate)-trunc(created_date) as date_diff from hrforms2_".$key."),
+					dd as (select 
+						case
+							when date_diff <= 1 then '1'
+							when date_diff > 1 and date_diff <= 7 then '7'
+							when date_diff > 7 and date_diff <= 14 then '14'
+							when date_diff > 14 and date_diff <= 28 then '28'
+							else '9999'
+						end as cat from ddiff where date_diff < 30)
+					select cat, count(*) as cnt from dd
+					group by cat
+					order by cat";
+				$stmt = oci_parse($this->db,$qry);
+				$r = oci_execute($stmt);
+				if (!$r) $this->raiseError();
+				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					$counts['admin'][$key][$row['CAT']] = $row['CNT'];
+				}
+				oci_free_statement($stmt);
+			}
+		}
+
         $this->toJSON($counts);
 	}
 }
