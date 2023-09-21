@@ -10,15 +10,19 @@ Bug fixes, enhancements and things still to complete.
   * Request: auto-approve next code
   * Form: Create Archive view
   * Email notification; auto-approved should not get emails (need to test/check this)
+  * Users who are inactive should not be included in the email list.
+  * Request: User should NOT be able to approve/reject requests they submitted.
 
 ## In Progress Tasks:
   * Search for "console.log" in files
   * Search for "TODO" in files
   * Use Helmet to change the title of the page
+  * Change Error Email to select a group and use the group instead of single email.
   * Admin: Add default hierarchy routing in settings - Default hierarchy to HR and send error notice.
   * Archive - Request|Form: Should save groups, hierarchy, and workflow
   * Request|Form: Control who can view/edit based on status (see TODO in file)
   * Add CSS for printing
+  * Admin: Admin users should be able to query journal of any request or form.
   * Change delete modals to component: ModalConfirm
   * Consolidate Title/Text of modals/confirmations - use config
   * [DONE] - Remove last group from skip select list - cannot skip the last group.
@@ -26,18 +30,19 @@ Bug fixes, enhancements and things still to complete.
   * Use table partitioning for managing requests and forms (see: https://docs.oracle.com/en/database/oracle/oracle-database/12.2/vldbg/partition-create-tables-indexes.html)
   
 ## Tasks: 
-  * Admin: Admin users should be able to query journal of any request or form.
-  * CHECK: Users who are inactive should not be included in the email list.[DONE?]
+  * Need to save route when created in case it gets deleted (or changed) later; see reqId 97.
+  * Check for version change and force reload when changed.
+  * Review all queries with LEGAL_FIRST_NAME and verify perferred name is being used (ALIAS_FIRST_NAME)
   * Change queries to use Global ID?
   * Account Numbers: do we need to include the Fiscal Year?
   * Archive - Request|Form: List needs date filter; default should limit range?
-  * Request: User should NOT be able to approve/reject requests they submitted. [DONE?]
   * FormList and RequestList; drop the additional formId, requestId and just use POSTvars.
-  * Switch from username to B# as primary key [DONE?]
   * DataTables:
     - Add search-by-field as needed (see groups.js)
     - Global setting for paginationRowsPerPageOptions
   * Add "initialData" value to query options and remove checked form !data. Caveat: setting initialData will set the query status to successful.
+  * Create Admin Panel to show counts of ALL new requests, forms, etc.
+    * New in last 24 hours, New in last 7 days, New in last 14 days, new in last 28 days, total active, total archived
 
 ## Upgrades:
   * Upgrade to React 18

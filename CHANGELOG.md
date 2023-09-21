@@ -1,12 +1,28 @@
 # Changelog
 
+## Version 2.0.0 (DEV-202309xx)
+  * FIXED bug where users who were in HR Forms2, but had no record in SUNY HR were not shown in the Users list and in the available/assigned users in the Groups user list modal.
+  * "Missing" users who do not have a SUNY HR record are shown in the assigned users list of the Group modal, but are hidden in the available users list.  This allows for those users to be removed, but not added.
+  * Removed the "Save & Exit" button from the review page of Requests when the user cannot edit.  The button was disabled, but still shown and should not have been displayed.
+  * FIXED DateFormat error on Form Review tab on the Person Information section.  The DateFomat function was not part of the import list.
+  * FIXED reference error to Account field on Employement Salary section on the Form Review page when no account had been selected.
+  * Form Hierachy, "Send To User's Department Group?" is now checked by default for new hierarchies.
+  * Major Fixes to User data and queries.
+    * FIXED User caching logic which was not updating correctly.
+    * FIXED user queries (javascript) to use preferred name as part of the fullName and sortName derived fields.
+    * Added "Last Refreshed" fields to the user query.
+    * Added "Last Refreshed" column to User List
+  * Added "Submitter Information" to Requests and Forms.
+  * FIXED: Prevent deletion or deactivation of groups when used in a workflow.
+    
+
 ## Version 2.0.0 (DEV-20230829)
   * Added ability to reset the Application Error message.
   * Changed the display of workflow selection for Request and Form Hierarchy.  A scrollable list that can be filtered is now available.  The selected workflow is displayed using the graphical representation.
   * Added default workflow settings and routing for Requests.
   * Added default workflow settings and routing for Forms.
   * Created config file for settings, similar to the config files for Request and Forms.  Sets default values for elements in the settings page.
-    * Disabled Start and End dates in user profile edit screen when editing your own profile; a user should not be able to change their own start/end dates.
+  * Disabled Start and End dates in user profile edit screen when editing your own profile; a user should not be able to change their own start/end dates.
 
 ## Version 2.0.0 (DEV-20230815)
   * Fixed logic error in new user caching and completed error email notification. 
