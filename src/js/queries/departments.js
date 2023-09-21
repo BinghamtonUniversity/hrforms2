@@ -21,8 +21,8 @@ export default function useDeptQueries(DEPARTMENT_CODE) {
         const options = args[0]?.options||args[0]||{};
         return useQuery(['deptGroup',DEPARTMENT_CODE],q(`deptgroup/${DEPARTMENT_CODE}`),options);
     }
-    const putDeptGroup = (...args) => useMutation(d=>q(`deptgroup/${DEPARTMENT_CODE}`,'PUT',d)());
-    const deleteDeptGroup = (...args) => useMutation(d=>q(`deptgroup/${DEPARTMENT_CODE}`,'DELETE',d)());
+    const putDeptGroup = () => useMutation(d=>q(`deptgroup/${DEPARTMENT_CODE}`,'PUT',d)());
+    const deleteDeptGroup = () => useMutation(d=>q(`deptgroup/${DEPARTMENT_CODE}`,'DELETE',d)());
 
     return {getDeptGroups,getDeptGroup,putDeptGroup,deleteDeptGroup};
 }
