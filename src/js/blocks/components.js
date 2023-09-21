@@ -150,7 +150,7 @@ const AppButton = React.memo(({children,format,icon,spin,...props}) => {
 
 const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
     /* showOn: home or menu */
-    const {getCounts} = useUserQueries();
+    const { getCounts } = useUserQueries();
     const location = useLocation();
     const counts = getCounts();
     if (counts.isError) {
@@ -186,6 +186,7 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
                         if (showOn == 'home') return <Link key={key} className="d-flex justify-content-between" to={`/${single}/list/${l}`} component={DashBoardListComponent}><span>{title}</span>{cnt}</Link>;
                         if (showOn == 'menu') return <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`}>{title} {cnt!=null && <span>({cnt})</span>}</NavDropdown.Item>;
                     })}
+                    
                 </>
             );
         }}

@@ -306,6 +306,8 @@ Class HRForms2 {
 		$_SERVER['REQUEST_METHOD'] = 'GET';
 		// if type != 'requests' or 'forms' then throw error
 		$settings = (new settings(array(),false))->returnData;
+		//TODO: if email not enabled then return
+		//if ($settings[$type]['email']['enabled']) {
 		$email_settings = $settings[$type]['email'];
 
 		$vars = array(

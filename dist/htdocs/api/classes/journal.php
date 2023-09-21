@@ -25,6 +25,7 @@ class Journal extends HRForms2 {
      * helper function to get user name information
      */
     private function getUser(&$row) {
+        //TODO: will this work for non-admin users?
         $user = (new user(array($row['SUNY_ID']),false))->returnData;
         if (sizeof($user) == 0) {
             $row['LEGAL_FIRST_NAME'] = 'Missing/Unknown User ('.$row['SUNY_ID'].')';

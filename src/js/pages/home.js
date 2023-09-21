@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Row, Col, Card, ListGroup } from "react-bootstrap";
 import { capitalize } from "lodash";
-import { UserContext, useAuthContext, useUserContext} from "../app";
+import { useAuthContext, useUserContext} from "../app";
 import { News } from "../blocks/news";
 import { MenuCounts } from "../blocks/components";
 import { t } from "../config/text";
@@ -17,9 +17,7 @@ export default function Page() {
                     <News/>
                 </Col>
             </Row>
-            <Row>
-                <DashBoardCards />
-            </Row>
+            <DashBoardCards />
         </>
     );
 }
@@ -31,20 +29,20 @@ function Welcome() {
         return `${t('home.welcome')} ${fullname} ${((!OVR_SUNY_ID)?'':'[IMPERSONATING]')}`;
     },[OVR_SUNY_ID,fullname]);
     return (
-        <>
+        <header>
             <Helmet>
                 <title>{title}</title>
             </Helmet>
             <Row>
                 <Col><h2>{t('home.welcome')} {fullname}</h2></Col>
             </Row>
-        </>
+        </header>
     );
 }
 
 function DashBoardCards() {
     return (
-        <>
+        <Row>
             {['requests','forms'].map(c => (
                 <Col key={c} sm={6} md={5} lg={4}>
                     <Card border="main">
@@ -55,6 +53,6 @@ function DashBoardCards() {
                     </Card>
                 </Col>
             ))}
-        </>
+        </Row>
     );
 }
