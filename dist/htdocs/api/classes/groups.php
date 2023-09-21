@@ -94,6 +94,31 @@ class Groups extends HRForms2 {
 		$this->done();
 	}
 	function DELETE() {
+		// Check if group is used in a workflow:
+		$qry = "select workflow_id, groups from hrforms2_requests_workflow";
+		$stmt = oci_parse($this->db,$qry);
+		$r = oci_execute($stmt);
+		$workflow_ids = array();
+		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+			if (in_array($this->req[0],explode(',',$row['GROUPS']))) {
+				$workflow_ids[] = $row['WORKFLOW_ID'];
+			}
+		}
+		oci_free_statement($stmt);
+		if (count($workflow_ids) > 0) $this->raiseError(E_BAD_REQUEST, array('errMsg'=>'Cannot delete group, found in Request Workflow ID: '. implode(',',$workflow_ids)));
+
+		$qry = "select workflow_id, groups from hrforms2_forms_workflow";
+		$stmt = oci_parse($this->db,$qry);
+		$r = oci_execute($stmt);
+		$workflow_ids = array();
+		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+			if (in_array($this->req[0],explode(',',$row['GROUPS']))) {
+				$workflow_ids[] = $row['WORKFLOW_ID'];
+			}
+		}
+		oci_free_statement($stmt);
+		if (count($workflow_ids) > 0) $this->raiseError(E_BAD_REQUEST, array('errMsg'=>'Cannot delete group, found in Form Workflow ID: '. implode(',',$workflow_ids)));
+
 		$qry = "delete from hrforms2_groups where group_id = :group_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":group_id", $this->req[0]);
