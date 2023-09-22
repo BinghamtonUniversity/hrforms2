@@ -144,7 +144,7 @@ class User extends HRForms2 {
 								if (!$this->retJSON) return;
 								// User is Inactive, does not have user_info, and was ended more than 6 months ago.
 								$message = "The SUNY ID <strong>" . $this->req[0] . "</strong> does not have cached information and was ended more than 6 months ago.  Will not update cached information";
-								$this->sendError($message,'HRForms2 Error: Old User With No Data');
+								$this->sendError($message,'HRForms2 Error: Old User With No Data','user');
 								$this->raiseError(E_NOT_FOUND);	
 						} else {
 							$this->_arr = $this->getSUNYHRUser();
@@ -152,7 +152,7 @@ class User extends HRForms2 {
 								// User is Inactive, does not have user_info, and does not have SUNY HR data; User DNE
 								if (!$this->retJSON) return;
 								$message = "The SUNY ID <strong>" . $this->req[0] . "</strong> does not exist in SUNY HR, but exists in HRForms2.  Cannot update cached information.";
-								$this->sendError($message,'HRForms2 Error: Missing SUNY ID in SUNY HR');
+								$this->sendError($message,'HRForms2 Error: Missing SUNY ID in SUNY HR','user');
 								$this->raiseError(E_NOT_FOUND);
 							} else {
 								if (!isset($this->_arr['SUNY_ID'])) $this->_arr['SUNY_ID'] = $this->_arr['SUNYHR_SUNY_ID'];
@@ -187,12 +187,12 @@ class User extends HRForms2 {
 								oci_commit($this->db);
 								oci_free_statement($stmt);
 								$message = "The SUNY ID <strong>" . $this->req[0] . "</strong> is active, but has not been able to be refreshed in ". $refresh_timeout . " days.  The user has been deactivated.";
-								$this->sendError($message,'HRForms2 Error: User Deactivated');
+								$this->sendError($message,'HRForms2 Error: User Deactivated','user');
 							}
 							$this->_arr = json_decode($user['USER_INFO'], true);
-						} else { // update cached data and refresh date
+						} else { // update cached data and refresh date							
 							if (!isset($this->_arr['SUNY_ID'])) $this->_arr['SUNY_ID'] = $this->_arr['SUNYHR_SUNY_ID'];
-							$this->updateUserInfo($this->_arr);
+							$a = $this->updateUserInfo($this->_arr);
 							$this->_arr['REFRESH_DATE'] = date('d-M-y h:i:s A', time());
 							//$this->_arr['X'] = 2;
 						}
