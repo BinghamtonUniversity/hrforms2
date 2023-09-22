@@ -165,17 +165,6 @@ function SettingsFormsEmail() {
                     <Col as="h4">Email Configuration</Col>
                 </Row>
                 <Form.Group as={Row} controlId="emailErrors">
-                    <Form.Label column md={2}>Errors Email:</Form.Label>
-                    <Col xs="auto">
-                        <Controller
-                            name='forms.email.errors'
-                            control={control}
-                            render={({field}) => <Form.Control {...field} type="email" placeholder="Enter Email Address" aria-describedby="emailErrorsHelp" />}
-                        />
-                        <Form.Text id="emailErrorsHelp" className="pt-1" muted>Email used when errors are encountered in the Forms process</Form.Text>
-                    </Col>
-                </Form.Group>
-                <Form.Group as={Row} controlId="emailErrors">
                     <Form.Label column md={2}>Errors Group:</Form.Label>
                     <Col xs="auto">
                         <Controller
