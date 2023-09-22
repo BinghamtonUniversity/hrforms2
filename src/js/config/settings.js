@@ -47,7 +47,14 @@ export const defaultVals = {
                 "list": "Archived"
             }
         },
-        "userRefresh": "7"
+        "userRefresh": "7",
+        "email": {
+            "enabled": false,
+            "name": "HR Forms 2",
+            "from": "",
+            "subject": "",
+            "errorsGroup":""
+        }
     },
     "requests": {
         "menu": {
@@ -89,8 +96,6 @@ export const defaultVals = {
             "name": "HR Forms 2",
             "from": "",
             "subject": "Requests",
-            "default": "",
-            "errors": "",
             "errorsGroup":"",
             "status": {
                 "S": {
@@ -179,8 +184,6 @@ export const defaultVals = {
             "name": "HR Forms 2",
             "from": "",
             "subject": "Forms",
-            "default": "",
-            "errors": "",
             "errorsGroup":"",
             "status": {
                 "S": {
