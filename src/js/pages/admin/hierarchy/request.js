@@ -4,7 +4,7 @@ import { useWorkflowQueries } from "../../../queries/hierarchy";
 import useGroupQueries from "../../../queries/groups";
 import { find, sortBy } from 'lodash';
 import { Container, Row, Col, Tabs, Tab, Badge } from "react-bootstrap";
-import { Loading, AppButton } from "../../../blocks/components";
+import { Loading, AppButton, DescriptionPopover } from "../../../blocks/components";
 import { Icon } from "@iconify/react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { NotFound } from "../../../app";
@@ -101,8 +101,18 @@ export function HierarchyChain({list,conditions}) {
                 const cond = find(conditions,(c=>c.seq==i));
                 return(
                     <span key={i} className="my-1">
-                        <Badge variant="white" className={`p-2 border ${cond&&'badge-white-striped'}`}>{g.GROUP_NAME}</Badge> 
-                        {(i<list.length-1)&&<span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>}
+                        <DescriptionPopover
+                            id={`group_description_${i}`}
+                            title="Group Description"
+                            placement="top"
+                            flip
+                            content={<p>{(!g.GROUP_DESCRIPTION)?<em>No group description</em>:g.GROUP_DESCRIPTION}</p>}
+                        >
+                            <span>
+                                <Badge variant="white" className={`p-2 border ${cond&&'badge-white-striped'}`}>{g.GROUP_NAME}</Badge> 
+                                {(i<list.length-1)&&<span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>}
+                            </span>
+                        </DescriptionPopover>
                     </span>
                 );
             })}
