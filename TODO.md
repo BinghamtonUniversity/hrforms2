@@ -32,6 +32,7 @@ Date of Transactions was 09/14/2023
   * Request: User should NOT be able to approve/reject requests they submitted.
 
 ## In Progress Tasks:
+  * Fix sendError to allow sending to default system-wide "from" and "mailto" addresses
   * Search for "console.log" in files
   * Search for "TODO" in files
   * Use Helmet to change the title of the page
