@@ -304,11 +304,12 @@ Class HRForms2 {
 	function sendError($message,$subject="HRForms2 Error",$type) {
 		$origMethod = $_SERVER['REQUEST_METHOD'];
 		$_SERVER['REQUEST_METHOD'] = 'GET';
-		// if type != 'requests' or 'forms' then throw error
 		$settings = (new settings(array(),false))->returnData;
 		//TODO: if email not enabled then return
 		//if ($settings[$type]['email']['enabled']) {
-		$email_settings = $settings[$type]['email'];
+		//TODO: need to add general email settings somewhere
+		$defaults = array('from'=>'no-reply@binghamton.edu','mailto'=>'geigers+hrforms2-errors@binghamton.edu');
+		$email_settings = array_merge($defaults,(array)$settings[$type]['email']);
 
 		$vars = array(
 			'ERROR'=> false,
