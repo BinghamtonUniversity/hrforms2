@@ -25,8 +25,8 @@ export default function HierarchyTab() {
         return d.map(w => {
             const grps = (w.GROUPS)?w.GROUPS.split(','):[];
             w.GROUPS_ARRAY = grps.map(g => {
-                const name = find(groups,{GROUP_ID:g})
-                return {GROUP_ID:g,GROUP_NAME:name?.GROUP_NAME}
+                const grp = find(groups,{GROUP_ID:g})
+                return {GROUP_ID:g,GROUP_NAME:grp?.GROUP_NAME,GROUP_DESCRIPTION:grp?.GROUP_DESCRIPTION}
             });
             return w;
         });
