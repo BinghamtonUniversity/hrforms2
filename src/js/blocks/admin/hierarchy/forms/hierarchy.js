@@ -30,14 +30,14 @@ export default function HierarchyTab() {
         return d.map(w => {
             const hryGroups = (w.HIERARCHY_GROUPS)?w.HIERARCHY_GROUPS.split(','):[];
             w.HIERARCHY_GROUPS_ARRAY = hryGroups.map(g => {
-                const name = find(groups,{GROUP_ID:g})
-                return {GROUP_ID:g,GROUP_NAME:name?.GROUP_NAME}
+                const grp = find(groups,{GROUP_ID:g})
+                return {GROUP_ID:g,GROUP_NAME:grp?.GROUP_NAME,GROUP_DESCRIPTION:grp?.GROUP_DESCRIPTION}
             });
            //w.AVAILABLE_HIERARCHY_GROUPS = groups.filter(g=>!hryGroups.includes(g.GROUP_ID));
             const wfGroups = (w.WORKFLOW_GROUPS)?w.WORKFLOW_GROUPS.split(','):[];
             w.WORKFLOW_GROUPS_ARRAY = wfGroups.map(g => {
-                const name = find(groups,{GROUP_ID:g})
-                return {GROUP_ID:g,GROUP_NAME:name?.GROUP_NAME}
+                const grp = find(groups,{GROUP_ID:g})
+                return {GROUP_ID:g,GROUP_NAME:grp?.GROUP_NAME,GROUP_DESCRIPTION:grp?.GROUP_DESCRIPTION}
             });
             return w;
         });
