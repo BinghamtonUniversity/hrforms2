@@ -46,7 +46,7 @@ class GroupUsers extends HRForms2 {
 				$row = array_merge($row,$userInfo);
 			} else {
 				$user = (new user(array($row['USER_SUNY_ID']),false))->returnData[0];
-				$row = array_merge($row,$user);
+				$row = array_merge($row,(array)$user);
 			}
 			if (!isset($row['SUNY_ID'])) {
 				if (!isset($row['USER_SUNY_ID'])) continue;
