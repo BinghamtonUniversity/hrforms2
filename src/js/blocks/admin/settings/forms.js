@@ -74,7 +74,7 @@ export default function SettingsForms() {
 function SettingsFormsDefaultRouting() {
     const [searchText,setSearchText] = useState('');
 
-    const { control, setValue } = useFormContext();
+    const { control, getValues, setValue } = useFormContext();
 
     const { getGroups } = useGroupQueries();
     const { getWorkflow } = useWorkflowQueries('form');
@@ -82,6 +82,14 @@ function SettingsFormsDefaultRouting() {
     const workflows = getWorkflow({
         enabled:!!groups.data,
         select:d=>{
+            const selectedWF = getValues('forms.defaultWorkflow');
+            if (selectedWF != "" && d.length > 0) {
+                const selectedIdx = d.findIndex(w=>w.WORKFLOW_ID==selectedWF);
+                if (selectedIdx > 0) {
+                    const selectedWFData = d.splice(selectedIdx,1);
+                    d.unshift(selectedWFData.at(0));
+                }
+            }
             return d.map(w => {
                 w.GROUPS_ARRAY = w.GROUPS.split(',').map(g => {
                     const name = find(groups.data,{GROUP_ID:g})
@@ -164,22 +172,6 @@ function SettingsFormsEmail() {
                 <Row as="header" className="mt-3">
                     <Col as="h4">Email Configuration</Col>
                 </Row>
-                <Form.Group as={Row} controlId="emailErrors">
-                    <Form.Label column md={2}>Errors Group:</Form.Label>
-                    <Col xs="auto">
-                        <Controller
-                            name='forms.email.errorsGroup'
-                            control={control}
-                            render={({field}) => (
-                                <Form.Control as="select" {...field} aria-describedby="emailErrorsGroupHelp">
-                                    <option></option>
-                                    {groups.data.map(g=><option value={g.GROUP_ID} key={g.GROUP_ID}>{g.GROUP_NAME}</option>)}
-                                </Form.Control>
-                            )}
-                        />
-                        <Form.Text id="emailErrorsGroupHelp" className="pt-1" muted>Group notified when errors are encountered in the Request process</Form.Text>
-                    </Col>
-                </Form.Group>
                 <Form.Group as={Row} controlId="emailEnabled">
                     <Form.Label column md={2}>Enable Notifications:</Form.Label>
                     <Col xs="auto" className="pt-2">
@@ -218,6 +210,22 @@ function SettingsFormsEmail() {
                             control={control}
                             render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Email Subject" disabled={!enabled} />}
                         />
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row} controlId="emailErrors">
+                    <Form.Label column md={2}>Errors Group:</Form.Label>
+                    <Col xs="auto">
+                        <Controller
+                            name='forms.email.errorsGroup'
+                            control={control}
+                            render={({field}) => (
+                                <Form.Control as="select" {...field} aria-describedby="emailErrorsGroupHelp" disabled={!enabled} >
+                                    <option></option>
+                                    {groups.data.map(g=><option value={g.GROUP_ID} key={g.GROUP_ID}>{g.GROUP_NAME}</option>)}
+                                </Form.Control>
+                            )}
+                        />
+                        <Form.Text id="emailErrorsGroupHelp" className="pt-1" muted>Group notified when errors are encountered in the Form process</Form.Text>
                     </Col>
                 </Form.Group>
             </section>

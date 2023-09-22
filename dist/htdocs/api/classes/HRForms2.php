@@ -305,11 +305,8 @@ Class HRForms2 {
 		$origMethod = $_SERVER['REQUEST_METHOD'];
 		$_SERVER['REQUEST_METHOD'] = 'GET';
 		$settings = (new settings(array(),false))->returnData;
-		//TODO: if email not enabled then return
-		//if ($settings[$type]['email']['enabled']) {
-		//TODO: need to add general email settings somewhere
-		$defaults = array('from'=>'no-reply@binghamton.edu','mailto'=>'geigers+hrforms2-errors@binghamton.edu');
-		$email_settings = array_merge($defaults,(array)$settings[$type]['email']);
+		if (!$settings[$type]['email']['enabled']) return;
+		$email_settings = (array)$settings[$type]['email'];
 
 		$vars = array(
 			'ERROR'=> false,

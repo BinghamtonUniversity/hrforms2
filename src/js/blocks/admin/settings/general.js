@@ -1,10 +1,18 @@
 import React from "react";
 import { Form, Row, Col } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
+import useGroupQueries from "../../../queries/groups";
+import { sortBy } from 'lodash';
 
 export default function SettingsGeneral() {
     const { control, formState:{ errors }} = useFormContext();
+
+    const { getGroups } = useGroupQueries();
+    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME']),initialData:[]});
+
+    const enabled = useWatch({name:'general.email.enabled',control:control});
     const watchHideNews = useWatch({name:'general.hideNews'});
+
     return (
         <section>
             <Form.Group as={Row}>
@@ -81,6 +89,70 @@ export default function SettingsGeneral() {
                     <Form.Control.Feedback type="invalid">{errors?.general?.userRefresh?.message}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
+            <section>
+                <Row as="header">
+                    <Col>
+                        <h4>Email Configuration</h4>
+                        <p className="text-muted"><small>Email configuration for general system-wide functions</small></p>
+                    </Col>
+                </Row>
+                <Form.Group as={Row} controlId="emailEnabled">
+                    <Form.Label column md={2}>Enable Notifications:</Form.Label>
+                    <Col xs="auto" className="pt-2">
+                        <Controller
+                            name='general.email.enabled'
+                            control={control}
+                            render={({field}) => <Form.Check {...field} type="checkbox" checked={!!field.value}/>}
+                        />
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row} controlId="emailFromName">
+                    <Form.Label column md={2}>From Name (optional):</Form.Label>
+                    <Col xs="auto">
+                        <Controller
+                            name='general.email.name'
+                            control={control}
+                            render={({field}) => <Form.Control {...field} type="text" placeholder="Enter From Email Name" disabled={!enabled}/>}
+                        />
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row} controlId="emailFrom">
+                    <Form.Label column md={2}>From Email:</Form.Label>
+                    <Col xs="auto">
+                        <Controller
+                            name='general.email.from'
+                            control={control}
+                            render={({field}) => <Form.Control {...field} type="email" placeholder="Enter From Email Address" disabled={!enabled} />}
+                        />
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row} controlId="emailSubject">
+                    <Form.Label column md={2}>Email Subject:</Form.Label>
+                    <Col xs="auto">
+                        <Controller
+                            name='general.email.subject'
+                            control={control}
+                            render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Email Subject" disabled={!enabled} />}
+                        />
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row} controlId="emailErrors">
+                    <Form.Label column md={2}>Errors Group:</Form.Label>
+                    <Col xs="auto">
+                        <Controller
+                            name='general.email.errorsGroup'
+                            control={control}
+                            render={({field}) => (
+                                <Form.Control as="select" {...field} aria-describedby="emailErrorsGroupHelp" disabled={!enabled}>
+                                    <option></option>
+                                    {groups.data.map(g=><option value={g.GROUP_ID} key={g.GROUP_ID}>{g.GROUP_NAME}</option>)}
+                                </Form.Control>
+                            )}
+                        />
+                        <Form.Text id="emailErrorsGroupHelp" className="pt-1" muted>Group notified when system errors are encountered</Form.Text>
+                    </Col>
+                </Form.Group>
+            </section>
         </section>
     );
 }
