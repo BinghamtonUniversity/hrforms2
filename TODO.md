@@ -1,6 +1,24 @@
 # TODO List
 Bug fixes, enhancements and things still to complete.
 
+## Meeting Notes
++add last refreshd date to user list
+check code for form skip group
+group request hierarchies like forms
++default "send to users dept" as checked
++add description hover on forms wf routing table
+forms: if search by name/bdate copy bdate over to demo tab
+forms: position/appoint remove Appopintment Information(100) <-- max pct
+forms: salary tab: appt pct not carried over
+
++BUG:
+28020/EF/HIR/AUC
+04859
+Error on DateFormat
+Name:  Jean Mortenson, DOB 04/10/1944
+Date of Transactions was 09/14/2023
+
+
 ## Bug Fix:
   * SGRIILLS showing as "ERR: DUPLICATE IDs" on email notification in old HR Forms PR request.
   * TEST FORM: When person has no IDs (in prod: Keisha Wint, DOB: 8/23/1974)
