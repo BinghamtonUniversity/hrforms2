@@ -12,7 +12,7 @@ const name = 'person.demographics';
 export default function PersonDemographics() {
     const { canEdit, activeNav } = useHRFormContext();
 
-    const { control, setValue } = useFormContext();
+    const { control, getValues, setValue } = useFormContext();
     const watchCitizen = useWatch({name:`${name}.US_CITIZEN_INDICATOR`});
     const watchVeteran = useWatch({name:`${name}.VETERAN_INDICATOR`});
 
@@ -43,7 +43,7 @@ export default function PersonDemographics() {
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
                                         name={field.name}
-                                        selected={field.value}
+                                        selected={field.value||getValues('selectedRow.birthDate')}
                                         closeOnScroll={true}
                                         onChange={field.onChange}
                                         autoComplete="off"
