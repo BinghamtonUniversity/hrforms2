@@ -126,7 +126,10 @@ function PersonLookup({results}) {
         setFocus((e.target.value == 'lastNameDOB')?'lookup.values.lastName':'lookup.values.bNumber');
     }
     const handleKeyDown = e => e.key=='Escape' && resetLookup();
-    const handleLookupKeyDown = e => e.key=='Enter' && handleLookup(e);
+    const handleLookupKeyDown = e => {
+        if (e.key=='Enter') handleLookup(e);
+        return true;
+    }
     
     const handleFocus = e => {
         //setValue('selectedRow',{});
@@ -295,7 +298,7 @@ function LookupResults({data}) {
         if (selectedId) return; 
         const el = document.querySelector('#lookupResults .rdt_TableBody .rdt_TableRow input[type=checkbox');
         el.scrollIntoView();
-        el.focus();
+        //el.focus();
     },[data]);
 
     return (
