@@ -20,7 +20,7 @@ export default function EmploymentAppointment() {
     const watchAmounts = useWatch({name:[
         `${name}.RATE_AMOUNT`,
         `${name}.NUMBER_OF_PAYMENTS`,
-        'employment.position.APPOINTMENT_PERCENT'
+        'employment.position.apptPercent'
     ],control:control});
     const watchPayBasis = useWatch({name:'employment.position.positionDetails.PAY_BASIS',control:control});
     const rateAmountLabel = useMemo(() => {
