@@ -83,10 +83,7 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
         effDate: effDate,
         options: {
             enabled:lineNumber!=getValues(`${name}.positionDetails.LINE_NUMBER`),
-            onSuccess:d=>{
-                console.log(d);
-                setValue(`${name}.positionDetails`,d);
-            },
+            onSuccess:d=>setValue(`${name}.positionDetails`,d),
             onError:e=>console.warn(e)
         }
     });
@@ -121,13 +118,12 @@ function EmploymentAppointmentInformation() {
         const value = (e.target.value<=maxPercent)?e.target.value:maxPercent;
         setValue(`${name}.apptPercent`,value);
     }
-    const maxPercent = useMemo(() => {
-        return getValues(`${name}.APPOINTMENT_PERCENT`) || 100;
-    },[]);
+    const maxPercent = useMemo(()=>(!getValues(`${name}.APPOINTMENT_PERCENT`))?100:getValues(`${name}.APPOINTMENT_PERCENT`),[]);
+    const getMinDate = useMemo(()=>(!watchEffectiveDate)?addDays(new Date(),-1):addDays(watchEffectiveDate,1),[watchEffectiveDate]);
     return (
         <section className="mt-3">
             <Row as="header">
-                <Col as="h4">Appointment Information ({maxPercent})</Col>
+                <Col as="h4">Appointment Information</Col>
             </Row>
             
             <AppointmentType/>
@@ -143,7 +139,7 @@ function EmploymentAppointmentInformation() {
                             min:{value:1,message:'Appointment Percent cannot be less than 1%'},
                             max:{value:maxPercent,message:`Appointment Percent cannot be greater than ${maxPercent}%`}
                         }}
-                        render={({field}) => <Form.Control {...field} type="number" min={1} max={maxPercent} disabled={!canEdit}/>}
+                        render={({field}) => <Form.Control {...field} type="number" min={1} max={maxPercent} disabled={!canEdit} value={field.value||maxPercent}/>}
                     />
                 </Col>
                 <Col sm={8} md={6} className="pt-2">
@@ -172,7 +168,7 @@ function EmploymentAppointmentInformation() {
                                 selected={field.value}
                                 closeOnScroll={true}
                                 onChange={field.onChange}
-                                minDate={addDays(watchEffectiveDate,1)}
+                                minDate={getMinDate}
                                 autoComplete="off"
                                 disabled={!canEdit}
                             />}

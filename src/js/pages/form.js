@@ -736,6 +736,10 @@ function EmploymentPositionInfoBoxList() {
     const { control, getValues } = useFormContext();
     const watchApptPercent = useWatch({name:'employment.position.apptPercent',control:control});
     const positionDetails = getValues('employment.position.positionDetails');
+    const apptPct = useMemo(() => {
+        let pct = (!watchApptPercent)?getValues('employment.position.APPOINTMENT_PERCENT'):watchApptPercent;
+        return pct||100;
+    },[watchApptPercent]);
     return (
         <Row as="dl" className="mb-0">
             <Col as="dt" sm={2} className="mb-0">Line Number:</Col>
@@ -757,7 +761,7 @@ function EmploymentPositionInfoBoxList() {
             <Col as="dt" sm={2} className="mb-0">Position Department:</Col>
             <Col as="dd" sm={4} className="mb-0">{positionDetails?.POSITION_DEPARTMENT}</Col>
             <Col as="dt" sm={2} className="mb-0">Position Percent:</Col>
-            <Col as="dd" sm={4} className="mb-0">{watchApptPercent}</Col>
+            <Col as="dd" sm={4} className="mb-0">{apptPct}</Col>
             <Col as="dt" sm={2} className="mb-0">Position Status:</Col>
             <Col as="dd" sm={4} className="mb-0">{positionDetails?.POSITION_STATUS}</Col>
         </Row>
