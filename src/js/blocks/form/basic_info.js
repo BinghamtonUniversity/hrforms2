@@ -294,7 +294,7 @@ function LookupResults({data}) {
         {name:'End Date',selector:row=>row.endDateFmt,sortable:true,wrap:true}
     ]);
 
-    // causes issues when attempting change lookup data after searching
+    //TODO|FIX: Causes issues when attempting change lookup data after searching.
     /*useEffect(() => {
         if (selectedId) return; 
         const el = document.querySelector('#lookupResults .rdt_TableBody .rdt_TableRow input[type=checkbox');
