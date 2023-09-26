@@ -233,6 +233,7 @@ function LookupResults({data}) {
         if (infoComplete) return false;
         setSelectedId((selectedId==row.id)?undefined:row.id);
     },[selectedId]);
+
     const handleSelectedRowChange = args => {
         const newRow = (args.selectedCount)?args.selectedRows[0]:{};
         if (selectedRow?.id === newRow?.id) return false;
