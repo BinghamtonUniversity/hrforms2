@@ -334,14 +334,14 @@ export function fetchFormData({watchIds,effectiveDate,payrollCode}) {
                 a.createDate = isValid(createDate)?createDate:"";
             });
             d.totalSalary = ((+d.RATE_AMOUNT*+d.NUMBER_OF_PAYMENTS) * (+d.APPOINTMENT_PERCENT/100)).toFixed(2);
-            console.log(d);
         }
     });
     const employmentleave = getEmploymentInfo([watchIds[1],'leave',effectiveDate],{
         refetchOnMount:false,
         enabled:false,
         onSuccess:d=>{
-            const origSalary = (!d?.CALCULATED_ANNUAL)?0:d.CALCULATED_ANNUAL
+            if (!d) return {};
+            const origSalary = (!d?.CALCULATED_ANNUAL)?'0':d.CALCULATED_ANNUAL;
             d.origSalary = Number(origSalary.replace(/[^\d.]+/g,''));
             d.leaveSalary = d.origSalary;
             const salaryEffDate = new Date(d?.SALARY_EFFECTIVE_DATE);
