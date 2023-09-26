@@ -506,7 +506,7 @@ class Requests extends HRForms2 {
                 break;
 
             default:
-                $this->raiseError(E_BAD_REUQEST);
+                $this->raiseError(E_BAD_REQUEST);
         }
     }
 
