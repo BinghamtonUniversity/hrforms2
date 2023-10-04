@@ -4,12 +4,12 @@ Bug fixes, enhancements and things still to complete.
 ## Meeting Notes
 +add last refreshd date to user list
 check code for form skip group
-group request hierarchies like forms
++group request hierarchies like forms
 +default "send to users dept" as checked
 +add description hover on forms wf routing table
-forms: if search by name/bdate copy bdate over to demo tab
-forms: position/appoint remove Appopintment Information(100) <-- max pct
-forms: salary tab: appt pct not carried over
++forms: if search by name/bdate copy bdate over to demo tab
++forms: position/appoint remove Appopintment Information(100) <-- max pct
++forms: salary tab: appt pct not carried over
 
 +BUG:
 28020/EF/HIR/AUC
@@ -37,7 +37,6 @@ Date of Transactions was 09/14/2023
   * Search for "TODO" in files
   * Use Helmet to change the title of the page
   * Change Error Email to select a group and use the group instead of single email.
-  * Admin: Add default hierarchy routing in settings - Default hierarchy to HR and send error notice.
   * Archive - Request|Form: Should save groups, hierarchy, and workflow
   * Request|Form: Control who can view/edit based on status (see TODO in file)
   * Add CSS for printing

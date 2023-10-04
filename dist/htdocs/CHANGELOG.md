@@ -1,11 +1,19 @@
 # Changelog
 
+## Version 2.0.0 (DEV-20231003)
+  * Set Birth Date on Person Demographics tab to use value from selected employee information.
+  * BUG FIX: Fixed Appointment Percent display on Employment Position and Salary tabs.
+  * BUG FIX: Removed autofocus and autoscroll to the lookup table after entering data in the lookup form.  This caused problems when attempting change previously entered data.  Will revisit this in a future release.
+  * MAJOR UPDATE: Converted Request Hierarchy to grouping like the Forms Hierarchy.
+
+
 ## Version 2.0.0 (DEV-20230922)
   * Added popover for group descriptions on Request hiearchy and workflows.
   * Removed text input for Errors Emails in settings; using group selection instead
   * FIXED errors in user.php when calling sendError; needed a third argument
-  * FIXED sendError function to have a default value for "from" and "mailto" parameters - TODO: these values need to be defined somewhere.
+  * Added general email configuration for system-wide errors.
   * FIXED cast return from user in groupusers as array to prevent NULL error in array_merge.
+  
 
 ## Version 2.0.0 (DEV-20230921)
   * FIXED bug where users who were in HR Forms2, but had no record in SUNY HR were not shown in the Users list and in the available/assigned users in the Groups user list modal.
