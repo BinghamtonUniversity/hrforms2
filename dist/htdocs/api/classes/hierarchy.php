@@ -33,7 +33,7 @@ class Hierarchy extends HRForms2 {
 			case "request": /** Request Hierarchy */
 				$qry = "select h.HIERARCHY_ID,h.POSITION_TYPE,h.WORKFLOW_ID,h.groups as hierarchy_groups,
 								w.GROUPS as workflow_groups,w.CONDITIONS
-					from hrforms2_requests_hierarchy2 h
+					from hrforms2_requests_hierarchy h
 					left join (select * from hrforms2_requests_workflow) w on (h.workflow_id = w.workflow_id)";	
 				//TODO: is this used?
 				if (isset($this->req[1])&&$this->req[1]!='group') {
@@ -139,7 +139,7 @@ class Hierarchy extends HRForms2 {
 	function POST() {
 		switch($this->req[0]) {
 			case "request": /** Request Hierarchy */
-				$qry = "insert into hrforms2_requests_hierarchy2 
+				$qry = "insert into hrforms2_requests_hierarchy 
 				values(HRFORMS2_REQUESTS_HIERARCHY_SEQ.nextval, :position_type, :workflow_id, :groups)
 				returning HIERARCHY_ID into :hierarchy_id";
 				$stmt = oci_parse($this->db,$qry);
@@ -171,7 +171,7 @@ class Hierarchy extends HRForms2 {
 	function PATCH() {
 		switch($this->req[0]) {
 			case "request": /** Request Hierarchy */
-				$qry = "update hrforms2_requests_hierarchy2 
+				$qry = "update hrforms2_requests_hierarchy 
 					set workflow_id = :workflow_id, groups = :groups
 					where hierarchy_id = :hierarchy_id";
 				$stmt = oci_parse($this->db,$qry);
