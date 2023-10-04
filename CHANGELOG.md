@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 2.0.0 (DEV-20231003)
+  * Set Birth Date on Person Demographics tab to use value from selected employee information.
+  * BUG FIX: Fixed Appointment Percent display on Employment Position and Salary tabs.
+  * BUG FIX: Removed autofocus and autoscroll to the lookup table after entering data in the lookup form.  This caused problems when attempting change previously entered data.  Will revisit this in a future release.
+  * MAJOR UPDATE: Converted Request Hierarchy to grouping like the Forms Hierarchy.
+
+
 ## Version 2.0.0 (DEV-20230922)
   * Added popover for group descriptions on Request hiearchy and workflows.
   * Removed text input for Errors Emails in settings; using group selection instead
