@@ -164,7 +164,7 @@ function HierarchyTable() {
             </p>
         ),sortable:true,sortField:'GROUP_NAME',wrap:true},
         {name:'Workflow ID',selector:row=>row.WORKFLOW_ID,sortable:true,sortField:'WORKFLOW_ID',center:true},
-        {name:'Workflow Routing',selector:row=>row.GROUPS,grow:5,style:{flexWrap:'wrap'},cell:row=><HierarchyChain list={row.WORKFLOW_GROUPS_ARRAY} conditions={row.CONDITIONS} sendToGroup={row.SENDTOGROUP}/>},
+        {name:'Workflow Routing',selector:row=><HierarchyChain list={row.WORKFLOW_GROUPS_ARRAY} conditions={row.CONDITIONS} sendToGroup={row.SENDTOGROUP}/>,grow:5,style:{flexWrap:'wrap'}},
     ],[hierarchy]);
 
     const paginationComponentOptions = {
@@ -295,6 +295,7 @@ function AddEditHierarchy(props) {
     }
 
     const handleSubmit = data => {
+        console.debug('Hierarchy Data: ',data);
         if (isNew) {
             if (find(hierarchy,{PAYROLL_CODE:data.payroll,PAYTRANS_ID:data.formCode,WORKFLOW_ID:data.workflowId})) {
                 setStatus({state:'error',message:'A hierarchy already exists for this Payroll, Form and Workflow.'});
@@ -315,7 +316,7 @@ function AddEditHierarchy(props) {
                 formCode:data.formCode,
                 workflowId:data.workflowId,
                 groups:data.assignedGroups.map(g=>g.GROUP_ID).join(',')
-            }).then(d=>{
+            }).then(()=>{
                 queryclient.refetchQueries(['hierarchy','form']).then(() => {
                     setStatus({state:'clear'});
                     toast.success('Hierarchy created successfully');
@@ -348,7 +349,7 @@ function AddEditHierarchy(props) {
                 update.mutateAsync({
                     workflowId:data.workflowId,
                     groups:data.assignedGroups.map(g=>g.GROUP_ID).join(',')    
-                }).then(d=>{
+                }).then(()=>{
                     queryclient.refetchQueries(['hierarchy','form']).then(() => {
                         setStatus({state:'clear'});
                         toast.success('Hierarchy updated successfully');
@@ -594,7 +595,6 @@ function HierarchyRequiredFieldMessage({children}) {
         </Form.Row>
     );
 }
-
 
 function HierarchyGroups() {
     const ref = useRef();
