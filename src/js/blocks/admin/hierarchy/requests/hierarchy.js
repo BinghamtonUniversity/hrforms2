@@ -1,17 +1,19 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, useReducer } from "react";
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/request";
 import { useHierarchyQueries } from "../../../../queries/hierarchy";
-import { find, truncate, orderBy } from 'lodash';
-import { Row, Col, Modal, Form, Alert, ListGroup, Button } from "react-bootstrap";
-import { AppButton, Loading, errorToast } from "../../../../blocks/components";
+import { find, truncate, orderBy, difference, intersection } from 'lodash';
+import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Badge, Button, ListGroup } from "react-bootstrap";
+import { Icon } from "@iconify/react";
+import { AppButton, DescriptionPopover, Loading, errorToast } from "../../../../blocks/components";
 import DataTable from 'react-data-table-component';
 import { toast } from "react-toastify";
 import { useHotkeys } from "react-hotkeys-hook";
-import { useForm, FormProvider, useFormContext, Controller } from "react-hook-form";
+import { useForm, FormProvider, useFormContext, Controller, useWatch, useFieldArray } from "react-hook-form";
 import { useQueryClient } from "react-query";
 import { flattenObject } from "../../../../utility";
 import { t } from "../../../../config/text";
 import useListsQueries from "../../../../queries/lists";
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 const HierarchyContext = React.createContext();
 HierarchyContext.displayName = 'HierarchyContext';
@@ -23,8 +25,14 @@ export default function HierarchyTab() {
     const position = getListData('posTypes');
     const hierarchy = getHierarchy({select:d=>{
         return d.map(w => {
-            const grps = (w.GROUPS)?w.GROUPS.split(','):[];
-            w.GROUPS_ARRAY = grps.map(g => {
+            const hryGroups = (w.HIERARCHY_GROUPS)?w.HIERARCHY_GROUPS.split(','):[];
+            w.HIERARCHY_GROUPS_ARRAY = hryGroups.map(g => {
+                const grp = find(groups,{GROUP_ID:g})
+                return {GROUP_ID:g,GROUP_NAME:grp?.GROUP_NAME,GROUP_DESCRIPTION:grp?.GROUP_DESCRIPTION}
+            });
+           //w.AVAILABLE_HIERARCHY_GROUPS = groups.filter(g=>!hryGroups.includes(g.GROUP_ID));
+            const wfGroups = (w.WORKFLOW_GROUPS)?w.WORKFLOW_GROUPS.split(','):[];
+            w.WORKFLOW_GROUPS_ARRAY = wfGroups.map(g => {
                 const grp = find(groups,{GROUP_ID:g})
                 return {GROUP_ID:g,GROUP_NAME:grp?.GROUP_NAME,GROUP_DESCRIPTION:grp?.GROUP_DESCRIPTION}
             });
@@ -112,9 +120,19 @@ function HierarchyTable() {
         {name:'Position Type',selector:row=>row.POSITION_TYPE,sortable:true,sortField:'POSITION_TYPE',cell:row=>{
             return `${row.POSITION_TYPE} - ${position[row.POSITION_TYPE].title}`;
         },grow:2},
-        {name:'Group Name',selector:row=>row.GROUP_NAME,sortable:true,sortField:'GROUP_NAME'},
+        {name:'Groups',selector:row=>(
+            <p className="mb-0">{row.HIERARCHY_GROUPS_ARRAY.length}{' '}
+                <DescriptionPopover
+                    id={`${row.HIERARCHY_ID}_groups_information`}
+                    title="Assigned Groups"
+                    content={row.HIERARCHY_GROUPS_ARRAY.map(g=>g.GROUP_NAME).sort().join(', ')}
+                >
+                    <Badge variant="info" style={{fontSize:"14px",verticalAlign:"bottom",padding:"1px"}}><Icon icon="mdi:information-variant"/></Badge>
+                </DescriptionPopover>
+            </p>
+        ),sortable:true,sortField:'GROUP_NAME',wrap:true},
         {name:'Workflow ID',selector:row=>row.WORKFLOW_ID,sortable:true,sortField:'WORKFLOW_ID',center:true},
-        {name:'Workflow Routing',selector:row=>row.GROUPS,grow:5,style:{flexWrap:'wrap'},cell:row=><HierarchyChain list={row.GROUPS_ARRAY} conditions={row.CONDITIONS}/>},
+        {name:'Workflow Routing',selector:row=><HierarchyChain list={row.WORKFLOW_GROUPS_ARRAY} conditions={row.CONDITIONS}/>,grow:5,style:{flexWrap:'wrap'}},
     ],[hierarchy]);
 
     const paginationComponentOptions = {
@@ -190,11 +208,18 @@ function DeleteHierarchy({HIERARCHY_ID,setDeleteHierarchy}) {
 }
 
 function AddEditHierarchy(props) {
+    const [activeTab,setActiveTab] = useState('hierarchy-info');
+    const [disableGroupsTab,setDisableGroupsTab] = useState(!!props.isNew);
+    const tabs = [
+        {id:'hierarchy-info',title:'Information'},
+        {id:'hierarchy-groups',title:'Groups'}
+    ];
     const defaultStatus = {state:'',message:'',icon:'',spin:false,cancel:true,save:true};
     const [status,setStatus] = useReducer((state,args) => {
         let presets = {};
         switch(args.state) {
             case "error": presets = {icon:'mdi:alert',spin:false,save:false,cancel:true}; break;
+            case "groups": presets = {icon:'mdi:alert',spin:false,save:false,cancel:true}; break;
             case "saving": presets = {message:'Saving...',icon:'mdi:loading',spin:true,cancel:false,save:false}; break;
             case "clear": presets = defaultStatus; break;
         }
@@ -203,6 +228,7 @@ function AddEditHierarchy(props) {
 
     const {isNew,setIsNew} = useContext(WorkflowContext);
     const {hierarchy} = useContext(HierarchyContext);
+    const {groups} = useContext(WorkflowContext);
 
     const queryclient = useQueryClient();
     const {postHierarchy,patchHierarchy} = useHierarchyQueries('request',props.HIERARCHY_ID);
@@ -212,11 +238,20 @@ function AddEditHierarchy(props) {
     const methods = useForm({defaultValues:{
         hierarchyId: props.HIERARCHY_ID,
         posType: props.POSITION_TYPE,
-        groupId: props.GROUP_ID,
-        groupName: props.GROUP_NAME,
         workflowId: props.WORKFLOW_ID||'',
-        workflowSearch:''
+        workflowSearch:'',
+        assignedGroups:props.HIERARCHY_GROUPS_ARRAY||[],
+        availableGroups:[]
     }});
+
+    const navigate = tab => setActiveTab(tab);
+
+    const findGroupsIntersection = useCallback(data =>{
+        const assignedGroupsArray = data.assignedGroups.map(g=>g.GROUP_ID);
+        const existingGroupsArray = hierarchy.filter(h=>h.POSITION_TYPE==data.posType&&h.HIERARCHY_ID!=data.hierarchyId).map(h=>h.WORKFLOW_GROUPS_ARRAY.map(g=>g.GROUP_ID)).flat();
+        const inter = intersection(assignedGroupsArray,existingGroupsArray);
+        return groups.filter(g=>inter.includes(g.GROUP_ID));
+    },[groups,hierarchy,methods]);
 
     const closeModal = () => {
         if (status.state == 'saving') return false;
@@ -225,15 +260,28 @@ function AddEditHierarchy(props) {
     }
 
     const handleSubmit = data => {
+        console.debug('Hierarchy Data: ',data);
         if (isNew) {
-            //check to see if hierarchy already exists.
-            const match = find(hierarchy,{POSITION_TYPE:data.posType,GROUP_ID:data.groupId});
-            if (match) {
+            //check to see if hierarchy already exists; should not get here, but just in case
+            if (find(hierarchy,{POSITION_TYPE:data.posType,WORKFLOW_ID:data.workflowId})) {
                 setStatus({state:'error',message:'A hierarchy already exists for this Position Type and Group.'});
                 return false;
             }
+            const inuse = findGroupsIntersection(data);
+            if (inuse.length) {
+                setStatus({state:'groups',message:'The following group(s) are already assigned to another hierarchy that uses the same Payroll and Form: ',groups:inuse});
+                return false;
+            }
+            if (!data.assignedGroups.length) {
+                setStatus({state:'error',message:'At least one group must be assigned to the hierarchy.'});
+                return false;
+            }
             setStatus({state:'saving'});
-            create.mutateAsync({...data}).then(d=>{
+            create.mutateAsync({
+                posType:data.posType,
+                workflowId:data.workflowId,
+                groups:data.assignedGroups.map(g=>g.GROUP_ID).join(',')
+            }).then(()=>{
                 queryclient.refetchQueries(['hierarchy','request']).then(() => {
                     setStatus({state:'clear'});
                     toast.success('Hierarchy created successfully');
@@ -243,9 +291,30 @@ function AddEditHierarchy(props) {
                 setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
             });
         } else {
-            if (data.workflowId != props.WORKFLOW_ID) {
+            let hasChanges = false;
+            if (props.WORKFLOW_ID!=data.workflowId) hasChanges = true;
+            // did groups change?
+            const origIds = (props.HIERARCHY_GROUPS_ARRAY)?props.HIERARCHY_GROUPS_ARRAY.map(g=>g.GROUP_ID):[];
+            const newIds = data.assignedGroups.map(g=>g.GROUP_ID);
+            const addGroups = difference(newIds,origIds);
+            const delGroups = difference(origIds,newIds);
+            if (addGroups.length) hasChanges = true;
+            if (delGroups.length) hasChanges = true;
+            if (hasChanges) {
+                if (!data.assignedGroups.length) {
+                    setStatus({state:'error',message:'At least one group must be assigned to the hierarchy.'});
+                    return false;
+                }
+                const inuse = findGroupsIntersection(data);
+                if (inuse.length) {
+                    setStatus({state:'groups',message:'The following group(s) are already assigned to another hierarchy that uses the same Payroll and Form: ',groups:inuse});
+                    return false;
+                }    
                 setStatus({state:'saving'});
-                update.mutateAsync({WORKFLOW_ID:data.workflowId}).then(d=>{
+                update.mutateAsync({
+                    workflowId:data.workflowId,
+                    groups:data.assignedGroups.map(g=>g.GROUP_ID).join(',')    
+                }).then(()=>{
                     queryclient.refetchQueries(['hierarchy','request']).then(() => {
                         setStatus({state:'clear'});
                         toast.success('Hierarchy updated successfully');
@@ -270,6 +339,14 @@ function AddEditHierarchy(props) {
         });
         return () => watchFields.unsubscribe();
     },[methods.watch]);
+    useEffect(() => {
+        if (!disableGroupsTab) {
+            // Update available groups removing groups assigned under the same POSITION_TYPE regardless of hierarchy.
+            const assgn = hierarchy.filter(h=>h.POSITION_TYPE==methods.getValues('posType')).map(h=>h.HIERARCHY_GROUPS_ARRAY).flat().map(g=>g.GROUP_ID);
+            const avail = groups.filter(g=>!assgn.includes(g.GROUP_ID));
+            methods.setValue('availableGroups',avail);
+        }
+    },[disableGroupsTab]);
     return(
         <Modal show={true} onHide={closeModal} backdrop="static" size="lg">
             <FormProvider {...methods}>
@@ -278,8 +355,26 @@ function AddEditHierarchy(props) {
                         <Modal.Title>Hierarchy</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
-                        <HierarchyForm/>
+                        <Row>
+                            <Col>
+                                {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
+                                {status.state == 'groups' && <Alert variant="danger">
+                                    {status.message}
+                                    <ul>
+                                        {status.groups.map(g=><li key={g.GROUP_ID}>{g.GROUP_NAME}</li>)}
+                                    </ul>
+                                </Alert>}
+                            </Col>
+                        </Row>
+                        <Tabs activeKey={activeTab} onSelect={navigate} id="form-hierarchy-tabs">
+                                {tabs.map(t=>(
+                                    <Tab key={t.id} eventKey={t.id} title={t.title} disabled={t.id=='hierarchy-groups'&&disableGroupsTab}>
+                                        <Container className="mt-3" fluid>
+                                            <TabRouter tab={activeTab}/>
+                                        </Container>
+                                    </Tab>
+                                ))}
+                        </Tabs>
                     </Modal.Body>
                     <Modal.Footer>
                         <AppButton format="close" onClick={closeModal} disabled={!status.cancel}>Cancel</AppButton>
@@ -291,10 +386,18 @@ function AddEditHierarchy(props) {
     );
 }
 
+const TabRouter = React.memo(({tab}) => {
+    switch(tab) {
+        case "hierarchy-info": return <HierarchyForm/>;
+        case "hierarchy-groups": return <HierarchyGroups/>;
+        default: return <NotFound/>;
+    }
+});
+
 function HierarchyForm() {
     const [searchText,setSearchText] = useState('');
     const { control, setValue, formState:{ errors } } = useFormContext();
-    const { groups, workflows, isNew} = useContext(WorkflowContext);
+    const { workflows, isNew} = useContext(WorkflowContext);
     const { position } = useContext(HierarchyContext);
 
     const searchWorkFlows = (e,field) => {
@@ -335,23 +438,6 @@ function HierarchyForm() {
                     <Form.Control.Feedback type="invalid">{errors.posType?.message}</Form.Control.Feedback>
                 </Form.Group>
             </Form.Row>
-            <Form.Row>
-                <Form.Group as={Col} controlId="groupId">
-                    <Form.Label>Group Name:</Form.Label>
-                    <Controller
-                        name="groupId"
-                        control={control}
-                        rules={{required:{value:true,message:'Group Name is required'}}}
-                        render={({field}) => (
-                            <Form.Control {...field} as="select" disabled={!isNew} isInvalid={errors.groupId}>
-                                <option></option>
-                                {groups.map(g=><option key={g.GROUP_ID} value={g.GROUP_ID}>{g.GROUP_NAME}</option>)}
-                            </Form.Control>
-                        )}
-                    />
-                    <Form.Control.Feedback type="invalid">{errors.groupId?.message}</Form.Control.Feedback>
-                </Form.Group>
-            </Form.Row>            
             <Form.Row>
                 <Form.Group as={Col} controlId="workflowId">
                     <Form.Label>Current Workflow: <Button title="Clear" variant="danger" style={{padding:'0.1rem 0.25rem',fontSize:'0.8rem'}} onClick={clearWorkflow}>X</Button></Form.Label>
@@ -396,5 +482,121 @@ function HierarchyForm() {
                 </Form.Group>
             </Form.Row>
         </>
+    );
+}
+
+function HierarchyGroups() {
+    const ref = useRef();
+    const [filterText,setFilterText] = useState('');
+    const [filteredGroups,setFilteredGroups] = useState([]);
+    const { getValues} = useFormContext();
+    const handleOnKeyDown = e => {
+        if (e.key == 'Escape') {
+            e.stopPropagation();
+            setFilterText('');
+        }
+    }
+    const handleOnChange = e => setFilterText(e.target.value);
+    useEffect(() => {
+        const filtered = getValues('availableGroups').filter(row =>{
+            return Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
+        }).map(f=>f.GROUP_ID);
+        setFilteredGroups(filtered);
+    },[filterText]);
+    useEffect(()=>ref.current.focus(),[]);
+    return (
+        <>
+            <Form.Row>
+                <Form.Group as={Col}>
+                    <Form.Label>Filter Groups:</Form.Label>
+                    <Form.Control ref={ref} type="search" placeholder="filter available groups..." value={filterText} onChange={handleOnChange} onKeyDown={handleOnKeyDown}/>
+                </Form.Group>
+            </Form.Row>
+            <div className="drag-col-2">
+                <div className="dlh1">Unassigned Groups</div>
+                <div className="dlh2">Assigned Groups</div>
+                <HierarchyGroupsList filteredGroups={filteredGroups} filterText={filterText}/>
+            </div>
+        </>
+    );
+}
+
+function HierarchyGroupsList({filteredGroups,filterText}) {
+    const { control } = useFormContext();
+    const { insert:insertAssignedGroups, remove:removeAssignedGroups } = useFieldArray({control:control,name:'assignedGroups'});
+    const { insert:insertAvailableGroups, remove:removeAvailableGroups } = useFieldArray({control:control,name:'availableGroups'});
+    const assignedgroups = useWatch({name:'assignedGroups',control:control});
+    const availablegroups = useWatch({name:'availableGroups',control:control});
+
+    const onDragEnd = ({source,destination}) => {
+        if (source.droppableId == destination.droppableId) return false; //no reordering
+        if (source.droppableId == 'available') {
+            insertAssignedGroups(destination.index,availablegroups[source.index]);
+            removeAvailableGroups(source.index);
+        }
+        if (source.droppableId == 'assigned') {
+            insertAvailableGroups(destination.index,assignedgroups[source.index]);
+            removeAssignedGroups(source.index);
+        }
+    }
+    const handleDblClick = useCallback(e => {
+        const {list,idx} = e.target.dataset;
+        onDragEnd({
+            source:{droppableId:list,index:parseInt(idx,10)},
+            destination:{droppableId:(list=='available'?'assigned':'available'),index:0}
+        });
+    },[availablegroups,assignedgroups]);
+    return(
+        <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="available">
+                {(provided, snapshot) => ( 
+                    <div ref={provided.innerRef} className={`droplist dl1 ${snapshot.isDraggingOver?'over':''}`}>
+                        {availablegroups.map((g,i) => {
+                            if (filterText&&!filteredGroups.includes(g.GROUP_ID)) return null;
+                            return (
+                                <Draggable key={g.GROUP_ID} draggableId={g.GROUP_ID} index={i}>
+                                    {(provided,snapshot) => (
+                                        <div
+                                            ref={provided.innerRef} 
+                                            {...provided.draggableProps} 
+                                            {...provided.dragHandleProps}
+                                            className={snapshot.isDragging?'dragging':''}
+                                            onDoubleClick={handleDblClick}
+                                            data-list="available" data-idx={i}
+                                        >
+                                            {g.GROUP_NAME}
+                                        </div>
+                                    )}
+                                </Draggable>
+                            );
+                        })}
+                        {provided.placeholder}
+                    </div>
+                )}
+            </Droppable>
+            <Droppable droppableId="assigned">
+                {(provided, snapshot) => ( 
+                    <div ref={provided.innerRef} className={`droplist dl2 ${snapshot.isDraggingOver?'over':''}`}>
+                        {assignedgroups.map((g,i) => (
+                            <Draggable key={g.GROUP_ID} draggableId={g.GROUP_ID} index={i}>
+                                {(provided,snapshot) => (
+                                    <div
+                                        ref={provided.innerRef} 
+                                        {...provided.draggableProps} 
+                                        {...provided.dragHandleProps}
+                                        className={snapshot.isDragging?'dragging':''}
+                                        onDoubleClick={handleDblClick}
+                                        data-list="assigned" data-idx={i}
+                                    >
+                                        {g.GROUP_NAME}
+                                    </div>
+                                )}
+                            </Draggable>
+                        ))}
+                        {provided.placeholder}
+                    </div>
+                )}
+            </Droppable>
+        </DragDropContext>
     );
 }

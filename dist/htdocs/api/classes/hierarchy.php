@@ -31,14 +31,12 @@ class Hierarchy extends HRForms2 {
 	function GET() {
 		switch($this->req[0]) {
 			case "request": /** Request Hierarchy */
-				$qry = "select h.HIERARCHY_ID,h.POSITION_TYPE,h.GROUP_ID,g.GROUP_NAME,h.WORKFLOW_ID,w.GROUPS,w.CONDITIONS
-					from hrforms2_requests_hierarchy h
-					left join (select * from hrforms2_groups) g on (h.group_id = g.group_id)
+				$qry = "select h.HIERARCHY_ID,h.POSITION_TYPE,h.WORKFLOW_ID,h.groups as hierarchy_groups,
+								w.GROUPS as workflow_groups,w.CONDITIONS
+					from hrforms2_requests_hierarchy2 h
 					left join (select * from hrforms2_requests_workflow) w on (h.workflow_id = w.workflow_id)";	
-				if ($this->req[1] == 'group') {
-					$qry .= " where h.group_id = :id ";
-					$id = $this->req[2];
-				} elseif (isset($this->req[1])) {
+				//TODO: is this used?
+				if (isset($this->req[1])&&$this->req[1]!='group') {
 					$qry .= " where h.hierarchy_id = :id";
 					$id = $this->req[1];
 				}
@@ -47,6 +45,10 @@ class Hierarchy extends HRForms2 {
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					if ($this->req[1] == 'group') {
+						$hgroups = explode(',',$row['HIERARCHY_GROUPS']);
+						if (!in_array($this->req[2],$hgroups)) continue;
+					}
 					$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
 					unset($row['CONDITIONS']);
 					$row['CONDITIONS'] = json_decode($conditions);
@@ -56,8 +58,8 @@ class Hierarchy extends HRForms2 {
 				
 				// get default when selecting for group:
 				if ($this->req[1] == 'group') {
-					$qry = "select 0 as HIERARCHY_ID,null as POSITION_TYPE,g.group_id,g.group_name,
-						w.workflow_id, w.groups, w.conditions
+					$qry = "select 0 as HIERARCHY_ID,null as POSITION_TYPE,
+						w.workflow_id, w.groups as workflow_groups, w.conditions
 						from hrforms2_requests_workflow w
 						left join (select * from hrforms2_groups) g on (g.group_id = :id)
 						where w.workflow_id = (select s.settings.requests.defaultWorkflow from hrforms2_settings s)";
@@ -137,13 +139,13 @@ class Hierarchy extends HRForms2 {
 	function POST() {
 		switch($this->req[0]) {
 			case "request": /** Request Hierarchy */
-				$qry = "insert into hrforms2_requests_hierarchy 
-				values(HRFORMS2_REQUESTS_HIERARCHY_SEQ.nextval, :position_type, :group_id, :workflow_id)
+				$qry = "insert into hrforms2_requests_hierarchy2 
+				values(HRFORMS2_REQUESTS_HIERARCHY_SEQ.nextval, :position_type, :workflow_id, :groups)
 				returning HIERARCHY_ID into :hierarchy_id";
 				$stmt = oci_parse($this->db,$qry);
 				oci_bind_by_name($stmt,":position_type", $this->POSTvars['posType']);
-				oci_bind_by_name($stmt,":group_id", $this->POSTvars['groupId']);
 				oci_bind_by_name($stmt,":workflow_id", $this->POSTvars['workflowId']);
+				oci_bind_by_name($stmt,":groups", $this->POSTvars['groups']);
 				oci_bind_by_name($stmt,":hierarchy_id", $HIERARCHY_ID,-1,SQLT_INT);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
@@ -169,16 +171,17 @@ class Hierarchy extends HRForms2 {
 	function PATCH() {
 		switch($this->req[0]) {
 			case "request": /** Request Hierarchy */
-				if (isset($this->POSTvars['WORKFLOW_ID'])) {
-					$qry = "update hrforms2_requests_hierarchy set workflow_id = :workflow_id where hierarchy_id = :hierarchy_id";
-					$stmt = oci_parse($this->db,$qry);
-					oci_bind_by_name($stmt,":workflow_id", $this->POSTvars['WORKFLOW_ID']);
-					oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
-					$r = oci_execute($stmt);
-					if (!$r) $this->raiseError();
-					oci_commit($this->db);
-					oci_free_statement($stmt);
-				}
+				$qry = "update hrforms2_requests_hierarchy2 
+					set workflow_id = :workflow_id, groups = :groups
+					where hierarchy_id = :hierarchy_id";
+				$stmt = oci_parse($this->db,$qry);
+				oci_bind_by_name($stmt,":workflow_id", $this->POSTvars['workflowId']);
+				oci_bind_by_name($stmt,":groups", $this->POSTvars['groups']);
+				oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
+				$r = oci_execute($stmt);
+				if (!$r) $this->raiseError();
+				oci_commit($this->db);
+				oci_free_statement($stmt);
 				$this->done();
 				break;
 			case "form": /** Form Hierarchy */
