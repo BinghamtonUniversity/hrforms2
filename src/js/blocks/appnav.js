@@ -10,7 +10,6 @@ export default function AppNav() {
     const logout = e => {
         e.preventDefault();
         //TODO: handle logout
-        console.log('logout');
     }
     return (
         <header>
@@ -53,7 +52,7 @@ export default function AppNav() {
                                 <NavDropdown.Item as={Link} to="/test/error">Error Test</NavDropdown.Item>
                             </NavDropdown>
                         }
-                        <Nav.Link onClick={logout}>Logout</Nav.Link>
+                        {/*<Nav.Link onClick={logout}>Logout</Nav.Link>*/}
                     </Nav>
                 </Navbar.Collapse>
             </Navbar>
