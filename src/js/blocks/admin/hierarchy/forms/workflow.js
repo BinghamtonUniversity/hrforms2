@@ -72,7 +72,7 @@ export default function WorkflowTab() {
     },[rows,filterText]);
 
     const columns = useMemo(() => [
-        {name:'Actions',selector:row=>row.WORKFLOW_ID,cell:row=>{
+        {name:'Actions',id:'actions',selector:row=>row.WORKFLOW_ID,cell:row=>{
             return (
                 <div className="button-group">
                     <AppButton format="delete" size="sm" title="Delete Workflow" onClick={()=>setDeleteWorkflow(row)}></AppButton>

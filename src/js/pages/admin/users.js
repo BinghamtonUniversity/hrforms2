@@ -154,7 +154,7 @@ function UsersTable({users,newUser,setNewUser}) {
     },[statusFilter,filterText,rows]);
 
     const columns = useMemo(() => [
-        {name:'Actions',cell:row=>{
+        {name:'Actions',id:'actions',cell:row=>{
             return (
                 <div className="button-group">
                     {row.SUNY_ID && <AppButton format="impersonate" size="sm" title="Impersonate User" onClick={()=>setImpersonateUser(row)} disabled={!row.active||row.SUNY_ID==SUNY_ID}/>}

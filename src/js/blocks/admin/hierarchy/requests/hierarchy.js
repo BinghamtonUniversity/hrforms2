@@ -110,7 +110,7 @@ function HierarchyTable() {
     },[rows,filterText]);
 
     const columns = useMemo(() => [
-        {name:'Actions',cell:row=>{
+        {name:'Actions',id:'actions',cell:row=>{
             return (
                 <div className="button-group">
                     <AppButton format="delete" size="sm" title="Delete Hierarchy" onClick={()=>setDeleteHierarchy(row)}></AppButton>

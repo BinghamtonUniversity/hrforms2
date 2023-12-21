@@ -96,7 +96,7 @@ export default function PayrollTransactionsTab() {
     };
 
     const columns = useMemo(() => [
-        {name:'Actions',cell:row=>{
+        {name:'Actions',id:'actions',cell:row=>{
             return (
                 <div className="button-group">
                     <AppButton format="copy" size="sm" name="copy" title="Copy" onClick={()=>handleCopyRow(row)}/>

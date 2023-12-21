@@ -1,5 +1,10 @@
 @media print {
-    .ReactQueryDevtools, .button-group { display: none }
+    .ReactQueryDevtools, 
+    .button-group, 
+    .btn,
+    [data-column-id="actions"] { 
+        display: none !important
+    }
     blockquote, pre { border: none; }
     main { margin-top: 1em; }
 }
