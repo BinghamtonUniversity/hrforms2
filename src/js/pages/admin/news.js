@@ -36,7 +36,9 @@ export default function AdminNews() {
                     <title>{t('admin.news.title')}</title>
                 </Helmet>
                 <Row>
-                    <Col><h2>{t('admin.news.title')}</h2></Col>
+                    <Col>
+                        <h2>{t('admin.news.title')}</h2>
+                    </Col>
                 </Row>
             </header>
             <article>

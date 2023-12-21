@@ -9,6 +9,7 @@ import JoditEditor from "jodit-react";
 import { editorConfig } from "../../config";
 import { useSettingsContext } from "../../app";
 import { t } from "../../config/text";
+import { Helmet } from "react-helmet";
 
 export default function AdminTemplates() {
     const [selectedTemplate,setSelectedTemplate] = useState('');
@@ -18,8 +19,13 @@ export default function AdminTemplates() {
         <section>
             <section>
                 <header className="mb-4">
+                    <Helmet>
+                        <title>{t('admin.templates.title')}</title>
+                    </Helmet>
                     <Row>
-                        <Col><h2>{t('admin.templates.title')}</h2></Col>
+                        <Col>
+                            <h2>{t('admin.templates.title')}</h2>
+                        </Col>
                     </Row>
                     <Row>
                         <Col>

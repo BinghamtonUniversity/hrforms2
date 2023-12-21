@@ -4,6 +4,7 @@ import { Container, Row, Col, Tabs, Tab } from "react-bootstrap";
 import { useHotkeys } from "react-hotkeys-hook";
 import { t } from "../../config/text";
 import { NotFound } from "../../app";
+import { Helmet } from "react-helmet";
 
 const PayrollTransactionsTab = lazy(()=>import("../../blocks/admin/transactions/paytrans"));
 const CodesTab = lazy(()=>import("../../blocks/admin/transactions/codes"));
@@ -15,15 +16,16 @@ const CodesTab = lazy(()=>import("../../blocks/admin/transactions/codes"));
 
 export default function AdminFormTransactions() {
     const tabs = [
-        {id:'paytrans',title:'Payroll Transactions'},
-        {id:'payroll',title:'Payroll Codes'},
-        {id:'form',title:'Form Codes'},
-        {id:'action',title:'Action Codes'},
-        {id:'transaction',title:'Transaction Codes'}
+        {id:'paytrans',title:t('admin.transactions.tabs.paytrans')},
+        {id:'payroll',title:t('admin.transactions.tabs.payroll')},
+        {id:'form',title:t('admin.transactions.tabs.form')},
+        {id:'action',title:t('admin.transactions.tabs.action')},
+        {id:'transaction',title:t('admin.transactions.tabs.transaction')}
     ];
     const {subpage} = useParams();
     const history = useHistory();
     const [activeTab,setActiveTab] = useState('');
+    const [tabTitle,setTabTitle] = useState('');
 
     const navigate = tab => {
         setActiveTab(tab);
@@ -41,12 +43,21 @@ export default function AdminFormTransactions() {
     },{enableOnTags:['INPUT']},[activeTab]);
 
     useEffect(()=>setActiveTab(tabs.map(t=>t.id).includes(subpage)?subpage:'paytrans'),[subpage]);
+    useEffect(() => {
+        if (!activeTab) setTabTitle('');
+        setTabTitle(' - ' + tabs.find(t=>t.id==activeTab)?.title);
+    },[activeTab])
     return (
         <>
             <section>
                 <header>
+                    <Helmet>
+                        <title>{t('admin.transactions.title')}{tabTitle}</title>
+                    </Helmet>
                     <Row>
-                        <Col><h2>{t('admin.transactions.title')}</h2></Col>
+                        <Col>
+                            <h2>{t('admin.transactions.title')}</h2>
+                        </Col>
                     </Row>
                 </header>
                 <Tabs activeKey={activeTab} onSelect={navigate} id="form-transaciton-tabs">

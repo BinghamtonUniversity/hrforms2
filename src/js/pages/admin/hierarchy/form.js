@@ -9,6 +9,7 @@ import { Icon } from "@iconify/react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { t } from "../../../config/text";
 import { NotFound } from "../../../app";
+import { Helmet } from "react-helmet";
 
 export const WorkflowContext = React.createContext();
 WorkflowContext.displayName = 'WorkflowContext';
@@ -18,8 +19,8 @@ const AdminFormHierarchyWorkflow = lazy(()=>import("../../../blocks/admin/hierar
 
 export default function AdminFormHierarchy() {
     const tabs = [
-        {id:'hierarchy',title:'Hierarchy'},
-        {id:'workflow',title:'Workflow'}
+        {id:'hierarchy',title:t('admin.hierarchy.form.tabs.hierarchy')},
+        {id:'workflow',title:t('admin.hierarchy.form.tabs.workflow')}
     ];
     const {pagetab} = useParams();
     const history = useHistory();
@@ -61,9 +62,14 @@ export default function AdminFormHierarchy() {
     return (
         <WorkflowContext.Provider value={{groups:groups.data,workflows:workflows.data,isNew:isNew,setIsNew:setIsNew,activeTab:activeTab}}>
             <section>
+                <Helmet>
+                    <title>{t('admin.hierarchy.form.title')} - {tabs.find(t=>t.id==activeTab)?.title}</title>
+                </Helmet>
                 <header>
                     <Row>
-                        <Col><h2>{t('admin.hierarchy.form.title')}</h2></Col>
+                        <Col>
+                            <h2>{t('admin.hierarchy.form.title')}</h2>
+                        </Col>
                     </Row>
                 </header>
                 <Tabs activeKey={activeTab} onSelect={navigate} id="form-hierarchy-tabs">
