@@ -63,11 +63,13 @@ function AdminSettingsTabs({settingsData}) {
     return (
         <>
             <header>
+                <Helmet>
+                    <title>{t('admin.settings.title')} - {tabs.filter(t=>t.id==activeTab).at(0)?.title}</title>
+                </Helmet>
                 <Row>
-                    <Col><h2>{t('admin.settings.title')}</h2></Col>
-                    <Helmet>
-                        <title>{t('admin.settings.title')} - {tabs.filter(t=>t.id==activeTab).at(0)?.title}</title>
-                    </Helmet>
+                    <Col>
+                        <h2>{t('admin.settings.title')}</h2>
+                    </Col>
                 </Row>
                 {!!Object.keys(methods.formState.dirtyFields).length && 
                     <Row>

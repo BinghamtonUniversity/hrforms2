@@ -12,6 +12,7 @@ import { AppButton, DescriptionPopover, Loading, ModalConfirm, WorkflowExpandedC
 import { SettingsContext, NotFound, useSettingsContext, useAuthContext, useUserContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
 import { displayFormCode } from "../form";
+import { Helmet } from "react-helmet";
 
 export default function FormList() {
     const {part} = useParams();
@@ -25,6 +26,9 @@ export default function FormList() {
                 return (
                 <>
                     <header>
+                        <Helmet>
+                            <title>Forms List: {forms.menu[part]?.title}</title>
+                        </Helmet>
                         <Row>
                             <Col>
                                 <h2>Forms List: {forms.menu[part]?.title} <AppButton format="add" onClick={()=>setRedirect('/form')}>New Form</AppButton></h2>

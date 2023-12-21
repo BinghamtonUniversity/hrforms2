@@ -13,6 +13,7 @@ import { AppButton, Loading, ModalConfirm, WorkflowExpandedComponent } from "../
 import { useUserContext, SettingsContext, NotFound, useSettingsContext, useAuthContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
 import { flattenObject } from "../../utility";
+import { Helmet } from "react-helmet";
 
 export default function RequestList() {
     const {part} = useParams();
@@ -26,8 +27,13 @@ export default function RequestList() {
                 return (
                 <>
                     <header>
+                        <Helmet>
+                            <title>Requests List: {requests.menu[part]?.title}</title>
+                        </Helmet>
                         <Row>
-                            <Col><h2>Requests List: {requests.menu[part]?.title} <AppButton format="add" onClick={()=>setRedirect('/request')}>New Request</AppButton></h2></Col>
+                            <Col>
+                                <h2>Requests List: {requests.menu[part]?.title} <AppButton format="add" onClick={()=>setRedirect('/request')}>New Request</AppButton></h2>
+                            </Col>
                         </Row>
                     </header>
                     <section>

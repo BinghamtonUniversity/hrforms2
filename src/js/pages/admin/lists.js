@@ -8,6 +8,7 @@ import { Loading, ModalConfirm, AppButton, errorToast } from "../../blocks/compo
 import { useHotkeys } from "react-hotkeys-hook";
 import { t } from "../../config/text";
 import useListsQueries from "../../queries/lists";
+import { Helmet } from "react-helmet";
 
 export default function AdminLists() {
     const [selectedList,setSelectedList] = useState();
@@ -196,8 +197,13 @@ export default function AdminLists() {
         <>
             <section>
                 <header className="mb-4">
+                    <Helmet>
+                        <title>{t('admin.lists.title')}</title>
+                    </Helmet>
                     <Row>
-                        <Col><h2>{t('admin.lists.title')} <AppButton format="add-list" onClick={newList}>Add New</AppButton></h2></Col>
+                        <Col>
+                            <h2>{t('admin.lists.title')} <AppButton format="add-list" onClick={newList}>Add New</AppButton></h2>
+                        </Col>
                     </Row>
                 </header>
                 <Form.Group as={Row}>

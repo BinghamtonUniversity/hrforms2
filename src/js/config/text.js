@@ -13,9 +13,17 @@ const text = {
         'hierarchy': {
             'form': {
                 'title': 'Form Hierarchy',
+                'tabs': {
+                    'hierarchy':'Hierarchy',
+                    'workflow':'Workflow'
+                },
             },
             'request': {
                 'title': 'Request Hierarchy',
+                'tabs': {
+                    'hierarchy':'Hierarchy',
+                    'workflow':'Workflow'
+                },
             }
         },
         'lists': {
@@ -32,6 +40,13 @@ const text = {
         },
         'transactions': {
             'title': 'Form Transactions',
+            'tabs': {
+                'paytrans':'Payroll Transactions',
+                'payroll':'Payroll Codes',
+                'form':'Form Codes',
+                'action':'Action Codes',
+                'transaction':'Transaction Codes'
+            },
         },
         'users': {
             'title': 'Admin: Users',

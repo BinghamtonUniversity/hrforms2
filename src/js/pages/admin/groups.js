@@ -18,6 +18,7 @@ import { flattenObject } from "../../utility";
 import { t } from "../../config/text";
 import { NotFound } from "../../app";
 import { CSVLink } from "react-csv";
+import { Helmet } from "react-helmet";
 
 export default function AdminGroups() {
     const [newGroup,setNewGroup] = useState(false);
@@ -28,8 +29,13 @@ export default function AdminGroups() {
 
     return (
         <>
+            <Helmet>
+                <title>{t('admin.groups.title')}</title>
+            </Helmet>
             <Row>
-                <Col><h2>{t('admin.groups.title')} <AppButton format="add-group" onClick={()=>setNewGroup(true)}>Add New</AppButton></h2></Col>
+                <Col>
+                    <h2>{t('admin.groups.title')} <AppButton format="add-group" onClick={()=>setNewGroup(true)}>Add New</AppButton></h2>
+                </Col>
             </Row>
             <Row>
                 <Col>

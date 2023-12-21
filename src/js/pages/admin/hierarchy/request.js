@@ -7,7 +7,9 @@ import { Container, Row, Col, Tabs, Tab, Badge } from "react-bootstrap";
 import { Loading, AppButton, DescriptionPopover } from "../../../blocks/components";
 import { Icon } from "@iconify/react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { t } from "../../../config/text";
 import { NotFound } from "../../../app";
+import { Helmet } from "react-helmet";
 
 export const WorkflowContext = React.createContext();
 WorkflowContext.displayName = 'WorkflowContext';
@@ -17,8 +19,8 @@ const AdminRequestHierarchyWorkflow = lazy(()=>import("../../../blocks/admin/hie
 
 export default function AdminRequestHierarchy() {
     const tabs = [
-        {id:'hierarchy',title:'Hierarchy'},
-        {id:'workflow',title:'Workflow'}
+        {id:'hierarchy',title:t('admin.hierarchy.request.tabs.hierarchy')},
+        {id:'workflow',title:t('admin.hierarchy.request.tabs.workflow')}
     ];
     const {pagetab} = useParams();
     const history = useHistory();
@@ -61,8 +63,13 @@ export default function AdminRequestHierarchy() {
         <WorkflowContext.Provider value={{groups:groups.data,workflows:workflows.data,isNew:isNew,setIsNew:setIsNew,activeTab:activeTab}}>
             <section>
                 <header>
+                    <Helmet>
+                        <title>{t('admin.hierarchy.request.title')} - {tabs.find(t=>t.id==activeTab)?.title}</title>
+                    </Helmet>
                     <Row>
-                        <Col><h2>Request Hierarchy</h2></Col>
+                        <Col>
+                            <h2>{t('admin.hierarchy.request.title')}</h2>
+                        </Col>
                     </Row>
                 </header>
                 <Tabs activeKey={activeTab} onSelect={navigate} id="request-hierarchy-tabs">

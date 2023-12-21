@@ -11,6 +11,7 @@ import { sortBy } from "lodash";
 import { toast } from "react-toastify";
 import { useQueryClient } from "react-query";
 import { CSVLink } from "react-csv";
+import { Helmet } from "react-helmet";
 
 export default function AdminDepartments() {
     const searchRef = useRef();
@@ -102,8 +103,13 @@ export default function AdminDepartments() {
     useEffect(()=>searchRef.current.focus(),[]);
     return (
         <>
+            <Helmet>
+                <title>{t('admin.departments.title')}</title>
+            </Helmet>
             <Row>
-                <Col><h2>{t('admin.departments.title')}</h2></Col>
+                <Col>
+                    <h2>{t('admin.departments.title')}</h2>
+                </Col>
             </Row>
             <Row>
                 <Col>

@@ -44,11 +44,13 @@ export default function AdminUsers() {
 
     return (
         <>
+            <Helmet>
+                <title>{t('admin.users.title')}</title>
+            </Helmet>
             <Row>
-                <Helmet>
-                    <title>{t('admin.users.title')}</title>
-                </Helmet>
-                <Col><h2>{t('admin.users.title')} <AppButton format="add-user" onClick={()=>setNewUser(true)}>Add New</AppButton></h2></Col>
+                <Col>
+                    <h2>{t('admin.users.title')} <AppButton format="add-user" onClick={()=>setNewUser(true)}>Add New</AppButton></h2>
+                </Col>
             </Row>
             <Row>
                 <Col>
