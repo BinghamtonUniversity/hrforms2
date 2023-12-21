@@ -103,7 +103,7 @@ export default function CodesTab({tab,tabName}) {
     };
 
     const columns = useMemo(() => [
-        {name:'Actions',cell:row=>{
+        {name:'Actions',id:'actions',cell:row=>{
             return (
                 <div className="button-group">
                     <AppButton format="delete" size="sm" name="delete" onClick={e=>handleRowEvents(e,row)}/>

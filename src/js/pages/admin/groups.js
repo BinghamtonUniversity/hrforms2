@@ -175,7 +175,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
     },[rows,filterText,filterField,statusFilter]);
 
     const columns = useMemo(() => [
-        {name:'Actions',cell:row=>{
+        {name:'Actions',id:'actions',cell:row=>{
             return (
                 <div className="button-group">
                     {row.active && <AppButton format="deactivate-group" size="sm" title="Deactivate Group" onClick={()=>setToggleGroup(row)}/>}
