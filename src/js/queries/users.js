@@ -12,8 +12,9 @@ export default function useUserQueries(SUNY_ID) {
     const getUser = () => {
         return useQuery('user',q(`user/${CURRENT_SUNY_ID}`),{staleTime:Infinity,cacheTime:Infinity,onSuccess:d => {
             return d.map(u => {
-                u.fullname = u.LEGAL_FIRST_NAME + ' ' + u.LEGAL_LAST_NAME;
-                u.sortname = u.LEGAL_LAST_NAME + ', ' + u.LEGAL_FIRST_NAME;
+                const fName = u.ALIAS_FIRST_NAME || u.LEGAL_FIRST_NAME;
+                u.fullname = fName + ' ' + u.LEGAL_LAST_NAME;
+                u.sortname = u.LEGAL_LAST_NAME + ', ' + fName;
             });
         }});
     }    

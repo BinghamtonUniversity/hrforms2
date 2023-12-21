@@ -45,8 +45,9 @@ export default function useGroupQueries(GROUP_ID) {
         options.select = data => {
             if (!data) return;
             data.forEach(d=>{
-                d.fullName = `${d.LEGAL_FIRST_NAME} ${d.LEGAL_LAST_NAME}`;
-                d.sortName = `${d.LEGAL_LAST_NAME}, ${d.LEGAL_FIRST_NAME}`;
+                const fName = d.ALIAS_FIRST_NAME || d.LEGAL_FIRST_NAME;
+                d.fullName = `${fName} ${d.LEGAL_LAST_NAME}`;
+                d.sortName = `${d.LEGAL_LAST_NAME}, ${fName}`;
                 d.email = d.EMAIL_ADDRESS_WORK && d.EMAIL_ADDRESS_WORK.toLowerCase();
                 d.endDateUnix = d.END_DATE && format(parse(d.END_DATE,'dd-MMM-yy',new Date()),'t');
                 d.active = !(d.END_DATE&&d.endDateUnix<Date.now());
