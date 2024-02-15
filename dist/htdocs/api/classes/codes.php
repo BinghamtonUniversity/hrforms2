@@ -56,9 +56,10 @@ class Codes extends HRForms2 {
         $qry = "INSERT INTO HRFORMS2_".$this->req[0]."_CODES VALUES(:code,:title,:active,:orderby,:description,EMPTY_CLOB()) returning ADDITIONAL_INFO into :addl_info";
         $stmt = oci_parse($this->db,$qry);
         $clob = oci_new_descriptor($this->db, OCI_D_LOB);
+        $desc = substr($this->POSTvars['DESCRIPTION'],0,2000);
         oci_bind_by_name($stmt,":code", $this->POSTvars['CODE']);
         oci_bind_by_name($stmt,":title", $this->POSTvars['TITLE']);
-        oci_bind_by_name($stmt,":description", substr($this->POSTvars['DESCRIPTION'],0,2000));
+        oci_bind_by_name($stmt,":description", $desc);
         oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
         oci_bind_by_name($stmt,":orderby", $this->POSTvars['ORDERBY']);
         oci_bind_by_name($stmt,":addl_info", $clob, -1, OCI_B_CLOB);
@@ -99,9 +100,10 @@ class Codes extends HRForms2 {
                 returning ADDITIONAL_INFO into :addl_info";
         $stmt = oci_parse($this->db,$qry);
         $clob = oci_new_descriptor($this->db, OCI_D_LOB);
+        $desc = substr($this->POSTvars['DESCRIPTION'],0,2000);
         oci_bind_by_name($stmt,":code", $this->POSTvars['CODE']);
         oci_bind_by_name($stmt,":title", $this->POSTvars['TITLE']);
-        oci_bind_by_name($stmt,":description", substr($this->POSTvars['DESCRIPTION'],0,2000));
+        oci_bind_by_name($stmt,":description", $desc);
         oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
         oci_bind_by_name($stmt,":orderby", $this->POSTvars['ORDERBY']);
         oci_bind_by_name($stmt,":addl_info", $clob, -1, OCI_B_CLOB);
