@@ -118,26 +118,24 @@ function UsersTable({users,newUser,setNewUser}) {
             }
         }
         return(
-            <>
-                <Col sm={6} md={5} lg={4} xl={3} className="pr-0">
-                    <Form style={{flexDirection:'column'}} onSubmit={e=>e.preventDefault()}>
-                        <Form.Group as={Row} controlId="filter">
-                            <Form.Label column sm="2">Search: </Form.Label>
-                            <Col sm="10">
-                                <Form.Control ref={searchRef} className="ml-2" type="search" value={filterText} placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
-                            </Col>
-                        </Form.Group>
-                        <Form.Group as={Row} controlId="status">
-                            <Form.Label column sm="2" className="pt-0">Status:</Form.Label>
-                            <Col sm="10">
-                                <Form.Check className="ml-2" inline label="All" name="status" type="radio" id="status_all" value="all" checked={statusFilter=='all'} onChange={statusChange} />
-                                <Form.Check inline label="Active" name="status" type="radio" id="status_active" value="active" checked={statusFilter=='active'} onChange={statusChange} />
-                                <Form.Check inline label="Inactive" name="status" type="radio" id="status_inactive" value="inactive" checked={statusFilter=='inactive'} onChange={statusChange} />
-                            </Col>
-                        </Form.Group>
-                    </Form>
-                </Col>
-            </>
+            <Col sm={6} md={5} lg={4} xl={3} className="pr-0">
+                <Form style={{flexDirection:'column'}} onSubmit={e=>e.preventDefault()}>
+                    <Form.Group as={Row} controlId="filter">
+                        <Form.Label column sm="2">Search: </Form.Label>
+                        <Col sm="10">
+                            <Form.Control ref={searchRef} className="ml-2" type="search" value={filterText} placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
+                        </Col>
+                    </Form.Group>
+                    <Form.Group as={Row} controlId="status">
+                        <Form.Label column sm="2" className="pt-0">Status:</Form.Label>
+                        <Col sm="10">
+                            <Form.Check className="ml-2" inline label="All" name="status" type="radio" id="status_all" value="all" checked={statusFilter=='all'} onChange={statusChange} />
+                            <Form.Check inline label="Active" name="status" type="radio" id="status_active" value="active" checked={statusFilter=='active'} onChange={statusChange} />
+                            <Form.Check inline label="Inactive" name="status" type="radio" id="status_inactive" value="inactive" checked={statusFilter=='inactive'} onChange={statusChange} />
+                        </Col>
+                    </Form.Group>
+                </Form>
+            </Col>
         );
     },[filterText,statusFilter,useHotkeys]);
 
