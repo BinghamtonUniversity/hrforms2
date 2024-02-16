@@ -421,7 +421,7 @@ function PayrollTabAdditionalInfo() {
     const { control } = useFormContext();
     return (
         <section>
-            <Form.Group as={Row} controlId="active">
+            <Form.Group as={Row} controlId="active" className="mb-0">
                 <Form.Label column md={3}>Has Benefits:</Form.Label>
                 <Col xs="auto" className="pt-2">
                     <Controller
@@ -430,11 +430,15 @@ function PayrollTabAdditionalInfo() {
                         defaultValue={false}
                         render={({field}) => <Form.Check {...field} type="checkbox" checked={field.value}/>}
                     />
-                    <Form.Text muted>Indicates the Payroll Code is allowed benefits</Form.Text>
                 </Col>
             </Form.Group>
-            <Form.Group as={Row} controlId="active">
-                <Form.Label column md={3}>Show Award Amount:</Form.Label>
+            <Row className="mb-3">
+                <Col xs="auto">
+                    <Form.Text muted>Indicates the Payroll Code is allowed benefits</Form.Text>
+                </Col>
+            </Row>
+            <Form.Group as={Row} controlId="active" className="mb-0">
+                <Form.Label column md={3}>Show Award Amt:</Form.Label>
                 <Col xs="auto" className="pt-2">
                     <Controller
                         name="additionalInfo.showStudentAwardAmount"
@@ -442,9 +446,13 @@ function PayrollTabAdditionalInfo() {
                         defaultValue={false}
                         render={({field}) => <Form.Check {...field} type="checkbox" checked={field.value}/>}
                     />
-                    <Form.Text muted>Indicates the Payroll will display the Student Award Amount in the Existing Pay table on the Pay Tab</Form.Text>
                 </Col>
             </Form.Group>
+            <Row className="mb-3">
+                <Col xs="auto">
+                    <Form.Text muted>Indicates the Payroll will display the Student Award Amount in the Existing Pay table on the Pay Tab</Form.Text>
+                </Col>
+            </Row>
         </section>
     );
 }
