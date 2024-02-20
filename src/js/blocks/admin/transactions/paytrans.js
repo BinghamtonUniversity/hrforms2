@@ -10,6 +10,8 @@ import { useQueryClient } from "react-query";
 import { allTabs } from "../../../config/form";
 import { flattenObject } from "../../../utility";
 import { useHotkeys } from "react-hotkeys-hook";
+import { routeBy } from "../../../config/paytrans";
+import { pickBy } from "lodash";
 
 export default function PayrollTransactionsTab() {
     const [isNew,setIsNew] = useState(false);
@@ -81,7 +83,7 @@ export default function PayrollTransactionsTab() {
             <Form onSubmit={e=>e.preventDefault()}>
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
-                    <Col sm="10">
+                    <Col xs="auto">
                         <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
                     </Col>
                 </Form.Group>
@@ -89,7 +91,13 @@ export default function PayrollTransactionsTab() {
         );
     },[filterText]);
 
-    const filteredRows = useMemo(()=>rows.filter(row => Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase())),[rows,filterText]);
+    const filteredRows = useMemo(()=>rows.filter(row => {
+        if (!filterText) return true;
+        const tokens = filterText.toLocaleLowerCase().split(' ');
+        const fields = pickBy(row,(v,k)=>k.endsWith('_CODE')||k.endsWith('_TITLE')); // Only filter on code and title fields
+        const r = Object.values(flattenObject(fields)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ')
+        return tokens.reduce((a,b)=>a&&r.includes(b),true);
+    }),[rows,filterText]);
 
     const paginationComponentOptions = {
         selectAllRowsItem: true
@@ -141,6 +149,7 @@ export default function PayrollTransactionsTab() {
                 <p className="m-0">{row.transactionDisplay}</p>
             </DescriptionPopover>
         ),sortable:true},
+        {name:'Route By',selector:row=>routeBy[row.ROUTE_BY]},
         {name:'Active',selector:row=><Form.Check aria-label="Active" name="active" value={row.ACTIVE} checked={row.ACTIVE==1} onChange={()=>handleRowAction('active',row)}/>,sortable:true,ignoreRowClick:true},
     ],[paytrans.data]);
 
@@ -250,6 +259,7 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
             ACTION_CODE:selectedRow.ACTION_CODE||'',
             TRANSACTION_CODE:selectedRow.TRANSACTION_CODE||'',
             ACTIVE:selectedRow.ACTIVE||'1',
+            ROUTE_BY:selectedRow.ROUTE_BY||'',
             for:{
                 newEmpl:(selectedRow?.AVAILABLE_FOR)?selectedRow.AVAILABLE_FOR[0]:0,
                 newRole:(selectedRow?.AVAILABLE_FOR)?selectedRow.AVAILABLE_FOR[1]:0,
@@ -302,7 +312,6 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
             });
         } else {
             //check to see if changes, if none then just exit
-            console.debug('update',selectedRow,data);
             if ((selectedRow.ACTIVE==1)!=data.ACTIVE||selectedRow.AVAILABLE_FOR!=data.AVAILABLE_FOR) {
                 updatePayTrans.mutateAsync(d).then(()=>{
                     queryclient.refetchQueries('paytrans').then(()=>{
@@ -457,6 +466,19 @@ function PayTransInfoTab({selectedRow,payrollcodes,formcodes,actioncodes,transac
                             name={`for.${r.name}`}
                             control={control}
                             render={({field}) => <Form.Check {...field} inline type="checkbox" value="1" label={r.title} checked={field.value==1}/>}
+                        />
+                    ))}
+                </Col>
+            </Form.Group>
+            <Form.Group as={Row} controlId="ROUTE_BY">
+                <Form.Label column sm={3}>Route By:</Form.Label>
+                <Col sm={9} className="pt-2">
+                    {Object.keys(routeBy).map(r=>(
+                        <Controller
+                            key={`routeBy-${r}`}
+                            name="ROUTE_BY"
+                            control={control}
+                            render={({field}) => <Form.Check {...field} inline type="radio" id={`routeBy-${r}`} label={routeBy[r]} value={r} checked={field.value==r}/>}
                         />
                     ))}
                 </Col>

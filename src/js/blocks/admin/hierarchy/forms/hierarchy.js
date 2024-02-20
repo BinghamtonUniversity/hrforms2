@@ -3,7 +3,7 @@ import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarc
 import { useHierarchyQueries } from "../../../../queries/hierarchy";
 import useCodesQueries from "../../../../queries/codes";
 import useTransactionQueries from "../../../../queries/transactions";
-import { find, truncate, orderBy, difference, pick, intersection } from 'lodash';
+import { find, truncate, orderBy, difference, pick, pickBy, get, intersection } from 'lodash';
 import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Badge, Button, ListGroup } from "react-bootstrap";
 import { Loading, errorToast, DescriptionPopover, AppButton } from "../../../../blocks/components";
 import { Icon } from "@iconify/react";
@@ -111,20 +111,15 @@ function HierarchyTable() {
     const filteredRows = useMemo(() => {
         return rows.filter(row => {
             if(!filterText) return true;
-            const searchString = Object.values(flattenObject(pick(row,[
-                'PAYROLL_CODE',
-                'PAYROLL_TITLE',
-                'FORM_CODE',
-                'FORM_TITLE',
-                'ACTION_CODE',
-                'ACTION_TITLE',
-                'TRANSACTION_CODE',
-                'TRANSACTION_TITLE',
-                'HIERARCHY_GROUPS_ARRAY',
-                'WORKFLOW_GROUPS_ARRAY'
-            ])));
+            const fields = pickBy(row,(v,k)=>k.endsWith('_CODE')||k.endsWith('_TITLE')); // Only filter on code and title fields
+            ['HIERARCHY_GROUPS_ARRAY','WORKFLOW_GROUPS_ARRAY'].forEach(f => {
+                fields[f] = get(row,f,[]).map(g=>pick(g,'GROUP_NAME'));
+            });
+            const searchString = Object.values(flattenObject(fields));
             searchString.push(displayFormCode({separator:'-',codes:[row.FORM_CODE,row.ACTION_CODE,row.TRANSACTION_CODE]}));
-            return searchString.filter(r=>!!r).map(r=>r.toString().toLowerCase()).join('|').includes(filterText.toLowerCase());
+            const r = searchString.filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ');
+            const tokens = filterText.toLocaleLowerCase().split(' ');
+            return tokens.reduce((a,b)=>a&&r.includes(b),true);
         });
     },[rows,filterText]);
 

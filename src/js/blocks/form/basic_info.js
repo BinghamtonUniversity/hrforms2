@@ -566,9 +566,11 @@ function FormActionsWrapper({payroll}) {
         if (!getValues('formActions.PAYTRANS_ID')) { //Do not reload if PAYTRANS_ID already set
             if (pt) {
                 setValue('formActions.PAYTRANS_ID',pt.PAYTRANS_ID);
+                setValue('formActions.ROUTE_BY',pt.ROUTE_BY);
                 handleTabs(pt.TABS);
             } else {
                 setValue('formActions.PAYTRANS_ID',"");
+                setValue('formActions.ROUTE_BY',"");
                 handleTabs();
             }
         }
@@ -604,6 +606,7 @@ function FormActionsFormCode({formCodes,description}) {
             return obj;
         },{});
         setValue('formActions.PAYTRANS_ID',"");
+        setValue('formActions.ROUTE_BY',"");
         setValue('formActions.formCode',filteredCode);
         setValue('formActions.actionCode',defaultFormActions.actionCode);
         setValue('formActions.transactionCode',defaultFormActions.transactionCode);
@@ -649,6 +652,7 @@ function FormActionsActionCode({actionCodes,description,formCode,actionSize}) {
             return obj;
         },{});
         setValue('formActions.PAYTRANS_ID',"");
+        setValue('formActions.ROUTE_BY',"");
         setValue('formActions.actionCode',filteredCode);
         setValue('formActions.transactionCode',defaultFormActions.transactionCode);
     }
@@ -684,6 +688,7 @@ function FormActionsTransactionCode({transactionCodes,description,formCode,actio
         field.onChange(e);
         const code = transactionCodes.get(e.target.value); 
         setValue('formActions.PAYTRANS_ID',"");
+        setValue('formActions.ROUTE_BY',"");
         setValue('formActions.transactionCode',(!code)?defaultFormActions.transactionCode:code);
     }
     return (
