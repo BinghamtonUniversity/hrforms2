@@ -317,8 +317,8 @@ function WorkflowForm() {
     useEffect(()=>ref.current.focus(),[]);
     return (
         <section>
-            <FormGroup as={Row} controlId="sendToUsersGroup">
-                <Form.Label column sm="auto">Send To User's Department Group?</Form.Label>
+            <FormGroup as={Row} controlId="sendToGroup">
+                <Form.Label column sm="auto">Send To Department Group:</Form.Label>
                 <Col className="mt-1">
                     <Controller
                         name="sendToGroup"

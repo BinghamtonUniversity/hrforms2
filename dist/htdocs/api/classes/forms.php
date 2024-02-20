@@ -205,10 +205,20 @@ class Forms extends HRForms2 {
                 $journal_array = array("S");
                 $comments_array = array();
     
-                // get user's group
                 $_SERVER['REQUEST_METHOD'] = 'GET';
-                $user = (new user(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData[0];
-                $group = $this->getGroupIds($user['REPORTING_DEPARTMENT_CODE']);
+
+                $route = $this->POSTvars['formActions']['ROUTE_BY'];
+                if ($route == 'P') { // Route by Position Dept
+                    $dept_code = $this->POSTvars['employment']['position']['positionDetails']['POSITION_DEPARTMENT_CODE'];
+                    $group = $this->getGroupIds($dept_code);
+                } elseif ($route == 'S') { // Route by Submitter (user) Dept
+                    $user = (new user(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData[0];
+                    $group = $this->getGroupIds($user['REPORTING_DEPARTMENT_CODE']);    
+                } else {
+                    $message = "Invalid or missing payroll transaction route by setting.  Information about the form is below.<br>" . $message;
+                    $this->sendError($message,'HRForms2 Error: Invalid/Missing Route By','forms');
+                    $this->raiseError(E_BAD_REQUEST,array('errMsg'=>'Invalid/Missing Route By'));
+                }
 
                 //get hierarchy for group
                 $h = (new hierarchy(array('form','group',$group['GROUP_ID']),false))->returnData;
@@ -266,10 +276,9 @@ class Forms extends HRForms2 {
                 $groups = $hierarchy['WORKFLOW_GROUPS'];
                 $groups_array = explode(",",$groups);
 
-                // Add User's Dept Group(s) to front of queue if "Send To Group" checked.
+                // Add Dept Group(s) to front of queue if "Send To Group" checked.
                 if ($hierarchy['SENDTOGROUP'] == "Y") {
-                    $deptGroup = $this->getGroupIds($user['REPORTING_DEPARTMENT_CODE']);
-                    $groups_array = array_merge(array_values($deptGroup),$groups_array);
+                    $groups_array = array_merge(array_values($group),$groups_array);
                 }
                 // Add empty value to the beginning of the groups for the "S" record.
                 array_unshift($groups_array,"-99");
