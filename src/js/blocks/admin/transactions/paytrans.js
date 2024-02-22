@@ -10,7 +10,7 @@ import { useQueryClient } from "react-query";
 import { allTabs } from "../../../config/form";
 import { flattenObject } from "../../../utility";
 import { useHotkeys } from "react-hotkeys-hook";
-import { routeBy } from "../../../config/paytrans";
+import config from "../../../config/paytrans";
 import { pickBy } from "lodash";
 
 export default function PayrollTransactionsTab() {
@@ -107,9 +107,9 @@ export default function PayrollTransactionsTab() {
         {name:'Actions',id:'actions',cell:row=>{
             return (
                 <div className="button-group">
-                    <AppButton format="copy" size="sm" name="copy" title="Copy" onClick={()=>handleCopyRow(row)}/>
-                    <AppButton format="edit" size="sm" name="edit" title="Edit" onClick={()=>setSelectedRow(row)}/>
-                    <AppButton format="delete" size="sm" name="delete" title="Delete" onClick={()=>handleRowAction('delete',row)}/>
+                    <AppButton {...config.actions.copy} size="sm" onClick={()=>handleCopyRow(row)}/>
+                    <AppButton {...config.actions.edit} size="sm" onClick={()=>setSelectedRow(row)}/>
+                    {!config.hideDelete && <AppButton {...config.actions.delete} size="sm" onClick={()=>handleRowAction('delete',row)} disabled={config.disableDelete}/>}
                 </div>
             );
         },ignoreRowClick:true,width:'150px'},
@@ -149,7 +149,7 @@ export default function PayrollTransactionsTab() {
                 <p className="m-0">{row.transactionDisplay}</p>
             </DescriptionPopover>
         ),sortable:true},
-        {name:'Route By',selector:row=>routeBy[row.ROUTE_BY]},
+        {name:'Route By',selector:row=>config.routeBy[row.ROUTE_BY]},
         {name:'Active',selector:row=><Form.Check aria-label="Active" name="active" value={row.ACTIVE} checked={row.ACTIVE==1} onChange={()=>handleRowAction('active',row)}/>,sortable:true,ignoreRowClick:true},
     ],[paytrans.data]);
 
@@ -473,12 +473,12 @@ function PayTransInfoTab({selectedRow,payrollcodes,formcodes,actioncodes,transac
             <Form.Group as={Row} controlId="ROUTE_BY">
                 <Form.Label column sm={3}>Route By:</Form.Label>
                 <Col sm={9} className="pt-2">
-                    {Object.keys(routeBy).map(r=>(
+                    {Object.keys(config.routeBy).map(r=>(
                         <Controller
                             key={`routeBy-${r}`}
                             name="ROUTE_BY"
                             control={control}
-                            render={({field}) => <Form.Check {...field} inline type="radio" id={`routeBy-${r}`} label={routeBy[r]} value={r} checked={field.value==r}/>}
+                            render={({field}) => <Form.Check {...field} inline type="radio" id={`routeBy-${r}`} label={config.routeBy[r]} value={r} checked={field.value==r}/>}
                         />
                     ))}
                 </Col>

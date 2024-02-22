@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { useForm, Controller, FormProvider, useFormContext } from "react-hook-form";
 import { flattenObject } from "../../../utility";
 import { useHotkeys } from "react-hotkeys-hook";
+import config from "../../../config/paytrans";
 
 export default function CodesTab({tab,tabName}) {
     const vals = {code:`${tab}_code`,title:`${tab}_title`,description:`${tab}_description`};
@@ -106,7 +107,7 @@ export default function CodesTab({tab,tabName}) {
         {name:'Actions',id:'actions',cell:row=>{
             return (
                 <div className="button-group">
-                    <AppButton format="delete" size="sm" name="delete" onClick={e=>handleRowEvents(e,row)}/>
+                    {!config.hideDelete && <AppButton format="delete" size="sm" name="delete" onClick={e=>handleRowEvents(e,row)} disabled={config.disableDelete}/>}
                 </div>
             );
         },ignoreRowClick:true,width:'100px'},
