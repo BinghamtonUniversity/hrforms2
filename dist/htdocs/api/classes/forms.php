@@ -208,11 +208,11 @@ class Forms extends HRForms2 {
                 $_SERVER['REQUEST_METHOD'] = 'GET';
 
                 $route = $this->POSTvars['formActions']['ROUTE_BY'];
+                $user = (new user(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData[0];
                 if ($route == 'P') { // Route by Position Dept
                     $dept_code = $this->POSTvars['employment']['position']['positionDetails']['POSITION_DEPARTMENT_CODE'];
                     $group = $this->getGroupIds($dept_code);
                 } elseif ($route == 'S') { // Route by Submitter (user) Dept
-                    $user = (new user(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData[0];
                     $group = $this->getGroupIds($user['REPORTING_DEPARTMENT_CODE']);    
                 } else {
                     $message = "Invalid or missing payroll transaction route by setting.  Information about the form is below.<br>" . $message;
