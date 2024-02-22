@@ -42,7 +42,7 @@ export const formats = {
     'clear':{icon:'mdi:eraser-variant',variant:'secondary'},
     'close':{icon:'mdi:close-circle',variant:'secondary'},
     'collapse':{icon:'mdi:chevron-down',variant:'secondary'},
-    'copy':{icon:'mdi:content-duplicate',variant:'primary'},
+    'copy':{icon:'mdi:content-duplicate',variant:'secondary'},
     'deactivate-group':{icon:'mdi:account-multiple-remove',variant:'warning'},
     'deactivate-user':{icon:'mdi:account-remove',variant:'warning'},
     'delete':{icon:'mdi:delete',variant:'danger'},
@@ -141,7 +141,7 @@ const ModalConfirm = React.memo(({children,show,title,buttons,icon,id}) => {
 });
 
 const AppButton = React.memo(({children,format,icon,spin,...props}) => {
-    let cName = props.className;
+    let cName = props.className?props.className:'';
     if (!children) cName += ' no-label';
     return (
         <Button {...props} className={cName} variant={props.variant||formats[format].variant}>{format!='none'&&<Icon className={(spin||formats[format].spin)&&'spin'} icon={icon||formats[format].icon}/>}{children}</Button>
