@@ -42,7 +42,7 @@ export const formats = {
     'clear':{icon:'mdi:eraser-variant',variant:'secondary'},
     'close':{icon:'mdi:close-circle',variant:'secondary'},
     'collapse':{icon:'mdi:chevron-down',variant:'secondary'},
-    'copy':{icon:'mdi:content-duplicate',variant:'secondary'},
+    'copy':{icon:'mdi:content-duplicate',variant:'warning-light'},
     'deactivate-group':{icon:'mdi:account-multiple-remove',variant:'warning'},
     'deactivate-user':{icon:'mdi:account-remove',variant:'warning'},
     'delete':{icon:'mdi:delete',variant:'danger'},
