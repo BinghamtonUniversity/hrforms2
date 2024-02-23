@@ -19,6 +19,7 @@ import { t } from "../../config/text";
 import { NotFound } from "../../app";
 import { CSVLink } from "react-csv";
 import { Helmet } from "react-helmet";
+import { datatablesConfig } from "../../config/app";
 
 export default function AdminGroups() {
     const [newGroup,setNewGroup] = useState(false);
@@ -219,9 +220,6 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
             }
         }
     ];
-    const paginationComponentOptions = {
-        selectAllRowsItem: true
-    };
     useEffect(()=>setRows(orderBy(groups,[sortField],[sortDir])),[groups]);
     useEffect(()=>searchRef.current.focus(),[]);
     useEffect(()=>{
@@ -235,6 +233,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
     return (
         <>
             <DataTable 
+                {...datatablesConfig}
                 keyField="GROUP_ID"
                 columns={columns} 
                 actions={actionsMemo}
@@ -244,9 +243,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
                 responsive
                 subHeader
                 subHeaderComponent={filterComponent} 
-                paginationRowsPerPageOptions={[10,20,30,40,50,100]}
                 paginationResetDefaultPage={resetPaginationToggle}
-                paginationComponentOptions={paginationComponentOptions}
                 pointerOnHover
                 highlightOnHover
                 onRowClicked={handleRowClick}

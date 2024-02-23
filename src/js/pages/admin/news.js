@@ -3,7 +3,7 @@ import { useQueryClient } from "react-query";
 import { Row, Col, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
 import JoditEditor from "jodit-react";
-import { editorConfig } from "../../config";
+import { editorConfig } from "../../config/app";
 import { useForm, Controller } from "react-hook-form";
 import { AppButton, errorToast } from "../../blocks/components";
 import { t } from "../../config/text";

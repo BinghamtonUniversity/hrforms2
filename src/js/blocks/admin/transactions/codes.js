@@ -10,6 +10,7 @@ import { useForm, Controller, FormProvider, useFormContext } from "react-hook-fo
 import { flattenObject } from "../../../utility";
 import { useHotkeys } from "react-hotkeys-hook";
 import config from "../../../config/paytrans";
+import { datatablesConfig } from "../../../config/app";
 
 export default function CodesTab({tab,tabName}) {
     const vals = {code:`${tab}_code`,title:`${tab}_title`,description:`${tab}_description`};
@@ -99,10 +100,6 @@ export default function CodesTab({tab,tabName}) {
 
     const filteredRows = useMemo(()=>rows.filter(row => Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase())),[rows,filterText]);
 
-    const paginationComponentOptions = {
-        selectAllRowsItem: true
-    };
-
     const columns = useMemo(() => [
         {name:'Actions',id:'actions',cell:row=>{
             return (
@@ -184,6 +181,7 @@ export default function CodesTab({tab,tabName}) {
             <Row>
                 <Col>
                     <DataTable
+                        {...datatablesConfig}
                         keyField={vars.code.upper}
                         columns={columns}
                         data={filteredRows}
@@ -192,9 +190,7 @@ export default function CodesTab({tab,tabName}) {
                         responsive
                         subHeader
                         subHeaderComponent={filterComponent} 
-                        paginationRowsPerPageOptions={[10,20,30,40,50,100]}
                         paginationResetDefaultPage={resetPaginationToggle}
-                        paginationComponentOptions={paginationComponentOptions}        
                         highlightOnHover
                         defaultSortFieldId={5}
                         pointerOnHover

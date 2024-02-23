@@ -1,4 +1,6 @@
-// configuration values
+// General Application Configurations
+
+// Editor Configuration
 export function editorConfig(...args) {
     if (args[0] == 'source') {
         return {
@@ -24,5 +26,13 @@ export function editorConfig(...args) {
             buttonsXS:["bold","italic","|","ul","ol","|","font","fontsize","align","|","copy","cut","paste","|","link","|","dots"],
             disablePlugins: "video,file,preview,print,drag-and-drop,drag-and-drop-element,iframe,media,image,image-processor,image-properties"
         };
+    }
+}
+
+// DataTables Configuration
+export const datatablesConfig = {
+    paginationRowsPerPageOptions:[10,20,30,40,50,100],
+    paginationComponentOptions:{
+        selectAllRowsItem: true
     }
 }

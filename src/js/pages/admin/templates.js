@@ -6,7 +6,7 @@ import { Loading, errorToast } from "../../blocks/components";
 import { toast } from "react-toastify";
 import { useForm, Controller } from "react-hook-form";
 import JoditEditor from "jodit-react";
-import { editorConfig } from "../../config";
+import { editorConfig } from "../../config/app";
 import { useSettingsContext } from "../../app";
 import { t } from "../../config/text";
 import { Helmet } from "react-helmet";
