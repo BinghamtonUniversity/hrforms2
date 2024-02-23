@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import { useQueryClient } from "react-query";
 import { CSVLink } from "react-csv";
 import { Helmet } from "react-helmet";
+import { datatablesConfig } from "../../config/app";
 
 export default function AdminDepartments() {
     const searchRef = useRef();
@@ -29,8 +30,6 @@ export default function AdminDepartments() {
 
     const {getDeptGroups} = useDeptQueries();
     const depts = getDeptGroups();
-
-    const paginationComponentOptions = {selectAllRowsItem:true};
 
     const filterComponent = useMemo(() => {
         const handleKeyDown = e => {
@@ -114,6 +113,7 @@ export default function AdminDepartments() {
             <Row>
                 <Col>
                     <DataTable 
+                        {...datatablesConfig}
                         keyField="DEPARTMENT_CODE"
                         columns={columns} 
                         actions={actionsMemo}
@@ -124,9 +124,7 @@ export default function AdminDepartments() {
                         subHeader
                         subHeaderComponent={filterComponent} 
                         pagination 
-                        paginationRowsPerPageOptions={[10,20,30,40,50,100]}
                         paginationResetDefaultPage={resetPaginationToggle}
-                        paginationComponentOptions={paginationComponentOptions}
                         pointerOnHover
                         highlightOnHover
                         onRowClicked={handleRowClick}

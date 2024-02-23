@@ -13,6 +13,7 @@ import { AppButton, errorToast } from "../../../components";
 import { flattenObject } from "../../../../utility";
 import { t } from "../../../../config/text";
 import { NotFound } from "../../../../app";
+import { datatablesConfig } from "../../../../config/app";
 
 
 export default function WorkflowTab() {
@@ -81,9 +82,6 @@ export default function WorkflowTab() {
         {name:'Workflow Routing',selector:row=>row.GROUPS,grow:5,style:{flexWrap:'wrap'},cell:row=><HierarchyChain list={row.GROUPS_ARRAY} conditions={row.CONDITIONS}/>},
     ],[workflows]);
 
-    const paginationComponentOptions = {
-        selectAllRowsItem: true
-    };
     useEffect(()=>{
         setRows(workflows);
         searchRef.current.focus();
@@ -92,6 +90,7 @@ export default function WorkflowTab() {
     return (
         <>
             <DataTable 
+                {...datatablesConfig}
                 keyField="WORKFLOW_ID"
                 columns={columns}
                 data={filteredRows}
@@ -100,9 +99,7 @@ export default function WorkflowTab() {
                 responsive
                 subHeader
                 subHeaderComponent={filterComponent} 
-                paginationRowsPerPageOptions={[10,20,30,40,50,100]}
                 paginationResetDefaultPage={resetPaginationToggle}
-                paginationComponentOptions={paginationComponentOptions}
                 pointerOnHover
                 highlightOnHover
                 defaultSortFieldId={2}

@@ -21,6 +21,7 @@ import { t } from "../../config/text";
 import { flattenObject } from "../../utility";
 import { Helmet } from "react-helmet";
 import { CSVLink } from "react-csv";
+import { datatablesConfig } from "../../config/app";
 
 const defaultVals = {
     SUNYID:'',
@@ -221,10 +222,6 @@ function UsersTable({users,newUser,setNewUser}) {
         }
     ];
 
-    const paginationComponentOptions = {
-        selectAllRowsItem: true
-    };
-
     useEffect(()=>setRows(orderBy(users,[sortField],[sortDir])),[users]);
     useEffect(()=>searchRef.current.focus(),[]);
     useEffect(()=>{
@@ -235,6 +232,7 @@ function UsersTable({users,newUser,setNewUser}) {
     return (
         <>
             <DataTable 
+                {...datatablesConfig}
                 keyField="USER_SUNY_ID"
                 columns={columns} 
                 data={filteredRows}
@@ -244,9 +242,7 @@ function UsersTable({users,newUser,setNewUser}) {
                 responsive
                 subHeader
                 subHeaderComponent={filterComponent} 
-                paginationRowsPerPageOptions={[10,20,30,40,50,100]}
                 paginationResetDefaultPage={resetPaginationToggle}
-                paginationComponentOptions={paginationComponentOptions}
                 pointerOnHover
                 highlightOnHover
                 onRowClicked={handleRowClick}

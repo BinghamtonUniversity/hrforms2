@@ -11,6 +11,7 @@ import { allTabs } from "../../../config/form";
 import { flattenObject } from "../../../utility";
 import { useHotkeys } from "react-hotkeys-hook";
 import config from "../../../config/paytrans";
+import { datatablesConfig } from "../../../config/app";
 import { pickBy } from "lodash";
 
 export default function PayrollTransactionsTab() {
@@ -98,10 +99,6 @@ export default function PayrollTransactionsTab() {
         const r = Object.values(flattenObject(fields)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ')
         return tokens.reduce((a,b)=>a&&r.includes(b),true);
     }),[rows,filterText]);
-
-    const paginationComponentOptions = {
-        selectAllRowsItem: true
-    };
 
     const columns = useMemo(() => [
         {name:'Actions',id:'actions',cell:row=>{
@@ -196,16 +193,15 @@ export default function PayrollTransactionsTab() {
             </Row>
             <Row>
                 <Col>
-                <DataTable
+                    <DataTable
+                        {...datatablesConfig}
                         keyField="PAYTRANS_ID"
                         columns={columns}
                         data={filteredRows}
                         subHeader
                         subHeaderComponent={filterComponent}
                         pagination
-                        paginationRowsPerPageOptions={[10,20,30,40,50,100]}
                         paginationResetDefaultPage={resetPaginationToggle}
-                        paginationComponentOptions={paginationComponentOptions}
                         striped 
                         responsive
                         highlightOnHover

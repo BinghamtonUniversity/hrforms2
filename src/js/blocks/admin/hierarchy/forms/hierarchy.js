@@ -17,6 +17,7 @@ import { displayFormCode } from "../../../../pages/form";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { t } from "../../../../config/text";
 import { NotFound } from "../../../../app";
+import { datatablesConfig } from "../../../../config/app";
 
 const HierarchyContext = React.createContext();
 HierarchyContext.displayName = 'HierarchyContext';
@@ -162,10 +163,6 @@ function HierarchyTable() {
         {name:'Workflow Routing',selector:row=><HierarchyChain list={row.WORKFLOW_GROUPS_ARRAY} conditions={row.CONDITIONS} sendToGroup={row.SENDTOGROUP}/>,grow:5,style:{flexWrap:'wrap'}},
     ],[hierarchy]);
 
-    const paginationComponentOptions = {
-        selectAllRowsItem: true
-    };
-
     useEffect(()=>{
         setRows(hierarchy);
         searchRef.current.focus();
@@ -174,6 +171,7 @@ function HierarchyTable() {
     return (
         <>
             <DataTable 
+                {...datatablesConfig}
                 keyField="HIERARCHY_ID"
                 columns={columns}
                 data={filteredRows}
@@ -182,9 +180,7 @@ function HierarchyTable() {
                 responsive
                 subHeader
                 subHeaderComponent={filterComponent} 
-                paginationRowsPerPageOptions={[10,20,30,40,50,100]}
                 paginationResetDefaultPage={resetPaginationToggle}
-                paginationComponentOptions={paginationComponentOptions}
                 pointerOnHover
                 highlightOnHover
                 defaultSortFieldId={3}
