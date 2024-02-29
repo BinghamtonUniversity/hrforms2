@@ -60,15 +60,6 @@ export default function AdminLists() {
         }
     }
     const pickSlugHint = () => methods.setValue('LIST_SLUG',slugHint);
-    const newList = () => {
-        setSelectedList('');
-        setIsNewList(true);
-        setRunSQL('');
-        resetState();
-        methods.setValue('LIST_ID','new');
-        ['LIST_NAME','LIST_DESCRIPTION','LIST_TYPE','LIST_SLUG','PROTECTED','LIST_DATA'].forEach(k=>methods.setValue(k,''));
-    }
-    useHotkeys('ctrl+alt+n',()=>newList());
     
     const handleDeleteList = () => setConfirmDelete(true);
     const confirmDeleteButtons = {
@@ -202,7 +193,7 @@ export default function AdminLists() {
                     </Helmet>
                     <Row>
                         <Col>
-                            <h2>{t('admin.lists.title')} <AppButton format="add-list" onClick={newList}>Add New</AppButton></h2>
+                            <h2>{t('admin.lists.title')}</h2>
                         </Col>
                     </Row>
                 </header>
