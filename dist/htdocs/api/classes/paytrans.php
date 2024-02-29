@@ -38,7 +38,7 @@ class PayTrans extends HRForms2 {
 			pt.action_code, a.action_title, a.action_description,
 			pt.transaction_code, t.transaction_title, t.transaction_description,
 			pt.active,pt.route_by,pt.available_for,pt.tabs
-			FROM HRFORMS2_PAYROLL_TRANSACTIONS2 pt
+			FROM HRFORMS2_PAYROLL_TRANSACTIONS pt
 			join (select PAYROLL_CODE, PAYROLL_TITLE, PAYROLL_DESCRIPTION from HRFORMS2_PAYROLL_CODES) p on (pt.PAYROLL_CODE = p.PAYROLL_CODE)
 			join (select FORM_CODE, FORM_TITLE, FORM_DESCRIPTION from HRFORMS2_FORM_CODES) f on (pt.FORM_CODE = f.FORM_CODE)
 			left join (select ACTION_CODE, ACTION_TITLE, ACTION_DESCRIPTION from HRFORMS2_ACTION_CODES) a on (pt.ACTION_CODE = a.ACTION_CODE)
@@ -63,7 +63,7 @@ class PayTrans extends HRForms2 {
 	}
 
     function POST() {
-        $qry = "INSERT INTO HRFORMS2_PAYROLL_TRANSACTIONS2 
+        $qry = "INSERT INTO HRFORMS2_PAYROLL_TRANSACTIONS 
             values(HRFORMS2_PAYTRANS_ID_SEQ.nextval,:payroll_code,:form_code,:action_code,:transaction_code,:active,:available_for,EMPTY_CLOB(),:route_by)
             RETURNING PAYTRANS_ID,TABS into :paytrans_id,:tabs";
 		$stmt = oci_parse($this->db,$qry);
@@ -86,7 +86,7 @@ class PayTrans extends HRForms2 {
     }
 	function PUT() {
 		/* cannot update codes, only active and tabs [TBD] */
-		$qry = "UPDATE HRFORMS2_PAYROLL_TRANSACTIONS2
+		$qry = "UPDATE HRFORMS2_PAYROLL_TRANSACTIONS
 			SET active = :active,
 			route_by = :route_by,
 			available_for = :available_for,
@@ -111,7 +111,7 @@ class PayTrans extends HRForms2 {
 		if (isset($this->POSTvars['ACTIVE'])) {
 			//make sure the codes are all active
 			$qry = "select count(*)
-			from hrforms2_payroll_transactions2 p
+			from hrforms2_payroll_transactions p
 			left join (select form_code, active from hrforms2_form_codes) f on (f.form_code = p.form_code)
 			left join (select action_code, active from hrforms2_action_codes) a on (a.action_code = p.action_code)
 			left join (select transaction_code, active from hrforms2_transaction_codes) t on (t.transaction_code = p.transaction_code)
@@ -139,7 +139,7 @@ class PayTrans extends HRForms2 {
 			$row = oci_fetch_array($stmt,OCI_NUM+OCI_RETURN_NULLS);
 			if ($row[0] != "0") $this->raiseError(E_FORBIDDEN,array("errMsg"=>"Payroll Transaction in use"));
 			
-			$qry = "UPDATE HRFORMS2_PAYROLL_TRANSACTIONS2 SET active = :active WHERE paytrans_id = :paytrans_id";
+			$qry = "UPDATE HRFORMS2_PAYROLL_TRANSACTIONS SET active = :active WHERE paytrans_id = :paytrans_id";
 			$stmt = oci_parse($this->db,$qry);
 			oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
 			oci_bind_by_name($stmt,":paytrans_id", $this->req[0]);
@@ -163,7 +163,7 @@ class PayTrans extends HRForms2 {
 		if (!$r) $this->raiseError();
 		$row = oci_fetch_array($stmt,OCI_NUM+OCI_RETURN_NULLS);
 		if ($row[0] != "0") $this->raiseError(E_FORBIDDEN,array("errMsg"=>"Payroll Transaction in use"));
-		$qry = "DELETE FROM HRFORMS2_PAYROLL_TRANSACTIONS2 where paytrans_id = :paytrans_id";
+		$qry = "DELETE FROM HRFORMS2_PAYROLL_TRANSACTIONS where paytrans_id = :paytrans_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":paytrans_id", $this->req[0]);
 		$r = oci_execute($stmt);
