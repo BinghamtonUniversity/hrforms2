@@ -1,5 +1,25 @@
 # Changelog
 
+## Version 2.0.0(DEV-20240229)
+  * Fixed error in bind variable for description for the POST and PUT operations in code.php.
+  * Fixed formatting on Payroll Codes - Additional Info tab.  Long help text was causing layout issues.
+  * Fixed Form Workflows to consider "Send to Group" and "Conditions" when checking for duplicates.
+  * Added "Route By" option to Payroll Transactions.
+  * Added code to use "Route By" option on form submit and route form accordingly.
+  * Updated search on Payroll Transactions to "tokenize" search terms.  Allows for searching of individual components.
+  * Changed color of Copy/Duplicate buttton to secondary color.
+  * Fixed "undefined" on class of AppButton component.
+  * Added configuration to hide or disable Delete button on Payroll Transactions tabs.
+  
+
+## Version 2.0.0 (DEV-20231222)
+  * Updates to Page Titles
+  * Added new text values to config for tab titles.
+  * Removed Logout from Navigation Menu (not needed - may rework later).
+  * Verified preferred name was used in all areas where name was needed.
+  * Hide "actions" column in tables for printing.
+
+
 ## Version 2.0.0 (DEV-20231003)
   * Set Birth Date on Person Demographics tab to use value from selected employee information.
   * BUG FIX: Fixed Appointment Percent display on Employment Position and Salary tabs.
