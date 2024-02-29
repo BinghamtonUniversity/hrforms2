@@ -209,7 +209,7 @@ function AddEditWorkflow(props) {
         }
         const mutateData = {GROUPS:newGroups,CONDITIONS:data.conditions,SENDTOGROUP:data.sendToGroup};
         if (isNew) {
-            const match = find(workflows,{GROUPS:newGroups});
+            const match = find(workflows,mutateData);
             if (match) {
                 setStatus({state:'error',message:`Workflow ID ${match.WORKFLOW_ID} has the same structure.`});
                 return false;

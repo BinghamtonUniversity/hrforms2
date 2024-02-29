@@ -56,7 +56,7 @@ class Workflow extends HRForms2 {
 			$this->_arr[] = $row;
 		}		
 		oci_free_statement($stmt);
-		$this->returnData = $this->_arr;
+		$this->returnData = $this->null2Empty($this->_arr);
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
 	function POST() {
