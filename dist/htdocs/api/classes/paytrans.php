@@ -13,7 +13,7 @@ class PayTrans extends HRForms2 {
 	private $_arr = array();
 
 	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+		$this->allowedMethods = "GET, POST, PUT, PATCH, DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
 		$this->reqAuth = true; //default: true - NB: See note above
 		$this->retJSON = $rjson;
 		$this->req = $req;
@@ -24,7 +24,7 @@ class PayTrans extends HRForms2 {
 	 * validate called from init()
 	 */
 	function validate() {
-        if (in_array($this->method,array('POST','PUT','PATCH','DELETE'))) {
+        if (in_array($this->method,array('PUT','PATCH','DELETE'))) {
             if (!$this->sessionData['isAdmin']) $this->raiseError(403);
             if (!isset($this->req[0])) $this->raiseError(400);
         }
