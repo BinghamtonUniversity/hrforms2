@@ -50,20 +50,20 @@ class User extends HRForms2 {
 		unset($data['REFRESH_DATE']);
 		// Add SUNY_ID if not set
 		if (!isset($data['SUNY_ID'])) $data['SUNY_ID'] = $data['SUNYHR_SUNY_ID'];
-		$qry = "update HRFORMS2_USERS set 
-		refresh_date = sysdate, user_info = EMPTY_CLOB() 
+		$qry = "update HRFORMS2_USERS 
+		set refresh_date = sysdate, user_info = EMPTY_CLOB() 
 		where suny_id = :suny_id
 		returning user_info into :user_info";
 		$stmt = oci_parse($this->db,$qry);
-		oci_bind_by_name($stmt,":suny_id", $this->req[0]);
 		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
+		oci_bind_by_name($stmt,":suny_id", $this->req[0]);
 		oci_bind_by_name($stmt,":user_info", $clob, -1, OCI_B_CLOB);
 		$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
 		if (!$r) $this->raiseError();
 		$clob->save(json_encode($data));
 		oci_commit($this->db);
 		oci_free_statement($stmt);
-		return $r;
+		return;
 	}
 
 	/**
@@ -172,8 +172,9 @@ class User extends HRForms2 {
 					if ($refresh_date) {
 						$diff = $refresh_date->diff($now);
 						$refresh_diff = ($diff->invert == 1)?$diff->days*-1:$diff->days;
+						if ($user['USER_INFO'] == "") $refresh_diff = INF;
 					}
-					if ($refresh_diff > $settings['general']['userRefresh']) { // user_info is "stale"
+					if ($refresh_diff > $settings['general']['userRefresh']) { // user_info is "stale" or missing
 						$this->_arr = $this->getSUNYHRUser();
 						if (!$this->_arr) { // No SUNY HR data; use existing cached data
 							// if refresh diff is greater than $userRefresh setting + 14 days; set end date on user and send error
@@ -194,7 +195,7 @@ class User extends HRForms2 {
 							if (!isset($this->_arr['SUNY_ID'])) $this->_arr['SUNY_ID'] = $this->_arr['SUNYHR_SUNY_ID'];
 							$a = $this->updateUserInfo($this->_arr);
 							$this->_arr['REFRESH_DATE'] = date('d-M-y h:i:s A', time());
-							//$this->_arr['X'] = 2;
+							//$this->_arr['X'] = 2;				
 						}
 
 					} else { // user_info is "fresh"
