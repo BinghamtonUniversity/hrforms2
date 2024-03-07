@@ -250,7 +250,7 @@ function AddEditWorkflow(props) {
                             {tabs.map(t=>(
                                 <Tab key={t.id} eventKey={t.id} title={t.title}>
                                     <Container className="mt-3" fluid>
-                                        <TabRouter tab={activeTab}/>
+                                        <TabRouter tab={t.id}/>
                                     </Container>
                                 </Tab>
                             ))}
@@ -396,6 +396,13 @@ function WorkflowConditions() {
     const assignedgroups = useWatch({name:'assignedGroups',control:control});
     const { fields, append, remove, update } = useFieldArray({control:control,name:'conditions'});
     
+    const groupslist = useMemo(() => {
+        return assignedgroups.map((g,i) => {
+            if (i >= assignedgroups.length-1) return;
+            return <option key={i} value={i} data-group_id={g.GROUP_ID}>{i+1}: {g.GROUP_NAME}</option>;
+        });
+    },[assignedgroups]);
+
     const handleNewCondition = () =>{
         append({
             seq:'',
@@ -440,79 +447,76 @@ function WorkflowConditions() {
                             </tr>
                         </thead>
                         <tbody>
-                            {fields.map((field,index) => (
-                            <tr key={index}>
-                                <td>
-                                    <div className="d-flex justify-content-center align-self-center">
-                                        <AppButton size="sm" format="delete" onClick={()=>remove(index)}/>
-                                    </div>
-                                </td>
-                                <td>
-                                    <Form.Group as={Row} controlId="skip_group_id" className="mb-0">
-                                        <Form.Label column sm={2}>Skip:</Form.Label>
-                                        <Col xs="auto">
+                            {fields.map((item,index) => (
+                                <tr key={item.id}>
+                                    <td>
+                                        <div className="d-flex justify-content-center align-self-center">
+                                            <AppButton size="sm" format="delete" onClick={()=>remove(index)}/>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <Form.Group as={Row} controlId="skip_group_id" className="mb-0">
+                                            <Form.Label column sm={2}>Skip:</Form.Label>
+                                            <Col xs="auto">
+                                                <Controller
+                                                    name={`conditions.${index}.seq`}
+                                                    defaultValue=""
+                                                    control={control}
+                                                    rules={{required:{value:true,message:'Skip condition selection is required'}}}
+                                                    render={({field})=>(
+                                                        <Form.Control {...field} as="select" size="sm" onChange={e=>handleGroupChange(field,index,e)} isInvalid={errors.conditions?.[index].seq}>
+                                                            <option></option>
+                                                            {groupslist}
+                                                        </Form.Control>
+                                                    )}
+                                                />
+                                            </Col>
+                                        </Form.Group>
+                                        <Form.Group as={Row} className="mb-0">
+                                            <Form.Label column sm={2}>When:</Form.Label>
+                                            <Col xs="auto">
                                             <Controller
-                                                name={`conditions.${index}.seq`}
-                                                defaultValue=""
-                                                control={control}
-                                                rules={{required:{value:true,message:'Skip condition selection is required'}}}
-                                                render={({field})=>(
-                                                    <Form.Control {...field} as="select" size="sm" onChange={e=>handleGroupChange(field,index,e)} isInvalid={errors.conditions?.[index].seq}>
-                                                        <option></option>
-                                                        {assignedgroups.map((g,i)=>{
-                                                            if (i >= assignedgroups.length-1) return null;
-                                                            return <option key={i} value={i} data-group_id={g.GROUP_ID}>{i+1}: {g.GROUP_NAME}</option>;
-                                                        })}
-                                                    </Form.Control>
-                                                )}
-                                            />
-                                        </Col>
-                                    </Form.Group>
-                                    <Form.Group as={Row} className="mb-0">
-                                        <Form.Label column sm={2}>When:</Form.Label>
-                                        <Col xs="auto">
-                                        <Controller
-                                                name={`conditions.${index}.field_name`}
-                                                defaultValue=""
-                                                control={control}
-                                                rules={{required:{value:true,message:'When condition fields are required'}}}
-                                                render={({field})=>(
-                                                    <Form.Control {...field} as="select" size="sm" isInvalid={errors.conditions?.[index].field_name}>
-                                                        <option></option>
-                                                        <option value="suny_account">SUNY Account</option>
-                                                    </Form.Control>
-                                                )}
-                                            />
-                                        </Col>
-                                        <Col xs="auto">
-                                            <Controller
-                                                name={`conditions.${index}.field_operator`}
-                                                defaultValue=""
-                                                control={control}
-                                                rules={{required:{value:true,message:'Group selection is required'}}}
-                                                render={({field})=>(
-                                                    <Form.Control {...field} as="select" size="sm" isInvalid={errors.conditions?.[index].field_operator}>
-                                                        <option></option>
-                                                        <option value="eq">==</option>
-                                                        <option value="ne">!=</option>
-                                                        <option value="sw">startsWith</option>
-                                                        <option value="ns">not startsWith</option>
-                                                    </Form.Control>
-                                                )}
-                                            />
-                                        </Col>
-                                        <Col xs="auto">
-                                            <Controller
-                                                name={`conditions.${index}.field_value`}
-                                                defaultValue=""
-                                                control={control}
-                                                rules={{required:{value:true,message:'Group selection is required'}}}
-                                                render={({field})=><Form.Control {...field} type="text" size="sm" isInvalid={errors.conditions?.[index].field_value}/>}
-                                            />
-                                        </Col>
-                                    </Form.Group>
-                                </td>
-                            </tr>
+                                                    name={`conditions.${index}.field_name`}
+                                                    defaultValue=""
+                                                    control={control}
+                                                    rules={{required:{value:true,message:'When condition fields are required'}}}
+                                                    render={({field})=>(
+                                                        <Form.Control {...field} as="select" size="sm" isInvalid={errors.conditions?.[index].field_name}>
+                                                            <option></option>
+                                                            <option value="suny_account">SUNY Account</option>
+                                                        </Form.Control>
+                                                    )}
+                                                />
+                                            </Col>
+                                            <Col xs="auto">
+                                                <Controller
+                                                    name={`conditions.${index}.field_operator`}
+                                                    defaultValue=""
+                                                    control={control}
+                                                    rules={{required:{value:true,message:'Group selection is required'}}}
+                                                    render={({field})=>(
+                                                        <Form.Control {...field} as="select" size="sm" isInvalid={errors.conditions?.[index].field_operator}>
+                                                            <option></option>
+                                                            <option value="eq">==</option>
+                                                            <option value="ne">!=</option>
+                                                            <option value="sw">startsWith</option>
+                                                            <option value="ns">not startsWith</option>
+                                                        </Form.Control>
+                                                    )}
+                                                />
+                                            </Col>
+                                            <Col xs="auto">
+                                                <Controller
+                                                    name={`conditions.${index}.field_value`}
+                                                    defaultValue=""
+                                                    control={control}
+                                                    rules={{required:{value:true,message:'Group selection is required'}}}
+                                                    render={({field})=><Form.Control {...field} type="text" size="sm" isInvalid={errors.conditions?.[index].field_value}/>}
+                                                />
+                                            </Col>
+                                        </Form.Group>
+                                    </td>
+                                </tr>
                             ))}
                         </tbody>
                     </Table>
