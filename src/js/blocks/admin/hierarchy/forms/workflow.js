@@ -266,7 +266,7 @@ function AddEditWorkflow(props) {
                             {tabs.map(t=>(
                                 <Tab key={t.id} eventKey={t.id} title={t.title}>
                                     <Container className="mt-3" fluid>
-                                        <TabRouter tab={activeTab}/>
+                                        <TabRouter tab={t.id}/>
                                     </Container>
                                 </Tab>
                             ))}
