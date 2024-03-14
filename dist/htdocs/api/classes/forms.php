@@ -79,26 +79,25 @@ class Forms extends HRForms2 {
             oci_bind_by_name($stmt,":unix_ts",$this->req[2]);
             $r = oci_execute($stmt);
 			if (!$r) $this->raiseError();
-            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-            $formData = json_decode((is_object($row['DATA'])) ? $row['DATA']->load() : "");
+            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+            $formData = json_decode($row['DATA']);
             oci_free_statement($stmt);
             $qry = "select pt.paytrans_id,pt.tabs FROM HRFORMS2_PAYROLL_TRANSACTIONS pt WHERE pt.paytrans_id = :paytrans_id";
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":paytrans_id", $formData->formActions->PAYTRANS_ID);
             $r = oci_execute($stmt);
             if (!$r) $this->raiseError();
-            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-            $tabs = (is_object($row['TABS']))?$row['TABS']->load():"";
-            $formData->formActions->TABS = json_decode($tabs);
+            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+            $formData->formActions->TABS = json_decode($row['TABS']);
         } elseif ($this->req[0] == 'archive') {
             $qry = "select CREATED_BY, FORM_DATA from HRFORMS2_FORMS_ARCHIVE where FORM_ID = :form_id";
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":form_id",$this->req[1]);
             $r = oci_execute($stmt);
             if (!$r) $this->raiseError();
-            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-            $formData = json_decode((is_object($row['FORM_DATA'])) ? $row['FORM_DATA']->load() : "");
-            $createdByData = json_decode((is_object($row['CREATED_BY'])) ? $row['CREATED_BY']->load() : "");
+            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+            $formData = json_decode($row['FORM_DATA']);
+            $createdByData = json_decode($row['CREATED_BY']);
             $formData->createdBy = $createdByData;
             oci_free_statement($stmt);
             $qry = "select pt.paytrans_id,pt.tabs 
@@ -108,9 +107,8 @@ class Forms extends HRForms2 {
             oci_bind_by_name($stmt,":paytrans_id", $formData->formActions->PAYTRANS_ID);
             $r = oci_execute($stmt);
             if (!$r) $this->raiseError();
-            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-            $tabs = (is_object($row['TABS']))?$row['TABS']->load():"";
-            $formData->formActions->TABS = json_decode($tabs);
+            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+            $formData->formActions->TABS = json_decode($row['TABS']);
         } else {
             // Validation: Only submitter and group assigned to should view request
             $usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
@@ -129,9 +127,9 @@ class Forms extends HRForms2 {
                 oci_bind_by_name($stmt,":form_id",$this->req[0]);
                 $r = oci_execute($stmt);
                 if (!$r) $this->raiseError();
-                $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-                $formData = json_decode((is_object($row['FORM_DATA'])) ? $row['FORM_DATA']->load() : "");
-                $createdByData = json_decode((is_object($row['CREATED_BY'])) ? $row['CREATED_BY']->load() : "");
+                $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+                $formData = json_decode($row['FORM_DATA']);
+                $createdByData = json_decode($row['CREATED_BY']);
                 $formData->createdBy = $createdByData;
                 oci_free_statement($stmt);
                 $qry = "select pt.paytrans_id,pt.tabs 
@@ -141,9 +139,8 @@ class Forms extends HRForms2 {
                 oci_bind_by_name($stmt,":paytrans_id", $formData->formActions->PAYTRANS_ID);
                 $r = oci_execute($stmt);
                 if (!$r) $this->raiseError();
-                $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-                $tabs = (is_object($row['TABS']))?$row['TABS']->load():"";
-                $formData->formActions->TABS = json_decode($tabs);
+                $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+                $formData->formActions->TABS = json_decode($row['TABS']);
             }
             $formData->lastJournal = $last_journal;
         }

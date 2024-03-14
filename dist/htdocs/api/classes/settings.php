@@ -32,10 +32,9 @@ class Settings extends HRForms2 {
 		$qry = "select settings from hrforms2_settings";
         $stmt = oci_parse($this->db,$qry);
         oci_execute($stmt);
-		$row = oci_fetch_row($stmt);
-		$json = (is_object($row[0])) ? $row[0]->load() : "";
+		$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
         oci_free_statement($stmt);
-        $this->_arr = json_decode($json,true);
+        $this->_arr = json_decode($row['SETTINGS'],true);
 		$this->returnData = $this->_arr;
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}

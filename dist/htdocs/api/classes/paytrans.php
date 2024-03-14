@@ -52,10 +52,8 @@ class PayTrans extends HRForms2 {
 		if (isset($this->req[2])) oci_bind_by_name($stmt,":action_code", $this->req[2]);
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
-		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
-            $tabs = (is_object($row['TABS']))?$row['TABS']->load():"";
-            unset($row['TABS']);
-            $row['TABS'] = json_decode($tabs);
+		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
+			$row['TABS'] = json_decode($row['TABS']);
 			$this->_arr[] = $row;
 		}
         $this->returnData = $this->_arr;

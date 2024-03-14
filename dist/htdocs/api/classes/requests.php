@@ -78,8 +78,8 @@ class Requests extends HRForms2 {
             oci_bind_by_name($stmt,":unix_ts",$this->req[2]);
             $r = oci_execute($stmt);
 			if (!$r) $this->raiseError();
-            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-            $this->_arr['DATA'] = (is_object($row['DATA'])) ? $row['DATA']->load() : "";
+            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+            $this->_arr['DATA'] = $row['DATA'];
             oci_free_statement($stmt);
             $this->returnData = json_decode($this->_arr['DATA']);
         } elseif ($this->req[0] == 'archive') {
@@ -88,9 +88,9 @@ class Requests extends HRForms2 {
             oci_bind_by_name($stmt,":request_id",$this->req[1]);
             $r = oci_execute($stmt);
 			if (!$r) $this->raiseError();
-            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-            $requestData = json_decode((is_object($row['REQUEST_DATA'])) ? $row['REQUEST_DATA']->load() : "");
-            $requestData->createdBy = json_decode((is_object($row['CREATED_BY'])) ? $row['CREATED_BY']->load() : "");
+            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+            $requestData = json_decode($row['REQUEST_DATA']);
+            $requestData->createdBy = json_decode($row['CREATED_BY']);
             oci_free_statement($stmt);
             $this->returnData = $requestData;
         } else {
@@ -111,9 +111,9 @@ class Requests extends HRForms2 {
                 oci_bind_by_name($stmt,":request_id",$this->req[0]);
                 $r = oci_execute($stmt);
                 if (!$r) $this->raiseError();
-                $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-                $requestData = json_decode((is_object($row['REQUEST_DATA'])) ? $row['REQUEST_DATA']->load() : "");
-                $requestData->createdBy = json_decode((is_object($row['CREATED_BY'])) ? $row['CREATED_BY']->load() : "");
+                $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+                $requestData = json_decode($row['REQUEST_DATA']);
+                $requestData->createdBy = json_decode($row['CREATED_BY']);
                 oci_free_statement($stmt);
                 $this->returnData = $requestData;
             }

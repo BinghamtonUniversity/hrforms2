@@ -32,11 +32,10 @@ class News extends HRForms2 {
         $qry = "select NEWS_TEXT, to_char(modified_date,'DD-MON-YY HH24:MI:SS') as MODIFIED_DATE, MODIFIED_BY from hrforms2_news";
         $stmt = oci_parse($this->db,$qry);
         oci_execute($stmt);
-        $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-        $newsText = is_object($row['NEWS_TEXT'])?$row['NEWS_TEXT']->load():"";
-		$row['NEWS_TEXT'] = $newsText;
+        $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+		$row['NEWS_TEXT'] = $row['NEWS_TEXT'];
 		oci_free_statement($stmt);
-		$this->returnData = $row;
+		$this->returnData = $this->null2Empty($row);
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
 	function PATCH() {

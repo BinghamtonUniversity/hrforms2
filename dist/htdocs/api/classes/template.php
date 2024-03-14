@@ -43,9 +43,8 @@ class Template extends HRForms2 {
             oci_bind_by_name($stmt,":req",$this->req[0]);
             $r = oci_execute($stmt);
             if (!$r) $this->raiseError();
-            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
             $this->_arr = $row;
-            $this->_arr['TEMPLATE'] = (is_object($row['TEMPLATE'])) ? $row['TEMPLATE']->load() : "";
         }
         $this->_arr = $this->null2Empty($this->_arr);
         $this->returnData = $this->_arr;

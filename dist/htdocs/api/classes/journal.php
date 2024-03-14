@@ -138,11 +138,8 @@ class Journal extends HRForms2 {
         oci_bind_by_name($stmt,":id",$this->req[1]);
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
-        while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+        while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
             $this->getUser($row);
-            $comments = (is_object($row['COMMENTS']))?$row['COMMENTS']->load():"";
-            unset($row['COMMENTS']);
-            $row['COMMENTS'] = $comments;
             $this->_arr[] = $row;
         }
         oci_free_statement($stmt);
