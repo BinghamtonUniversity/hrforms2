@@ -35,9 +35,9 @@ class Lists extends HRForms2 {
 			$stmt = oci_parse($this->db,$qry);
 			oci_bind_by_name($stmt,":list_id",$this->req[0]);
 			oci_execute($stmt);
-			$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+			$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
 			$this->_arr = $row;
-			$this->_arr['LIST_DATA'] = (is_object($row['LIST_DATA'])) ? $row['LIST_DATA']->load() : "";	
+			$this->_arr['LIST_DATA'] = $row['LIST_DATA'];
 		} else {
 			$qry = "select LIST_ID,LIST_NAME,LIST_SLUG from hrforms2_lists order by LIST_NAME";
 			$stmt = oci_parse($this->db,$qry);

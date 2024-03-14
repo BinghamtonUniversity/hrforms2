@@ -43,10 +43,8 @@ class Codes extends HRForms2 {
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
         //oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
-		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
-            $addlInfo = (is_object($row['ADDITIONAL_INFO']))?$row['ADDITIONAL_INFO']->load():"";
-            unset($row['ADDITIONAL_INFO']);
-            $row['ADDITIONAL_INFO'] = json_decode($addlInfo);
+		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
+            $row['ADDITIONAL_INFO'] = json_decode($row['ADDITIONAL_INFO'],true);
 			$this->_arr[] = $row;
 		}
         $this->returnData = $this->_arr;

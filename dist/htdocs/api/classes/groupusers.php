@@ -39,14 +39,11 @@ class GroupUsers extends HRForms2 {
 		oci_bind_by_name($stmt,":group_id", $this->req[0]);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
-		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
-			$userInfo = json_decode((is_object($row['USER_INFO']))?$row['USER_INFO']->load():"",true);
-			unset($row['USER_INFO']);
-			if ($userInfo != null) {
-				$row = array_merge($row,$userInfo);
-			} else {
+		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
+			$row['USER_INFO'] = json_decode($row['USER_INFO'],true);
+			if ($row['USER_INFO'] == null) {
 				$user = (new user(array($row['USER_SUNY_ID']),false))->returnData[0];
-				$row = array_merge($row,(array)$user);
+				$row['USER_INFO'] = $user;
 			}
 			if (!isset($row['SUNY_ID'])) {
 				if (!isset($row['USER_SUNY_ID'])) continue;
@@ -54,12 +51,6 @@ class GroupUsers extends HRForms2 {
 				$row['LEGAL_FIRST_NAME'] = $row['USER_SUNY_ID'];
 				$row['LEGAL_LAST_NAME'] = null;
 			}
-			/*if (!isset($row['SUNY_ID'])) {
-				$row['SUNY_ID'] = $row['USER_SUNY_ID'];
-				$row['LEGAL_FIRST_NAME'] = null;
-				$row['LEGAL_LAST_NAME'] = null;
-				//continue; // no user data returned
-			}*/
 			$this->_arr[] = $row;
 		}
 		oci_free_statement($stmt);

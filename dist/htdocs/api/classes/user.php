@@ -9,6 +9,12 @@ NB: HTTP Codes: https://tools.ietf.org/html/rfc7231#section-6
 NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 */
 
+/* Note:
+	We are not using the OCI_RETURN_LOBS parameter for fetching as we have in other
+	classes because the LOB data is used conditionally.  Rather than always returning
+	it we only load it when needed.
+*/
+
 class User extends HRForms2 {
 	private $_arr = array();
 
