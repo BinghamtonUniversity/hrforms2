@@ -35,6 +35,7 @@ export function News() {
         
     },[news.data]);
     if (show && news.data) {
+        if (!news.data.NEWS_TEXT) return null;
         return (
             <Alert variant="light" onClose={dismissNews} dismissible={general.hideNews}>
                 <Alert.Heading>{t('home.news.heading')}</Alert.Heading>
