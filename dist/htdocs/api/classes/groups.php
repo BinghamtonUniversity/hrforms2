@@ -20,6 +20,25 @@ class Groups extends HRForms2 {
 		$this->init();
 	}
 
+	function __save_history() {
+		// get current group info 
+		$qry = "SELECT * FROM hrforms2_groups where group_id = :group_id";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt,":group_id", $this->req[0]);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+		oci_free_statement($stmt);
+		// insert into history
+		$qry = "insert into hrforms2_groups_history values(:group_id, :group_name, :method, sysdate)";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt,":group_id", $this->req[0]);
+		oci_bind_by_name($stmt,":group_name", $row['GROUP_NAME']);
+		oci_bind_by_name($stmt,":method", $this->method);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		oci_free_statement($stmt);
+	}
 
 	/**
 	 * Check for group in workflows
@@ -90,8 +109,7 @@ class Groups extends HRForms2 {
 		$this->done();
 	}
 	function PUT() {
-		//include 'groupusers.php';
-		//include 'groupdepts.php';
+		$this->__save_history();
 		$qry = "update hrforms2_groups set 
 			group_name = :group_name, 
 			start_date = :start_date, 
@@ -118,6 +136,7 @@ class Groups extends HRForms2 {
 			$message = $this->checkWorkflow('deactivate');
 			if ($message != "") $this->raiseError(E_BAD_REQUEST, array('errMsg'=>$message));
 
+			$this->__save_history();
 			$qry = "update hrforms2_groups set end_date = :end_date where group_id = :group_id";
 			$stmt = oci_parse($this->db,$qry);
 			oci_bind_by_name($stmt,":end_date", $this->POSTvars['END_DATE']);
