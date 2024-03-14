@@ -14,11 +14,38 @@ class Workflow extends HRForms2 {
 	private $table = "";
 
 	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET,POST,PUT,PATCH,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+		$this->allowedMethods = "GET,POST,PUT,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
 		$this->reqAuth = true; //default: true - NB: See note above
 		$this->retJSON = $rjson;
 		$this->req = $req;
 		$this->init();
+	}
+
+	private function __save_history() {
+		// get current data
+		$qry = "select * from $this->table where workflow_id = :id";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt,":id", $this->req[1]);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+		oci_free_statement($stmt);
+
+		// insert data into history
+		$hist_table = $this->table . "_history";
+		$qry = "insert into $hist_table values(:id,:groups,EMPTY_CLOB(),:sendtogroup,:method,sysdate) RETURNING conditions INTO :conditions";
+		$stmt = oci_parse($this->db,$qry);
+		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
+		oci_bind_by_name($stmt,":id", $this->req[1]);
+		oci_bind_by_name($stmt,":groups", $row['GROUPS']);
+		oci_bind_by_name($stmt,":conditions", $clob, -1, OCI_B_CLOB);
+		oci_bind_by_name($stmt,":sendtogroup", $row['SENDTOGROUP']);
+		oci_bind_by_name($stmt,":method", $this->method);
+		$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+		if (!$r) $this->raiseError();
+		$clob->save($row['CONDITIONS']);
+		oci_commit($this->db);
+		oci_free_statement($stmt);
 	}
 
 	/**
@@ -49,10 +76,8 @@ class Workflow extends HRForms2 {
 		if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $this->req[1]);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
-		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
-			$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
-			unset($row['CONDITIONS']);
-			$row['CONDITIONS'] = json_decode($conditions);
+		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
+			$row['CONDITIONS'] = json_decode($row['CONDITIONS']);
 			$this->_arr[] = $row;
 		}		
 		oci_free_statement($stmt);
@@ -76,6 +101,7 @@ class Workflow extends HRForms2 {
 		$this->toJSON(array("WORKFLOW_ID"=>$WORKFLOW_ID));
 	}
 	function PUT() {
+		$this->__save_history();
 		$qry = "update $this->table set groups = :groups, CONDITIONS = EMPTY_CLOB(),
 		sendtogroup = :sendtogroup
 		where workflow_id = :workflow_id returning CONDITIONS into :conditions";
@@ -89,19 +115,6 @@ class Workflow extends HRForms2 {
 		if (!$r) $this->raiseError();
 		$clob->save(json_encode($this->POSTvars['CONDITIONS']));
 		oci_commit($this->db);
-		$this->done();
-	}
-	function PATCH() {
-		if (isset($this->POSTvars['GROUPS'])) {
-			$qry = "update $this->table set groups = :groups where workflow_id = :workflow_id";
-			$stmt = oci_parse($this->db,$qry);
-			oci_bind_by_name($stmt,":groups", $this->POSTvars['GROUPS']);
-			oci_bind_by_name($stmt,":workflow_id", $this->req[1]);
-			$r = oci_execute($stmt);
-			if (!$r) $this->raiseError();
-			oci_commit($this->db);
-			oci_free_statement($stmt);
-		}
 		$this->done();
 	}
 	function DELETE() {
