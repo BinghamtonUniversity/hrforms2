@@ -42,7 +42,7 @@ class RequestList extends HRForms2 {
 				to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
-				j.status, j.sequence, w.groups,js.journal_status
+				j.status, j.sequence, r.request_data.GROUPS, js.journal_status
 				from hrforms2_requests r,
 				(select jr2.* from (select jr1.*,
 					rank() over (partition by jr1.request_id order by jr1.journal_date desc) as rnk
@@ -50,7 +50,6 @@ class RequestList extends HRForms2 {
 				) jr2
 				where jr2.rnk = 1 and jr2.status = 'PA' and
 				jr2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
-				left join (select workflow_id, groups from hrforms2_requests_workflow) w on (j.workflow_id = w.workflow_id)
 				left join (select request_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
 				where r.request_id = j.request_id
 				and r.created_by.SUNY_ID != :suny_id";
@@ -60,14 +59,13 @@ class RequestList extends HRForms2 {
 				to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
-				j.status, j.sequence, w.groups,js.journal_status
+				j.status, j.sequence, r.request_data.GROUPS, js.journal_status
 				from hrforms2_requests r,
 				(select jr2.* from (select jr1.*,
 					rank() over (partition by jr1.request_id order by jr1.journal_date desc) as rnk
 					from hrforms2_requests_journal jr1
 				) jr2
 				where jr2.rnk = 1 and jr2.status = 'R') j
-				left join (select workflow_id, groups from hrforms2_requests_workflow) w on (j.workflow_id = w.workflow_id)
 				left join (select request_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
 				where r.request_id = j.request_id
 				and r.created_by.SUNY_ID = :suny_id";
@@ -78,14 +76,13 @@ class RequestList extends HRForms2 {
 				to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
-				j.status, j.sequence, w.groups,js.journal_status
+				j.status, j.sequence, r.request_data.GROUPS, js.journal_status
 				from hrforms2_requests r,
 				(select jr2.* from (select jr1.*,
 					rank() over (partition by jr1.request_id order by jr1.sequence desc) as rnk
 					from hrforms2_requests_journal jr1
 					where jr1.request_id in (select request_id from hrforms2_requests_journal where suny_id = :suny_id and status = 'S')) jr2
 				where jr2.rnk = 1 and jr2.status in ('PA','PF')) j
-				left join (select workflow_id, groups from hrforms2_requests_workflow) w on (j.workflow_id = w.workflow_id)
 				left join (select request_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
 				where r.request_id = j.request_id";
 				break;
@@ -94,7 +91,7 @@ class RequestList extends HRForms2 {
 				to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
-				j.status, j.sequence, w.groups,js.journal_status
+				j.status, j.sequence, r.request_data.GROUPS, js.journal_status
 				from hrforms2_requests r,
 				(select jr2.* from (select jr1.*,
 					rank() over (partition by jr1.request_id order by jr1.journal_date desc) as rnk
@@ -102,7 +99,6 @@ class RequestList extends HRForms2 {
 				) jr2
 				where jr2.rnk = 1 and jr2.status ='PF' and
 				jr2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
-				left join (select workflow_id, groups from hrforms2_requests_workflow) w on (j.workflow_id = w.workflow_id)
 				left join (select request_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
 				where r.request_id = j.request_id
 				and r.created_by.SUNY_ID != :suny_id";
@@ -112,14 +108,14 @@ class RequestList extends HRForms2 {
 				 to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
-				j.status, j.sequence, w.groups,js.journal_status
+				j.status, j.sequence, jg.journal_groups as groups ,js.journal_status
 				from hrforms2_requests_archive r,
 				(select jr2.* from (select jr1.*,
 					rank() over (partition by jr1.request_id order by jr1.journal_date desc) as rnk
 					from hrforms2_requests_journal_archive jr1
 				) jr2
 				where jr2.rnk = 1 and jr2.status ='Z') j
-				left join (select workflow_id, groups from hrforms2_requests_workflow) w on (j.workflow_id = w.workflow_id)
+				left join (select request_id, listagg(group_to,',') within group (order by sequence) as journal_groups from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) jg on (jg.request_id = j.request_id)
 				left join (select request_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
 				where r.request_id = j.request_id
 				and r.created_by.SUNY_ID = :suny_id";
@@ -135,7 +131,41 @@ class RequestList extends HRForms2 {
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
 			$row['POSTYPE'] = json_decode($row['POSTYPE']);
 			$row['REQTYPE'] = json_decode($row['REQTYPE']);
+			$row['STATUS_ARRAY'] = explode(",",$row['JOURNAL_STATUS']);
 			$this->_arr[] = $row;
+		}
+		if ($this->req[0] == 'archived') {
+			foreach ($this->_arr as &$line) {
+				$line['GROUPS_ARRAY'] = array();
+				$qry = "select sequence, rank, group_id, group_name, group_description
+					from hrforms2_requests_journal_archive j,
+					(
+						select dense_rank() over (partition by group_id order by history_date asc) rank, g2.*
+						from (
+							select g.*, null as method, sysdate as history_date from hrforms2_groups g
+							union 
+							select * from hrforms2_groups_history
+						) g2
+					) grp 
+					where request_id = :id
+					and sequence > 0
+					and grp.group_id = j.group_to
+					and grp.history_date >= j.journal_date
+					order by journal_date, sequence, rank";
+				$stmt = oci_parse($this->db,$qry);
+				oci_bind_by_name($stmt,":id",$line['REQUEST_ID']);
+				oci_execute($stmt);
+				$last_seq = 0;
+				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					if ($last_seq == $row['SEQUENCE']) continue;
+					array_push($line['GROUPS_ARRAY'],array(
+						"GROUP_ID"=>$row['GROUP_ID'],
+						"GROUP_NAME"=>$row['GROUP_NAME'],
+						"GROUP_DESCRIPTION"=>$row['GROUP_DESCRIPTION']
+					));
+					$last_seq = $row['SEQUENCE'];
+				}
+			}
 		}
 		oci_free_statement($stmt);
 		$this->returnData = $this->_arr;

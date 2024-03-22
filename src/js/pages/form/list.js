@@ -50,9 +50,7 @@ function ListData({list}) {
     const groups = getGroups();
     const listdata = getFormList(list,{enabled:!!groups.data,select:d=>{
         return d.map(l => {
-            l.STATUS_ARRAY = l.JOURNAL_STATUS.split(',');
-            // exclude first element: submitter group
-            l.GROUPS_ARRAY = (!l.GROUPS)?[]:l.GROUPS.split(',').slice(1,).map(g=>pick(find(groups.data,{GROUP_ID:g}),['GROUP_ID','GROUP_NAME','GROUP_DESCRIPTION']));
+            l.GROUPS_ARRAY = (!l.GROUPS)?[]:l.GROUPS.split(',').map(g=>pick(find(groups.data,{GROUP_ID:g}),['GROUP_ID','GROUP_NAME','GROUP_DESCRIPTION']));
             return l;
         });
     }});

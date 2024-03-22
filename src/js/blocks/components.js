@@ -323,19 +323,19 @@ const WorkflowExpandedComponent = ({data}) => {
     },[general]);
     return (
         <div className="p-3" style={{backgroundColor:'#ddd'}}>
-            <span className="my-1">
-                <Badge variant="secondary" className="p-2 badge-outline border-dark">Submitter</Badge> 
-                <span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>
-            </span>
             {data.GROUPS_ARRAY.map((g,i)=>{
                 const sequence = parseInt(data.SEQUENCE,10);
                 const key = `${data.id}_${i}`;
-                if (data.STATUS_ARRAY[i+1] == 'X' && !showSkipped) return null;
+                if (data.STATUS_ARRAY[i] == 'X' && !showSkipped) return null;
                 let variant = 'white';
                 let classname = 'p-2 m-0 d-inline-flex flex-column badge-outline border';
                 let title = general.awaitLabel;
-                if (i < sequence) { 
-                    switch(data.STATUS_ARRAY[i+1]) {
+                if (i <= sequence) { 
+                    switch(data.STATUS_ARRAY[i]) {
+                        case "S":
+                            classname += "-dark";
+                            variant = 'secondary';
+                            break;
                         case "X":
                             classname += '-dark badge-white-striped'
                             break;
@@ -352,13 +352,8 @@ const WorkflowExpandedComponent = ({data}) => {
                             classname += '-success';
                             variant = 'success-light';
                     }
-                    title = general.status[data.STATUS_ARRAY[i+1]].badge;
+                    title = general.status[data.STATUS_ARRAY[i]].badge;
                 }
-                /*if (i == sequence && data.STATUS != 'R') {
-                    classname += '-info';
-                    variant = 'info-light';
-                    title = general.status[data.STATUS].badge;
-                }*/
                 return (
                     <span key={key} className="my-1">
                         <DescriptionPopover
@@ -371,7 +366,6 @@ const WorkflowExpandedComponent = ({data}) => {
                             <Badge as="p" variant={variant} className={classname}>
                                 <span>{g.GROUP_NAME}</span>
                                 <span className="pt-1 font-italic">{title}</span>
-                                {/*<span>{i}-{data.STATUS_ARRAY[i+1]}-{sequence}</span>*/}
                             </Badge>
                         </DescriptionPopover>
                         {(i<data.GROUPS_ARRAY.length-1)&&<span><Icon className="iconify-inline m-0 mt-1" icon="mdi:arrow-right"/></span>}
