@@ -165,7 +165,7 @@ function ExpandedComponent({data}) {
                         </dd>
                     </>
                 }
-                <dt>Updated By:</dt>
+                <dt>{(data.STATUS=='S')?'Submitted':'Updated'} By:</dt>
                 <dd>{data.fullName}</dd>
                 <dt>Comment:</dt>
                 <dd><pre>{data.COMMENTS}</pre></dd>
