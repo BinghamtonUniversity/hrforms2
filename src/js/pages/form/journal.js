@@ -142,17 +142,20 @@ function ExpandedComponent({data}) {
                 <dd>{data.journalDateFmt}</dd>
                 <dt>Status:</dt>
                 <dd>{get(general.status,`${data.STATUS}.list`,'Unknown')}</dd>
-                {data.GROUP_FROM &&
+                {(data.GROUP_FROM && data.STATUS!='S') &&
                     <>
                         <dt>Group From:</dt>
                         <dd>
-                            <OverlayTrigger placement="right" delay={{show:500,hide:500}} overlay={<GroupPopover sequence={data.SEQUENCE} groupId={data.GROUP_FROM} groupName={data.GROUP_FROM_NAME}/>}>
-                                <Link onClick={clickHander} to={`/admin/groups/${data.GROUP_FROM}`}>{data.GROUP_FROM_NAME} ({data.GROUP_FROM})</Link>
-                            </OverlayTrigger>
+                            {(data.GROUP_FROM == '-99')?
+                                <>{data.GROUP_FROM_NAME} ({data.GROUP_FROM})</>:
+                                <OverlayTrigger placement="right" delay={{show:500,hide:500}} overlay={<GroupPopover sequence={data.SEQUENCE} groupId={data.GROUP_FROM} groupName={data.GROUP_FROM_NAME}/>}>
+                                    <Link onClick={clickHander} to={`/admin/groups/${data.GROUP_FROM}`}>{data.GROUP_FROM_NAME} ({data.GROUP_FROM})</Link>
+                                </OverlayTrigger>
+                            }
                         </dd>
                     </>
                 }
-                {data.GROUP_TO && 
+                {(data.GROUP_TO && data.STATUS!='S') && 
                     <>
                         <dt>Group To:</dt>
                         <dd>
