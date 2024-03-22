@@ -51,8 +51,9 @@ function ListData({list}) {
     const groups = getGroups();
     const listdata = getRequestList(list,{enabled:!!groups.data,select:d=>{
         return d.map(l => {
-            l.STATUS_ARRAY = l.JOURNAL_STATUS.split(',');
-            l.GROUPS_ARRAY = (!l.GROUPS)?[]:l.GROUPS.split(',').map(g=>pick(find(groups.data,{GROUP_ID:g}),['GROUP_ID','GROUP_NAME','GROUP_DESCRIPTION']));
+            if (list != 'archived') {
+                l.GROUPS_ARRAY = (!l.GROUPS)?[]:l.GROUPS.split(',').map(g=>pick(find(groups.data,{GROUP_ID:g}),['GROUP_ID','GROUP_NAME','GROUP_DESCRIPTION']));
+            }
             return l;
         });
     }});

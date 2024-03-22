@@ -226,6 +226,7 @@ class FormList extends HRForms2 {
 		oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
 		oci_execute($stmt);
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+			$row['STATUS_ARRAY'] = explode(",",$row['JOURNAL_STATUS']);
 			$this->_arr[] = $row;
 		}
 		oci_free_statement($stmt);
