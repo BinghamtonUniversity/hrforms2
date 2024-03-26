@@ -22,29 +22,13 @@ class Workflow extends HRForms2 {
 	}
 
 	private function __save_history() {
-		// get current data
-		$qry = "select * from $this->table where workflow_id = :id";
+		$hist_table = $this->table . "_history";
+		$qry = "insert into $hist_table select w.*, :method, sysdate from $this->table w where workflow_id = :id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":id", $this->req[1]);
+		oci_bind_by_name($stmt,":method", $this->method);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
-		$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
-		oci_free_statement($stmt);
-
-		// insert data into history
-		$hist_table = $this->table . "_history";
-		$qry = "insert into $hist_table values(:id,:groups,EMPTY_CLOB(),:sendtogroup,:method,sysdate) RETURNING conditions INTO :conditions";
-		$stmt = oci_parse($this->db,$qry);
-		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
-		oci_bind_by_name($stmt,":id", $this->req[1]);
-		oci_bind_by_name($stmt,":groups", $row['GROUPS']);
-		oci_bind_by_name($stmt,":conditions", $clob, -1, OCI_B_CLOB);
-		oci_bind_by_name($stmt,":sendtogroup", $row['SENDTOGROUP']);
-		oci_bind_by_name($stmt,":method", $this->method);
-		$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
-		if (!$r) $this->raiseError();
-		$clob->save($row['CONDITIONS']);
-		oci_commit($this->db);
 		oci_free_statement($stmt);
 	}
 
@@ -118,6 +102,7 @@ class Workflow extends HRForms2 {
 		$this->done();
 	}
 	function DELETE() {
+		$this->__save_history();
 		$qry = "delete from $this->table where workflow_id = :workflow_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":workflow_id", $this->req[1]);

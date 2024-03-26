@@ -21,19 +21,9 @@ class Groups extends HRForms2 {
 	}
 
 	function __save_history() {
-		// get current group info 
-		$qry = "SELECT * FROM hrforms2_groups where group_id = :group_id";
+		$qry = "insert into hrforms2_groups_history SELECT g.*, :method, sysdate FROM hrforms2_groups g where group_id = :group_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":group_id", $this->req[0]);
-		$r = oci_execute($stmt);
-		if (!$r) $this->raiseError();
-		$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-		oci_free_statement($stmt);
-		// insert into history
-		$qry = "insert into hrforms2_groups_history values(:group_id, :group_name, :method, sysdate)";
-		$stmt = oci_parse($this->db,$qry);
-		oci_bind_by_name($stmt,":group_id", $this->req[0]);
-		oci_bind_by_name($stmt,":group_name", $row['GROUP_NAME']);
 		oci_bind_by_name($stmt,":method", $this->method);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
