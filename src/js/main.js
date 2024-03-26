@@ -25,7 +25,8 @@ const queryClient = new QueryClient({
                 return 0;
             },
             retryDelay:attempt=>Math.min(attempt > 0 ? 2 ** attempt * 2000 : 1000, 30 * 1000),
-            refetchOnWindowFocus:false, // TODO: add to config?
+            refetchOnWindowFocus:false, // TODO: add to config?  set to true in Prod?
+            refetchOnReconnect:true,
         }
     }
 });
