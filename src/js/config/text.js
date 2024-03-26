@@ -53,6 +53,10 @@ const text = {
         },
     },
     'form':{
+        'journal': {
+            'title':'Form Journal',
+            'return': 'Return to List'
+        },
         'actions':{
             'save':{
                 'pending': 'Saving Form',
@@ -77,6 +81,10 @@ const text = {
         }
     },
     'request':{
+        'journal': {
+            'title': 'Request Journal',
+            'return': 'Return to List'
+        },
         'actions':{
             'save':{
                 'pending': 'Saving Request',
