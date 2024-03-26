@@ -11,6 +11,8 @@ NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 
 class Hierarchy extends HRForms2 {
 	private $_arr = array();
+	private $table = "";
+	private $key2 = "";
 
 	function __construct($req,$rjson=true) {
 		$this->allowedMethods = "GET,POST,PATCH,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
@@ -20,11 +22,34 @@ class Hierarchy extends HRForms2 {
 		$this->init();
 	}
 
+	private function __save_history() {
+		$hist_table = $this->table . "_history";
+		$qry = "insert into $hist_table select h.*, :method, sysdate from $this->table h where hierarchy_id = :id";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt,":id", $this->req[1]);
+		oci_bind_by_name($stmt,":method", $this->method);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		oci_free_statement($stmt);
+	}
+
 	/**
 	 * validate called from init()
 	 */
 	function validate() {
 		if (in_array($this->method,array('PUT','PATCH','DELETE')) && !isset($this->req[1])) $this->raiseError(400);
+		switch($this->req[0]) {
+			case "request": /** Request Hierarchy */
+				$this->table = "hrforms2_requests_hierarchy";
+				$this->key2 = $this->POSTvars['posType'];
+				break;
+			case "form": /** Form Hierarchy */
+				$this->table = "hrforms2_forms_hierarchy";
+				$this->key2 = $this->POSTvars['formCode'];
+				break;
+			default:
+				$this->raiseError(400);
+		}
 	}
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -44,14 +69,12 @@ class Hierarchy extends HRForms2 {
 				if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $id);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
-				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_LOBS)) {
 					if ($this->req[1] == 'group') {
 						$hgroups = explode(',',$row['HIERARCHY_GROUPS']);
 						if (!in_array($this->req[2],$hgroups)) continue;
 					}
-					$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
-					unset($row['CONDITIONS']);
-					$row['CONDITIONS'] = json_decode($conditions);
+					$row['CONDITIONS'] = json_decode($row['CONDITIONS']);
 					$this->_arr[] = $row;
 				}
 				oci_free_statement($stmt);
@@ -67,10 +90,8 @@ class Hierarchy extends HRForms2 {
 					if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $id);
 					$r = oci_execute($stmt);
 					if (!$r) $this->raiseError();
-					while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
-						$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
-						unset($row['CONDITIONS']);
-						$row['CONDITIONS'] = json_decode($conditions);
+					while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
+						$row['CONDITIONS'] = json_decode($row['CONDITIONS']);
 						$this->_arr[] = $row;
 					}
 					oci_free_statement($stmt);
@@ -98,14 +119,12 @@ class Hierarchy extends HRForms2 {
 				$stmt = oci_parse($this->db,$qry);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
-				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
 					if ($this->req[1] == 'group') {
 						$hgroups = explode(',',$row['HIERARCHY_GROUPS']);
 						if (!in_array($this->req[2],$hgroups)) continue;
 					}
-					$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
-					unset($row['CONDITIONS']);
-					$row['CONDITIONS'] = json_decode($conditions);
+					$row['CONDITIONS'] = json_decode($row['CONDITIONS']);
 					$this->_arr[] = $row;
 				}
 				oci_free_statement($stmt);
@@ -121,10 +140,8 @@ class Hierarchy extends HRForms2 {
 					if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $id);
 					$r = oci_execute($stmt);
 					if (!$r) $this->raiseError();
-					while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
-						$conditions = (is_object($row['CONDITIONS']))?$row['CONDITIONS']->load():"";
-						unset($row['CONDITIONS']);
-						$row['CONDITIONS'] = json_decode($conditions);
+					while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
+						$row['CONDITIONS'] = json_decode($row['CONDITIONS']);
 						$this->_arr[] = $row;
 					}
 					oci_free_statement($stmt);
@@ -137,77 +154,37 @@ class Hierarchy extends HRForms2 {
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
 	function POST() {
-		switch($this->req[0]) {
-			case "request": /** Request Hierarchy */
-				$qry = "insert into hrforms2_requests_hierarchy 
-				values(HRFORMS2_REQUESTS_HIERARCHY_SEQ.nextval, :position_type, :workflow_id, :groups)
-				returning HIERARCHY_ID into :hierarchy_id";
-				$stmt = oci_parse($this->db,$qry);
-				oci_bind_by_name($stmt,":position_type", $this->POSTvars['posType']);
-				oci_bind_by_name($stmt,":workflow_id", $this->POSTvars['workflowId']);
-				oci_bind_by_name($stmt,":groups", $this->POSTvars['groups']);
-				oci_bind_by_name($stmt,":hierarchy_id", $HIERARCHY_ID,-1,SQLT_INT);
-				$r = oci_execute($stmt);
-				if (!$r) $this->raiseError();
-				oci_free_statement($stmt);
-				$this->toJSON(array("HIERARCHY_ID"=>$HIERARCHY_ID));
-				break;
-			case "form": /** Form Hierarchy */
-				$qry = "insert into hrforms2_forms_hierarchy 
-				values(HRFORMS2_FORMS_HIERARCHY_SEQ.nextval, :paytrans_id, :workflow_id, :groups)
-				returning HIERARCHY_ID into :hierarchy_id";
-				$stmt = oci_parse($this->db,$qry);
-				oci_bind_by_name($stmt,":paytrans_id", $this->POSTvars['formCode']);
-				oci_bind_by_name($stmt,":workflow_id", $this->POSTvars['workflowId']);
-				oci_bind_by_name($stmt,":groups", $this->POSTvars['groups']);
-				oci_bind_by_name($stmt,":hierarchy_id", $HIERARCHY_ID,-1,SQLT_INT);
-				$r = oci_execute($stmt);
-				if (!$r) $this->raiseError();
-				oci_free_statement($stmt);
-				$this->toJSON(array("HIERARCHY_ID"=>$HIERARCHY_ID));
-				break;
-		}
+		$qry = "insert into $this->table 
+		values({$this->table}_SEQ.nextval, :key2, :workflow_id, :groups)
+		returning HIERARCHY_ID into :hierarchy_id";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt,":key2", $this->key2);
+		oci_bind_by_name($stmt,":workflow_id", $this->POSTvars['workflowId']);
+		oci_bind_by_name($stmt,":groups", $this->POSTvars['groups']);
+		oci_bind_by_name($stmt,":hierarchy_id", $HIERARCHY_ID,-1,SQLT_INT);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		oci_free_statement($stmt);
+		$this->toJSON(array("HIERARCHY_ID"=>$HIERARCHY_ID));
 	}
 	function PATCH() {
-		switch($this->req[0]) {
-			case "request": /** Request Hierarchy */
-				$qry = "update hrforms2_requests_hierarchy 
-					set workflow_id = :workflow_id, groups = :groups
-					where hierarchy_id = :hierarchy_id";
-				$stmt = oci_parse($this->db,$qry);
-				oci_bind_by_name($stmt,":workflow_id", $this->POSTvars['workflowId']);
-				oci_bind_by_name($stmt,":groups", $this->POSTvars['groups']);
-				oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
-				$r = oci_execute($stmt);
-				if (!$r) $this->raiseError();
-				oci_commit($this->db);
-				oci_free_statement($stmt);
-				$this->done();
-				break;
-			case "form": /** Form Hierarchy */
-				$qry = "update hrforms2_forms_hierarchy 
-					set workflow_id = :workflow_id, groups = :groups
-					where hierarchy_id = :hierarchy_id";
-				$stmt = oci_parse($this->db,$qry);
-				oci_bind_by_name($stmt,":workflow_id", $this->POSTvars['workflowId']);
-				oci_bind_by_name($stmt,":groups", $this->POSTvars['groups']);
-				oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
-				$r = oci_execute($stmt);
-				if (!$r) $this->raiseError();
-				oci_commit($this->db);
-				oci_free_statement($stmt);
-				$this->done();
-				break;
-		}
+		$this->__save_history();
+		$qry = "update $this->table 
+		set workflow_id = :workflow_id, groups = :groups
+		where hierarchy_id = :hierarchy_id";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt,":workflow_id", $this->POSTvars['workflowId']);
+		oci_bind_by_name($stmt,":groups", $this->POSTvars['groups']);
+		oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		oci_commit($this->db);
+		oci_free_statement($stmt);
+		$this->done();
 	}
 	function DELETE() {
-		$table = "";
-		switch($this->req[0]) {
-			case "request": $table = "requests"; break;
-			case "form": $table = "forms"; break;
-			default: $this->raiseError(400);
-		}
-		$qry = "delete from hrforms2_{$table}_hierarchy where hierarchy_id = :hierarchy_id";
+		$this->__save_history();
+		$qry = "delete from $this->table where hierarchy_id = :hierarchy_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
 		$r = oci_execute($stmt);
