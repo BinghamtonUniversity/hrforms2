@@ -8,6 +8,7 @@ import useGroupQueries from "../../queries/groups";
 import { useAuthContext, useSettingsContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
 import { AppButton, Loading } from "../../blocks/components";
+import { t } from "../../config/text";
 
 export default function FormJournal() {
     const {id} = useParams();
@@ -51,7 +52,10 @@ export default function FormJournal() {
     return (
         <>
             <Row>
-                <Col><h2>Form Journal {showReturn && <AppButton format="previous" onClick={handleReturnToList}>Return to List</AppButton>}</h2></Col>
+                <Col>
+                    {showReturn && <AppButton size="sm" format="previous" onClick={handleReturnToList}>{t('form.journal.return')}</AppButton>}
+                    <h2>{t('form.journal.title')}</h2>
+                </Col>
             </Row>
             <Form inline onSubmit={handleSubmit}>
                 <Form.Label className="my-1 mr-2" htmlFor="journalFormIdSearch" >Form ID:</Form.Label>
