@@ -46,11 +46,11 @@ class Journal extends HRForms2 {
         switch($this->req[0]) {
             case "request":
             case "requests":
-                $this->k = array("id"=>"request_id","master"=>"hrforms2_requests","journal"=>"hrforms2_requests_journal");
+                $this->k = array("id"=>"request_id","master"=>"hrforms2_requests","journal"=>"hrforms2_requests_journal","archive"=>false);
                 break;
             case "form":
             case "forms":
-                $this->k = array("id"=>"form_id","master"=>"hrforms2_forms","journal"=>"hrforms2_forms_journal");
+                $this->k = array("id"=>"form_id","master"=>"hrforms2_forms","journal"=>"hrforms2_forms_journal","archive"=>false);
                 break;
         }
     }
@@ -74,6 +74,7 @@ class Journal extends HRForms2 {
             if (!$row) return false;
             $this->k['master'] .= "_archive";
             $this->k['journal'] .= "_archive";
+            $this->k['archive'] = true;
         }
         return true;
     }
@@ -122,6 +123,12 @@ class Journal extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
+        // if the journal is archived; get the historical group names for the request/form
+        if ($this->k['archive']) {
+            $gh = (new groupshistory($this->req,false))->returnData;
+            $group_ids = array_column($gh,'GROUP_ID');
+        }
+
         $qry = "select j.".$this->k['id'].", b.created_by_suny_id,
         to_char(journal_date,'DD-MON-YYYY HH24:MI:SS') as journal_date,
         j.suny_id, status, hierarchy_id, workflow_id, sequence, 
@@ -140,6 +147,13 @@ class Journal extends HRForms2 {
         if (!$r) $this->raiseError();
         while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
             $this->getUser($row);
+            if ($this->k['archive']) {
+                if ($row['GROUP_TO']) {
+                    $key = array_search($row['GROUP_TO'],$group_ids);
+                    $row['GROUP_TO_NAME'] = $gh[$key]['GROUP_NAME'];
+                    $row['GROUP_TO_DESCRIPTION'] = $gh[$key]['GROUP_DESCRIPTION'];
+                }
+            }
             $this->_arr[] = $row;
         }
         oci_free_statement($stmt);
