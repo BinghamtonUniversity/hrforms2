@@ -29,9 +29,29 @@ class Testing extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		$message = "An error occurred while updating the user information in <code>user.php</code> at line <strong>1234</strong>.";
+		$qry = "select * from hrforms2_payroll_codes";
+		$stmt = oci_parse($this->db,$qry);
+		//oci_bind_by_name($stmt,":id", $this->req[0]);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		$row = oci_fetch_array($stmt);
+		print_r($row);
+		echo "<hr>";
+		$row = oci_fetch_array($stmt,OCI_RETURN_LOBS);
+		print_r($row);
+		echo "<hr>";
+		$row = oci_fetch_array($stmt,OCI_RETURN_NULLS);
+		print_r($row);
+		oci_free_statement($stmt);
+
+
+		/*$settings = (new settings(array(),false))->returnData;
+		$email = array_merge(array('from'=>'no-reply'),(array)$settings['requests']['email']);
+		print_r($email);*/
+
+		/*$message = "An error occurred while updating the user information in <code>user.php</code> at line <strong>1234</strong>.";
 		$ret = $this->sendError($message,'Error Subject');
 		var_dump($ret);
-		echo "done\n";
+		echo "done\n";*/
 	}
 }
