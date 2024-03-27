@@ -200,30 +200,38 @@ function ListTable({data,list}) {
 
     const filteredRows = useMemo(()=>rows.filter(row=>Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase())),[rows,filterText]);
     
-    const columns = useMemo(() => [
-        {name:'Actions',id:'actions',cell:row=>{
-            return (
-                <div className="button-group">
-                    {(list=='drafts')&&<AppButton format="delete" size="sm" title="Delete Draft" onClick={()=>handleAction('delete',row)}></AppButton>}
-                    {(list!='drafts')&&<AppButton format="info" size="sm" title="Show Journal" onClick={()=>handleAction('journal',row)}></AppButton>}
-                    {!(['drafts','pending','rejections','archived'].includes(list))&&
-                        <>
-                            <AppButton format="approve" size="sm" title="Approve" onClick={()=>handleAction('approve',row)}></AppButton>
-                            <AppButton format="reject" size="sm" title="Reject" onClick={()=>handleAction('reject',row)}></AppButton>
-                        </>
-                    }
-                </div>
-            );
-        },ignoreRowClick:true,maxWidth:'100px'},
-        {name:'ID',selector:row=>row.REQUEST_ID,sortable:true,sortField:'REQUEST_ID'},
-        {name:'Status',selector:row=>row.STATUS,format:row=>(row.STATUS == 'draft')?"Draft":get(general.status,`${row.STATUS}.list`,row.STATUS),sortable:true,sortField:'STATUS'},
-        {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortField:'UNIX_TS'},
-        {name:'Submitted By',selector:row=>row.SUNY_ID,sortable:true,omit:(list=='drafts'||list=='pending'),format:row=>`${row.fullName} (${row.CREATED_BY_SUNY_ID})`},
-        {name:'Position Type',selector:row=>row.POSTYPE.id,format:row=>`${row.POSTYPE.id} - ${row.POSTYPE.title}`,sortable:true},
-        {name:'Request Type',selector:row=>row.REQTYPE.id,format:row=>`${row.REQTYPE.id} - ${row.REQTYPE.title}`,sortable:true},
-        {name:'Candidate Name',selector:row=>row.CANDIDATENAME,sortable:true},
-        {name:'Effective Date',selector:row=>row.EFFDATE,format:row=>format(new Date(row.EFFDATE),'P'),sortable:true}
-    ],[data,list]);
+    const columns = useMemo(() => {
+        const cols = [
+            {name:'Actions',id:'actions',cell:row=>{
+                return (
+                    <div className="button-group">
+                        {(list=='drafts')&&<AppButton format="delete" size="sm" title="Delete Draft" onClick={()=>handleAction('delete',row)}></AppButton>}
+                        {(list!='drafts')&&<AppButton format="info" size="sm" title="Show Journal" onClick={()=>handleAction('journal',row)}></AppButton>}
+                        {!(['drafts','pending','rejections','archived'].includes(list))&&
+                            <>
+                                <AppButton format="approve" size="sm" title="Approve" onClick={()=>handleAction('approve',row)}></AppButton>
+                                <AppButton format="reject" size="sm" title="Reject" onClick={()=>handleAction('reject',row)}></AppButton>
+                            </>
+                        }
+                    </div>
+                );
+            },ignoreRowClick:true,maxWidth:'100px'},
+            {name:'ID',selector:row=>row.REQUEST_ID,sortable:true},
+            {name:'Status',selector:row=>row.STATUS,format:row=>(row.STATUS == 'draft')?"Draft":get(general.status,`${row.STATUS}.list`,row.STATUS),sortable:true,sortField:'STATUS'},
+            {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortField:'UNIX_TS',grow:2},
+            {name:'Submitted By',selector:row=>row.SUNY_ID,sortable:true,omit:(list=='drafts'||list=='pending'),format:row=>`${row.fullName} (${row.CREATED_BY_SUNY_ID})`,wrap:true},
+            {name:'Position Type',selector:row=>row.POSTYPE.id,format:row=>`${row.POSTYPE.id} - ${row.POSTYPE.title}`,sortable:true},
+            {name:'Request Type',selector:row=>row.REQTYPE.id,format:row=>`${row.REQTYPE.id} - ${row.REQTYPE.title}`,sortable:true},
+            {name:'Candidate Name',selector:row=>row.CANDIDATENAME,sortable:true,wrap:true},
+            {name:'Effective Date',selector:row=>row.EFFDATE,format:row=>format(new Date(row.EFFDATE),'P'),sortable:true},
+            {name:'Line #',selector:row=>row.LINENUMBER,sortable:true},
+            {name:'Title',selector:row=>row.REQBUDGETTITLE,sortable:true,wrap:true}
+        ];
+        if (list != 'drafts') {
+            cols.push({name:(list=='archived')?'Archive Date':'Last Updated',selector:row=>row.MAX_JOURNAL_DATE,format:row=>format(new Date(row.MAX_JOURNAL_DATE),'Pp'),sortable:true,grow:2});
+        }
+        return cols;
+    },[data,list]);
     useEffect(()=>{
         setRedirect(undefined);
         setRows(data);
