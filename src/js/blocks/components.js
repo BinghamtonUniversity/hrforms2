@@ -348,6 +348,10 @@ const WorkflowExpandedComponent = ({data}) => {
                             classname += '-info';
                             variant = 'info-light';
                             break;
+                        case "Z":
+                            classname += '-dark';
+                            variant = 'accent2';
+                            break;    
                         default:
                             classname += '-success';
                             variant = 'success-light';
