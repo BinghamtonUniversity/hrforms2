@@ -73,7 +73,8 @@ class FormList extends HRForms2 {
 				f.form_data.employment.position.positionDetails.TITLE as TITLE,
 				nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
 				f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name,
-				j.status, j.sequence, f.form_data.GROUPS, js.journal_status
+				j.status, j.sequence, f.form_data.GROUPS, js.journal_status,
+				to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
 				from hrforms2_forms f,
 				(select jf2.* from (select jf1.*,
 					rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
@@ -81,8 +82,7 @@ class FormList extends HRForms2 {
 				) jf2
 				where jf2.rnk = 1 and jf2.status = 'PA' and
 				jf2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
-				left join (select * from hrforms2_forms_workflow) w on (j.workflow_id = w.workflow_id)
-				left join (select form_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal group by form_id) js on (js.form_id = j.form_id)
+				left join (select form_id, max(journal_date) as max_journal_date, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal group by form_id) js on (js.form_id = j.form_id)
 				where f.form_id = j.form_id
 				and f.created_by.SUNY_ID != :suny_id";
 				break;
@@ -107,15 +107,15 @@ class FormList extends HRForms2 {
 				f.form_data.employment.position.positionDetails.TITLE as TITLE,
 				nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
 				f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name,
-				j.status, j.sequence, f.form_data.GROUPS, js.journal_status
+				j.status, j.sequence, f.form_data.GROUPS, js.journal_status,
+				to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
                 from hrforms2_forms f,
 				(select jf2.* from (select jf1.*,
 					rank() over (partition by jf1.form_id order by jf1.sequence desc) as rnk
 					from hrforms2_forms_journal jf1
 					where jf1.form_id in (select form_id from hrforms2_forms_journal where suny_id = :suny_id and status = 'S')) jf2
 				where jf2.rnk = 1 and jf2.status in ('PA','PF')) j
-				left join (select * from hrforms2_forms_workflow) w on (j.workflow_id = w.workflow_id)
-				left join (select form_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal where sequence >= 0 group by form_id) js on (js.form_id = j.form_id)
+				left join (select form_id, max(journal_date) as max_journal_date, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal where sequence >= 0 group by form_id) js on (js.form_id = j.form_id)
 				where f.form_id = j.form_id";
 				break;
 			
@@ -139,15 +139,15 @@ class FormList extends HRForms2 {
 				f.form_data.employment.position.positionDetails.TITLE as TITLE,
 				nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
 				f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name, 
-				j.status, j.sequence, f.form_data.GROUPS, js.journal_status
+				j.status, j.sequence, f.form_data.GROUPS, js.journal_status,
+				to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
 				from hrforms2_forms f,
 				(select jf2.* from (select jf1.*,
 					rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
 					from hrforms2_forms_journal jf1
 					where jf1.form_id in (select form_id from hrforms2_forms_journal where suny_id = :suny_id and status = 'S')) jf2
 				where jf2.rnk = 1 and jf2.status = 'R') j
-				left join (select * from hrforms2_forms_workflow) w on (j.workflow_id = w.workflow_id)
-				left join (select form_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal group by form_id) js on (js.form_id = j.form_id)
+				left join (select form_id, max(journal_date) as max_journal_date, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal group by form_id) js on (js.form_id = j.form_id)
 				where f.form_id = j.form_id
 				and f.created_by.SUNY_ID = :suny_id";
 				break;
@@ -172,7 +172,8 @@ class FormList extends HRForms2 {
 				f.form_data.employment.position.positionDetails.TITLE as TITLE,
 				nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
 				f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name, 
-				j.status, j.sequence, f.form_data.GROUPS, js.journal_status
+				j.status, j.sequence, f.form_data.GROUPS, js.journal_status,
+				to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
 				from hrforms2_forms f,
 				(select jf2.* from (select jf1.*,
 					rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
@@ -180,8 +181,7 @@ class FormList extends HRForms2 {
 				) jf2
 				where jf2.rnk = 1 and jf2.status = 'PF' and
 				jf2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
-				left join (select * from hrforms2_forms_workflow) w on (j.workflow_id = w.workflow_id)
-				left join (select form_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal group by form_id) js on (js.form_id = j.form_id)
+				left join (select form_id, max(journal_date) as max_journal_date, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal group by form_id) js on (js.form_id = j.form_id)
 				where f.form_id = j.form_id
 				and f.created_by.SUNY_ID != :suny_id";
 				break;
@@ -206,15 +206,15 @@ class FormList extends HRForms2 {
 				f.form_data.employment.position.positionDetails.TITLE as TITLE,
 				nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
 				f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name, 
-				j.status, j.sequence, f.form_data.GROUPS, js.journal_status
+				j.status, j.sequence, f.form_data.GROUPS, js.journal_status,
+				to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
 				from hrforms2_forms_archive f,
 				(select jf2.* from (select jf1.*,
 					rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
 					from hrforms2_forms_journal_archive jf1
 				) jf2
 				where jf2.rnk = 1 and jf2.status = 'Z') j
-				left join (select * from hrforms2_forms_workflow) w on (j.workflow_id = w.workflow_id)
-				left join (select form_id, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal_archive group by form_id) js on (js.form_id = j.form_id)
+				left join (select form_id, max(journal_date) as max_journal_date, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal_archive group by form_id) js on (js.form_id = j.form_id)
 				where f.form_id = j.form_id
 				and f.created_by.SUNY_ID = :suny_id";
 				break;
@@ -227,7 +227,42 @@ class FormList extends HRForms2 {
 		oci_execute($stmt);
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
 			$row['STATUS_ARRAY'] = explode(",",$row['JOURNAL_STATUS']);
+			if ($this->req[0] == 'drafts') {
+				$row['MAX_JOURNAL_DATE'] = date('Y-m-d H:i:s',$row['MAX_JOURNAL_DATE']);
+			}
 			$this->_arr[] = $row;
+		}
+		if ($this->req[0] == 'archived') {
+			foreach ($this->_arr as &$line) {
+				$line['GROUPS_ARRAY'] = array();
+				$qry = "select sequence, rank, group_id, group_name, group_description
+					from hrforms2_forms_journal_archive j,
+					(
+						select dense_rank() over (partition by group_id order by history_date asc) rank, g2.*
+						from (
+							select g.*, null as method, sysdate as history_date from hrforms2_groups g
+							union 
+							select * from hrforms2_groups_history
+						) g2
+					) grp 
+					where form_id = :id
+					and grp.group_id = j.group_to
+					and grp.history_date >= j.journal_date
+					order by journal_date, sequence, rank";
+				$stmt = oci_parse($this->db,$qry);
+				oci_bind_by_name($stmt,":id",$line['FORM_ID']);
+				oci_execute($stmt);
+				$last_seq = null;
+				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+					if ($last_seq == $row['SEQUENCE']) continue;
+					array_push($line['GROUPS_ARRAY'],array(
+						"GROUP_ID"=>$row['GROUP_ID'],
+						"GROUP_NAME"=>$row['GROUP_NAME'],
+						"GROUP_DESCRIPTION"=>$row['GROUP_DESCRIPTION']
+					));
+					$last_seq = $row['SEQUENCE'];
+				}
+			}
 		}
 		oci_free_statement($stmt);
 		$this->returnData = $this->_arr;
