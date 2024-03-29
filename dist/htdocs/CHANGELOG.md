@@ -1,5 +1,23 @@
 # Changelog
 
+## Version 2.0.0(DEV-20240401)
+  * Fixed bug with conditions on hiearchies not deleting when the delete button is clicked.
+  * Fixed bug in user.php that was preventing cached user information from updating and returning empty data.
+  * Fixed bug with Line Number search on Employment->Position tab in Forms that caused form to submit when enter key presses.
+  * Changed key press handling for Line Number search on Employment->Position to clear existing search results.  Previously an error alert would show on every key press indicating the partial line number was not found.
+  * Added "Group" to Forms Hiearchy workflow selector when "Route To Group" is selected.
+  * Hide the news alert if there is no news text.
+  * Switched to using OCI_RETURN_LOBS for data fetch instead of using load function for most API calls.
+  * Added _HISTORY tables to save Groups, Hierarchies, and Workflows when changed; used for Archived Requests/Forms.
+  * Removed PATCH method from workflow.php; not in use.
+  * Updates to Workflow Expander Component.  Use full group and status array instead of dropping first record (i.e. submitter).
+  * Updates to Journal Expander Component: hide Group From/To for Submitted sequence (not relevant).
+  * Updates to Journal Expander Component: no link when Group From is the Submitter group (-99).
+  * Updates to Journal Expander Component: no link to Groups when the Request/Form is archived.
+  * New "plum" color for Archived badge box.
+  * Added Archived to menu items for Requests and Forms.
+
+
 ## Version 2.0.0(DEV-20240229)
   * Fixed error in bind variable for description for the POST and PUT operations in code.php.
   * Fixed formatting on Payroll Codes - Additional Info tab.  Long help text was causing layout issues.
