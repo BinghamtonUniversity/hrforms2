@@ -5,7 +5,7 @@ import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
 import { Loading, AppButton, DateFormat } from "../blocks/components";
-import { get, set, has, zip, cloneDeep, merge } from "lodash";
+import { get, set, has, zip, cloneDeep, merge, difference } from "lodash";
 import useFormQueries from "../queries/forms";
 import { flattenObject } from "../utility";
 import { allTabs, fetchFormData, initFormValues, HRFormContext } from "../config/form";
@@ -253,6 +253,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         console.debug(data);
         //setHasErrors(false);
         const action = data.action;
+        if (!action) return;
         setIsSaving(true);
         setIsBlocking(true); //TODO: when true should be full block with no prompt?
         setLockTabs(true);
@@ -468,6 +469,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                         return r;
                     }).then(r=>{
                         const objPath = p.tab.replace('-','.');
+                        const role_type = methods.getValues('selectedRow.EMPLOYMENT_ROLE_TYPE');
                         switch(p.tab) {
                             case "person-education":
                                 methods.setValue('person.education.institutions',r.data);
@@ -475,6 +477,26 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                             case "person-contacts":
                                 methods.setValue('person.contact.contacts',r.data);
                                 break;
+                            case "employment-position":
+                                if (role_type == 'New Role') {
+                                    // Reset all values to default
+                                    Object.keys(initFormValues.employment.position).forEach(f => methods.setValue(`employment.position.${f}`,initFormValues.employment.position[f]));
+                                }
+                                break;
+                            case "employment-appointment":
+                                if (role_type == 'New Role') {
+                                    // Reset all values to default except facultyDetails and studentDetails
+                                    difference(Object.keys(initFormValues.employment.appointment),['facultyDetails','studentDetails']).forEach(f=>{
+                                        methods.setValue(`employment.appointment.${f}`,initFormValues.employment.appointment[f]);
+                                    });
+                                }
+                                break;
+                            case "employment-salary":
+                                if (role_type == 'New Role') {
+                                    // Reset all values to default
+                                    Object.keys(initFormValues.employment.salary).forEach(f => methods.setValue(`employment.salary.${f}`,initFormValues.employment.salary[f]));
+                                }
+                                break;    
                             case "employment-pay":
                                 methods.setValue('employment.pay.existingPay',r.data);
                                 break;
