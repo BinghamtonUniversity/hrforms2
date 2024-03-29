@@ -562,11 +562,11 @@ function HierarchyFormWorkflow({payrollCode,formCode,filter}) {
                     control={control}
                     render={({field}) => (
                         <ListGroup className="border list-group-condensed list-group-scrollable-25">
-                            {filteredWorkflows.map(w =>( 
+                            {filteredWorkflows.map(w => ( 
                                 <ListGroup.Item key={w.WORKFLOW_ID} action active={field.value==w.WORKFLOW_ID} onClick={e=>listItemClick(e,field)} value={w.WORKFLOW_ID}>{w.WORKFLOW_ID}:{' '}
-                                    {truncate(w.GROUPS_ARRAY.map(g=>g.GROUP_NAME).join(' > '),{length:70,separator:' > '})}
-                                </ListGroup.Item>))
-                            }
+                                    {w.SENDTOGROUP=='Y'&&'Group > '}{truncate(w.GROUPS_ARRAY.map(g=>g.GROUP_NAME).join(' > '),{length:70,separator:' > '})}
+                                </ListGroup.Item>)
+                            )}
                         </ListGroup>
                     )}
                 />
