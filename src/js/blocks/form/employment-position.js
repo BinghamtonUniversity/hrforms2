@@ -34,7 +34,7 @@ function EmploymentPositionSearch({setShowResults}) {
     const ref = useRef();
 
     const { control, setValue } = useFormContext();
-    const handleSearch = () => {
+    const handleSearch = e => {
         setShowResults(true);
     }
     const handleClear = () => {
@@ -42,7 +42,13 @@ function EmploymentPositionSearch({setShowResults}) {
         setValue(`${name}.LINE_ITEM_NUMBER`,'');
         setValue(`${name}.positionDetails`,{});
     }
-    const handleKeyDown = e => e.key=='Enter' && handleSearch(e);
+    const handleKeyDown = e => {        
+        if (e.key=='Enter') {
+            handleSearch(e);
+        } else {
+            setShowResults(false);
+        }
+    }
 
     useEffect(() => (canEdit&&ref.current)&&ref.current.focus(),[activeNav]);
     
