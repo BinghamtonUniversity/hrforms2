@@ -99,7 +99,9 @@ const initFormValues = {
             "PROTECTED_VET_STATUS_CODE": [],
             "MILITARY_SEPARATION_DATE": "",
             "birthDate":"",
-            "militarySepDate":""
+            "militarySepDate":"",
+            "protectedVetStatus":[0,0,0,0,0,0,0,0],
+            "militaryStatus":[0,0,0,0,0]
         },
         directory: {
             address:[],
