@@ -148,6 +148,11 @@ class Journal extends HRForms2 {
         while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
             $this->getUser($row);
             if ($this->k['archive']) {
+                if ($row['GROUP_FROM']) {
+                    $key = array_search($row['GROUP_FROM'],$group_ids);
+                    $row['GROUP_FROM_NAME'] = $gh[$key]['GROUP_NAME'];
+                    $row['GROUP_FROM_DESCRIPTION'] = $gh[$key]['GROUP_DESCRIPTION'];
+                }
                 if ($row['GROUP_TO']) {
                     $key = array_search($row['GROUP_TO'],$group_ids);
                     $row['GROUP_TO_NAME'] = $gh[$key]['GROUP_NAME'];

@@ -124,13 +124,14 @@ function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
             expandableRows 
             expandOnRowClicked
             expandableRowsComponent={ExpandedComponent}
+            expandableRowsComponentProps={{lastStatus:formData.data?.lastJournal?.STATUS}}
             expandableRowExpanded={()=>expandAll}
             noDataComponent={<p className="m-3">No Form Journal Found Matching Your Criteria</p>}
         />
     );
 }
 
-function ExpandedComponent({data}) {
+function ExpandedComponent({data,lastStatus}) {
     //TODO: Consolidate with list flow?
     const {isAdmin} = useAuthContext();
     const {general} = useSettingsContext();
@@ -150,7 +151,7 @@ function ExpandedComponent({data}) {
                     <>
                         <dt>Group From:</dt>
                         <dd>
-                            {(data.GROUP_FROM == '-99')?
+                            {(data.GROUP_FROM == '-99' || lastStatus == 'Z')?
                                 <>{data.GROUP_FROM_NAME} ({data.GROUP_FROM})</>:
                                 <OverlayTrigger placement="right" delay={{show:500,hide:500}} overlay={<GroupPopover sequence={data.SEQUENCE} groupId={data.GROUP_FROM} groupName={data.GROUP_FROM_NAME}/>}>
                                     <Link onClick={clickHander} to={`/admin/groups/${data.GROUP_FROM}`}>{data.GROUP_FROM_NAME} ({data.GROUP_FROM})</Link>
@@ -163,9 +164,12 @@ function ExpandedComponent({data}) {
                     <>
                         <dt>Group To:</dt>
                         <dd>
+                            {(lastStatus == 'Z')?
+                                <>{data.GROUP_TO_NAME} ({data.GROUP_TO})</>:
                                 <OverlayTrigger placement="right" delay={{show:500,hide:500}} overlay={<GroupPopover sequence={data.SEQUENCE} groupId={data.GROUP_TO} groupName={data.GROUP_TO_NAME}/>}>
                                     <Link onClick={clickHander} to={`/admin/groups/${data.GROUP_TO}`}>{data.GROUP_TO_NAME} ({data.GROUP_TO})</Link>
                                 </OverlayTrigger>
+                            }
                         </dd>
                     </>
                 }
