@@ -69,15 +69,15 @@ export default function RequestJournal() {
 }
 
 function JournalSearchResults({reqId,expandAll,setExpandAll,setRedirect}) {
+    const [lastStatus,setLastSatutus] = useState("");
     const { general } = useSettingsContext();
-    const { getRequest, getJournal } = useRequestQueries(reqId);
-    const reqData = getRequest();
-    const journal = getJournal();
+    const { getJournal } = useRequestQueries(reqId);
+    const journal = getJournal({onSuccess:data=>setLastSatutus(data[data.length-1].STATUS)});
 
     const expandToggleComponent = useMemo(() => {
         const expandText = ((expandAll)?'Collapse':'Expand') + ' All';
         let r = '';
-        if (reqData.data?.lastJournal?.STATUS == 'Z') {
+        if (lastStatus == 'Z') {
             r = `/request/archive/${reqId}`;
         } else {
             r = `/request/${reqId}`;
@@ -94,7 +94,7 @@ function JournalSearchResults({reqId,expandAll,setExpandAll,setRedirect}) {
                 }
             </>
         );
-    },[expandAll,reqData,reqId]);
+    },[expandAll,lastStatus,reqId]);
 
     const columns = useMemo(() => [
         {name:'Sequence',selector:row=>row.SEQUENCE,sortable:true,width:'120px'},
@@ -124,7 +124,7 @@ function JournalSearchResults({reqId,expandAll,setExpandAll,setRedirect}) {
             expandableRows 
             expandOnRowClicked
             expandableRowsComponent={ExpandedComponent}
-            expandableRowsComponentProps={{lastStatus:reqData.data?.lastJournal?.STATUS}}
+            expandableRowsComponentProps={{lastStatus:lastStatus}}
             expandableRowExpanded={()=>expandAll}
             noDataComponent={<p className="m-3">No Request Journal Found Matching Your Criteria</p>}
         />

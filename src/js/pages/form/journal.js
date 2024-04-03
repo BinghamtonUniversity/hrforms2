@@ -69,15 +69,15 @@ export default function FormJournal() {
 }
 
 function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
+    const [lastStatus,setLastStatus] = useState("");
     const { general } = useSettingsContext();
-    const { getForm, getJournal } = useFormQueries(formId);
-    const journal = getJournal();
-    const formData = getForm();
+    const { getJournal } = useFormQueries(formId);
+    const journal = getJournal({onSuccess:data=>setLastStatus(data[data.length-1].STATUS)});
 
     const expandToggleComponent = useMemo(() => {
         const expandText = ((expandAll)?'Collapse':'Expand') + ' All';
         let r = '';
-        if (formData.data?.lastJournal?.STATUS == 'Z') {
+        if (lastStatus == 'Z') {
             r = `/form/archive/${formId}`;
         } else {
             r = `/form/${formId}`;
@@ -94,7 +94,7 @@ function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
                 }
             </>
         );
-    },[expandAll,formData,formId]);
+    },[expandAll,lastStatus,formId]);
 
     const columns = useMemo(() => [
         {name:'Sequence',selector:row=>row.SEQUENCE,sortable:true,width:'120px'},
@@ -124,7 +124,7 @@ function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
             expandableRows 
             expandOnRowClicked
             expandableRowsComponent={ExpandedComponent}
-            expandableRowsComponentProps={{lastStatus:formData.data?.lastJournal?.STATUS}}
+            expandableRowsComponentProps={{lastStatus:lastStatus}}
             expandableRowExpanded={()=>expandAll}
             noDataComponent={<p className="m-3">No Form Journal Found Matching Your Criteria</p>}
         />
