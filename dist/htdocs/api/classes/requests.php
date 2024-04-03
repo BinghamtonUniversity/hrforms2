@@ -71,6 +71,7 @@ class Requests extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
+        $requestData = new stdClass(); // initialize default empty object to prevent assignment errors
         if ($this->req[0] == 'draft') {
             $qry = "select DATA from HRFORMS2_REQUESTS_DRAFTS where SUNY_ID = :suny_id and UNIX_TS = :unix_ts";
             $stmt = oci_parse($this->db,$qry);
