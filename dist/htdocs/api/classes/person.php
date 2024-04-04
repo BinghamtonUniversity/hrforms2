@@ -94,6 +94,7 @@ class Person extends HRForms2 {
         // Get results
         $r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
+        $results = array();
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
             if ($row['EMPLOYMENT_ROLE_TYPE']=='VOLUN') $row['PAYROLL_AGENCY_CODE'] = "00000";
 			$results[] = $row;
