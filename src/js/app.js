@@ -12,10 +12,11 @@ import useUserQueries from "./queries/users";
 import AppNav from "./blocks/appnav";
 import Footer from "./blocks/footer";
 import AppHotKeys from "./blocks/apphotkeys";
-import { AppButton, formats } from "./blocks/components";
+import { AppButton } from "./blocks/components";
 import useSettingsQueries from "./queries/settings";
 import useSessionQueries from "./queries/session";
 import { Helmet } from "react-helmet";
+import { icons } from "../js/config/app";
 
 /* PAGES */
 const Home = lazy(()=>import("./pages/home"));
@@ -88,7 +89,7 @@ export default function StartApp() {
     const { getSession } = useSessionQueries();
     const { getSettings } = useSettingsQueries();
 
-    const queryclient = useQueryClient();
+    //const queryclient = useQueryClient();
     const session = getSession();
     const settings = getSettings({
         enabled:session.isSuccess,
@@ -98,7 +99,7 @@ export default function StartApp() {
             defaultOptions.queries.refetchOnWindowFocus = true;
             queryclient.setDefaultOptions(defaultOptions);*/
             // pre-load icons for improved performance.
-            loadAppIcons(Object.keys(formats).map(k=>formats[k]?.icon));
+            loadAppIcons(icons);
         }
     });
 
