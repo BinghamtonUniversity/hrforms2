@@ -34,20 +34,22 @@ function EmploymentPositionSearch({setShowResults}) {
     const ref = useRef();
 
     const { control, setValue } = useFormContext();
-    const handleSearch = e => {
-        setShowResults(true);
-    }
+    const handleSearch = e => setShowResults(true);
     const handleClear = () => {
         setShowResults(false);
         setValue(`${name}.LINE_ITEM_NUMBER`,'');
         setValue(`${name}.positionDetails`,{});
     }
-    const handleKeyDown = e => {        
+    const handleKeyDown = e => {
         if (e.key=='Enter') {
             handleSearch(e);
         } else {
             setShowResults(false);
         }
+    }
+    const handleChange = (field,e) => {
+        if (e.target.value=='') setShowResults(false);
+        field.onChange(e);
     }
 
     useEffect(() => (canEdit&&ref.current)&&ref.current.focus(),[activeNav]);
@@ -63,7 +65,7 @@ function EmploymentPositionSearch({setShowResults}) {
                     <Controller
                         name={`${name}.LINE_ITEM_NUMBER`}
                         control={control}
-                        render={({field})=><Form.Control {...field} ref={ref} type="search" onKeyDown={handleKeyDown} disabled={!canEdit}/>}
+                        render={({field})=><Form.Control {...field} ref={ref} type="search" onKeyDown={handleKeyDown} onChange={e=>handleChange(field,e)} disabled={!canEdit}/>}
                     />
                 </Col>
             </Form.Group>
