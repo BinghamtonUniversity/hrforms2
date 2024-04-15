@@ -20,8 +20,8 @@ export default function EmploymentAppointment() {
     const watchAmounts = useWatch({name:[
         `${name}.RATE_AMOUNT`,
         `${name}.NUMBER_OF_PAYMENTS`,
-        'employment.position.apptPercent'
-    ],control:control});
+        'employment.position.APPOINTMENT_PERCENT'
+    ],control:control,defaultValue:[0,1,100]});
     const watchPayBasis = useWatch({name:'employment.position.positionDetails.PAY_BASIS',control:control});
     const rateAmountLabel = useMemo(() => {
         switch(watchPayBasis) {
@@ -35,6 +35,7 @@ export default function EmploymentAppointment() {
         }
     },[watchPayBasis]);
     useEffect(() => {
+        console.log(watchAmounts);
         setValue(`${name}.totalSalary`,((+watchAmounts[0]*+watchAmounts[1]) * (+watchAmounts[2]/100)).toFixed(2));
     },[watchAmounts]);
 

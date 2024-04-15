@@ -756,7 +756,7 @@ export function EmploymentPositionInfoBox({as}) {
 }
 function EmploymentPositionInfoBoxList() {
     const { control, getValues } = useFormContext();
-    const watchApptPercent = useWatch({name:'employment.position.apptPercent',control:control});
+    const watchApptPercent = useWatch({name:'employment.position.APPOINTMENT_PERCENT',control:control});
     const positionDetails = getValues('employment.position.positionDetails');
     const apptPct = useMemo(() => {
         let pct = (!watchApptPercent)?getValues('employment.position.APPOINTMENT_PERCENT'):watchApptPercent;

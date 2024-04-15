@@ -126,7 +126,6 @@ const initFormValues = {
             "VOLUNTARY_REDUCTION": "",
             "PAYROLL_MAIL_DROP_ID": {"id": "","label": ""},
             "positionDetails": {},
-            "apptPercent": "",
             "apptEffDate": "",
             "apptEndDate": "",
             "justification": {"id": "","label": ""}
@@ -318,7 +317,6 @@ export function fetchFormData({watchIds,effectiveDate,payrollCode}) {
             d.apptEffDate = isValid(apptEffDate)?apptEffDate:"";
             const apptEndDate = new Date(d?.APPOINTMENT_END_DATE);
             d.apptEndDate = isValid(apptEndDate)?apptEndDate:"";
-            d.apptPercent = d.APPOINTMENT_PERCENT;
         }
     });
     const employmentsalary = getEmploymentInfo([watchIds[0],'salary'],{

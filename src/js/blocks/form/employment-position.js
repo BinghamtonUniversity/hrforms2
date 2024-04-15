@@ -89,7 +89,10 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
         effDate: effDate,
         options: {
             enabled:lineNumber!=getValues(`${name}.positionDetails.LINE_NUMBER`),
-            onSuccess:d=>setValue(`${name}.positionDetails`,d),
+            onSuccess:d=>{
+                setValue(`${name}.positionDetails`,d);
+                setValue(`${name}.APPOINTMENT_PERCENT`,d.POSITION_PERCENT);
+            },
             onError:e=>console.warn(e)
         }
     });
@@ -119,10 +122,10 @@ function EmploymentAppointmentInformation() {
     const { canEdit } = useHRFormContext();
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
     const watchEffectiveDate = useWatch({name:`${name}.apptEffDate`,control:control,defaultValue:new Date(0)});
-    const watchApptPercent = useWatch({name:`${name}.apptPercent`,control:control})||100;
+    const watchApptPercent = useWatch({name:`${name}.APPOINTMENT_PERCENT`,control:control})||100;
     const handleRangeChange = e => {
         const value = (e.target.value<=maxPercent)?e.target.value:maxPercent;
-        setValue(`${name}.apptPercent`,value);
+        setValue(`${name}.APPOINTMENT_PERCENT`,value);
     }
     const maxPercent = useMemo(()=>(!getValues(`${name}.APPOINTMENT_PERCENT`))?100:getValues(`${name}.APPOINTMENT_PERCENT`),[]);
     const getMinDate = useMemo(()=>(!watchEffectiveDate)?addDays(new Date(),-1):addDays(watchEffectiveDate,1),[watchEffectiveDate]);
@@ -138,7 +141,7 @@ function EmploymentAppointmentInformation() {
                 <Form.Label column md={2}>Apointment Percent:</Form.Label>
                 <Col xs="auto">
                     <Controller
-                        name={`${name}.apptPercent`}
+                        name={`${name}.APPOINTMENT_PERCENT`}
                         defaultValue={maxPercent}
                         control={control}
                         rules={{
