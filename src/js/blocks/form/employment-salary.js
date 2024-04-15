@@ -35,7 +35,6 @@ export default function EmploymentAppointment() {
         }
     },[watchPayBasis]);
     useEffect(() => {
-        console.log(watchAmounts);
         setValue(`${name}.totalSalary`,((+watchAmounts[0]*+watchAmounts[1]) * (+watchAmounts[2]/100)).toFixed(2));
     },[watchAmounts]);
 
