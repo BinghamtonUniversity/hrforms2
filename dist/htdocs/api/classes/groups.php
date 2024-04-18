@@ -116,8 +116,8 @@ class Groups extends HRForms2 {
 		if (!$r) $this->raiseError();
 		oci_commit($this->db);
 		oci_free_statement($stmt);
-		new groupusers($this->req);
-		new groupdepts($this->req);
+		new groupusers($this->req,false);
+		new groupdepts($this->req,false);
 		$this->done();
 	}
 	function PATCH() {
