@@ -218,7 +218,7 @@ function PersonDirectoryAddresses() {
                     }
                     {testField(index,'building') &&
                         <Form.Group as={Row} className="mb-1">
-                            <Form.Label column md={2}>Buidling*:</Form.Label>
+                            <Form.Label column md={2}>Building*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_2`}
