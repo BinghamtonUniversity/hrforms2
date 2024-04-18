@@ -419,15 +419,16 @@ function AddEditUserForm(props) {
     
     const handleSave = data => {
         console.debug(data);
-        if (!Object.keys(methods.formState.dirtyFields).length &&!props.newUser) {
-            toast.info('No changes to user data');
-            closeModal();
-            return true;
-        }
+        //check for group changes
         const origIds = (usergroups.data)?usergroups.data.map(g=>g.GROUP_ID):[];
         const newIds = data.assignedGroups.map(g=>g.GROUP_ID);
         const addGroups = difference(newIds,origIds);
         const delGroups = difference(origIds,newIds);
+        if (!Object.keys(methods.formState.dirtyFields).length && !props.newUser && !addGroups && !delGroups) {
+            toast.info('No changes to user data');
+            closeModal();
+            return true;
+        }
         const reqData = {
             SUNY_ID:data.SUNYID,
             START_DATE:format(data.startDate,'dd-MMM-yyyy'),
