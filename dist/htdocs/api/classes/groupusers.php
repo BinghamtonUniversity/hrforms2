@@ -20,6 +20,19 @@ class GroupUsers extends HRForms2 {
 		$this->init();
 	}
 
+	/** Helper Functions */
+	private function updateUser($suny_id) {
+		$_SERVER["REQUEST_METHOD"] = 'GET';
+		// clear user refresh date and then call GET
+		$qry = "update hrforms2_users set refresh_date = NULL where suny_id = :suny_id";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt,":suny_id", $suny_id);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		oci_free_statement($stmt);
+		$user = new user(array($suny_id),false);
+	}
+
 	/**
 	 * validate called from init()
 	 */
@@ -62,26 +75,29 @@ class GroupUsers extends HRForms2 {
 	}
 
 	function PUT() {
-		foreach ($this->POSTvars['DEL_USERS'] as $user) {
+		foreach ($this->POSTvars['DEL_USERS'] as $suny_id) {
 			$qry = "delete from hrforms2_user_groups where suny_id = :suny_id and group_id = :group_id";
 			$stmt = oci_parse($this->db,$qry);
-			oci_bind_by_name($stmt,":suny_id", $user);
+			oci_bind_by_name($stmt,":suny_id", $suny_id);
 			oci_bind_by_name($stmt,":group_id", $this->req[0]);
 			$r = oci_execute($stmt);
-            if (!$r) $this->raiseError();
+			if (!$r) $this->raiseError();
 			oci_free_statement($stmt);
+			$this->updateUser($suny_id);
 		}
-		foreach ($this->POSTvars['ADD_USERS'] as $user) {
+		foreach ($this->POSTvars['ADD_USERS'] as $suny_id) {
 			$qry = "insert into hrforms2_user_groups values(:suny_id,:group_id)";
 			$stmt = oci_parse($this->db,$qry);
-			oci_bind_by_name($stmt,":suny_id", $user);
+			oci_bind_by_name($stmt,":suny_id", $suny_id);
 			oci_bind_by_name($stmt,":group_id", $this->req[0]);
 			$r = oci_execute($stmt);
             if (!$r) $this->raiseError();
 			oci_free_statement($stmt);
+			$this->updateUser($suny_id);
 		}
 		oci_commit($this->db);
 	}
+	
 	function POST() {
 		$this->PUT();
 	}
