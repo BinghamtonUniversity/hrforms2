@@ -43,7 +43,7 @@ export default function PersonDemographics() {
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
                                         name={field.name}
-                                        selected={field.value||getValues('selectedRow.birthDate')}
+                                        selected={field.value||getValues('lookup.values.dob')}
                                         closeOnScroll={true}
                                         onChange={field.onChange}
                                         autoComplete="off"
