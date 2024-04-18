@@ -222,6 +222,7 @@ class User extends HRForms2 {
 		$qry = "update hrforms2_users 
 			set start_date = :start_date, 
 			end_date = :end_date,
+			refresh_date = NULL,
 			user_options = EMPTY_CLOB()
 			where suny_id = :suny_id
 			returning user_options into :user_options";
@@ -237,7 +238,8 @@ class User extends HRForms2 {
 		oci_commit($this->db);
 		oci_free_statement($stmt);
 		new usergroups(array($this->POSTvars['SUNY_ID']));
-		$this->done();
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+		$this->GET();
 	}
 
 	function POST() {
