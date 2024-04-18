@@ -201,7 +201,7 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
                     <Icon className="iconify-inline" icon="mdi:information-variant-box" width={24} height={24}/>
                 </DescriptionPopover>{name}</div>
             );
-        },sortable:true,sortField:'GROUP_NAME'},
+        },sortable:true,sortField:'GROUP_NAME',grow:3},
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
         {name:'End Date',selector:row=>row.endDateUnix,format:row=>row.endDateFmt,sortable:true,sortField:'endDateUnix'}
     ],[groups]);
