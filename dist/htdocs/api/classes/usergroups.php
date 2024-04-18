@@ -67,6 +67,7 @@ class UserGroups extends HRForms2 {
 		}
 		oci_commit($this->db);
 	}
+
 	function POST() {
 		$this->PUT();
 	}
