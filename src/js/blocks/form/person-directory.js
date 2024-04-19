@@ -73,9 +73,10 @@ function PersonDirectoryAddresses() {
     const handleSelectChange = (e,field) => {
         field.onChange(e);
         const fieldName = field.name.split('.').slice(0,-1).join('.');
+        const baseName = field.name.split('.').slice(0,-2).join('.');
         setValue(`${fieldName}.label`,e.target.selectedOptions[0].label);
-        if (endsWith(fieldName,'.department')) setValue('ADDRESS_1',e.target.selectedOptions[0].label);
-        if (endsWith(fieldName,'.building')) setValue('ADDRESS_2',e.target.selectedOptions[0].label);
+        if (endsWith(fieldName,'.department')) setValue(`${baseName}.ADDRESS_1`,e.target.selectedOptions[0].label);
+        if (endsWith(fieldName,'.building')) setValue(`${baseName}.ADDRESS_2`,e.target.selectedOptions[0].label);
     }
     const handleNew = () => {
         if (fields.length > 2) return;
