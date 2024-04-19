@@ -41,7 +41,8 @@ function ReviewPersonDirectoryAddress({data}) {
                                     {includes(addrType?.fields,'line1')&&<p className="mb-0">{a.ADDRESS_1}</p>}
                                     {includes(addrType?.fields,'line2')&&<p className="mb-0">{a.ADDRESS_2}</p>}
                                     {includes(addrType?.fields,'department')&&<p className="mb-0">{a.department.label}</p>}
-                                    {includes(addrType?.fields,'building')&&<p className="mb-0">{Object.values(a.building).join(' - ')}</p>}
+                                    {includes(addrType?.fields,'building')&&<p className="mb-0">{a.building.label}</p>}
+                                    {includes(addrType?.fields,'room')&&<p className="mb-0">{a.ADDRESS_3}</p>}
                                     {includes(addrType?.fields,'line3')&&<p className="mb-0">{a.ADDRESS_3}</p>}
                                     {includes(addrType?.fields,'city')&&<p className="mb-0">{a.ADDRESS_CITY}, {a.STATE_CODE} {a.ADDRESS_POSTAL_CODE}</p>}
                                 </address>
