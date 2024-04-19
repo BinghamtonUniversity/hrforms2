@@ -65,11 +65,11 @@ function PersonDirectoryAddresses() {
         return addressCodes.data.find(c=>c.id==watchAddress?.[index]?.ADDRESS_CODE)?.edit;
     },[addressCodes.data,watchAddress]);
     
-
-    const disableText = useCallback(field => {
-        const fieldName = field.name.split('.').slice(-3,-1).join('.');
-        return !!get(watchAddress,`${fieldName}.id`);
+    const disableText = useCallback((idx,name) => {
+        const fieldName = `${idx}.${name}.id`;
+        return !!get(watchAddress,fieldName);
     },[watchAddress]);
+
     const handleSelectChange = (e,field) => {
         field.onChange(e);
         const fieldName = field.name.split('.').slice(0,-1).join('.');
@@ -138,7 +138,8 @@ function PersonDirectoryAddresses() {
     }
 
     useEffect(()=>{
-        (isNew||editIndex!=undefined) && document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true});
+        const field = document.querySelector(`#${activeNav} input:not([disabled])`);
+        ((isNew||editIndex!=undefined)&&field) && field.focus({focusVisible:true});
     },[editIndex,isNew,activeNav]);
 
     return (
@@ -198,7 +199,7 @@ function PersonDirectoryAddresses() {
                                     name={`${name}.${index}.ADDRESS_1`}
                                     control={control}
                                     rules={{required:{value:true,message:'Department is Required'}}}
-                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(field)} isInvalid={get(errors,field.name,false)}/>}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'department')} isInvalid={get(errors,field.name,false)}/>}
                                 />
                             </Col>
                             <Col xs="auto">
@@ -224,7 +225,7 @@ function PersonDirectoryAddresses() {
                                     name={`${name}.${index}.ADDRESS_2`}
                                     control={control}
                                     rules={{required:{value:true,message:'Building is Required'}}}
-                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(field)} isInvalid={get(errors,field.name,false)}/>}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'building')} isInvalid={get(errors,field.name,false)}/>}
                                 />
                             </Col>
                             <Col xs="auto">
@@ -338,8 +339,9 @@ function PersonDirectoryPhone() {
         return phoneTypes.data.find(c=>c.id==watchPhone?.[index]?.PHONE_TYPE)?.edit;
     },[phoneTypes.data,watchPhone]);
 
-    const handlePhoneChange = (args,index) => {
+    const handlePhoneChange = (args,index,field) => {
         const [value,country,e,formattedValue] = args;
+        field.onChange(e);
         setValue(`${name}.${index}.number`,value);
         setValue(`${name}.${index}.formattedValue`,formattedValue);
         setValue(`${name}.${index}.country`,country);
@@ -398,7 +400,8 @@ function PersonDirectoryPhone() {
     }
 
     useEffect(()=>{
-        (isNew||editIndex!=undefined) && document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true});
+        const field = document.querySelector(`#${activeNav} input:not([disabled])`);
+        ((isNew||editIndex!=undefined)&&field) && field.focus({focusVisible:true});
     },[editIndex,isNew,activeNav]);
 
     return (
@@ -440,12 +443,12 @@ function PersonDirectoryPhone() {
                                         preferredCountries={['us']} 
                                         enableLongNumbers={true}
                                         inputClass="form-control" 
-                                        onChange={(...args)=>handlePhoneChange(args,index)} 
+                                        onChange={(...args)=>handlePhoneChange(args,index,field)} 
                                         disabled={editIndex!=index||!editableType(index)}
                                         isInvalid={get(errors,field.name,false)}
                                     />}
                                 />
-                                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].number`,false)?'block':'none'}}>{get(errors,`${name}[${index}].number.message`,'')}</Form.Control.Feedback>
+                                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].PHONE_NUMBER`,false)?'block':'none'}}>{get(errors,`${name}[${index}].PHONE_NUMBER.message`,'')}</Form.Control.Feedback>
                             </Col>
                             <Form.Label column md={2}>Effective Date*:</Form.Label>
                             <Col xs="auto">
@@ -576,7 +579,8 @@ function PersonDirectoryEmail() {
     }
 
     useEffect(()=>{
-        (isNew||editIndex!=undefined) && document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true});
+        const field = document.querySelector(`#${activeNav} input:not([disabled])`);
+        ((isNew||editIndex!=undefined)&&field) && field.focus({focusVisible:true});
     },[editIndex,isNew,activeNav]);
 
     return (
@@ -619,7 +623,7 @@ function PersonDirectoryEmail() {
                                         isInvalid={get(errors,field.name,false)}
                                     />}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].email.message`,'')}</Form.Control.Feedback>
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].EMAIL_ADDRESS.message`,'')}</Form.Control.Feedback>
                             </Col>
                             <Form.Label column md={2}>Effective Date*:</Form.Label>
                             <Col xs="auto">
