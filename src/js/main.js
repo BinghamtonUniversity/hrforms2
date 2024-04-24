@@ -21,7 +21,7 @@ const queryClient = new QueryClient({
             notifyOnChangeProps:['data','error'],
             retry:(count,error)=>{
                 // don't retry unless the error code/name less than 200 or 408 (timeout).
-                if (error?.name < 300 || error?.name == '408') return 2 - count;
+                if (error?.name < 200 || error?.name == '408') return 2 - count;
                 return 0;
             },
             retryDelay:attempt=>Math.min(attempt > 0 ? 2 ** attempt * 2000 : 1000, 30 * 1000),
