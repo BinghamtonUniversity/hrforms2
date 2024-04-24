@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, useReducer } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, useReducer, lazy } from "react";
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/form";
 import { useHierarchyQueries } from "../../../../queries/hierarchy";
 import useCodesQueries from "../../../../queries/codes";
@@ -27,14 +27,13 @@ export default function HierarchyTab() {
     const payrolls = getPayrollCodes();
     const {getHierarchy} = useHierarchyQueries('form');
     const {groups} = useContext(WorkflowContext);
-    const hierarchy = getHierarchy({select:d=>{
+    const hierarchy = getHierarchy({retry:false,select:d=>{
         return d.map(w => {
             const hryGroups = (w.HIERARCHY_GROUPS)?w.HIERARCHY_GROUPS.split(','):[];
             w.HIERARCHY_GROUPS_ARRAY = hryGroups.map(g => {
                 const grp = find(groups,{GROUP_ID:g})
                 return {GROUP_ID:g,GROUP_NAME:grp?.GROUP_NAME,GROUP_DESCRIPTION:grp?.GROUP_DESCRIPTION}
             });
-           //w.AVAILABLE_HIERARCHY_GROUPS = groups.filter(g=>!hryGroups.includes(g.GROUP_ID));
             const wfGroups = (w.WORKFLOW_GROUPS)?w.WORKFLOW_GROUPS.split(','):[];
             w.WORKFLOW_GROUPS_ARRAY = wfGroups.map(g => {
                 const grp = find(groups,{GROUP_ID:g})
@@ -44,7 +43,21 @@ export default function HierarchyTab() {
         });
     }});
 
-    if (hierarchy.isError||payrolls.isError) return <Loading isError>Error Loading Data</Loading>;
+    if (hierarchy.isError) {
+        if (hierarchy.error.status == 408) {
+            return (
+                <>
+                    <Alert variant="warning">
+                        <p className="m-0"><Icon icon="mdi:alert" className="iconify-inline" width={24} height={24}/> Loading the full hiearchy took too long.  Displaying a limited number of records.  Additional records loaded on page change.  Search restricted to current page.</p>
+                    </Alert>
+                    <PagedHierarchyTab payrolls={payrolls.data} />
+                </>
+            );
+        } else {
+            return <Loading isError error={hierarchy.error}>Error Loading Hierarchies</Loading>;
+        }
+    }
+    if (payrolls.isError) return <Loading isError error={payrolls.error}>Error Loading Payrolls</Loading>;
     if (hierarchy.isLoading||payrolls.isLoading) return <Loading type="alert">Loading Data</Loading>;
     return (
         <HierarchyContext.Provider value={{hierarchy:hierarchy.data,payrolls:payrolls.data}}>
@@ -53,7 +66,52 @@ export default function HierarchyTab() {
     );
 }
 
-function HierarchyTable() {
+function PagedHierarchyTab(payrolls) {
+    const [page,setPage] = useState(1);
+    const [perPage,setPerPage] = useState(10);
+    const [totalRows,setTotalRows] = useState(0);
+    const [isLoading,setIsLoading] = useState(true);
+
+    const {getHierarchyPaged} = useHierarchyQueries('form');
+    const {groups} = useContext(WorkflowContext);
+    const hierarchy = getHierarchyPaged({page:page,results:perPage},{select:d=>{
+        d.results.map(w => {
+            const hryGroups = (w.HIERARCHY_GROUPS)?w.HIERARCHY_GROUPS.split(','):[];
+            w.HIERARCHY_GROUPS_ARRAY = hryGroups.map(g => {
+                const grp = find(groups,{GROUP_ID:g})
+                return {GROUP_ID:g,GROUP_NAME:grp?.GROUP_NAME,GROUP_DESCRIPTION:grp?.GROUP_DESCRIPTION}
+            });
+            const wfGroups = (w.WORKFLOW_GROUPS)?w.WORKFLOW_GROUPS.split(','):[];
+            w.WORKFLOW_GROUPS_ARRAY = wfGroups.map(g => {
+                const grp = find(groups,{GROUP_ID:g})
+                return {GROUP_ID:g,GROUP_NAME:grp?.GROUP_NAME,GROUP_DESCRIPTION:grp?.GROUP_DESCRIPTION}
+            });
+            return w;
+        });
+        return d;
+    },onSuccess:d=>{
+        setTotalRows(d.info?.total_rows);
+        setIsLoading(false);
+    },keepPreviousData:true});
+
+    if (hierarchy.isError) return <Loading isError error={hierarchy.error}>Error Loading Hierarchies</Loading>;
+    if (hierarchy.isLoading) return <Loading type="alert">Loading Data</Loading>;
+    return (
+        <HierarchyContext.Provider value={{
+            hierarchy:hierarchy.data.results,
+            payrolls:payrolls,
+            isLoading:isLoading,
+            setIsLoading:setIsLoading,
+            totalRows:totalRows,
+            setPage:setPage,
+            setPerPage:setPerPage
+        }}>
+            <HierarchyTable isPaged={true}/>
+        </HierarchyContext.Provider>
+    );
+}
+
+function HierarchyTable(isPaged) {
     const [filterText,setFilterText] = useState('');
     const [rows,setRows] = useState([]);
     const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
@@ -61,7 +119,8 @@ function HierarchyTable() {
     const [deleteHierarchy,setDeleteHierarchy] = useState({});
 
     const {isNew,activeTab} = useContext(WorkflowContext);
-    const {hierarchy} = useContext(HierarchyContext);
+    //const {hierarchy} = useContext(HierarchyContext);
+    const {hierarchy,isLoading,setIsLoading,totalRows,setPage,setPerPage} = useContext(HierarchyContext);
     const searchRef = useRef();
 
     useHotkeys('ctrl+f,ctrl+alt+f',e=>{
@@ -83,6 +142,17 @@ function HierarchyTable() {
             setRows(orderBy(hierarchy,[args[0].sortField],[args[1]]));
         }
     },[]);
+
+    const handleChangePage = page => {
+        setIsLoading(true);
+        setPage(page);
+    }
+
+    const handleChangeRowsPerPage = (newPerPage,page) => {
+        setIsLoading(true);
+        setPerPage(newPerPage);
+        setPage(page);
+    }
 
     const filterComponent = useMemo(() => {
         const handleKeyDown = e => {
@@ -168,10 +238,24 @@ function HierarchyTable() {
         searchRef.current.focus();
     },[hierarchy,activeTab]);
 
+    let tableParams = {};
+    if (isPaged) {
+        tableParams = {
+            progressPending:isLoading,
+            paginationServer:true,
+            paginationRowsPerPageOptions:[10,15,20,25,30],
+            paginationResetDefaultPage:resetPaginationToggle,
+            onChangeRowsPerPage:handleChangeRowsPerPage,
+            onChangePage:handleChangePage,
+            paginationTotalRows:totalRows
+        };
+    } else {
+        tableParams = {...datatablesConfig};
+    }
     return (
         <>
             <DataTable 
-                {...datatablesConfig}
+                {...tableParams}
                 keyField="HIERARCHY_ID"
                 columns={columns}
                 data={filteredRows}
