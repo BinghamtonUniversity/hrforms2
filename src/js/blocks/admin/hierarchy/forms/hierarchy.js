@@ -61,7 +61,7 @@ export default function HierarchyTab() {
     if (hierarchy.isLoading||payrolls.isLoading) return <Loading type="alert">Loading Data</Loading>;
     return (
         <HierarchyContext.Provider value={{hierarchy:hierarchy.data,payrolls:payrolls.data}}>
-            <HierarchyTable/>
+            <HierarchyTable isPaged={false}/>
         </HierarchyContext.Provider>
     );
 }
@@ -238,20 +238,24 @@ function HierarchyTable(isPaged) {
         searchRef.current.focus();
     },[hierarchy,activeTab]);
 
-    let tableParams = {};
-    if (isPaged) {
-        tableParams = {
-            progressPending:isLoading,
-            paginationServer:true,
-            paginationRowsPerPageOptions:[10,15,20,25,30],
-            paginationResetDefaultPage:resetPaginationToggle,
-            onChangeRowsPerPage:handleChangeRowsPerPage,
-            onChangePage:handleChangePage,
-            paginationTotalRows:totalRows
-        };
-    } else {
-        tableParams = {...datatablesConfig};
-    }
+    const tableParams = useCallback(() => {
+        if (isPaged) {
+            return {
+                progressPending:isLoading,
+                paginationServer:true,
+                paginationRowsPerPageOptions:[10,15,20,25,30],
+                onChangeRowsPerPage:handleChangeRowsPerPage,
+                onChangePage:handleChangePage,
+                paginationTotalRows:totalRows
+            };
+        } else {
+            return {
+                ...datatablesConfig,
+                paginationServer:false
+            };
+        }
+    },[isPaged]);
+
     return (
         <>
             <DataTable 
