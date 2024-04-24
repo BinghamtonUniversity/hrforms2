@@ -1,5 +1,22 @@
 # Changelog
 
+## Version 2.0.0(DEV-20240424)
+  * Removed Form/Request query from Journal.  The only data used was the lastJournal data which can be derived from the journal query already used.
+  * Initialize person lookup results as empty array to fix error when searching for new employee.
+  * Set userGroups to empty array when USER_GROUPS is null in form.js; fix split error.
+  * Moved preload icons to app configuration.
+  * Fixed "no changes" error when only modifying a user's groups; changes to groups should update records.
+  * Update cached user information when user's groups are changed.
+  * Fixed No Data Found error when clearing Line Number Search on Position tab in forms.
+  * Fixed Appointment percentage not carrying over to Salary tab.
+  * Fixed Appointment percentage on Position tab not being limited when less than 100%.
+  * Fixed spelling error in Person Directory tab.
+  * Carry Birthdate from lookup into Demographics tab.
+  * Make Group Name column in Groups table wider - added grow option.
+  * Multiple fixes to the Directory tab in Forms.
+  * Added "paged" query support for Forms Hiearchy table in Admin.
+
+
 ## Version 2.0.0(DEV-20240401)
   * Fixed bug with conditions on hiearchies not deleting when the delete button is clicked.
   * Fixed bug in user.php that was preventing cached user information from updating and returning empty data.
