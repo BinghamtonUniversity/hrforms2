@@ -1,6 +1,6 @@
 import { useQuery } from "react-query";
 
-const requestTimeout = 20000; //in milliseconds
+const requestTimeout = 10000; //in milliseconds
 
 /* ERROR QUERY: Return a Promise Rejection with the message passed.  Option set to not retry. */
 export function qErr(key,options={},message='Bad Data') {
