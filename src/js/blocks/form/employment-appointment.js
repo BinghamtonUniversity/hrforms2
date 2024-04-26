@@ -25,7 +25,15 @@ export default function EmploymentAppointment() {
         `${baseName}.TENURE_STATUS.id`,
     ],contorl:control});
 
-    const handleRangeChange = e => setValue(`${baseName}.TERM_DURATION`,e.target.value);
+    const handleRangeChange = e => {
+        const value = (parseInt(e.target.value,10)<=5)?parseInt(e.target.value,10):5;
+        setValue(`${baseName}.TERM_DURATION`,value);
+    }
+
+    const handleTermDurationChange = (e,field) => {
+        if (!e.target.value || parseInt(e.target.value,10)>5) return false;
+        field.onChange(e);
+    }
 
     const { getListData } = useListsQueries();
     const tenure = getListData('tenureStatus');
@@ -105,11 +113,18 @@ export default function EmploymentAppointment() {
                                     defaultValue=""
                                     control={control}
                                     rules={{min:{value:1,message:'Term Duration cannot be less than 0'},max:{value:5,message:'Term Duration cannot be greater than 5'}}}
-                                    render={({field}) => <Form.Control {...field} type="number" min={1} max={5} disabled={!canEdit}/>}
+                                    render={({field}) => <Form.Control {...field} type="number" min={1} max={5} disabled={!canEdit} onChange={e=>handleTermDurationChange(e,field)}/>}
                                 />
                             </Col>
                             <Col sm={8} md={6} className="pt-2">
-                                <Form.Control type="range" name="termDurationRange" id="termDurationRange" min={1} max={5} value={watchTermDuration} onChange={handleRangeChange} disabled={!canEdit}/>
+                                <Form.Control type="range" name="termDurationRange" id="termDurationRange" min={1} max={5} value={watchTermDuration} onChange={handleRangeChange} disabled={!canEdit} list="markers"/>
+                                <datalist id="markers" className="marker" style={{padding:"0 0.2rem"}}>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </datalist>
                             </Col>
                         </Form.Group>
                     }
