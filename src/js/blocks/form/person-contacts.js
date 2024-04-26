@@ -121,7 +121,8 @@ export default function PersonContacts() {
     }
 
     useEffect(()=>{
-        (isNew||editIndex!=undefined) && document.querySelector(`#${activeNav} input:not([disabled]):not([readonly])`).focus({focusVisible:true});
+        const field = document.querySelector(`#${activeNav} input:not([disabled]):not([readonly])`);
+        ((isNew||editIndex!=undefined)&&field) && field.focus({focusVisible:true});
     },[editIndex,isNew,activeNav]);
 
     return (

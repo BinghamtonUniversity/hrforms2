@@ -38,7 +38,10 @@ export default function EmploymentAppointment() {
         setValue(`${name}.totalSalary`,((+watchAmounts[0]*+watchAmounts[1]) * (+watchAmounts[2]/100)).toFixed(2));
     },[watchAmounts]);
 
-    useEffect(() => canEdit&&document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true}),[activeNav]);
+    useEffect(() => {
+        const field = document.querySelector(`#${activeNav} input:not([disabled])`);
+        (canEdit&&field)&&field.focus({focusVisible:true});
+    },[activeNav]);
 
     return (
         <article>

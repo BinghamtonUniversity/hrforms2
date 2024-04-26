@@ -44,7 +44,8 @@ export default function EmploymentAppointment() {
     },[watchFields]);
 
     useEffect(() => {
-        canEdit&&document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true});
+        const field = document.querySelector(`#${activeNav} input:not([disabled])`);
+        (canEdit&&field)&&field.focus({focusVisible:true});
     },[activeNav]);
     
     return (
