@@ -349,3 +349,10 @@ div.form-check-input-lg input[type="checkbox"].form-check-input {
 .list-group-scrollable-30 { overflow: scroll; height: 30vh; }
 .list-group-scrollable-40 { overflow: scroll; height: 40vh; }
 .list-group-scrollable-50 { overflow: scroll; height: 50vh; }
+
+/* Markers For Ranges */
+datalist.marker {
+  display:flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+}
