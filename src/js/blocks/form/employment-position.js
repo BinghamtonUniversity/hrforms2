@@ -124,13 +124,22 @@ function EmploymentAppointmentInformation() {
     const { canEdit } = useHRFormContext();
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
     const watchEffectiveDate = useWatch({name:`${name}.apptEffDate`,control:control,defaultValue:new Date(0)});
-    const watchApptPercent = useWatch({name:`${name}.APPOINTMENT_PERCENT`,control:control})||100;
-    const handleRangeChange = e => {
-        const value = (e.target.value<=maxPercent)?e.target.value:maxPercent;
-        setValue(`${name}.APPOINTMENT_PERCENT`,value);
-    }
+    const watchApptPercent = useWatch({name:`${name}.APPOINTMENT_PERCENT`,control:control});
+
     const maxPercent = useMemo(()=>(!getValues(`${name}.APPOINTMENT_PERCENT`))?100:getValues(`${name}.APPOINTMENT_PERCENT`),[]);
     const getMinDate = useMemo(()=>(!watchEffectiveDate)?addDays(new Date(),-1):addDays(watchEffectiveDate,1),[watchEffectiveDate]);
+
+    const handleRangeChange = e => {
+        const value = (parseInt(e.target.value,10)<=maxPercent)?parseInt(e.target.value,10):maxPercent;
+        setValue(`${name}.APPOINTMENT_PERCENT`,value);
+    }
+
+    const handlePctChange = (e,field) => {
+        const max = maxPercent || 100;
+        if (!e.target.value || parseInt(e.target.value,10)>max) return false;
+        field.onChange(e);
+    }
+
     return (
         <section className="mt-3">
             <Row as="header">
@@ -150,11 +159,18 @@ function EmploymentAppointmentInformation() {
                             min:{value:1,message:'Appointment Percent cannot be less than 1%'},
                             max:{value:maxPercent,message:`Appointment Percent cannot be greater than ${maxPercent}%`}
                         }}
-                        render={({field}) => <Form.Control {...field} type="number" min={1} max={maxPercent} disabled={!canEdit} value={field.value||maxPercent}/>}
+                        render={({field}) => <Form.Control {...field} type="number" min={1} max={maxPercent} disabled={!canEdit} value={field.value||maxPercent} onChange={e=>handlePctChange(e,field)}/>}
                     />
                 </Col>
                 <Col sm={8} md={6} className="pt-2">
-                    <Form.Control type="range" name="apptPercentRange" id="apptPercentRange" min={1} max={100} value={watchApptPercent} onChange={handleRangeChange} disabled={!canEdit}/>
+                    <Form.Control type="range" name="apptPercentRange" id="apptPercentRange" min={1} max={100} value={watchApptPercent} onChange={handleRangeChange} disabled={!canEdit} list="markers"/>
+                    <datalist id="markers" className="marker">
+                        <option value="0">0%</option>
+                        <option value="25">25%</option>
+                        <option value="50">50%</option>
+                        <option value="75">75%</option>
+                        <option value="100">100%</option>
+                    </datalist>
                 </Col>
             </Form.Group>
 
