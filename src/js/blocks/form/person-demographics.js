@@ -25,7 +25,10 @@ export default function PersonDemographics() {
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
     }
-    useEffect(()=>canEdit&&document.querySelector(`#${activeNav} input:not([disabled])`).focus({focusVisible:true}),[activeNav]);
+    useEffect(()=>{
+        const field = document.querySelector(`#${activeNav} input:not([disabled])`);
+        (canEdit&&field)&&field.focus({focusVisible:true});
+    },[activeNav]);
     return (
         <HRFormContext.Consumer>
             {({showInTest,canEdit}) => (
