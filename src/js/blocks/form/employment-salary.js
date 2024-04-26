@@ -23,6 +23,7 @@ export default function EmploymentAppointment() {
         'employment.position.APPOINTMENT_PERCENT'
     ],control:control,defaultValue:[0,1,100]});
     const watchPayBasis = useWatch({name:'employment.position.positionDetails.PAY_BASIS',control:control});
+    const watchEffectiveDate = useWatch({name:'employment.position.apptEffDate',control:control,defaultValue:new Date(0)});
     const rateAmountLabel = useMemo(() => {
         switch(watchPayBasis) {
             case "BIW":
@@ -59,7 +60,7 @@ export default function EmploymentAppointment() {
                                 render={({field}) => <Form.Control
                                     as={DatePicker}
                                     name={field.name}
-                                    selected={field.value}
+                                    selected={field.value||watchEffectiveDate}
                                     closeOnScroll={true}
                                     onChange={field.onChange}
                                     autoComplete="off"
