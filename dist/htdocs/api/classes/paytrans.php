@@ -37,7 +37,7 @@ class PayTrans extends HRForms2 {
 			pt.form_code, f.form_title, f.form_description,
 			pt.action_code, a.action_title, a.action_description,
 			pt.transaction_code, t.transaction_title, t.transaction_description,
-			pt.active,pt.route_by,pt.available_for,pt.tabs
+			pt.active,pt.route_by, pt.pr_required, pt.available_for, pt.tabs
 			FROM HRFORMS2_PAYROLL_TRANSACTIONS pt
 			join (select PAYROLL_CODE, PAYROLL_TITLE, PAYROLL_DESCRIPTION from HRFORMS2_PAYROLL_CODES) p on (pt.PAYROLL_CODE = p.PAYROLL_CODE)
 			join (select FORM_CODE, FORM_TITLE, FORM_DESCRIPTION from HRFORMS2_FORM_CODES) f on (pt.FORM_CODE = f.FORM_CODE)
@@ -62,7 +62,7 @@ class PayTrans extends HRForms2 {
 
     function POST() {
         $qry = "INSERT INTO HRFORMS2_PAYROLL_TRANSACTIONS 
-            values(HRFORMS2_PAYTRANS_ID_SEQ.nextval,:payroll_code,:form_code,:action_code,:transaction_code,:active,:available_for,EMPTY_CLOB(),:route_by)
+            values(HRFORMS2_PAYTRANS_ID_SEQ.nextval,:payroll_code,:form_code,:action_code,:transaction_code,:active,:available_for,EMPTY_CLOB(),:route_by,:pr_required)
             RETURNING PAYTRANS_ID,TABS into :paytrans_id,:tabs";
 		$stmt = oci_parse($this->db,$qry);
 		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
@@ -72,6 +72,7 @@ class PayTrans extends HRForms2 {
 		oci_bind_by_name($stmt,":transaction_code", $this->POSTvars['TRANSACTION_CODE']);
 		oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
 		oci_bind_by_name($stmt,":route_by", $this->POSTvars['ROUTE_BY']);
+		oci_bind_by_name($stmt,":pr_required", $this->POSTvars['PR_REQUIRED']);
 		oci_bind_by_name($stmt,":available_for", $this->POSTvars['AVAILABLE_FOR']);
         oci_bind_by_name($stmt,":paytrans_id", $PAYTRANS_ID,-1,SQLT_INT);
 		oci_bind_by_name($stmt,":tabs", $clob, -1, OCI_B_CLOB);
@@ -86,6 +87,7 @@ class PayTrans extends HRForms2 {
 		/* cannot update codes, only active and tabs [TBD] */
 		$qry = "UPDATE HRFORMS2_PAYROLL_TRANSACTIONS
 			SET active = :active,
+			pr_required = :pr_required,
 			route_by = :route_by,
 			available_for = :available_for,
 			tabs = EMPTY_CLOB()
@@ -94,6 +96,7 @@ class PayTrans extends HRForms2 {
 		$stmt = oci_parse($this->db,$qry);
 		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
 		oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
+		oci_bind_by_name($stmt,":pr_required", $this->POSTvars['PR_REQUIRED']);
 		oci_bind_by_name($stmt,":route_by", $this->POSTvars['ROUTE_BY']);
 		oci_bind_by_name($stmt,":available_for", $this->POSTvars['AVAILABLE_FOR']);
 		oci_bind_by_name($stmt,":paytrans_id", $this->req[0]);
