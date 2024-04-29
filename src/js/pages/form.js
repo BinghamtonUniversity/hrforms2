@@ -197,7 +197,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const [activeTab,setActiveTab] = useState('basic-info');
     const [activeNav,setActiveNav] = useState('');
     const [showHidden,setShowHidden] = useState(true);
-    const [lockTabs,setLockTabs] = useState(false);
+    const [lockTabs,setLockTabs] = useState(true);
     const [isSaving,setIsSaving] = useState(false);
     const [hasErrors,setHasErrors] = useState(false);
     const [showDeleteModal,setShowDeleteModal] = useState(false);
@@ -398,10 +398,12 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             console.debug('Reset/Clear Tabs');
             setTabList(allTabs.filter(t=>t.value=='basic-info'));
             setIsBlocking(false);
+            setLockTabs(true);
         } else {
             console.debug('Display Tabs: ',tabs);
             setInfoComplete(true);
             setIsBlocking(true);
+            setLockTabs(false);
             const tlist = [allTabs.find(t=>t.value=='basic-info')];
             ['person','employment'].forEach(t=>{
                 if (tabs.filter(v=>v.startsWith(t)).length>0) {
@@ -507,13 +509,8 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                     }))).then(res=>{
                         const errors = res.find(q=>q.isError);
                         if (errors) throw new Error(errors?.error);
-                        handleNext(tlist);
                     }).catch(e=>setDataLoadError({message:e.message}));
-                } else { // new employee; not data loaded
-                    handleNext(tlist);
-                }
-            } else { // existing form
-                handleNext(tabList);
+                } 
             }
         }
     },[tabList,watchIds]);

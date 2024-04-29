@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { useIsFetching } from 'react-query';
-import { Row, Col, Form, InputGroup } from "react-bootstrap";
+import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import sub from "date-fns/sub";
 import { assign, keyBy, orderBy } from "lodash";
@@ -470,11 +470,14 @@ function PayrollDate({selectedId,selectedPayroll}) {
 
 function FormActionsWrapper({payroll}) {
     const [filter,setFilter] = useState('000');
+    const [PRRequired,setPRRequired] = useState(false);
+    const [showPRRequired,setShowPRRequired] = useState(false);
     
     const { getValues, setValue } = useFormContext();
     const { handleTabs } = useHRFormContext();
     const [watchFormCode,watchActionCode,watchTransactionCode] = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode']});
     const watchRoleType = useWatch({name:'selectedRow.EMPLOYMENT_ROLE_TYPE'});
+    const watchPRRequired = useWatch({name:'formActions.PR_REQUIRED'});
 
     const {getPayTrans} = useTransactionQueries(payroll); 
     const paytrans = getPayTrans({select:d=>d.filter(p=>p.ACTIVE==1)});//only return ACTIVE
@@ -565,16 +568,31 @@ function FormActionsWrapper({payroll}) {
         }
         if (!getValues('formActions.PAYTRANS_ID')) { //Do not reload if PAYTRANS_ID already set
             if (pt) {
+                if (pt.PR_REQUIRED == '1') setShowPRRequired(true);
                 setValue('formActions.PAYTRANS_ID',pt.PAYTRANS_ID);
                 setValue('formActions.ROUTE_BY',pt.ROUTE_BY);
-                handleTabs(pt.TABS);
+                if (pt.PR_REQUIRED==watchPRRequired) {
+                    handleTabs(pt.TABS);
+                } else {
+                    handleTabs();
+                }
             } else {
+                setShowPRRequired(false);
                 setValue('formActions.PAYTRANS_ID',"");
                 setValue('formActions.ROUTE_BY',"");
                 handleTabs();
             }
+        } else {
+            if (pt?.PR_REQUIRED=='1') {
+                setShowPRRequired(true);
+                if (watchPRRequired) {
+                    handleTabs(pt.TABS);
+                } else {
+                    handleTabs();
+                }
+            }
         }
-    },[paytrans.data,filter,watchFormCode,watchActionCode,watchTransactionCode]);
+    },[paytrans.data,filter,watchFormCode,watchActionCode,watchTransactionCode,watchPRRequired]);
 
     useEffect(()=>setFilter((watchRoleType=="New Employee")?"100":(watchRoleType=="New Role")?"010":"001"),[watchRoleType]);
     
@@ -588,6 +606,7 @@ function FormActionsWrapper({payroll}) {
             <FormActionsFormCode formCodes={codes} description={watchFormCode.FORM_DESCRIPTION}/>
             <FormActionsActionCode actionCodes={getCodes('action').codes} description={watchActionCode.ACTION_DESCRIPTION} formCode={watchFormCode.FORM_CODE} actionSize={getCodes('action').size}/>
             <FormActionsTransactionCode transactionCodes={getCodes('transaction').codes} description={watchTransactionCode.TRANSACTION_DESCRIPTION} formCode={watchFormCode.FORM_CODE} actionCode={watchActionCode.ACTION_CODE} actionSize={getCodes('action').size} transactionSize={getCodes('transaction').size}/>
+            {showPRRequired && <FormPRRequired/>}
             {/**TESTING: <p>{getCodes('form').size},{getCodes('action').size},{getCodes('transaction').size}</p>*/}
             <LoadingFormTabs/>
         </article>
@@ -610,6 +629,7 @@ function FormActionsFormCode({formCodes,description}) {
         setValue('formActions.formCode',filteredCode);
         setValue('formActions.actionCode',defaultFormActions.actionCode);
         setValue('formActions.transactionCode',defaultFormActions.transactionCode);
+        setValue('formActions.PR_REQUIRED',defaultFormActions.PR_REQUIRED);
     }
 
     useEffect(()=>{
@@ -655,6 +675,7 @@ function FormActionsActionCode({actionCodes,description,formCode,actionSize}) {
         setValue('formActions.ROUTE_BY',"");
         setValue('formActions.actionCode',filteredCode);
         setValue('formActions.transactionCode',defaultFormActions.transactionCode);
+        setValue('formActions.PR_REQUIRED',defaultFormActions.PR_REQUIRED);
     }
     return (
         <Form.Group as={Row}>
@@ -690,6 +711,7 @@ function FormActionsTransactionCode({transactionCodes,description,formCode,actio
         setValue('formActions.PAYTRANS_ID',"");
         setValue('formActions.ROUTE_BY',"");
         setValue('formActions.transactionCode',(!code)?defaultFormActions.transactionCode:code);
+        setValue('formActions.PR_REQUIRED',defaultFormActions.PR_REQUIRED);
     }
     return (
         <Form.Group as={Row}>
@@ -716,6 +738,21 @@ function FormActionsTransactionCode({transactionCodes,description,formCode,actio
             </Col>
         </Form.Group>
     );    
+}
+
+function FormPRRequired() {
+    const { control } = useFormContext();
+    return (
+        <Alert variant="warning">
+             <Controller
+                name="formActions.PR_REQUIRED"
+                control={control}
+                render={({field}) => (
+                    <Form.Check {...field} type="checkbox" id="PR_REQUIRED" value={1} checked={field.value=='1'} label="Have you completed a Position Request?"/>
+                )}
+            />
+        </Alert>
+    );
 }
 
 function LoadingFormTabs() {

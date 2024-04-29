@@ -46,7 +46,8 @@ const defaultFormActions = {
     formCode:{FORM_CODE:"",FORM_TITLE:"",FORM_DESCRIPTION:""},
     actionCode:{ACTION_CODE:"",ACTION_TITLE:"",ACTION_DESCRIPTION:""},
     transactionCode:{TRANSACTION_CODE:"",TRANSACTION_TITLE:"",TRANSACTION_DESCRIPTION:""},
-    ROUTE_BY:""
+    ROUTE_BY:"",
+    PR_REQUIRED:"0"
 };
 export {defaultFormActions}; //used on basic_info
 
