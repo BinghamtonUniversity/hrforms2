@@ -255,6 +255,7 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
             ACTION_CODE:selectedRow.ACTION_CODE||'',
             TRANSACTION_CODE:selectedRow.TRANSACTION_CODE||'',
             ACTIVE:selectedRow.ACTIVE||'1',
+            PR_REQUIRED:selectedRow.PR_REQUIRED||'0',
             ROUTE_BY:selectedRow.ROUTE_BY||'',
             for:{
                 newEmpl:(selectedRow?.AVAILABLE_FOR)?selectedRow.AVAILABLE_FOR[0]:0,
@@ -291,6 +292,7 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
         }
         const d = {...data}
         d.ACTIVE = (data.ACTIVE)?1:0;
+        d.PR_REQUIRED = (data.PR_REQUIRED)?1:0;
         d.AVAILABLE_FOR = Object.values(data.for).map(a=>(a==1)?'1':(a==0)?'0':(!!a)?'1':'0').join('');
         delete d['for'];
         delete d['tabs'];
@@ -308,7 +310,7 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
             });
         } else {
             //check to see if changes, if none then just exit
-            if ((selectedRow.ACTIVE==1)!=data.ACTIVE||selectedRow.AVAILABLE_FOR!=data.AVAILABLE_FOR) {
+            if ((selectedRow.ACTIVE==1)!=data.ACTIVE||selectedRow.AVAILABLE_FOR!=data.AVAILABLE_FOR||selectedRow.PR_REQUIRED!=data.PR_REQUIRED) {
                 updatePayTrans.mutateAsync(d).then(()=>{
                     queryclient.refetchQueries('paytrans').then(()=>{
                         setStatus({state:'clear'});
@@ -477,6 +479,17 @@ function PayTransInfoTab({selectedRow,payrollcodes,formcodes,actioncodes,transac
                             render={({field}) => <Form.Check {...field} inline type="radio" id={`routeBy-${r}`} label={config.routeBy[r]} value={r} checked={field.value==r}/>}
                         />
                     ))}
+                </Col>
+            </Form.Group>
+            <Form.Group as={Row} controlId="PR_REQUIRED">
+                <Form.Label column sm={3}>PR Required:</Form.Label>
+                <Col sm={9} className="pt-2">
+                    <Controller
+                        name="PR_REQUIRED"
+                        control={control}
+                        defaultValue={selectedRow.PR_REQUIRED}
+                        render={({field}) => <Form.Check {...field} type="checkbox" checked={field.value==1}/>}
+                    />
                 </Col>
             </Form.Group>
             <Form.Group as={Row} controlId="ACTIVE">
