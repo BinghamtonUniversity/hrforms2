@@ -41,7 +41,8 @@ export default function HierarchyTab() {
         });
     }});
 
-    if (hierarchy.isError||position.isError) return <Loading isError>Error Loading Data</Loading>;
+    if (hierarchy.isError) return <Loading isError error={hierarchy.error}>Error Loading Hiearchies</Loading>;
+    if (position.isError) return <Loading isError error={position.error}>Error Loading Positions</Loading>;
     if (hierarchy.isLoading||position.isLoading) return <Loading type="alert">Loading Data</Loading>;
     return (
         <HierarchyContext.Provider value={{hierarchy:hierarchy.data,position:position.data}}>
@@ -277,7 +278,7 @@ function AddEditHierarchy(props) {
             create.mutateAsync({
                 posType:data.posType,
                 workflowId:data.workflowId,
-                groups:data.assignedGroups.map(g=>g.GROUP_ID).join(',')
+                addGroups:data.assignedGroups.map(g=>g.GROUP_ID)
             }).then(()=>{
                 queryclient.refetchQueries(['hierarchy','request']).then(() => {
                     setStatus({state:'clear'});
@@ -310,7 +311,8 @@ function AddEditHierarchy(props) {
                 setStatus({state:'saving'});
                 update.mutateAsync({
                     workflowId:data.workflowId,
-                    groups:data.assignedGroups.map(g=>g.GROUP_ID).join(',')    
+                    addGroups:addGroups,
+                    delGroups:delGroups
                 }).then(()=>{
                     queryclient.refetchQueries(['hierarchy','request']).then(() => {
                         setStatus({state:'clear'});

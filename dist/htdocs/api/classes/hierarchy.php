@@ -24,7 +24,11 @@ class Hierarchy extends HRForms2 {
 
 	private function __save_history() {
 		$hist_table = $this->table . "_history";
-		$qry = "insert into $hist_table select h.*, :method, sysdate from $this->table h where hierarchy_id = :id";
+		$qry = "insert into $hist_table 
+			select h.*, g.hierarchy_groups, :method, sysdate 
+			from $this->table h 
+			left join (select hierarchy_id, listagg(group_id,',') as hierarchy_groups from " . $this->table . "_groups group by hierarchy_id) g on (h.hierarchy_id = g.hierarchy_id)
+			where h,hierarchy_id = :id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":id", $this->req[1]);
 		oci_bind_by_name($stmt,":method", $this->method);
@@ -56,10 +60,12 @@ class Hierarchy extends HRForms2 {
 	function GET() {
 		switch($this->req[0]) {
 			case "request": /** Request Hierarchy */
-				$qry = "select h.HIERARCHY_ID,h.POSITION_TYPE,h.WORKFLOW_ID,h.groups as hierarchy_groups,
-								w.GROUPS as workflow_groups,w.CONDITIONS
-					from hrforms2_requests_hierarchy h
-					left join (select * from hrforms2_requests_workflow) w on (h.workflow_id = w.workflow_id)";	
+				$qry = "select h.HIERARCHY_ID,h.POSITION_TYPE,h.WORKFLOW_ID,
+						g.hierarchy_groups,
+						w.GROUPS as workflow_groups,w.CONDITIONS
+						from hrforms2_requests_hierarchy h
+						left join (select hierarchy_id, listagg(group_id,',') as hierarchy_groups from hrforms2_requests_hierarchy_groups group by hierarchy_id) g on (h.hierarchy_id = g.hierarchy_id)
+						left join (select * from hrforms2_requests_workflow) w on (h.workflow_id = w.workflow_id)";	
 				//TODO: is this used?
 				if (isset($this->req[1])&&$this->req[1]!='group') {
 					$qry .= " where h.hierarchy_id = :id";
@@ -107,9 +113,10 @@ class Hierarchy extends HRForms2 {
 					p.action_code, a.action_title, a.action_description, a.active as action_code_active,
 					p.transaction_code, t.transaction_title, t.transaction_description, t.active as transaction_code_active,
 					p.active as paytrans_active, p.available_for,
-					h.GROUPS as hierarchy_groups,h.WORKFLOW_ID,
+					g.hierarchy_groups,h.WORKFLOW_ID,
 					w.GROUPS as workflow_groups,w.CONDITIONS,w.SENDTOGROUP
 					from hrforms2_forms_hierarchy h
+					left join (select hierarchy_id, listagg(group_id,',') as hierarchy_groups from hrforms2_forms_hierarchy_groups group by hierarchy_id) g on (h.hierarchy_id = g.hierarchy_id)
 					left join (select * from hrforms2_payroll_transactions) p on (h.paytrans_id = p.paytrans_id)
 					left join (select * from hrforms2_forms_workflow) w on (h.workflow_id = w.workflow_id)
 					left join (select * from hrforms2_payroll_codes) pay on (p.payroll_code = pay.payroll_code)
@@ -155,35 +162,64 @@ class Hierarchy extends HRForms2 {
 	}
 	function POST() {
 		$qry = "insert into $this->table 
-		values({$this->table}_SEQ.nextval, :key2, :workflow_id, :groups)
+		values({$this->table}_SEQ.nextval, :key2, :workflow_id, '0')
 		returning HIERARCHY_ID into :hierarchy_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":key2", $this->key2);
 		oci_bind_by_name($stmt,":workflow_id", $this->POSTvars['workflowId']);
-		oci_bind_by_name($stmt,":groups", $this->POSTvars['groups']);
 		oci_bind_by_name($stmt,":hierarchy_id", $HIERARCHY_ID,-1,SQLT_INT);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
 		oci_free_statement($stmt);
+		// add groups
+		foreach ($this->POSTvars['addGroups'] as $group) {
+			$qry = "insert into " . $this->table . "_groups values(:hierarchy_id, :group_id)";
+			$stmt = oci_parse($this->db,$qry);
+			oci_bind_by_name($stmt,":hierarchy_id", $HIERARCHY_ID);
+			oci_bind_by_name($stmt,":group_id", $group);
+			$r = oci_execute($stmt);
+			if (!$r) $this->raiseError();
+			oci_free_statement($stmt);
+		}
 		$this->toJSON(array("HIERARCHY_ID"=>$HIERARCHY_ID));
 	}
 	function PATCH() {
-		$this->__save_history();
+		//$this->__save_history();
 		$qry = "update $this->table 
-		set workflow_id = :workflow_id, groups = :groups
+		set workflow_id = :workflow_id
 		where hierarchy_id = :hierarchy_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":workflow_id", $this->POSTvars['workflowId']);
-		oci_bind_by_name($stmt,":groups", $this->POSTvars['groups']);
 		oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
 		oci_commit($this->db);
 		oci_free_statement($stmt);
+		// add groups
+		foreach ($this->POSTvars['addGroups'] as $group) {
+			$qry = "insert into " . $this->table . "_groups values(:hierarchy_id, :group_id)";
+			$stmt = oci_parse($this->db,$qry);
+			oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
+			oci_bind_by_name($stmt,":group_id", $group);
+			$r = oci_execute($stmt);
+			if (!$r) $this->raiseError();
+			oci_free_statement($stmt);
+		}
+		// delete groups
+		foreach ($this->POSTvars['delGroups'] as $group) {
+			$qry = "delete from " . $this->table . "_groups where hierarchy_id = :hierarchy_id and group_id = :group_id";
+			$stmt = oci_parse($this->db,$qry);
+			oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
+			oci_bind_by_name($stmt,":group_id", $group);
+			$r = oci_execute($stmt);
+			if (!$r) $this->raiseError();
+			oci_free_statement($stmt);
+		}
+
 		$this->done();
 	}
 	function DELETE() {
-		$this->__save_history();
+		//$this->__save_history();
 		$qry = "delete from $this->table where hierarchy_id = :hierarchy_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
