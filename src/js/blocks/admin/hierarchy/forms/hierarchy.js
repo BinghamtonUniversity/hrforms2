@@ -119,7 +119,6 @@ function HierarchyTable(isPaged) {
     const [deleteHierarchy,setDeleteHierarchy] = useState({});
 
     const {isNew,activeTab} = useContext(WorkflowContext);
-    //const {hierarchy} = useContext(HierarchyContext);
     const {hierarchy,isLoading,setIsLoading,totalRows,setPage,setPerPage} = useContext(HierarchyContext);
     const searchRef = useRef();
 
@@ -238,7 +237,7 @@ function HierarchyTable(isPaged) {
         searchRef.current.focus();
     },[hierarchy,activeTab]);
 
-    const tableParams = useCallback(() => {
+    const tableParams = useMemo(() => {
         if (isPaged) {
             return {
                 progressPending:isLoading,
@@ -254,7 +253,7 @@ function HierarchyTable(isPaged) {
                 paginationServer:false
             };
         }
-    },[isPaged]);
+    },[isPaged,totalRows]);
 
     return (
         <>
@@ -394,7 +393,7 @@ function AddEditHierarchy(props) {
                 payroll:data.payroll,
                 formCode:data.formCode,
                 workflowId:data.workflowId,
-                groups:data.assignedGroups.map(g=>g.GROUP_ID).join(',')
+                addGroups:data.assignedGroups.map(g=>g.GROUP_ID)
             }).then(()=>{
                 queryclient.refetchQueries(['hierarchy','form']).then(() => {
                     setStatus({state:'clear'});
@@ -407,7 +406,7 @@ function AddEditHierarchy(props) {
         } else {
             let hasChanges = false;
             if (props.WORKFLOW_ID!=data.workflowId) hasChanges = true;
-            // did groups change?
+            // check for group changes
             const origIds = (props.HIERARCHY_GROUPS_ARRAY)?props.HIERARCHY_GROUPS_ARRAY.map(g=>g.GROUP_ID):[];
             const newIds = data.assignedGroups.map(g=>g.GROUP_ID);
             const addGroups = difference(newIds,origIds);
@@ -427,7 +426,8 @@ function AddEditHierarchy(props) {
                 setStatus({state:'saving'});
                 update.mutateAsync({
                     workflowId:data.workflowId,
-                    groups:data.assignedGroups.map(g=>g.GROUP_ID).join(',')    
+                    addGroups:addGroups,
+                    delGroups:delGroups
                 }).then(()=>{
                     queryclient.refetchQueries(['hierarchy','form']).then(() => {
                         setStatus({state:'clear'});
