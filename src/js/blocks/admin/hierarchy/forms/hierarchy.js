@@ -111,7 +111,7 @@ function PagedHierarchyTab(payrolls) {
     );
 }
 
-function HierarchyTable(isPaged) {
+function HierarchyTable({isPaged}) {
     const [filterText,setFilterText] = useState('');
     const [rows,setRows] = useState([]);
     const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
@@ -127,7 +127,7 @@ function HierarchyTable(isPaged) {
         searchRef.current.focus();
     });
 
-    const handleRowClick = useCallback(row=>setSelectedRow(row));
+    const handleRowClick = useCallback(row=>setSelectedRow(row),[]);
 
     const handleSort = useCallback((...args) => {
         if (!args[0].sortable) return false;
@@ -142,16 +142,16 @@ function HierarchyTable(isPaged) {
         }
     },[]);
 
-    const handleChangePage = page => {
+    const handleChangePage = useCallback(page => {
         setIsLoading(true);
         setPage(page);
-    }
+    },[]);
 
-    const handleChangeRowsPerPage = (newPerPage,page) => {
+    const handleChangeRowsPerPage = useCallback((newPerPage,page) => {
         setIsLoading(true);
         setPerPage(newPerPage);
         setPage(page);
-    }
+    },[]);
 
     const filterComponent = useMemo(() => {
         const handleKeyDown = e => {
