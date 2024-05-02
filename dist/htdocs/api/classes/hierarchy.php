@@ -162,7 +162,7 @@ class Hierarchy extends HRForms2 {
 	}
 	function POST() {
 		$qry = "insert into $this->table 
-		values({$this->table}_SEQ.nextval, :key2, :workflow_id, '0')
+		values({$this->table}_SEQ.nextval, :key2, :workflow_id)
 		returning HIERARCHY_ID into :hierarchy_id";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":key2", $this->key2);
