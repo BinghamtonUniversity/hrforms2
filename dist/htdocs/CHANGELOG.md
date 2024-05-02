@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 2.0.0(DEV-20240501)
+  * Fix field focus on forms; check to make sure field exists before focusing.
+  * Fixes for range sliders and linked input on Form Position and Appointment tabs.
+  * Added "markers" for range sliders.
+  * Set Form Salary Effective Date to default to the Appointment Effective Date.
+  * Added checkbox for "PR Required" to Form Payroll Transactions setup.
+  * Added checkbox on Form to prompt user if they have submitted a PR.  Alert is displayed based on the Payroll Transaction setup.
+  * Restructured Request and Form Hierarchy tables and code to use an intermediate table linking hierarchy and group tables.  Fixes bug where an empty list item is left when a group is deleted.
+
+
 ## Version 2.0.0(DEV-20240424)
   * Removed Form/Request query from Journal.  The only data used was the lastJournal data which can be derived from the journal query already used.
   * Initialize person lookup results as empty array to fix error when searching for new employee.
