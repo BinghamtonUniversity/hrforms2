@@ -168,7 +168,14 @@ export default function Position() {
                     <Form.Control.Feedback type="invalid">{errors.fte?.message}</Form.Control.Feedback>
                 </Col>
                 <Col sm={8} md={6} className="pt-2">
-                    <Form.Control type="range" name="fteRange" id="fteRange" min={1} max={100} value={watchFTE} onChange={handleFTERangeChange} disabled={!canEdit}/>
+                    <Form.Control type="range" name="fteRange" id="fteRange" min={1} max={100} value={watchFTE} onChange={handleFTERangeChange} disabled={!canEdit} list="markers"/>
+                    <datalist id="markers" className="marker">
+                        <option value="0">0%</option>
+                        <option value="25">25%</option>
+                        <option value="50">50%</option>
+                        <option value="75">75%</option>
+                        <option value="100">100%</option>
+                    </datalist>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
