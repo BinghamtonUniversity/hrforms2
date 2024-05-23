@@ -36,8 +36,12 @@ export default function EmploymentAppointment() {
         }
     },[watchPayBasis]);
     useEffect(() => {
-        setValue(`${name}.totalSalary`,((+watchAmounts[0]*+watchAmounts[1]) * (+watchAmounts[2]/100)).toFixed(2));
-    },[watchAmounts]);
+        if (['BIW', 'FEE', 'HRY'].includes(watchPayBasis)) {
+            setValue(`${name}.totalSalary`,(+watchAmounts[0]*+watchAmounts[1]).toFixed(2));
+        } else {
+            setValue(`${name}.totalSalary`,((+watchAmounts[0]*+watchAmounts[1]) * (+watchAmounts[2]/100)).toFixed(2));
+        }
+    },[watchAmounts,watchPayBasis]);
 
     useEffect(() => {
         const field = document.querySelector(`#${activeNav} input:not([disabled])`);
