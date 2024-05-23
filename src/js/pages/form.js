@@ -472,6 +472,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                     }).then(r=>{
                         const objPath = p.tab.replace('-','.');
                         const role_type = methods.getValues('selectedRow.EMPLOYMENT_ROLE_TYPE');
+                        const effDate = methods.getValues('effDate');
                         switch(p.tab) {
                             case "person-education":
                                 methods.setValue('person.education.institutions',r.data);
@@ -482,7 +483,12 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                             case "employment-position":
                                 if (role_type == 'New Role') {
                                     // Reset all values to default
-                                    Object.keys(initFormValues.employment.position).forEach(f => methods.setValue(`employment.position.${f}`,initFormValues.employment.position[f]));
+                                    Object.keys(initFormValues.employment.position).forEach(f => {
+                                        methods.setValue(`employment.position.${f}`,initFormValues.employment.position[f]);
+                                        methods.setValue(`employment.position.apptEffDate`,effDate); // use Basic Info Effective Date for Appt Effective Date.
+                                    });
+                                } else {
+                                    methods.setValue(objPath,Object.assign({},get(defaultVals,objPath),r.data));
                                 }
                                 break;
                             case "employment-appointment":
