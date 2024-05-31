@@ -56,19 +56,19 @@ class User extends HRForms2 {
 		unset($data['REFRESH_DATE']);
 		// Add SUNY_ID if not set
 		if (!isset($data['SUNY_ID'])) $data['SUNY_ID'] = $data['SUNYHR_SUNY_ID'];
-		$qry = "update HRFORMS2_USERS 
-		set refresh_date = sysdate, user_info = EMPTY_CLOB() 
+		$update_qry = "update HRFORMS2_USERS 
+		set refresh_date = sysdate, user_info = '{}' 
 		where suny_id = :suny_id
 		returning user_info into :user_info";
-		$stmt = oci_parse($this->db,$qry);
+		$update_stmt = oci_parse($this->db,$update_qry);
 		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
-		oci_bind_by_name($stmt,":suny_id", $this->req[0]);
-		oci_bind_by_name($stmt,":user_info", $clob, -1, OCI_B_CLOB);
-		$r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
-		if (!$r) $this->raiseError();
-		$clob->save(json_encode($data));
+		$json = json_encode($data);
+		oci_bind_by_name($update_stmt,":suny_id", $this->req[0]);	
+		oci_bind_by_name($update_stmt,":user_info", $clob, -1, OCI_B_CLOB);
+        $r = oci_execute($update_stmt,OCI_NO_AUTO_COMMIT);
+		$clob->save($json);
 		oci_commit($this->db);
-		oci_free_statement($stmt);
+		oci_free_statement($update_stmt);
 		return;
 	}
 
@@ -120,17 +120,14 @@ class User extends HRForms2 {
 				$user['USER_OPTIONS'] = (is_object($user['USER_OPTIONS']))?$user['USER_OPTIONS']->load():null;
 			}
 			oci_free_statement($stmt);
-
-			// User does not exist
-			if (!$existing) {
+			
+			if (!$existing) { // User does not exist
 				$this->_arr = $this->getSUNYHRUser();
 				if (!$this->_arr) {
 					//if (!$this->retJSON) return;
 					$this->raiseError(E_BAD_REQUEST,array('errMsg'=>'SUNY ID Not Found'));
 				}
-
-			// User exists
-			} else {
+			} else { // User exists
 				$now = new DateTime();
 				$end_date = DateTime::createFromFormat('d-M-Y H:i',$user['END_DATE']);
 				$end_diff = -1;
@@ -139,12 +136,12 @@ class User extends HRForms2 {
 					$end_diff = $diff->d*1440+$diff->h*60+$diff->i;
 					$end_diff = ($diff->invert == 1)?$end_diff*-1:$end_diff;
 				}
+
 				// User is Inactive/Ended
 				if ($end_diff > 0) {
 					if ($user['USER_INFO']) { // user has user_info
 						$this->_arr = json_decode($user['USER_INFO'], true);
 						$this->_arr['REFRESH_DATE'] = $user['REFRESH_DATE'];
-						//$this->_arr['X'] = 3;
 					} else { // user does not have user_info
 						if ($end_diff > 259200) { // user ended more than 6 months ago
 								if (!$this->retJSON) return;
@@ -164,7 +161,6 @@ class User extends HRForms2 {
 								if (!isset($this->_arr['SUNY_ID'])) $this->_arr['SUNY_ID'] = $this->_arr['SUNYHR_SUNY_ID'];
 								$this->updateUserInfo($this->_arr);
 								$this->_arr['REFRESH_DATE'] = date('d-M-y h:i:s A', time());
-								//$this->_arr['X'] = 4;
 							}
 						}
 					}
@@ -175,11 +171,12 @@ class User extends HRForms2 {
 					$settings = (new settings(array(),false))->returnData;
 					$refresh_date = DateTime::createFromFormat('d-M-Y h:i:s A',$user['REFRESH_DATE']);
 					$refresh_diff = INF;
-					if ($refresh_date) {
+					if (!$user['REFRESH_DATE']) {
 						$diff = $refresh_date->diff($now);
 						$refresh_diff = ($diff->invert == 1)?$diff->days*-1:$diff->days;
 						if ($user['USER_INFO'] == "") $refresh_diff = INF;
 					}
+	
 					if ($refresh_diff > $settings['general']['userRefresh']) { // user_info is "stale" or missing
 						$this->_arr = $this->getSUNYHRUser();
 						if (!$this->_arr) { // No SUNY HR data; use existing cached data
@@ -197,17 +194,14 @@ class User extends HRForms2 {
 								$this->sendError($message,'HRForms2 Error: User Deactivated','general');
 							}
 							$this->_arr = json_decode($user['USER_INFO'], true);
-						} else { // update cached data and refresh date							
+						} else { // update cached data and refresh date	
 							if (!isset($this->_arr['SUNY_ID'])) $this->_arr['SUNY_ID'] = $this->_arr['SUNYHR_SUNY_ID'];
 							$a = $this->updateUserInfo($this->_arr);
 							$this->_arr['REFRESH_DATE'] = date('d-M-y h:i:s A', time());
-							//$this->_arr['X'] = 2;				
 						}
-
 					} else { // user_info is "fresh"
 						$this->_arr = json_decode($user['USER_INFO'], true);
 						$this->_arr['REFRESH_DATE'] = $user['REFRESH_DATE'];
-						//$this->_arr['X'] = 1;
 					}
 				}
 			}
