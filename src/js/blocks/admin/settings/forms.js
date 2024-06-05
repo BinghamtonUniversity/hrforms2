@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { Form, Row, Col, Table, ListGroup, Button } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { useSettingsContext } from "../../../app";
@@ -7,67 +7,114 @@ import { useWorkflowQueries } from "../../../queries/hierarchy";
 import { find, sortBy, truncate } from 'lodash';
 import { HierarchyChain } from "../../../pages/admin/hierarchy/request";
 import { Loading } from "../../components";
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { Icon } from "@iconify/react";
 
 export default function SettingsForms() {
-    const { control } = useFormContext();
+    return (
+        <>
+            <SettingsFormsMenu/>
+            <SettingsFormsDefaultRouting/>
+            <SettingsFormsEmail/>
+        </>
+    );
+}
+
+function SettingsFormsMenu() {
+    const [menuItems,setMenuItems] = useState([]);
+    const { control, setValue } = useFormContext();
     const menuFields = useWatch({name:'forms.menu',control:control});
     const { forms } = useSettingsContext();
     const disabled = useCallback(field => {
         const k = field.name.split('.')[2];
         return (Object.keys(menuFields[k]).includes('enabled'))?!menuFields[k].enabled:false;
     },[menuFields]);
+
+    const handleDragEnd = result => {
+        if (!result.destination) return;
+        const [moved] = menuItems.splice(result.source.index,1);
+        menuItems.splice(result.destination.index,0,moved);
+        menuItems.forEach((item,index) => {
+            setValue(`forms.menu.${item}.order`,index);
+        });
+    };
+
+    useEffect(() => {
+        setMenuItems(Object.keys(menuFields).sort((a,b) => parseInt(menuFields[a].order,10)>parseInt(menuFields[b].order,10)?1:parseInt(menuFields[a].order,10)==parseInt(menuFields[b].order,10)?0:-1));
+    },[menuFields]);
+
     return (
-        <>
-            <section>
-                {Object.keys(forms.menu).map(k=>(
-                    <Form.Group key={k} as={Row} controlId={k}>
-                        <Form.Label column md={2}>{k}:</Form.Label>
-                        <Col xs="auto">
-                            <Controller
-                                name={`forms.menu.${k}.title`}
-                                control={control}
-                                defaultValue={forms.menu[k].title}
-                                render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Title" disabled={disabled(field)}/>}
-                            />
-                        </Col>
-                        <Col xs="auto">
-                            <Controller
-                                name={`forms.menu.${k}.showOnHome`}
-                                control={control}
-                                render={({field}) => <Form.Check {...field} type="checkbox" inline label="Show On Home" checked={field.value} disabled={disabled(field)}/>}
-                            />
-                        </Col>
-                        <Col xs="auto">
-                            <Controller
-                                name={`forms.menu.${k}.showOnMenu`}
-                                control={control}
-                                render={({field}) => <Form.Check {...field} type="checkbox" inline label="Show On Menu" checked={field.value} disabled={disabled(field)}/>}
-                            />
-                        </Col>
-                        {Object.keys(forms.menu[k]).includes('resubmit') && 
-                            <Col xs="auto">
-                                <Controller
-                                    name={`forms.menu.${k}.resubmit`}
-                                    control={control}
-                                    render={({field}) => <Form.Check {...field} type="checkbox" inline label="Allow Resubmit" checked={field.value} disabled={disabled(field)}/>}
-                                />
-                            </Col>
-                        }
-                        {Object.keys(forms.menu[k]).includes('enabled') && 
-                            <Col xs="auto">
-                                <Controller
-                                    name={`forms.menu.${k}.enabled`}
-                                    control={control}
-                                    render={({field}) => <Form.Check {...field} type="checkbox" inline label="Enabled" checked={field.value}/>}
-                                />
-                            </Col>
-                        }
-                    </Form.Group>
-                ))}
-            </section>
-            <SettingsFormsDefaultRouting/>
-            <SettingsFormsEmail/>
-        </>
+        <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="order">
+                {(provided,snapshot) => (
+                    <section
+                        id="menu-items"
+                        ref={provided.innerRef}
+                        {...provided.droppableProps} 
+                    >
+                        {menuItems.map((k,i) => (
+                            <Draggable key={k} draggableId={k} index={i}>
+                                {(provided,snapshot) => (
+                                    <Form.Group 
+                                        ref={provided.innerRef}
+                                        {...provided.draggableProps}
+                                        as={Row} 
+                                        controlId={k}
+                                        className={snapshot.isDragging?'dragging':''}
+                                    >
+                                        <Form.Label column md={2}>
+                                            <span {...provided.dragHandleProps}><Icon icon="mdi:reorder-horizontal" className="iconify-inline drag-handle" width={24} height={24}/></span>
+                                            <span>{k}:</span>
+                                        </Form.Label>
+                                        <Col xs="auto">
+                                            <Controller
+                                                name={`forms.menu.${k}.title`}
+                                                control={control}
+                                                defaultValue={forms.menu[k].title}
+                                                render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Title" disabled={disabled(field)}/>}
+                                            />
+                                        </Col>
+                                        <Col xs="auto">
+                                            <Controller
+                                                name={`forms.menu.${k}.showOnHome`}
+                                                control={control}
+                                                render={({field}) => <Form.Check {...field} type="checkbox" inline label="Show On Home" checked={field.value} disabled={disabled(field)}/>}
+                                            />
+                                        </Col>
+                                        <Col xs="auto">
+                                            <Controller
+                                                name={`forms.menu.${k}.showOnMenu`}
+                                                control={control}
+                                                render={({field}) => <Form.Check {...field} type="checkbox" inline label="Show On Menu" checked={field.value} disabled={disabled(field)}/>}
+                                            />
+                                        </Col>
+                                        {Object.keys(forms.menu[k]).includes('resubmit') && 
+                                            <Col xs="auto">
+                                                <Controller
+                                                    name={`forms.menu.${k}.resubmit`}
+                                                    control={control}
+                                                    render={({field}) => <Form.Check {...field} type="checkbox" inline label="Allow Resubmit" checked={field.value} disabled={disabled(field)}/>}
+                                                />
+                                            </Col>
+                                        }
+                                        {Object.keys(forms.menu[k]).includes('enabled') && 
+                                            <Col xs="auto">
+                                                <Controller
+                                                    name={`forms.menu.${k}.enabled`}
+                                                    control={control}
+                                                    render={({field}) => <Form.Check {...field} type="checkbox" inline label="Enabled" checked={field.value}/>}
+                                                />
+                                            </Col>
+                                        }
+                                    </Form.Group>
+                                )}
+                            </Draggable>
+                        ))}
+                        {provided.placeholder}
+                    </section>
+                )}
+            </Droppable>
+        </DragDropContext>
     );
 }
 
