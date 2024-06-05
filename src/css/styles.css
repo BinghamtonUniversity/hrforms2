@@ -356,3 +356,12 @@ datalist.marker {
   justify-content: space-between;
   font-size: 0.7rem;
 }
+
+#menu-items .dragging {
+  opacity: 0.35;
+}
+
+.drag-handle { 
+  cursor: move; 
+  margin-bottom: -3px;
+}
