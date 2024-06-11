@@ -418,6 +418,8 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                 if (!!watchIds[0]) { 
                     // Fetch Data:
                     const promiseList = [];
+                    // include position data if any employment tab exists; position data is needed for the position info box and other tabs.
+                    if (tabs.some(t=>t.startsWith('employment-')) && !tabs.includes('employment-position')) tabs.push('employment-position');
                     tabs.forEach(tab => {
                         switch(tab) {
                             case "person-information": promiseList.push({tab:tab,func:fetchData.personinfo.refetch}); break;
@@ -427,7 +429,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                             case "person-contacts": promiseList.push({tab:tab,func:fetchData.personcontacts.refetch}); break;
                             case "employment-appointment": promiseList.push({tab:tab,func:fetchData.employmentappointment.refetch}); break;
                             case "employment-position": 
-                            promiseList.push({tab:tab,func:fetchData.employmentposition.refetch,then:() =>{
+                                promiseList.push({tab:tab,func:fetchData.employmentposition.refetch,then:() =>{
                                     //if payroll == 28029 get student data
                                     methods.getValues('payroll.PAYROLL_CODE')=='28029' && fetchData.studentinformation.refetch().then(r=>{
                                         methods.setValue('employment.appointment.studentDetails',Object.assign({},defaultVals.employment.appointment.studentDetails,r.data));
