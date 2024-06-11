@@ -8,7 +8,7 @@ import { useHRFormContext, conditionalFields } from "../../../config/form";
 export default function ReviewEmploymentSalary() {
     const { formType } = useHRFormContext();
     const { getValues } = useFormContext();
-    const [salary] = getValues(['employment.salary']);
+    const [salary,position] = getValues(['employment.salary','employment.position']);
     return (
         <article className="border rounded p-1 mb-2">
             <Row as="header">
@@ -16,11 +16,11 @@ export default function ReviewEmploymentSalary() {
             </Row>
             <Row as="dl" className="mb-0">
                 <Col as="dt" md={2} className="mb-0">Effective Date:</Col>
-                <Col as="dd" md={4} className="mb-0"><DateFormat>{salary.effDate}</DateFormat></Col>
+                <Col as="dd" md={4} className="mb-0"><DateFormat>{salary.effDate||position.apptEffDate}</DateFormat></Col>
                 <Col as="dt" md={2} className="mb-0">Pay Basis:</Col>
-                <Col as="dd" md={4} className="mb-0">{salary.PAY_BASIS}</Col>
+                <Col as="dd" md={4} className="mb-0">{position.positionDetails.PAY_BASIS}</Col>
                 <Col as="dt" md={2} className="mb-0">Percent:</Col>
-                <Col as="dd" md={4} className="mb-0">{salary.APPOINTMENT_PERCENT}%</Col>
+                <Col as="dd" md={4} className="mb-0">{position.APPOINTMENT_PERCENT}%</Col>
                 <Col as="dt" md={2} className="mb-0">Payments:</Col>
                 <Col as="dd" md={4} className="mb-0">{salary.NUMBER_OF_PAYMENTS}</Col>
                 <Col as="dt" md={2} className="mb-0">Rate:</Col>
