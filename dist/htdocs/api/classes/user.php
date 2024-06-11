@@ -57,9 +57,9 @@ class User extends HRForms2 {
 		// Add SUNY_ID if not set
 		if (!isset($data['SUNY_ID'])) $data['SUNY_ID'] = $data['SUNYHR_SUNY_ID'];
 		$update_qry = "update HRFORMS2_USERS 
-		set refresh_date = sysdate, user_info = '{}' 
-		where suny_id = :suny_id
-		returning user_info into :user_info";
+			set refresh_date = sysdate, user_info = '{}' 
+			where suny_id = :suny_id
+			returning user_info into :user_info";
 		$update_stmt = oci_parse($this->db,$update_qry);
 		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
 		$json = json_encode($data);
@@ -171,7 +171,7 @@ class User extends HRForms2 {
 					$settings = (new settings(array(),false))->returnData;
 					$refresh_date = DateTime::createFromFormat('d-M-Y h:i:s A',$user['REFRESH_DATE']);
 					$refresh_diff = INF;
-					if (!$user['REFRESH_DATE']) {
+					if ($user['REFRESH_DATE']) {
 						$diff = $refresh_date->diff($now);
 						$refresh_diff = ($diff->invert == 1)?$diff->days*-1:$diff->days;
 						if ($user['USER_INFO'] == "") $refresh_diff = INF;
