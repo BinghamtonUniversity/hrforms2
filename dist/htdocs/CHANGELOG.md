@@ -1,5 +1,22 @@
 # Changelog
 
+## Version 2.0.0(DEV-20240614)
+  * Fixed error in user.php causing incorrect refresh of data and error on update (pushed to dev early).
+  * Fixed demographic data not being returned; query was restricted to only return when role end date was in the future.
+  * Position data retrieved when any Employment tab is displayed.  Position data is used in the info box and on tabs other than Position.
+  * Reworked how counts are handled on home page and menus to be more efficient.
+  * Allow menu items to be reordered via drag and drop in settings for Requests and Forms.
+  
+
+## Version 2.0.0(DEV-20240609)
+  * Fixed Forms Employment Position data not being populated for current roles.
+  * Added "markers" for range slider on Position Request Position tab.
+  * Fixed incorrect salary calculation on Form Salary tab for BIW, Fee, and HRY appointments.
+  * Set Form Position Effective Date and Salary Effecive Date to use the Basic Information Effective Date for new role.
+  * Fixed error in updateUserInfo in user.php; code was setting user_info to EMPTY_CLOB(), but it needed to be a valid JSON string.  Resulted in segmentation error.
+  * Added drag and drop functionality to reorder menu items for Request and Form list menus items in settings.
+
+
 ## Version 2.0.0(DEV-20240501)
   * Fix field focus on forms; check to make sure field exists before focusing.
   * Fixes for range sliders and linked input on Form Position and Appointment tabs.
