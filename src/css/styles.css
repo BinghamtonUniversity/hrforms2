@@ -357,7 +357,7 @@ datalist.marker {
   font-size: 0.7rem;
 }
 
-#menu-items .dragging {
+.menu-items .dragging {
   opacity: 0.35;
 }
 

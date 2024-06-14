@@ -164,6 +164,7 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
             const single = menu.slice(0,-1);
             let linkTo = `/${single}/`;
             if (location.pathname.startsWith(linkTo)) linkTo += 'new';
+            const menuItems = Object.keys(settings[menu].menu).sort((a,b) => parseInt(settings[menu].menu[a].order,10)>parseInt(settings['forms'].menu[b].order,10)?1:parseInt(settings[menu].menu[a].order,10)==parseInt(settings[menu].menu[b].order,10)?0:-1);
             return (
                 <>
                     {(showNew && showOn=='home') && <Link key={`${menu}.new`} to={`/${single}/`} component={DashBoardListComponent}><span className="font-italic">New {capitalize(single)}</span></Link> }
@@ -176,13 +177,13 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
                     }
                     {(counts.isLoading&&showOn=='home') && <ListGroup.Item className="d-flex justify-content-center"><Loading>Loading...</Loading></ListGroup.Item>}
                     {(counts.isLoading&&showOn=='menu') && <NavDropdown.Item><Loading>Loading...</Loading></NavDropdown.Item>}
-                    {counts.data && Object.keys(counts.data[menu]).map(l=>{
+                    {counts.data && menuItems.map(l=>{
                         const key = `${menu}.menu.${l}`;
                         if (!get(settings,`${key}.enabled`,true)) return null;
                         const title = get(settings,`${key}.title`,l);
                         const show = get(settings,`${key}.showOn${capitalize(showOn)}`,false);
                         if (!show) return null;
-                        const cnt = get(counts.data,`${menu}.${l}`,0);
+                        const cnt = get(counts.data,`${menu}.${l}.count`,0);
                         if (showOn == 'home') return <Link key={key} className="d-flex justify-content-between" to={`/${single}/list/${l}`} component={DashBoardListComponent}><span>{title}</span>{cnt}</Link>;
                         if (showOn == 'menu') return <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`}>{title} {cnt!=null && <span>({cnt})</span>}</NavDropdown.Item>;
                     })}
