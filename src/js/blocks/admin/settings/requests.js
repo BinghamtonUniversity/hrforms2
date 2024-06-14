@@ -35,7 +35,7 @@ function SettingsRequestsMenu() {
         const [moved] = menuItems.splice(result.source.index,1);
         menuItems.splice(result.destination.index,0,moved);
         menuItems.forEach((item,index) => {
-            setValue(`requests.menu.${item}.order`,index);
+            setValue(`requests.menu.${item}.order`,index, { shouldDirty: true });
         });
     };
 
@@ -48,7 +48,7 @@ function SettingsRequestsMenu() {
             <Droppable droppableId="order">
                 {(provided,snapshot) => (
                     <section
-                        id="menu-items"
+                        className="menu-items"
                         ref={provided.innerRef}
                         {...provided.droppableProps} 
                     >
@@ -182,7 +182,7 @@ function SettingsRequestsDefaultRouting() {
                     <Form.Group as={Row} controlId="requestWorkflowSearch">
                         <Form.Label column md={2}>Workflow Search:</Form.Label>
                         <Col xs="auto">
-                            <Form.Control type="search" placeholder="search workflows..." onChange={e=>setSearchText(e.target.value)} />
+                            <Form.Control type="search" placeholder="search workflows..." onChange={e=>setSearchText(e.target.value)}/>
                         </Col>
                     </Form.Group>
                     <Form.Row>

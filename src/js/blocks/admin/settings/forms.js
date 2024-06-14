@@ -32,11 +32,13 @@ function SettingsFormsMenu() {
 
     const handleDragEnd = result => {
         if (!result.destination) return;
-        const [moved] = menuItems.splice(result.source.index,1);
-        menuItems.splice(result.destination.index,0,moved);
-        menuItems.forEach((item,index) => {
-            setValue(`forms.menu.${item}.order`,index);
+        const newMenuItems = [...menuItems];
+        const [moved] = newMenuItems.splice(result.source.index,1);
+        newMenuItems.splice(result.destination.index,0,moved);
+        newMenuItems.forEach((item,index) => {
+            setValue(`forms.menu.${item}.order`,index, { shouldDirty: true });
         });
+        setMenuItems(newMenuItems);
     };
 
     useEffect(() => {
@@ -48,7 +50,7 @@ function SettingsFormsMenu() {
             <Droppable droppableId="order">
                 {(provided,snapshot) => (
                     <section
-                        id="menu-items"
+                        className="menu-items"
                         ref={provided.innerRef}
                         {...provided.droppableProps} 
                     >
