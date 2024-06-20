@@ -144,8 +144,9 @@ class EmploymentInfo extends HRForms2 {
 				$row['APPOINTMENT_TYPE'] = array("id"=>$row['APPOINTMENT_TYPE'],"label"=>($key!==false)?$appointmentTypes[$key][1]:"");
 
 				// hasBenefits:
+				
 				$payroll = (new codes(array('payroll',$row['PAYROLL_AGENCY_CODE']),false))->returnData[0];
-				if ($payroll['ADDITIONAL_INFO']->hasBenefits) {
+				if ($payroll['ADDITIONAL_INFO']['hasBenefits']) {
 					$row['hasBenefits'] = true;
 					$key = array_search($row['BENEFIT_FLAG'],array_column($benefitCodes,0));
 					$row['BENEFIT_FLAG'] = array("id"=>$row['BENEFIT_FLAG'],"label"=>($key!==false)?$benefitCodes[$key][1]:"");
