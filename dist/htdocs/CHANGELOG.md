@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 2.0.0(DEV-20240621)
+  * Fixed issue where Benefits were not being populated due to incorrect array reference in server code in employmentinfo.php.
+  * Fixed issue where Appointment and Salary tab information was not populating on existing roles.
+  * Fixed permission error that caused form lists to not display for some users.
+
+
 ## Version 2.0.0(DEV-20240614)
   * Fixed error in user.php causing incorrect refresh of data and error on update (pushed to dev early).
   * Fixed demographic data not being returned; query was restricted to only return when role end date was in the future.
