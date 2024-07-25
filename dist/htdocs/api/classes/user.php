@@ -57,16 +57,15 @@ class User extends HRForms2 {
 		// Add SUNY_ID if not set
 		if (!isset($data['SUNY_ID'])) $data['SUNY_ID'] = $data['SUNYHR_SUNY_ID'];
 		$update_qry = "update HRFORMS2_USERS 
-			set refresh_date = sysdate, user_info = '{}' 
+			set refresh_date = sysdate, user_info = EMPTY_CLOB() 
 			where suny_id = :suny_id
 			returning user_info into :user_info";
 		$update_stmt = oci_parse($this->db,$update_qry);
 		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
-		$json = json_encode($data);
 		oci_bind_by_name($update_stmt,":suny_id", $this->req[0]);	
 		oci_bind_by_name($update_stmt,":user_info", $clob, -1, OCI_B_CLOB);
         $r = oci_execute($update_stmt,OCI_NO_AUTO_COMMIT);
-		$clob->save($json);
+		$clob->save(json_encode($data));
 		oci_commit($this->db);
 		oci_free_statement($update_stmt);
 		return;
@@ -142,6 +141,7 @@ class User extends HRForms2 {
 					if ($user['USER_INFO'] != '' && $user['USER_INFO'] != '{}') { // user has user_info
 						$this->_arr = json_decode($user['USER_INFO'], true);
 						$this->_arr['REFRESH_DATE'] = $user['REFRESH_DATE'];
+						$this->_arr['CACHED_DATA'] = true;
 					} else { // user does not have user_info
 						if ($end_diff > 259200) { // user ended more than 6 months ago
 								if (!$this->retJSON) return;
@@ -161,6 +161,7 @@ class User extends HRForms2 {
 								if (!isset($this->_arr['SUNY_ID'])) $this->_arr['SUNY_ID'] = $this->_arr['SUNYHR_SUNY_ID'];
 								$this->updateUserInfo($this->_arr);
 								$this->_arr['REFRESH_DATE'] = date('d-M-y h:i:s A', time());
+								$this->_arr['CACHED_DATA'] = false;
 							}
 						}
 					}
@@ -198,10 +199,12 @@ class User extends HRForms2 {
 							if (!isset($this->_arr['SUNY_ID'])) $this->_arr['SUNY_ID'] = $this->_arr['SUNYHR_SUNY_ID'];
 							$a = $this->updateUserInfo($this->_arr);
 							$this->_arr['REFRESH_DATE'] = date('d-M-y h:i:s A', time());
+							$this->_arr['CACHED_DATA'] = false;
 						}
 					} else { // user_info is "fresh"
 						$this->_arr = json_decode($user['USER_INFO'], true);
 						$this->_arr['REFRESH_DATE'] = $user['REFRESH_DATE'];
+						$this->_arr['CACHED_DATA'] = true;
 					}
 				}
 			}
