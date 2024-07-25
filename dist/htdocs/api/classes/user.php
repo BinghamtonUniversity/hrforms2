@@ -84,7 +84,7 @@ class User extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		if (!isset($this->req[0])) {
+		if (!isset($this->req[0])) { // get all users
 			$qry = "select u.suny_id, p.*,
 				u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date,
 				to_char(u.refresh_date,'dd-MON-yy hh:mi:ss AM') as refresh_date,
@@ -105,7 +105,7 @@ class User extends HRForms2 {
 			oci_free_statement($stmt);
 			$this->returnData = $this->_arr;
 			if ($this->retJSON) $this->toJSON($this->returnData);
-		} else {
+		} else { //get one user
 			$qry = "select suny_id, to_char(end_date,'DD-MON-YYYY HH24:MI') as end_date,
 				to_char(refresh_date,'DD-MON-YYYY HH:MI:SS AM') as refresh_date, user_info, user_options
 				from HRFORMS2_USERS u where suny_id = :suny_id";
@@ -139,7 +139,7 @@ class User extends HRForms2 {
 
 				// User is Inactive/Ended
 				if ($end_diff > 0) {
-					if ($user['USER_INFO']) { // user has user_info
+					if ($user['USER_INFO'] != '' && $user['USER_INFO'] != '{}') { // user has user_info
 						$this->_arr = json_decode($user['USER_INFO'], true);
 						$this->_arr['REFRESH_DATE'] = $user['REFRESH_DATE'];
 					} else { // user does not have user_info
@@ -174,7 +174,7 @@ class User extends HRForms2 {
 					if ($user['REFRESH_DATE']) {
 						$diff = $refresh_date->diff($now);
 						$refresh_diff = ($diff->invert == 1)?$diff->days*-1:$diff->days;
-						if ($user['USER_INFO'] == "") $refresh_diff = INF;
+						if ($user['USER_INFO'] == "" || $user['USER_INFO'] == "{}") $refresh_diff = INF;
 					}
 	
 					if ($refresh_diff > $settings['general']['userRefresh']) { // user_info is "stale" or missing
