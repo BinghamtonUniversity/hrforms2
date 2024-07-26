@@ -56,8 +56,10 @@ class User extends HRForms2 {
 		unset($data['REFRESH_DATE']);
 		// Add SUNY_ID if not set
 		if (!isset($data['SUNY_ID'])) $data['SUNY_ID'] = $data['SUNYHR_SUNY_ID'];
+		// must use: user_info = '{}' instead of user_info = EMPTY_CLOB(); causes TWO TASK error on server.
+		// local does not work with user_info = '{}'; wants user_info = EMPTY_CLOB()
 		$update_qry = "update HRFORMS2_USERS 
-			set refresh_date = sysdate, user_info = EMPTY_CLOB() 
+			set refresh_date = sysdate, user_info = '{}' 
 			where suny_id = :suny_id
 			returning user_info into :user_info";
 		$update_stmt = oci_parse($this->db,$update_qry);
