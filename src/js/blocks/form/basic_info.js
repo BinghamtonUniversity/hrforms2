@@ -596,8 +596,9 @@ function FormActionsWrapper({payroll}) {
 
     useEffect(()=>setFilter((watchRoleType=="New Employee")?"100":(watchRoleType=="New Role")?"010":"001"),[watchRoleType]);
     
-    if (!paytrans.data) return <Loading type="alert">Loading Form Actions...</Loading>;
-    if (paytrans.error) return <Loading type="alert" isError>Error Loading Form Actions</Loading>;
+    if (paytrans.isError) return <Loading type="alert" isError>Error Loading Form Actions</Loading>;
+    if (paytrans.isLoading) return <Loading type="alert">Loading Form Actions...</Loading>;
+    if (!paytrans.data) return <Loading type="alert" isError>Error Loading Form Actions</Loading>;
     return (
         <article className="mt-3">
             <Row as="header">
