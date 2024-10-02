@@ -14,7 +14,7 @@ export default function AppNav() {
     return (
         <header>
             <Navbar bg="main" variant="dark" expand="lg" className="mb-4 shadow" fixed="top" collapseOnSelect={true}>
-                <Navbar.Brand href="#home">HR Forms 2</Navbar.Brand>
+                <Navbar.Brand href="/">HR Forms 2</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav" className="justify-content-end">
                     <Nav>
