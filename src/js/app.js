@@ -148,6 +148,7 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
             <AppHotKeys/>
             <Suspense fallback={null}>
                 <Container as="main" fluid>
+                    <NonProductionAlert/>
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
                         {(userData && OVR_SUNY_ID) && <ImpersonationAlert {...userData}/>}
                         <Switch>
@@ -221,6 +222,16 @@ export function ErrorFallback({error,componentStack,resetErrorBoundary}) {
                     <Button onClick={reset} variant="danger">Reset</Button>
                 </>
             }
+        </Alert>
+    );
+}
+
+function NonProductionAlert() {
+    const { INSTANCE } = useAuthContext();
+    if (INSTANCE != 'PROD')
+    return (
+        <Alert variant="danger">
+            <Icon icon="mdi:alert" className="iconify-inline"/><strong>Attention!</strong> you are currently in the <strong>{INSTANCE}</strong> instance.  This is a non-production instance used for testing and training only.
         </Alert>
     );
 }
