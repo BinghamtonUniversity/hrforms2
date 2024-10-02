@@ -5,6 +5,7 @@ import htmr from "htmr";
 import { useSettingsContext } from "../app";
 import { t } from "../config/text";
 import useNewsQueries from "../queries/news";
+import { Icon } from "@iconify/react/dist/iconify.js";
 
 export function News() {
     const {general} = useSettingsContext();
@@ -38,7 +39,7 @@ export function News() {
         if (!news.data.NEWS_TEXT) return null;
         return (
             <Alert variant="light" onClose={dismissNews} dismissible={general.hideNews}>
-                <Alert.Heading>{t('home.news.heading')}</Alert.Heading>
+                <Alert.Heading> <Icon icon="mdi:newspaper" className="iconify-inline"/>{t('home.news.heading')}</Alert.Heading>
                 {htmr(news.data.NEWS_TEXT)}
             </Alert>        
         );

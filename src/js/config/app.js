@@ -70,6 +70,7 @@ export const icons = [
     "mdi:loading",
     "mdi:magnify",
     "mdi:minus",
+    "mdi:newspaper",
     "mdi:pencil",
     "mdi:playlist-plus",
     "mdi:plus",
