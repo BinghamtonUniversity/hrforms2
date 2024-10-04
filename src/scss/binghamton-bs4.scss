@@ -10,6 +10,7 @@ $main:#004333;
 //$nav:rgba($main,.9);
 $accent: #6BC04B;
 $accent2: #90669c;
+$warning2: #ff6600;
 $light:#669c8e;
 $white:#fff;
 
@@ -21,6 +22,7 @@ $theme-colors: (
   "white":$white,
   "accent":$accent,
   "accent2":$accent2,
+  "warning2":$warning2,
   "light":$light,
   "primary":scale-color($primary,$lightness:$pct*-1),
   "danger":scale-color($danger,$lightness:$pct*-1),
