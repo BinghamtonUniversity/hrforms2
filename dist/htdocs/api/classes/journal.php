@@ -195,6 +195,7 @@ class Journal extends HRForms2 {
             SUNY_ID = :suny_id,
             COMMENTS = EMPTY_CLOB()
             where ".$this->k['id']." = :id
+            and sequence = :seq
             and STATUS = :old_status
             returning COMMENTS into :comments";
         $stmt = oci_parse($this->db,$qry);
