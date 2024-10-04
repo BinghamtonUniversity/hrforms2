@@ -163,7 +163,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     const [redirect,setRedirect] = useState('');
 
     const methods = useForm({
-        mode:'onSubmit',
+        mode:'onBlur',
         reValidateMode:'onChange',
         defaultValues:Object.assign({"reqId":reqId},defaultVals,data)
     });
@@ -220,9 +220,10 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     }
     const history = useHistory();
     const handleReset = () => {
+        methods.clearErrors();
         methods.reset(Object.assign({"reqId":reqId},defaultVals,data));
         setActiveTab('information');
-        setLockTabs(true);
+        handleLockTabs(data);
         if (reset) history.push('/request/');
     }
     const handleSave = action => {
