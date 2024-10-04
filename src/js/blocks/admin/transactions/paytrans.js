@@ -510,7 +510,7 @@ function PayTransInfoTab({selectedRow,payrollcodes,formcodes,actioncodes,transac
 function PayTransTabs({selectedTabs}) {
     const { setValue } = useFormContext();
 
-    const [tabsSelected,setTabsSelected] = useState(selectedTabs);
+    const [tabsSelected,setTabsSelected] = useState(selectedTabs||[]);
     const [tabsExpanded,setTabsExpanded] = useState(['person','employment']);
 
     const handleCheck = useCallback(checked=>{
