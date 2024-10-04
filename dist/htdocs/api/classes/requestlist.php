@@ -115,7 +115,7 @@ class RequestList extends HRForms2 {
 				break;
 			case "archived":
 				$qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id,
-				 to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
+				to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.request_data.lineNumber, r.request_data.reqBudgetTitle.title,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
