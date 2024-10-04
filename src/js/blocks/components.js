@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Button, Modal, ListGroup, NavDropdown, Form, OverlayTrigger, Popover, Badge } from "react-bootstrap";
+import { Alert, Button, Modal, ListGroup, NavDropdown, Form, OverlayTrigger, Popover, Badge, Overlay } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { parse, format } from "date-fns";
 import { invoke, get, capitalize, isDate } from "lodash";
@@ -161,16 +161,23 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
     return (
         <SettingsContext.Consumer>
         {settings=>{
+            // check number of drafts.  If over limit disabled New option.
+            let overLimit = true;
+            if (settings.general.draftLimit == 0) { // draft limit disabled via settings
+                overLimit = false;
+            } else {
+                overLimit = get(counts.data,`${menu}.drafts.count`,settings.general.draftLimit) >= settings.general.draftLimit;
+            }
             const single = menu.slice(0,-1);
             let linkTo = `/${single}/`;
             if (location.pathname.startsWith(linkTo)) linkTo += 'new';
             const menuItems = Object.keys(settings[menu].menu).sort((a,b) => parseInt(settings[menu].menu[a].order,10)>parseInt(settings['forms'].menu[b].order,10)?1:parseInt(settings[menu].menu[a].order,10)==parseInt(settings[menu].menu[b].order,10)?0:-1);
             return (
                 <>
-                    {(showNew && showOn=='home') && <Link key={`${menu}.new`} to={`/${single}/`} component={DashBoardListComponent}><span className="font-italic">New {capitalize(single)}</span></Link> }
+                    {(showNew && showOn=='home') && <Link key={`${menu}.new`} to={`/${single}/`} component={DashBoardListComponent} disabled={overLimit}><span className="font-italic">New {capitalize(single)}</span> {counts.isSuccess&&overLimit && <small className="text-danger"><Icon icon="mdi:alert" className="iconify-inline" style={{top:'-1px'}}/>draft limit exceeded</small>}</Link> }
                     {(showNew && showOn=='menu') && 
                         <>
-                            <NavDropdown.Item as={Link} to={linkTo}>New {capitalize(single)}</NavDropdown.Item>
+                            <NavDropdown.Item as={Link} to={linkTo} disabled={overLimit}>New {capitalize(single)}</NavDropdown.Item>
                             <NavDropdown.Divider/>
 
                         </>
@@ -184,7 +191,13 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
                         const show = get(settings,`${key}.showOn${capitalize(showOn)}`,false);
                         if (!show) return null;
                         const cnt = get(counts.data,`${menu}.${l}.count`,0);
-                        if (showOn == 'home') return <Link key={key} className="d-flex justify-content-between" to={`/${single}/list/${l}`} component={DashBoardListComponent}><span>{title}</span>{cnt}</Link>;
+                        const age = get(counts.data,`${menu}.${l}.age`,0);
+                        const ageClass = {home:'',homeIcon:''};
+                        /*TBD: if (age > 90) {
+                            ageClass['home'] = 'list-group-item-danger'
+                            ageClass['homeIcon'] = <><Icon icon="mdi:alert" className="iconify-inline"/>{' '}</>;
+                        }*/
+                        if (showOn == 'home') return <Link key={key} className={`d-flex justify-content-between ${ageClass.home}`} to={`/${single}/list/${l}`} component={DashBoardListComponent}><span>{ageClass.homeIcon}{title}</span>{cnt}</Link>;
                         if (showOn == 'menu') return <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`}>{title} {cnt!=null && <span>({cnt})</span>}</NavDropdown.Item>;
                     })}
                     
@@ -196,7 +209,7 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
 });
 
 const DashBoardListComponent = props => {
-    return <ListGroup.Item className={props.className} href={props.href} action>{props.children}</ListGroup.Item>;
+    return <ListGroup.Item className={props.className} href={props.href} action disabled={props.disabled}>{props.children}</ListGroup.Item>;
 }
 
 function errorToast(message) {
