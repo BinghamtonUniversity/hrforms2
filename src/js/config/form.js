@@ -3,6 +3,7 @@ import React, { useContext } from "react";
 import usePersonQueries from "../queries/person"
 import useEmploymentQueries from "../queries/employment";
 import { isValid } from "date-fns";
+import { get, set, invoke } from "lodash";
 
 /** CONTEXT */
 export const HRFormContext = React.createContext();
@@ -39,6 +40,53 @@ const allTabs = [
     {value:'review',label:'Review'}
 ];
 export {allTabs}; //used on paytrans
+
+/** Required Fields */
+const requiredFields = {
+    "person.information.LEGAL_FIRST_NAME":v=>!!v||'First Name is required',
+    "person.information.LEGAL_LAST_NAME":v=>!!v||'Last Name is required',
+    "comment":v=>!!v||'Comment is required',
+}
+
+const arrayFields = {
+    "person.directory.phone": frmData => {
+        return (get(frmData,'person.directory.phone',[]).length > 0) ? true : 'At least one phone number is required'
+    },
+    "person.directory.email": frmData => {
+        //EMAIL_TYPE and EMAIL_ADDRESS are '' while entering
+        const test = get(frmData,'person.directory.email').some(v => v?.EMAIL_TYPE=='HOME');
+        return (!test) ? 'Home email is required' : true;
+    }
+}
+
+export const checkFields = [...Object.keys(requiredFields),...Object.keys(arrayFields)];
+
+export async function validateForm(frmData,context,options) {
+    //console.log(frmData,options);
+    const errors = {};
+
+    for (const field of options.names) {
+        const test = invoke(requiredFields,field,get(frmData,field,''));
+        if (test === undefined) continue;
+        if (test !== true) set(errors,field,{type:'custom',message:test});
+    };
+    
+    const arrayFieldKeys = Object.keys(arrayFields);
+    arrayFieldKeys.forEach(key => {
+        // Do not validate if we are in the arrayField - will cause errors when saving the arrayField block.
+        if (!(options.names.length == 1 && arrayFieldKeys.includes(options.names[0]))) {
+            if (options.names.filter(n => n.startsWith(key)).length > 0) {
+                const test = arrayFields[key](frmData);
+                if (test !== true) set(errors,key,{type:'custom',message:test});
+            }
+        }
+    });
+
+    return {
+        values:{},
+        errors:errors
+    }
+}
 
 /** Default Form Values */
 const defaultFormActions = {
@@ -228,7 +276,8 @@ const initFormValues = {
     lastJournal:{
         STATUS:""
     },
-    comment:""
+    comment:"",
+    tabsVisited:[]
 };
 export {initFormValues};
 
