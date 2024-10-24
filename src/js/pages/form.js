@@ -369,13 +369,13 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     }
     const history = useHistory();
     const handleReset = () => {
-        if (!isNew&&isDraft) return; // cannot reset a saved form?
         console.debug('Resetting Form');
         /* TODO: maybe?
         // all queries used in the form need to be reset?
         queryclient.resetQueries('personLookup');
         queryclient.resetQueries('paytrans');
         */
+        methods.clearErrors();
         methods.reset(defaultVals);
         setTabList(allTabs.filter(t=>t.value=='basic-info'));
         setInfoComplete(false);
