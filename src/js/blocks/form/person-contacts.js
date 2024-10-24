@@ -18,7 +18,7 @@ const phoneTypes = [
 ];
 
 export default function PersonContacts() {
-    const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext();
+    const { control, getValues, setValue, clearErrors, setError, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
         name:name
@@ -26,7 +26,7 @@ export default function PersonContacts() {
 
     const watchContact = useWatch({name:name,control});
 
-    const { canEdit, activeNav } = useHRFormContext();
+    const { canEdit, activeNav, setLockTabs } = useHRFormContext();
 
     const [isNew,setIsNew] = useState(false);
     const [editIndex,setEditIndex] = useState();
@@ -59,48 +59,60 @@ export default function PersonContacts() {
         });
         setEditIndex(fields.length);
         setIsNew(true);
+        setLockTabs(true);
     }
     const handleEdit = index => {
         setEditIndex(index);
         setEditValues(cloneDeep(getValues(`${name}.${index}`)));
         setIsNew(false); // can only edit existing
+        setLockTabs(true);
     }
     const handleCancel = index => {
-        const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
-        clearErrors(checkFields);
+        clearErrors(`${name}.${index}`);
         update(index,editValues);
         setEditValues(undefined);
         setEditIndex(undefined);
+        setLockTabs(false);
     }
     const handleSave = index => {
-        const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
-        trigger(checkFields).then(valid => {
-            if (!valid) {
-                console.error('Errors!',errors);
-            } else {
-                if (watchContact.length > 1) {
-                    const m = watchContact.map(c=>c['isPrimary']).filter(v=>v=='Y');
-                    if (m.length > 1) {
-                        m.forEach((v,i) => {
-                            if (i != index) {
-                                const id = fields[i].id;
-                                console.warn(`Changing Primary for Contact index ${i} (id:${id}) to "no"`);
-                                setValue(`${name}.${i}.isPrimary`,'N');
-                            }
-                        });
-                    }
+        clearErrors(`${name}.${index}`);
+        const arrayData = getValues(`${name}.${index}`);
+        console.debug(arrayData);
+
+        /* Required fields */
+        if (!arrayData?.EMR_CTC_FIRST_NAME) setError(`${name}.${index}.EMR_CTC_FIRST_NAME`,{type:'manual',message:'First Name is required'});
+        if (!arrayData?.EMR_CTC_FIRST_NAME) setError(`${name}.${index}.EMR_CTC_LAST_NAME`,{type:'manual',message:'Last Name is required'});
+        if (!arrayData?.EMR_CTC_RELATIONSHIP?.id) setError(`${name}.${index}.EMR_CTC_RELATIONSHIP.id`,{type:'manual',message:'Relationship is required'});
+
+        if (Object.keys(get(errors,`${name}.${index}`,{})).length > 0) {
+            console.error(errors);
+            return false;
+        } else {
+            if (watchContact.length > 1) {
+                const m = watchContact.map(c=>c['isPrimary']).filter(v=>v=='Y');
+                if (m.length > 1) {
+                    m.forEach((v,i) => {
+                        if (i != index) {
+                            const id = fields[i].id;
+                            console.warn(`Changing Primary for Contact index ${i} (id:${id}) to "no"`);
+                            setValue(`${name}.${i}.isPrimary`,'N');
+                        }
+                    });
                 }
-                setEditIndex(undefined);
-                setEditValues(undefined);
-                setIsNew(false);
             }
-        }).catch(e=>console.error(e));
+            setEditIndex(undefined);
+            setEditValues(undefined);
+            setIsNew(false);
+            setLockTabs(false);
+        }
     }
     const handleRemove = index => {
+        clearErrors(`${name}.${index}`);
         remove(index);
         setEditIndex(undefined);
         setEditValues(undefined);
         setIsNew(false);
+        setLockTabs(false);
     }
 
     const handleSelectChange = (e,field) => {
@@ -160,20 +172,18 @@ export default function PersonContacts() {
                                 name={`${name}.${index}.EMR_CTC_FIRST_NAME`}
                                 defaultValue=""
                                 control={control}
-                                rules={{required:{value:true,message:'First Name is Required'}}}
                                 render={({field}) => <Form.Control {...field} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}/>}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].name.first.message`,'')}</Form.Control.Feedback>
+                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].EMR_CTC_FIRST_NAME.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col xs={6} md={4}>
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_LAST_NAME`}
                                 defaultValue=""
                                 control={control}
-                                rules={{required:{value:true,message:'Last Name is Required'}}}
                                 render={({field}) => <Form.Control {...field} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}/>}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].name.last.message`,'')}</Form.Control.Feedback>
+                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].EMR_CTC_LAST_NAME.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row} className="mb-1">
@@ -296,7 +306,6 @@ export default function PersonContacts() {
                                     name={`${name}.${index}.EMR_CTC_RELATIONSHIP.id`}
                                     defaultValue=""
                                     control={control}
-                                    rules={{required:{value:true,message:'Relationship is Required'}}}
                                     render={({field}) => (
                                         <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}>
                                             <option></option>
@@ -305,7 +314,7 @@ export default function PersonContacts() {
                                     )}
                                 />
                             }
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].relationship.message`,'')}</Form.Control.Feedback>
+                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].EMR_CTC_RELATIONSHIP.id.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
                     {canEdit && 
