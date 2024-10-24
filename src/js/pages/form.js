@@ -8,7 +8,7 @@ import { Loading, AppButton, DateFormat } from "../blocks/components";
 import { get, set, has, zip, cloneDeep, merge, difference } from "lodash";
 import useFormQueries from "../queries/forms";
 import { flattenObject } from "../utility";
-import { allTabs, fetchFormData, initFormValues, HRFormContext } from "../config/form";
+import { allTabs, fetchFormData, initFormValues, HRFormContext, validateForm, checkFields } from "../config/form";
 import { t } from "../config/text";
 import { toast } from "react-toastify";
 import { Helmet } from "react-helmet";
@@ -193,6 +193,7 @@ function BlockNav({formId,when,isDraft}) {
 function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInfoComplete,reset}) {
     //TODO: probably need to change to useReducer?
     const [tabList,setTabList] = useState(allTabs.filter(t=>t.value=='basic-info'));
+    const [tabsVisited,setTabsVisited] = useState(['basic-info']);
 
     const [activeTab,setActiveTab] = useState('basic-info');
     const [activeNav,setActiveNav] = useState('');
@@ -205,7 +206,12 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const [dataLoadError,setDataLoadError] = useState(undefined);
 
     const defaultVals = merge({},initFormValues,{formId:formId});
-    const methods = useForm({defaultValues: merge({},defaultVals,data)});
+    const methods = useForm({
+        mode:'onBlur',
+        reValidateMode:'onChange',
+        defaultValues: merge({},defaultVals,data),
+        resolver: validateForm
+    });
     const watchFormActions = useWatch({name:'formActions',control:methods.control});
     const watchIds = useWatch({name:['person.information.HR_PERSON_ID','person.information.SUNY_ID','person.information.LOCAL_CAMPUS_ID'],control:methods.control});
 
@@ -240,24 +246,37 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     }
 
     const navigate = tab => {
+        // Change top level tab; e.g. Person, Employment, Commments, etc.
         //TODO: can we maintain last tab/sub-tab?  or should we use routing? so that it remembers when you switch
         const idx = tabList.findIndex(t=>t.value==tab);
         let aNav = '';
         if (Object.keys(tabList[idx]).includes('children')) aNav = tabList[idx].children[0].value;
+        setTabsVisited(tabsVisited => Array.from(new Set([...tabsVisited,aNav||tab])));
         setActiveNav(aNav);
         setActiveTab(tab);
     }
-    const navigate2 = nav => { setActiveNav(nav); }
+    const navigate2 = nav => { 
+        // Change sub-tab
+        setTabsVisited(tabsVisited => Array.from(new Set([...tabsVisited,nav])));
+        setActiveNav(nav);    
+    }
 
     const handleSubmit = data => {
-        console.debug(data);
-        //setHasErrors(false);
+        setHasErrors(false);
+        if (!data.action) return; // just validating the form, not saving
+        console.debug('Submitting Form Data:',data);
         const action = data.action;
-        if (!action) return;
         setIsSaving(true);
         setIsBlocking(true); //TODO: when true should be full block with no prompt?
         setLockTabs(true);
         //TODO: switch? save, submit, appove, reject?
+        if (action == 'validate') {
+            console.log('validate');
+            setIsSaving(false);
+            setIsBlocking(false);
+            setLockTabs(false);
+            return;
+        }
         if (isDraft) {
             if (isNew || data.action=='submit') {
                 // submit draft form
@@ -337,8 +356,16 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             }
         }
     }
-    const handleError = error => {
-        console.error(error);
+    const handleError = errors => {
+        const data = methods.getValues();
+        // clear errors and call handleSubmit if only saving
+        if (data.action == 'save') {
+            setHasErrors(false);
+            handleSubmit(data);
+        } else {
+            setHasErrors(true);
+            console.error('Form Errors:',errors);
+        }
     }
     const history = useHistory();
     const handleReset = () => {
@@ -368,7 +395,6 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         });
     }
     const handleNext = tablist => {
-        //TODO: should validate before?
         const tabs = (tablist instanceof Array)?tablist:tabList;
         const aTabIdx = tabs.findIndex(t=>t.value==activeTab);
         const tabListLen = tabs.length;
@@ -385,8 +411,9 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         const nextTab = get(tabs,`${nextTabIdx}.value`);
         const nextNav = get(tabs,`${nextTabIdx}.children.${nextNavIdx}.value`);
         if (!nextTab) return;
+        setTabsVisited(tabsVisited => Array.from(new Set([...tabsVisited,nextNav||nextTab])));
         setActiveTab(nextTab);
-        setActiveNav(nextNav);
+        setActiveNav(nextNav);    
     }
     const handleSave = action => {
         methods.setValue('action',action);
@@ -499,12 +526,16 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                                     difference(Object.keys(initFormValues.employment.appointment),['facultyDetails','studentDetails']).forEach(f=>{
                                         methods.setValue(`employment.appointment.${f}`,initFormValues.employment.appointment[f]);
                                     });
+                                } else {
+                                    methods.setValue(objPath,Object.assign({},get(defaultVals,objPath),r.data));
                                 }
                                 break;
                             case "employment-salary":
                                 if (role_type == 'New Role') {
                                     // Reset all values to default
                                     Object.keys(initFormValues.employment.salary).forEach(f => methods.setValue(`employment.salary.${f}`,initFormValues.employment.salary[f]));
+                                } else {
+                                    methods.setValue(objPath,Object.assign({},get(defaultVals,objPath),r.data));
                                 }
                                 break;    
                             case "employment-pay":
@@ -538,6 +569,18 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     useEffect(()=>!isNew && handleTabs(data.formActions.TABS),[formId]);
     useEffect(()=>(isNew&&!data.hasOwnProperty('formId'))&&handleReset(),[isNew,reset,data]); //reset form when "New"
     useEffect(()=>setIsBlocking(methods.formState.isDirty),[methods.formState.isDirty]);
+    useEffect(()=>{
+        // get value and merge
+        const merged = Array.from(new Set(tabsVisited.concat(tabsVisited)));
+        methods.setValue('tabsVisited',merged);
+    },[tabsVisited]);
+    useEffect(()=>{
+        // NOTE: for review tab get validated fields and pass as array
+        // for other tabs let normal validation occur.  It operates off mounted fields.
+        // If review has been visited then always validate all fields
+        const fields = (activeTab == 'review'||tabsVisited.includes('review'))?checkFields:undefined;
+        methods.trigger(fields);
+    },[methods,activeTab,activeNav]);
 
     if (redirect) return <Redirect to={redirect}/>;
     if (dataLoadError) return <ErrorFallback error={dataLoadError}/>;
@@ -548,7 +591,9 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                     formId:formId,
                     createdBy:data.createdBy,
                     tabs:tabList,
+                    tabsVisited:tabsVisited,
                     handleTabs:handleTabs,
+                    setLockTabs:setLockTabs,
                     activeNav:activeNav,
                     isDraft:isDraft,
                     isNew:isNew,
@@ -558,11 +603,13 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                     formType:formType,
                     sunyId:methods.getValues('person.information.SUNY_ID'),
                     hrPersonId:methods.getValues('person.information.HR_PERSON_ID'),
+                    setHasErrors:setHasErrors,
                     isTest:methods.getValues('formActions.formCode.id')=='TEST',
                     testHighlight:testHighlight,
                     showInTest:showInTest
                 }}>
                     <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)} onReset={handleReset}>
+                        <FormErrorsAlert/>
                         <Tabs activeKey={activeTab} onSelect={navigate} id="hr-forms-tabs">
                             {tabList.map(t => (
                                 <Tab key={t.value} eventKey={t.value} title={t.label} disabled={lockTabs}>
@@ -572,7 +619,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                                                 <Nav activeKey={activeNav} onSelect={navigate2}>
                                                     {t.children.map(s=>(
                                                         <Nav.Item key={s.value}>
-                                                            {s.value==activeNav?
+                                                            {(s.value==activeNav||lockTabs)?
                                                                 <p className="px-2 pt-2 pb-1 m-0 active">{s.label}</p>:
                                                                 <Nav.Link eventKey={s.value} className="px-2 pt-2 pb-1">{s.label}</Nav.Link>
                                                             }
@@ -601,19 +648,20 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
 
                                                 {activeTab!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}                                                
                                                 
-                                                {activeTab=='review'&&isDraft&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={hasErrors||isSaving}>Submit</AppButton>}
+                                                {activeTab=='review'&&isDraft&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={!methods.formState.isValid||hasErrors||isSaving}>Submit</AppButton>}
+                                                
                                                 {(activeTab=='review'&&!isDraft&&canEdit&&get(data,'lastJournal.STATUS')!='R') && 
                                                     <>
-                                                        <AppButton format="reject" id="reject" onClick={()=>handleSave('reject')} disabled={hasErrors||isSaving}>Reject</AppButton>
+                                                        <AppButton format="reject" id="reject" onClick={()=>handleSave('reject')} disabled={!methods.formState.isValid||hasErrors||isSaving}>Reject</AppButton>
                                                         {(get(data,'lastJournal.STATUS')=='PF')?
-                                                            <AppButton format="approve" id="final" onClick={()=>handleSave('final')} disabled={hasErrors||isSaving}>Final Approve</AppButton>
+                                                            <AppButton format="approve" id="final" onClick={()=>handleSave('final')} disabled={!methods.formState.isValid||hasErrors||isSaving}>Final Approve</AppButton>
                                                         :
-                                                            <AppButton format="approve" id="approve" onClick={()=>handleSave('approve')} disabled={hasErrors||isSaving}>Approve</AppButton>
+                                                            <AppButton format="approve" id="approve" onClick={()=>handleSave('approve')} disabled={!methods.formState.isValid||hasErrors||isSaving}>Approve</AppButton>
                                                         }
                                                     </>
                                                 }
                                                 {(activeTab=='review'&&get(data,'lastJournal.STATUS')=='R'&&forms.menu.rejections.resubmit&&canEdit)&&
-                                                    <AppButton format="approve" id="resubmit" onClick={()=>handleSave('resubmit')} disabled={hasErrors||isSaving}>Resubmit</AppButton>
+                                                    <AppButton format="approve" id="resubmit" onClick={()=>handleSave('resubmit')} disabled={!methods.formState.isValid||hasErrors||isSaving}>Resubmit</AppButton>
                                                 }
                                             </Col>
                                         </Row>
@@ -634,6 +682,22 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                 </HRFormContext.Provider>
             </FormProvider>
         </>
+    );
+}
+
+function FormErrorsAlert() {
+    const { formState: { errors } } = useFormContext();
+    if (Object.keys(errors).length < 1) return null;
+    return (
+        <Alert variant="danger">
+            <Alert.Heading>Form Errors:</Alert.Heading>
+            <ul>
+                {Object.entries(flattenObject(errors)).map(error => {
+                    if (error[0].endsWith('.message')) return <li key={error[0]}>{error[1]}</li>;
+                    return null;
+                })}
+            </ul>
+        </Alert>
     );
 }
 
