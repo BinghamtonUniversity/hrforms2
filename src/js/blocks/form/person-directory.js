@@ -7,7 +7,7 @@ import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css'
-import { HRFormContext, useHRFormContext } from "../../config/form";
+import { useHRFormContext } from "../../config/form";
 import useListsQueries from "../../queries/lists";
 
 //TODO: make address form a component and pass stuff?
@@ -37,14 +37,14 @@ export default function PersonDirectory() {
 
 function PersonDirectoryAddresses() {
     const name = 'person.directory.address';
-    const { control, getValues, setValue, trigger, clearErrors, formState: { errors } } = useFormContext();
+    const { control, getValues, setValue, setError, clearErrors, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
         name:name
     });
     const watchAddress = useWatch({name:name,control});
 
-    const { canEdit, activeNav } = useHRFormContext();
+    const { canEdit, activeNav, setLockTabs } = useHRFormContext();
 
     const [isNew,setIsNew] = useState(false);
     const [editIndex,setEditIndex] = useState();
@@ -102,36 +102,58 @@ function PersonDirectoryAddresses() {
         });
         setEditIndex(fields.length);
         setIsNew(true);
+        setLockTabs(true);
+    }
+    const handleTypeChange = (e,field,index) => {
+        field.onChange(e);
+        clearErrors(`${name}.${index}`);
     }
     const handleEdit = index => {
         setEditIndex(index);
         setEditValues(cloneDeep(getValues(`${name}.${index}`)));
         setIsNew(false); // can only edit existing
+        setLockTabs(true);
     }
     const handleCancel = index => {
-        const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
-        clearErrors(checkFields);
+        clearErrors(`${name}.${index}`);
         update(index,editValues);
         setEditValues(undefined);
         setEditIndex(undefined);
+        setLockTabs(false);
     }
     const handleSave = index => {
-        const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
-        trigger(checkFields).then(valid => {
-            if (!valid) {
-                console.error('Errors!',errors);
-            } else {
-                setEditIndex(undefined);
-                setEditValues(undefined);
-                setIsNew(false);    
-            }
-        }).catch(e=>console.error(e));
+        clearErrors(`${name}.${index}`);
+        const arrayData = getValues(`${name}.${index}`);
+        console.debug(arrayData);
+
+        /* Required fields */
+        if (testField(index,'line1')&&!arrayData?.ADDRESS_1) setError(`${name}.${index}.ADDRESS_1`,{type:'manual',message:'Address Line 1 is required'});
+        if (testField(index,'department')&&!arrayData?.ADDRESS_1) setError(`${name}.${index}.ADDRESS_1`,{type:'manual',message:'Department is required'});
+        if (testField(index,'building')&&!arrayData?.ADDRESS_2) setError(`${name}.${index}.ADDRESS_2`,{type:'manual',message:'Building is required'});
+        if (testField(index,'city')) {
+            if(!arrayData?.ADDRESS_CITY) setError(`${name}.${index}.ADDRESS_CITY`,{type:'manual',message:'City is required'});
+            if(!arrayData?.STATE_CODE) setError(`${name}.${index}.STATE_CODE`,{type:'manual',message:'State is required'});
+            if(!arrayData?.ADDRESS_POSTAL_CODE) setError(`${name}.${index}.ADDRESS_POSTAL_CODE`,{type:'manual',message:'Zip Code is required'});
+        }
+        if (!arrayData?.effDate) setError(`${name}.${index}.effDate`,{type:'manual',message:'Effective Date is required'});
+
+        if (Object.keys(get(errors,`${name}.${index}`,{})).length > 0) {
+            console.error(errors);
+            return false;
+        } else {
+            setEditIndex(undefined);
+            setEditValues(undefined);
+            setIsNew(false);
+            setLockTabs(false);
+        }
     }
     const handleRemove = index => {
+        clearErrors(`${name}.${index}`);
         remove(index);
         setEditIndex(undefined);
         setEditValues(undefined);
         setIsNew(false);
+        setLockTabs(false);
     }
     const handleEscape = (e,index) => {
         if (e.key == 'Escape' && editIndex != undefined) handleCancel(index);
@@ -159,7 +181,7 @@ function PersonDirectoryAddresses() {
                                     control={control}
                                     render={({field}) => addressCodes.data.map(c => {
                                         if (!c.show) return null;
-                                        return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit}/>;
+                                        return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit} onChange={e=>handleTypeChange(e,field,index)}/>;
                                     })}
                                 />
                             }
@@ -172,7 +194,6 @@ function PersonDirectoryAddresses() {
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_1`}
-                                    rules={{required:{value:true,message:'Address Line 1 is Required'}}}
                                     control={control}
                                     render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
                                 />
@@ -199,9 +220,9 @@ function PersonDirectoryAddresses() {
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_1`}
                                     control={control}
-                                    rules={{required:{value:true,message:'Department is Required'}}}
                                     render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'department')} isInvalid={get(errors,field.name,false)}/>}
                                 />
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.ADDRESS_1.message`,'')}</Form.Control.Feedback>
                             </Col>
                             <Col xs="auto">
                                 <Controller
@@ -214,7 +235,6 @@ function PersonDirectoryAddresses() {
                                         </Form.Control>
                                     )}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.ADDRESS_1.message`,'')}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>
                     }
@@ -225,9 +245,9 @@ function PersonDirectoryAddresses() {
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_2`}
                                     control={control}
-                                    rules={{required:{value:true,message:'Building is Required'}}}
                                     render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'building')} isInvalid={get(errors,field.name,false)}/>}
                                 />
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.ADDRESS_2.message`,'')}</Form.Control.Feedback>
                             </Col>
                             <Col xs="auto">
                                 <Controller
@@ -240,7 +260,6 @@ function PersonDirectoryAddresses() {
                                         </Form.Control>
                                     )}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.ADDRESS_2.message`,'')}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>
                     }
@@ -263,7 +282,6 @@ function PersonDirectoryAddresses() {
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_CITY`}
                                     control={control}
-                                    rules={{required:{value:true,message:'City is Required'}}}
                                     render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_CITY.message`,'')}</Form.Control.Feedback>
@@ -272,7 +290,6 @@ function PersonDirectoryAddresses() {
                                 <Controller
                                     name={`${name}.${index}.STATE_CODE`}
                                     control={control}
-                                    rules={{required:{value:true,message:'State is Required'}}}
                                     render={({field}) => <StateSelector field={field} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].STATE_CODE.message`,'')}</Form.Control.Feedback>
@@ -281,7 +298,6 @@ function PersonDirectoryAddresses() {
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_POSTAL_CODE`}
                                     control={control}
-                                    rules={{required:{value:true,message:'Zip Code is Required'}}}
                                     render={({field}) => <Form.Control {...field} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_POSTAL_CODE.message`,'')}</Form.Control.Feedback>
@@ -319,7 +335,7 @@ function PersonDirectoryAddresses() {
 
 function PersonDirectoryPhone() {
     const name = 'person.directory.phone'
-    const { control, getValues, setValue, trigger, clearErrors, formState: { errors } } = useFormContext();
+    const { control, getValues, setValue, setError, clearErrors, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
         name:name
@@ -330,7 +346,7 @@ function PersonDirectoryPhone() {
     const [editIndex,setEditIndex] = useState();
     const [editValues,setEditValues] = useState();
 
-    const { activeNav, canEdit } = useHRFormContext();
+    const { activeNav, canEdit, setLockTabs } = useHRFormContext();
 
     const { getListData } = useListsQueries();
     const phoneTypes = getListData('phoneTypes');
@@ -363,36 +379,51 @@ function PersonDirectoryPhone() {
         });
         setEditIndex(fields.length);
         setIsNew(true);
+        setLockTabs(true);
+    }
+    const handleTypeChange = (e,field,index) => {
+        field.onChange(e);
+        clearErrors(`${name}.${index}`);
     }
     const handleEdit = index => {
         setEditIndex(index);
         setEditValues(cloneDeep(getValues(`${name}.${index}`)));
         setIsNew(false); // can only edit existing
+        setLockTabs(true);
     }
     const handleCancel = index => {
-        const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
-        clearErrors(checkFields);
+        clearErrors(`${name}.${index}`);
         update(index,editValues);
         setEditValues(undefined);
         setEditIndex(undefined);
+        setLockTabs(false);
     }
     const handleSave = index => {
-        const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
-        trigger(checkFields).then(valid => {
-            if (!valid) {
-                console.error('Errors!',errors);
-            } else {
-                setEditIndex(undefined);
-                setEditValues(undefined);
-                setIsNew(false);
-            }
-        }).catch(e=>console.error(e));
+        clearErrors(`${name}.${index}`);
+        console.debug(arrayData);
+
+        /* Required fields */
+        const arrayData = getValues(`${name}.${index}`);
+        if (!arrayData?.PHONE_NUMBER) setError(`${name}.${index}.PHONE_NUMBER`,{type:'manual',message:'Phone Number is required'});
+        if (!arrayData?.effDate) setError(`${name}.${index}.effDate`,{type:'manual',message:'Effective Date is required'});
+
+        if (Object.keys(get(errors,`${name}.${index}`,{})).length > 0) {
+            console.error(errors);
+            return false;
+        } else {
+            setEditIndex(undefined);
+            setEditValues(undefined);
+            setIsNew(false);
+            setLockTabs(false);
+        }
     }
     const handleRemove = index => {
+        clearErrors(`${name}.${index}`);
         remove(index);
         setEditIndex(undefined);
         setEditValues(undefined);
         setIsNew(false);
+        setLockTabs(false);
     }
 
     const handleEscape = (e,index) => {
@@ -422,7 +453,7 @@ function PersonDirectoryPhone() {
                                     control={control}
                                     render={({field}) => phoneTypes.data.map(c => {
                                         if (!c.show) return null;
-                                        return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit}/>;
+                                        return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit} onChange={e=>handleTypeChange(e,field,index)}/>;
                                     })}
                                 />
                             }
@@ -437,7 +468,6 @@ function PersonDirectoryPhone() {
                                     name={`${name}.${index}.PHONE_NUMBER`}
                                     defaultValue=""
                                     control={control}
-                                    rules={{required:{value:true,message:'Phone is Required'}}}
                                     render={({field}) => <PhoneInput 
                                         {...field} 
                                         country={'us'} 
@@ -457,7 +487,6 @@ function PersonDirectoryPhone() {
                                     <Controller
                                         name={`${name}.${index}.effDate`}
                                         control={control}
-                                        rules={{required:{value:true,message:'Effective Date is Required'}}}
                                         render={({field}) => <Form.Control
                                             as={DatePicker}
                                             name={field.name}
@@ -510,14 +539,14 @@ function PersonDirectoryPhone() {
 
 function PersonDirectoryEmail() {
     const name = 'person.directory.email';
-    const { control, getValues, trigger, clearErrors, formState: { errors } } = useFormContext();
-    const { fields, append, remove,  update } = useFieldArray({
+    const { control, getValues, setError, clearErrors, formState: { errors } } = useFormContext();
+    const { fields, append, remove, update } = useFieldArray({
         control:control,
         name:name
     });
     const watchEmail = useWatch({name:name,control});
 
-    const { activeNav, canEdit } = useHRFormContext();
+    const { activeNav, canEdit, setLockTabs } = useHRFormContext();
 
     const [isNew,setIsNew] = useState(false);
     const [editIndex,setEditIndex] = useState();
@@ -542,36 +571,51 @@ function PersonDirectoryEmail() {
         });
         setEditIndex(fields.length);
         setIsNew(true);
+        setLockTabs(true);
+    }
+    const handleTypeChange = (e,field,index) => {
+        field.onChange(e);
+        clearErrors(`${name}.${index}`);
     }
     const handleEdit = index => {
         setEditIndex(index);
         setEditValues(cloneDeep(getValues(`${name}.${index}`)));
         setIsNew(false); // can only edit existing
+        setLockTabs(true);
     }
     const handleCancel = index => {
-        const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
-        clearErrors(checkFields);
+        clearErrors(`${name}.${index}`);
         update(index,editValues);
         setEditValues(undefined);
         setEditIndex(undefined);
+        setLockTabs(false);
     }
     const handleSave = index => {
-        const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
-        trigger(checkFields).then(valid => {
-            if (!valid) {
-                console.error('Errors!',errors);
-            } else {
-                setEditIndex(undefined);
-                setEditValues(undefined);
-                setIsNew(false);
-            }
-        }).catch(e=>console.error(e));
+        clearErrors(`${name}.${index}`);
+        const arrayData = getValues(`${name}.${index}`);
+        console.debug(arrayData);
+
+        /* Required fields */
+        if (!arrayData?.EMAIL_ADDRESS) setError(`${name}.${index}.EMAIL_ADDRESS`,{type:'manual',message:'Email Address is required'});
+        if (!arrayData?.effDate) setError(`${name}.${index}.effDate`,{type:'manual',message:'Effective Date is required'});
+
+        if (Object.keys(get(errors,`${name}.${index}`,{})).length > 0) {
+            console.error(errors);
+            return false;
+        } else {
+            setEditIndex(undefined);
+            setEditValues(undefined);
+            setIsNew(false);
+            setLockTabs(false);
+        }
     }
     const handleRemove = index => {
+        clearErrors(`${name}.${index}`);
         remove(index);
         setEditIndex(undefined);
         setEditValues(undefined);
         setIsNew(false);
+        setLockTabs(false);
     }
 
     const handleEscape = (e,index) => {
@@ -601,7 +645,7 @@ function PersonDirectoryEmail() {
                                     control={control}
                                     render={({field}) => emailTypes.data.map(c => {
                                         if (!c.show) return null;
-                                        return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit}/>;
+                                        return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit} onChange={e=>handleTypeChange(e,field,index)}/>;
                                     })}
                                 />
                             }
@@ -616,7 +660,6 @@ function PersonDirectoryEmail() {
                                     name={`${name}.${index}.EMAIL_ADDRESS`}
                                     defaultValue=""
                                     control={control}
-                                    rules={{required:{value:true,message:'Email is Required'}}}
                                     render={({field}) => <Form.Control
                                         {...field} 
                                         type="email"
@@ -633,7 +676,6 @@ function PersonDirectoryEmail() {
                                         name={`${name}.${index}.effDate`}
                                         defaultValue=""
                                         control={control}
-                                        rules={{required:{value:true,message:'Effective Date is Required'}}}
                                         render={({field}) => <Form.Control
                                             as={DatePicker}
                                             name={field.name}
