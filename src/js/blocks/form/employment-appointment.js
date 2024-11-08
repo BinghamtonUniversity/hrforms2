@@ -17,6 +17,7 @@ export default function EmploymentAppointment() {
     const { control, getValues, setValue } = useFormContext();
     const watchPayroll = useWatch({name:['payroll.PAYROLL_CODE','selectedRow.PAYROLL_AGENCY_CODE'],control:control});
     const watchFaculty = useWatch({name:`${baseName}.DERIVED_FAC_TYPE`,control:control});
+    const watchAdjunct = useWatch({name:`${baseName}.isAdjunct`,control:control});
     const watchTermDuration = useWatch({name:`${baseName}.TERM_DURATION`,control:control,defaultValue:0});
     const watchFields = useWatch({name:[
         'payroll.PAYROLL_CODE',
@@ -82,6 +83,24 @@ export default function EmploymentAppointment() {
                         </Form.Group>
                     }
                     {(watchFaculty=='Y'||showInTest) &&
+                        <>
+                        <Form.Group as={Row} className={testHighlight(watchFaculty=='Y')}>
+                            <Form.Label column md={2}>Adjunct:</Form.Label>
+                            <Col xs="auto">
+                            <Controller
+                                    name={`${baseName}.isAdjunct`}
+                                    defaultValue={false}
+                                    control={control}
+                                    render={({field}) => (
+                                        <>
+                                            <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'} disabled={!canEdit}/>
+                                            <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!='Y'} disabled={!canEdit}/>
+                                        </>
+                                    )}
+                                />
+                            </Col>
+                        </Form.Group>
+
                         <Form.Group as={Row} className={testHighlight(watchFaculty=='Y')}>
                             <Form.Label column md={2}>Tenure Status:</Form.Label>
                             <Col xs="auto">
@@ -103,6 +122,7 @@ export default function EmploymentAppointment() {
                                 }
                             </Col>
                         </Form.Group>
+                        </>
                     }
                     {(displayTermDuration||showInTest) && 
                         <Form.Group as={Row} className={testHighlight(displayTermDuration)}>
@@ -207,7 +227,7 @@ export default function EmploymentAppointment() {
                         </Col>
                     </Form.Group>
 
-                    {(watchFaculty=='Y'||showInTest)&&<FacultyDetails watchFaculty={watchFaculty}/>}
+                    {((watchFaculty=='Y'&&watchAdjunct=='Y')||showInTest)&&<FacultyDetails watchFaculty={watchFaculty} watchAdjunct={watchAdjunct}/>}
 
                     {(watchPayroll[0]=='28029'||showInTest)&&<StudentDetails watchPayroll={watchPayroll} handleSelectChange={handleSelectChange}/>}
                 </article>
@@ -258,7 +278,7 @@ function AppointmentSupervisor() {
     );
 }
 
-function FacultyDetails({watchFaculty}) {
+function FacultyDetails({watchFaculty,watchAdjunct}) {
     const name = `${baseName}.facultyDetails`;
     const { control, setValue } = useFormContext();
     const watchCourses = useWatch({name:[`${name}.fallCourses`,`${name}.springCourses`,],control:control})||0;
@@ -268,7 +288,7 @@ function FacultyDetails({watchFaculty}) {
     return (
         <HRFormContext.Consumer>
             {({testHighlight,canEdit}) => (
-                <section className={`mt-4 ${testHighlight(watchFaculty=='Y')}`}>
+                <section className={`mt-4 ${testHighlight(watchFaculty=='Y'&&watchAdjunct=='Y')}`}>
                     <Row as="header">
                         <Col as="h4">Faculty Details</Col>
                     </Row>

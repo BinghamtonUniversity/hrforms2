@@ -189,6 +189,7 @@ const initFormValues = {
             "SUPERVISOR_NAME": "",
             "REPORTING_DEPARTMENT_CODE": {"id": "", "label": ""},
             "DERIVED_FAC_TYPE": "N",
+            "isAdjunct": "N",
             "supervisor": [],
             "noticeDate": "",
             "contPermDate": "",
