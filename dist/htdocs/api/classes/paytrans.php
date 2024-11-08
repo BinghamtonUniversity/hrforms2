@@ -40,12 +40,13 @@ class PayTrans extends HRForms2 {
 			pt.active,pt.route_by, pt.pr_required, pt.available_for, pt.tabs
 			FROM HRFORMS2_PAYROLL_TRANSACTIONS pt
 			join (select PAYROLL_CODE, PAYROLL_TITLE, PAYROLL_DESCRIPTION from HRFORMS2_PAYROLL_CODES) p on (pt.PAYROLL_CODE = p.PAYROLL_CODE)
-			join (select FORM_CODE, FORM_TITLE, FORM_DESCRIPTION from HRFORMS2_FORM_CODES) f on (pt.FORM_CODE = f.FORM_CODE)
-			left join (select ACTION_CODE, ACTION_TITLE, ACTION_DESCRIPTION from HRFORMS2_ACTION_CODES) a on (pt.ACTION_CODE = a.ACTION_CODE)
-			left join (select TRANSACTION_CODE, TRANSACTION_TITLE, TRANSACTION_DESCRIPTION from HRFORMS2_TRANSACTION_CODES) t on (pt.TRANSACTION_CODE = t.TRANSACTION_CODE)";
+			join (select FORM_CODE, FORM_TITLE, FORM_DESCRIPTION, ORDERBY as FORM_ORDER from HRFORMS2_FORM_CODES) f on (pt.FORM_CODE = f.FORM_CODE)
+			left join (select ACTION_CODE, ACTION_TITLE, ACTION_DESCRIPTION, ORDERBY as ACTION_ORDER from HRFORMS2_ACTION_CODES) a on (pt.ACTION_CODE = a.ACTION_CODE)
+			left join (select TRANSACTION_CODE, TRANSACTION_TITLE, TRANSACTION_DESCRIPTION, ORDERBY as TRANSACTION_ORDER from HRFORMS2_TRANSACTION_CODES) t on (pt.TRANSACTION_CODE = t.TRANSACTION_CODE)";
 		if (isset($this->req[0])) $qry .= " WHERE pt.payroll_code = :payroll_code";
 		if (isset($this->req[1])) $qry .= " AND pt.form_code = :form_code";
 		if (isset($this->req[2])) $qry .= " AND pt.action_code = :action_code";
+		$qry .= " ORDER BY f.form_order, f.form_title, a.action_order, a.action_title, t.transaction_order, t.transaction_title";
         $stmt = oci_parse($this->db,$qry);
 		if (isset($this->req[0])) oci_bind_by_name($stmt,":payroll_code", $this->req[0]);
 		if (isset($this->req[1])) oci_bind_by_name($stmt,":form_code", $this->req[1]);
