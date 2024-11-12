@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Button, Modal, ListGroup, NavDropdown, Form, OverlayTrigger, Popover, Badge, Overlay } from "react-bootstrap";
+import { Alert, Button, Modal, ListGroup, NavDropdown, Form, OverlayTrigger, Popover, Badge } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { parse, format } from "date-fns";
 import { invoke, get, capitalize, isDate } from "lodash";
@@ -30,6 +30,8 @@ import useListsQueries from "../queries/lists";
  */
 
 /* formats for AppButton */
+// 'key':{icon:<iconName>,variant:<bootstrap_variant>,[preload:false]}
+// use "preload:false" to prevent icon from being loaded on app start.
 export const formats = {
     'add':{icon:'mdi:plus',variant:'success'},
     'add-group':{icon:'mdi:account-multiple-plus',variant:'success'},
@@ -49,6 +51,7 @@ export const formats = {
     'edit':{icon:'mdi:pencil',variant:'primary'},
     'expand':{icon:'mdi:chevron-right',variant:'secondary'},
     'exit':{icon:'mdi:arrow-left-circle',variant:'danger'},
+    'filter':{icon:'mdi:filter',variant:'primary'},
     'impersonate':{icon:'mdi:account-switch',variant:'primary'},
     'info':{icon:'mdi:information-variant-circle-outline',variant:'primary'},
     'loading':{icon:'mdi:loading',variant:'secondary',spin:true},
