@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Alert, Button, Modal, ListGroup, NavDropdown, Form, OverlayTrigger, Popover, Badge } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { parse, format } from "date-fns";
-import { invoke, get, capitalize, isDate } from "lodash";
+import { invoke, get, capitalize, isDate, has } from "lodash";
 import { Icon } from '@iconify/react';
 import { SettingsContext, useSettingsContext, useAuthContext } from "../app";
 import useUserQueries from "../queries/users";
@@ -196,12 +196,19 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
                         const cnt = get(counts.data,`${menu}.${l}.count`,0);
                         const age = get(counts.data,`${menu}.${l}.age`,0);
                         const ageClass = {home:'',homeIcon:''};
-                        /*TBD: if (age > 90) {
+                        /*TBD:
+                        if (age > 90) {
                             ageClass['home'] = 'list-group-item-danger'
                             ageClass['homeIcon'] = <><Icon icon="mdi:alert" className="iconify-inline"/>{' '}</>;
-                        }*/
-                        if (showOn == 'home') return <Link key={key} className={`d-flex justify-content-between ${ageClass.home}`} to={`/${single}/list/${l}`} component={DashBoardListComponent}><span>{ageClass.homeIcon}{title}</span>{cnt}</Link>;
-                        if (showOn == 'menu') return <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`}>{title} {cnt!=null && <span>({cnt})</span>}</NavDropdown.Item>;
+                        }
+                        /**/
+                        if (showOn == 'home') return <Link key={key} className={`d-flex justify-content-between ${ageClass.home}`} to={`/${single}/list/${l}`} component={DashBoardListComponent}><span>{ageClass.homeIcon}{title}</span>{has(counts.data,`${menu}.${l}.count`)&&cnt}</Link>;
+                        if (showOn == 'menu') return (
+                            <>
+                                {!has(counts.data,`${menu}.${l}.count`)&& <NavDropdown.Divider/>}
+                                <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`}>{title} {has(counts.data,`${menu}.${l}.count`)&&<span>({cnt})</span>}</NavDropdown.Item>
+                            </>
+                        );
                     })}
                     
                 </>

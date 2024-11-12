@@ -25,8 +25,6 @@ export default function AppNav() {
                                 <NavDropdown key={`${single}-menu`} title={capitalize(c)} id="request-nav-dropdown" alignRight>
                                     <MenuCounts menu={c} showOn="menu" showNew/>
                                     <NavDropdown.Divider/>
-                                    <NavDropdown.Item as={Link} to={`/${single}/list/archived`}>Archived</NavDropdown.Item>
-                                    <NavDropdown.Divider/>
                                     <NavDropdown.Item as={Link} to={`/${single}/journal`}>{capitalize(c)} Journal</NavDropdown.Item>
                                 </NavDropdown>
                             );
