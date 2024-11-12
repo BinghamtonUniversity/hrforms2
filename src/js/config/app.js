@@ -1,4 +1,6 @@
 // General Application Configurations
+import { formats } from "../blocks/components";
+import { get } from "lodash";
 
 // Editor Configuration
 export function editorConfig(...args) {
@@ -38,43 +40,4 @@ export const datatablesConfig = {
 }
 
 // Preload Icons
-export const icons = [
-    "mdi:account",
-    "mdi:account-multiple",
-    "mdi:account-multiple-plus",
-    "mdi:account-multiple-remove",
-    "mdi:account-plus",
-    "mdi:account-remove",
-    "mdi:account-switch",
-    "mdi:arrow-left-circle",
-    "mdi:arrow-left-thick",
-    "mdi:arrow-right",
-    "mdi:arrow-right-thick",
-    "mdi:check",
-    "mdi:chevron-down",
-    "mdi:chevron-right",
-    "mdi:chevron-up",
-    "mdi:close-circle",
-    "mdi:close-circle",
-    "mdi:close-circle",
-    "mdi:content-duplicate",
-    "mdi:content-save",
-    "mdi:content-save-check",
-    "mdi:content-save-move",
-    "mdi:delete",
-    "mdi:eraser-variant",
-    "mdi:eye-arrow-right",
-    "mdi:file-upload",
-    "mdi:information-variant-circle-outline",
-    "mdi:loading",
-    "mdi:loading",
-    "mdi:magnify",
-    "mdi:minus",
-    "mdi:newspaper",
-    "mdi:pencil",
-    "mdi:playlist-plus",
-    "mdi:plus",
-    "mdi:printer",
-    "mdi:run",
-    "mdi:undo"
-];
+export const icons = Array.from(new Set(Object.values(formats).map(f=>get(f,'preload',true)&&f.icon)));
