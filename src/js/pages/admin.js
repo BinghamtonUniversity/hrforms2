@@ -25,11 +25,6 @@ export default function AdminPages() {
         case "lists": return <AdminLists/>;
         case "settings": return <AdminSettings/>;
         case "templates": return <AdminTemplates/>;
-        case "journal":
-            switch(subpage) {
-                case "request": return <p>Request Journal Page</p>;
-                default: return <NotFound/>;
-            }
         case "hierarchy":
             switch(subpage) {
                 case "request": return <AdminRequestHierarchy/>;
