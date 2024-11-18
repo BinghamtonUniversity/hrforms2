@@ -6,17 +6,29 @@ import useGroupQueries from "../../queries/groups";
 import { useForm, Controller } from "react-hook-form";
 import { capitalize, find, pick } from "lodash";
 import { Redirect } from "react-router-dom";
-import { Row, Col, Modal, Form } from "react-bootstrap";
+import { Row, Col, Modal, Form, Alert } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
 import { AppButton, DescriptionPopover, Loading, ModalConfirm, WorkflowExpandedComponent } from "../../blocks/components";
 import { SettingsContext, NotFound, useSettingsContext, useAuthContext, useUserContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
 import { displayFormCode } from "../form";
 import { Helmet } from "react-helmet";
+import useUserQueries from "../../queries/users";
+import { get } from "lodash";
+import { Icon } from "@iconify/react/dist/iconify.js";
 
 export default function FormList() {
     const {part} = useParams();
     const [redirect,setRedirect] = useState();
+    const [countAge,setCountAge] = useState();
+    const { getCounts } = useUserQueries();
+    const counts = getCounts();
+
+    useEffect(() => {
+        if (!counts.data) return;
+        setCountAge(get(counts.data,`forms.${part}.age`),undefined);
+    },[counts.data]);
+
     if (redirect) return <Redirect to={redirect}/>;
     return (
         <SettingsContext.Consumer>
@@ -36,11 +48,22 @@ export default function FormList() {
                         </Row>
                     </header>
                     <section>
-                        <ListData list={(part)?part:'all'}/>
+                        <ListAgeWarning enabled={forms.agewarn.enabled} maxage={forms.agewarn.age} countAge={countAge}/>
+                        <ListData list={(part)?part:'all'} />
                     </section>
                 </>
             )}}
         </SettingsContext.Consumer>
+    );
+}
+
+function ListAgeWarning({enabled,maxage,countAge}) {
+    if (!enabled||!countAge) return null;
+    if (countAge < maxage) return null;
+    return (                
+        <Alert variant="danger">
+            <Icon icon="mdi:alert" className="iconify-inline"/> There are Forms older than <strong>{maxage} days</strong> in your list
+        </Alert>
     );
 }
 
@@ -254,6 +277,7 @@ function ListTable({data,list}) {
                 pagination 
                 striped 
                 responsive
+                persistTableHead
                 subHeader
                 subHeaderComponent={filterComponent}
                 paginationResetDefaultPage={resetPaginationToggle}

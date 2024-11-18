@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef, lazy } from "react";
 import {useParams} from "react-router-dom";
 import { useQueryClient } from "react-query";
 import useRequestQueries from "../../queries/requests";
@@ -6,7 +6,7 @@ import useGroupQueries from "../../queries/groups";
 import { useForm, Controller } from "react-hook-form";
 import { capitalize, find, pick, get } from "lodash";
 import { Redirect } from "react-router-dom";
-import { Row, Col, Modal, Form } from "react-bootstrap";
+import { Row, Col, Modal, Form, Alert } from "react-bootstrap";
 import { format } from "date-fns";
 import DataTable from 'react-data-table-component';
 import { AppButton, Loading, ModalConfirm, WorkflowExpandedComponent } from "../../blocks/components";
@@ -14,10 +14,23 @@ import { useUserContext, SettingsContext, NotFound, useSettingsContext, useAuthC
 import { useHotkeys } from "react-hotkeys-hook";
 import { flattenObject } from "../../utility";
 import { Helmet } from "react-helmet";
+import useUserQueries from "../../queries/users";
+import { Icon } from "@iconify/react/dist/iconify.js";
+
+const ListArchiveTable = lazy(()=>import("./archive"));
 
 export default function RequestList() {
     const {part} = useParams();
     const [redirect,setRedirect] = useState();
+    const [countAge,setCountAge] = useState();
+    const { getCounts } = useUserQueries();
+    const counts = getCounts();
+
+    useEffect(() => {
+        if (!counts.data) return;
+        setCountAge(get(counts.data,`requests.${part}.age`),undefined);
+    },[counts.data]);
+
     if (redirect) return <Redirect to={redirect}/>;
     return (
         <SettingsContext.Consumer>
@@ -37,11 +50,22 @@ export default function RequestList() {
                         </Row>
                     </header>
                     <section>
-                        <ListData list={(part)?part:'all'}/>
+                        <ListAgeWarning enabled={requests.agewarn.enabled} maxage={requests.agewarn.age} countAge={countAge}/>
+                        {(part=='archived')?<ListArchiveTable/>:<ListData list={(part)?part:'all'}/>}
                     </section>
                 </>
             )}}
         </SettingsContext.Consumer>
+    );
+}
+
+function ListAgeWarning({enabled,maxage,countAge}) {
+    if (!enabled||!countAge) return null;
+    if (countAge < maxage) return null;
+    return (                
+        <Alert variant="danger">
+            <Icon icon="mdi:alert" className="iconify-inline"/> There are Requests older than <strong>{maxage} days</strong> in your list
+        </Alert>
     );
 }
 
@@ -248,6 +272,7 @@ function ListTable({data,list}) {
                 pagination 
                 striped 
                 responsive
+                persistTableHead
                 subHeader
                 subHeaderComponent={filterComponent}
                 paginationResetDefaultPage={resetPaginationToggle}

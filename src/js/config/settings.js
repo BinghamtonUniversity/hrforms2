@@ -142,7 +142,11 @@ export const defaultVals = {
                 }
             }
         },
-        "defaultWorkflow": ""
+        "defaultWorkflow": "",
+        "agewarn": {
+            "enabled": false,
+            "age": "180"
+        }
     },
     "forms": {
         "menu": {
@@ -230,6 +234,10 @@ export const defaultVals = {
                 }
             }
         },
-        "defaultWorkflow": ""
+        "defaultWorkflow": "",
+        "agewarn": {
+            "enabled": false,
+            "age": "180"
+        }
     }
 };

@@ -14,6 +14,7 @@ export default function SettingsForms() {
     return (
         <>
             <SettingsFormsMenu/>
+            <SettingsFormsAgeWarning/>
             <SettingsFormsDefaultRouting/>
             <SettingsFormsEmail/>
         </>
@@ -117,6 +118,36 @@ function SettingsFormsMenu() {
                 )}
             </Droppable>
         </DragDropContext>
+    );
+}
+
+function SettingsFormsAgeWarning() {
+    const { control } = useFormContext();
+    const enabled = useWatch({name:'forms.agewarn.enabled',control:control});
+
+    return (
+        <section>
+            <Row as="header" className="mt-3">
+                <Col as="h4">Age Warning</Col>
+            </Row>
+            <Form.Group as={Row} controlId="formsAgeWarn">
+                <Form.Label column md={2}>Enable Age Warning:</Form.Label>
+                <Col xs="auto" className="pt-2">
+                    <Controller
+                        name='forms.agewarn.enabled'
+                        control={control}
+                        render={({field}) => <Form.Check {...field} type="checkbox" checked={!!field.value}/>}
+                    />
+                </Col>
+                <Col xs="auto">
+                    <Controller
+                        name='forms.agewarn.age'
+                        control={control}
+                        render={({field}) => <Form.Control {...field} type="number" min={0} placeholder="Enter Min Age (in days)" disabled={!enabled} />}
+                    />
+                </Col>
+            </Form.Group> 
+        </section>
     );
 }
 
