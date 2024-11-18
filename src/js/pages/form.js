@@ -578,8 +578,17 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         // NOTE: for review tab get validated fields and pass as array
         // for other tabs let normal validation occur.  It operates off mounted fields.
         // If review has been visited then always validate all fields
-        const fields = (activeTab == 'review'||tabsVisited.includes('review'))?checkFields:undefined;
-        methods.trigger(fields);
+        if (activeTab == 'review'||tabsVisited.includes('review')) {
+            // Exclude fields from tabs that are not displayed.  Always include comments.
+            const tabs = methods.getValues('formActions.TABS');
+            const fields = checkFields.filter(field => {
+                const t = field.split('.').slice(0,2).join('-');
+                if (t == 'comment' || tabs.includes(t)) return field;
+            });
+            methods.trigger(fields);
+        } else {
+            methods.trigger();
+        }
     },[methods,activeTab,activeNav]);
 
     if (redirect) return <Redirect to={redirect}/>;

@@ -45,10 +45,17 @@ export {allTabs}; //used on paytrans
 const requiredFields = {
     "person.information.LEGAL_FIRST_NAME":v=>!!v||'First Name is required',
     "person.information.LEGAL_LAST_NAME":v=>!!v||'Last Name is required',
+    "employment.separation.lastDateWorked":v=>!!v||'TESTING!',
     "comment":v=>!!v||'Comment is required',
 }
 
+/* ArrayFields or Fields with dependencies */
 const arrayFields = {
+    "person.information.RETIRED_FROM": frmData =>{
+        const rehire = get(frmData,'person.information.REHIRE_RETIREE','0');
+        if (rehire != 1) return true;
+        if (!get(frmData,'person.information.RETIRED_FROM','')) return "Retired From is required";
+    },
     "person.directory.phone": frmData => {
         return (get(frmData,'person.directory.phone',[]).length > 0) ? true : 'At least one phone number is required'
     },
