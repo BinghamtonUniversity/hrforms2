@@ -6,11 +6,12 @@ import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import { Loading } from "../components";
 import useListsQueries from "../../queries/lists";
+import get from "lodash/get";
 
 const name = 'person.information';
 
 export default function PersonInfo() {
-    const { control, getValues, setValue } = useFormContext();
+    const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const { canEdit, activeNav } = useHRFormContext();
 
     const watchRehireRetiree = useWatch({name:`${name}.REHIRE_RETIREE`});
@@ -34,6 +35,7 @@ export default function PersonInfo() {
         const field = document.querySelector(`#${activeNav} input:not([disabled])`);
         (canEdit&&field)&&field.focus({focusVisible:true});
     },[activeNav]);
+
     return (
         <HRFormContext.Consumer>
             {({showInTest,testHighlight,canEdit}) => (
@@ -89,13 +91,14 @@ export default function PersonInfo() {
                             </Col>
                         </Form.Group>
                         <Form.Group as={Row}>
-                            <Form.Label column md={2}>First Name:</Form.Label>
+                            <Form.Label column md={2}>First Name*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.LEGAL_FIRST_NAME`}
                                     control={control}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit} isInvalid={get(errors,'person.information.LEGAL_FIRST_NAME',false)}/>}
                                 />
+                                <Form.Control.Feedback type="invalid">{get(errors,'person.information.LEGAL_FIRST_NAME.message','')}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>
                         <Form.Group as={Row}>
@@ -119,13 +122,14 @@ export default function PersonInfo() {
                             </Col>
                         </Form.Group>
                         <Form.Group as={Row}>
-                            <Form.Label column md={2}>Last Name:</Form.Label>
+                            <Form.Label column md={2}>Last Name*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.LEGAL_LAST_NAME`}
                                     control={control}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit} isInvalid={get(errors,'person.information.LEGAL_LAST_NAME',false)}/>}
                                 />
+                                <Form.Control.Feedback type="invalid">{get(errors,'person.information.LEGAL_LAST_NAME.message','')}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>
                         <Form.Group as={Row}>
