@@ -4,7 +4,7 @@ import { useQueryClient } from "react-query";
 import useFormQueries from "../../queries/forms";
 import useGroupQueries from "../../queries/groups";
 import { useForm, Controller } from "react-hook-form";
-import { capitalize, find, pick } from "lodash";
+import { capitalize, find, pick, get } from "lodash";
 import { Redirect } from "react-router-dom";
 import { Row, Col, Modal, Form, Alert } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
@@ -14,7 +14,6 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { displayFormCode } from "../form";
 import { Helmet } from "react-helmet";
 import useUserQueries from "../../queries/users";
-import { get } from "lodash";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
 export default function FormList() {
