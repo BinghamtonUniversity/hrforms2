@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
-import { Form, Row, Col, Table, ListGroup, Button } from "react-bootstrap";
+import { Form, Row, Col, Table, ListGroup, Button, ButtonGroup, Badge } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { useSettingsContext } from "../../../app";
 import useGroupQueries from "../../../queries/groups";
@@ -14,6 +14,7 @@ export default function SettingsRequests() {
     return (
         <>
             <SettingsRequestsMenu/>
+            <SettingsRequestsAgeWarning/>
             <SettingsRequestsDefaultRouting/>
             <SettingsRequestsEmail/>
         </>
@@ -117,6 +118,112 @@ function SettingsRequestsMenu() {
         </DragDropContext>
     );
 }
+
+function SettingsRequestsAgeWarning() {
+    const { control } = useFormContext();
+    const enabled = useWatch({name:'requests.agewarn.enabled',control:control});
+
+    return (
+        <section>
+            <Row as="header" className="mt-3">
+                <Col as="h4">Age Warning</Col>
+            </Row>
+            <Form.Group as={Row} controlId="requestsAgeWarn">
+                <Form.Label column md={2}>Enable Age Warning:</Form.Label>
+                <Col xs="auto" className="pt-2">
+                    <Controller
+                        name='requests.agewarn.enabled'
+                        control={control}
+                        render={({field}) => <Form.Check {...field} type="checkbox" checked={!!field.value}/>}
+                    />
+                </Col>
+                <Col xs="auto">
+                    <Controller
+                        name='requests.agewarn.age'
+                        control={control}
+                        render={({field}) => <Form.Control {...field} type="number" min={0} placeholder="Enter Min Age (in days)" disabled={!enabled} />}
+                    />
+                </Col>
+            </Form.Group> 
+        </section>
+    );
+}
+
+/*function SettingsRequestsAgeWarning() {
+    const levels = [
+        {id:'level1',title:'Level 1'},
+        {id:'level2',title:'Level 2'},
+        {id:'level3',title:'Level 3'},
+    ]
+    const { control, setValue } = useFormContext();
+    const enabled = useWatch({name:'requests.agewarn.enabled',control:control});
+
+    const handleColorChange = (e,field) => {
+        field.onChange(e);
+        const color = (e.target.tagName == 'SPAN') ? e.target.parentElement.dataset.color : e.target.dataset.color;
+        setValue(field.name,color);
+    }
+
+    return (
+        <section>
+            <Row as="header" className="mt-3">
+                <Col as="h4">Age Warning</Col>
+            </Row>
+            <Form.Group as={Row} controlId="ageWarnEnabled">
+                <Form.Label column md={2}>Enable Age Warning:</Form.Label>
+                <Col xs="auto" className="pt-2">
+                    <Controller
+                        name='requests.agewarn.enabled'
+                        control={control}
+                        render={({field}) => <Form.Check {...field} type="checkbox" checked={!!field.value}/>}
+                    />
+                </Col>
+            </Form.Group>
+            {levels.map(l => (
+                <Form.Group key={l.id} as={Row} controlId={l.id}>
+                    <Form.Label column md={2}>{l.title}:</Form.Label>
+                    <Col xs="auto">
+                        <Controller
+                            name={`requests.agewarn.${l.id}.title`}
+                            control={control}
+                            render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Title/Label" disabled={!enabled} />}
+                        />
+                    </Col>
+                    <Col xs="auto">
+                        <Controller
+                            name={`requests.agewarn.${l.id}.minage`}
+                            control={control}
+                            render={({field}) => <Form.Control {...field} type="number" min={0} placeholder="Enter Min Age (in days)" disabled={!enabled} />}
+                        />
+                    </Col>
+                    <Col xs="auto">
+                        <Controller
+                            name={`requests.agewarn.${l.id}.maxage`}
+                            control={control}
+                            render={({field}) => <Form.Control {...field} type="number" min={0} placeholder="Enter Max Age (in days)" disabled={!enabled} />}
+                        />
+                    </Col>
+                    <Col xs="auto">
+                        <Controller
+                            name={`requests.agewarn.${l.id}.color`}
+                            control={control}
+                            render={({field}) => (
+                                <ButtonGroup size="sm" toggle onClick={e=>handleColorChange(e,field)}>
+                                    {['danger','warning2','warning','info','success'].map(c => (
+                                        <Button key={c} variant="white" data-color={c} disabled={!enabled}>
+                                            <Badge variant={`${c}-light`} className="px-2 py-1">&nbsp;</Badge>
+                                        </Button>
+                                    ))}
+                                </ButtonGroup>    
+                            )}
+                        />
+                    </Col>
+                </Form.Group>
+
+            ))}
+        </section>
+    );
+}*/
 
 function SettingsRequestsDefaultRouting() {
     const [searchText,setSearchText] = useState('');

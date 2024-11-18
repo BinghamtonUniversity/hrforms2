@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Button, Modal, ListGroup, NavDropdown, Form, OverlayTrigger, Popover, Badge } from "react-bootstrap";
+import { Alert, Button, Modal, ListGroup, NavDropdown, Form, OverlayTrigger, Popover, Badge, Tooltip } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { parse, format } from "date-fns";
 import { invoke, get, capitalize, isDate, has } from "lodash";
@@ -173,6 +173,8 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
             }
             const single = menu.slice(0,-1);
             let linkTo = `/${single}/`;
+            const agewarn = get(settings,`${menu}.agewarn.enabled`,false);
+            const agemax = get(settings,`${menu}.agewarn.age`,0);
             if (location.pathname.startsWith(linkTo)) linkTo += 'new';
             const menuItems = Object.keys(settings[menu].menu).sort((a,b) => parseInt(settings[menu].menu[a].order,10)>parseInt(settings['forms'].menu[b].order,10)?1:parseInt(settings[menu].menu[a].order,10)==parseInt(settings[menu].menu[b].order,10)?0:-1);
             return (
@@ -195,28 +197,35 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
                         if (!show) return null;
                         const cnt = get(counts.data,`${menu}.${l}.count`,0);
                         const age = get(counts.data,`${menu}.${l}.age`,0);
-                        const ageClass = {home:'',homeIcon:''};
-                        /*TBD:
-                        if (age > 90) {
+                        const ageClass = {home:'',homeIcon:'',menu:''};
+                        if (agewarn && age >= agemax) {
                             ageClass['home'] = 'list-group-item-danger'
-                            ageClass['homeIcon'] = <><Icon icon="mdi:alert" className="iconify-inline"/>{' '}</>;
+                            ageClass['homeIcon'] = (
+                                <OverlayTrigger placement="top" overlay={<Tooltip>{title} older than {agemax} days</Tooltip>}>
+                                    <Icon icon="mdi:alert" className="iconify-inline"/>
+                                </OverlayTrigger>
+                            );
+                            ageClass['menu'] = 'text-danger'
                         }
-                        /**/
                         if (showOn == 'home') return <Link key={key} className={`d-flex justify-content-between ${ageClass.home}`} to={`/${single}/list/${l}`} component={DashBoardListComponent}><span>{ageClass.homeIcon}{title}</span>{has(counts.data,`${menu}.${l}.count`)&&cnt}</Link>;
-                        if (showOn == 'menu') return (
-                            <>
-                                {!has(counts.data,`${menu}.${l}.count`)&& <NavDropdown.Divider/>}
-                                <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`}>{title} {has(counts.data,`${menu}.${l}.count`)&&<span>({cnt})</span>}</NavDropdown.Item>
-                            </>
-                        );
+                        if (showOn == 'menu') return <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`} className={ageClass['menu']}>{title} {has(counts.data,`${menu}.${l}.count`)&&<span>({cnt})</span>}</NavDropdown.Item>;
                     })}
-                    
                 </>
             );
         }}
         </SettingsContext.Consumer>
     );
 });
+
+/*
+                        if (showOn == 'menu') return (
+                            <>
+                                {!has(counts.data,`${menu}.${l}.count`)&& <NavDropdown.Divider/>}
+                                <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`}>{title} {has(counts.data,`${menu}.${l}.count`)&&<span>({cnt})</span>}</NavDropdown.Item>
+                            </>
+                        );
+
+*/
 
 const DashBoardListComponent = props => {
     return <ListGroup.Item className={props.className} href={props.href} action disabled={props.disabled}>{props.children}</ListGroup.Item>;

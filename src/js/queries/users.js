@@ -18,7 +18,7 @@ export default function useUserQueries(SUNY_ID) {
             });
         }});
     }    
-    const getCounts = () => useQuery([CURRENT_SUNY_ID,'counts'],q('counts'));
+    const getCounts = () => useQuery([CURRENT_SUNY_ID,'counts'],q('counts'),{staleTime:10000});
 
     const lookupUser = (...args) => {
         const options = args[0]?.options||args[0]||{};
