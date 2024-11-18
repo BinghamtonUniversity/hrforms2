@@ -4,10 +4,11 @@ import { Controller, useFormContext } from "react-hook-form";
 import { useHRFormContext } from "../../config/form";
 import useFormQueries from "../../queries/forms";
 import DataTable from 'react-data-table-component';
+import { get } from "lodash";
 
 export default function Comments() {
     const ref = useRef();
-    const { control, getValues } = useFormContext();
+    const { control, getValues, formState:{ errors } } = useFormContext();
     const { isDraft, canEdit, activeNav } = useHRFormContext();
     const formId = getValues('formId');
     useEffect(()=>(canEdit&&ref.current)&&ref.current.focus(),[activeNav]);
@@ -25,8 +26,9 @@ export default function Comments() {
                                 name="comment"
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <Form.Control {...field} as="textarea" ref={ref} rows={5}/>}
+                                render={({field}) => <Form.Control {...field} as="textarea" ref={ref} rows={5} isInvalid={get(errors,'comment',false)}/>}
                             />
+                            <Form.Control.Feedback type="invalid">{get(get(errors,'comment',''),'message','')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
                 </section>
