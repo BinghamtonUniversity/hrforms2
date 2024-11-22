@@ -35,7 +35,9 @@ class Archive extends HRForms2 {
                 // add the workflow with group detail to the JSON
                 // insert into the archive table.
 
-                $qry = "insert into HRFORMS2_REQUESTS_ARCHIVE select * from HRFORMS2_REQUESTS where request_id = :request_id";
+                $qry = "insert into HRFORMS2_REQUESTS_ARCHIVE 
+                    select request_id, created_by, created_date, trunc(to_timestamp(r.request_data.effDate,'YYYY-MM-DD\"T\"HH24:MI:SS.FF3\"Z\"')), request_data 
+                    from HRFORMS2_REQUESTS r where request_id = :request_id";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":request_id",$this->req[1]);
                 $r = oci_execute($stmt);
@@ -53,7 +55,9 @@ class Archive extends HRForms2 {
                 if ($this->retJSON) $this->done();
                 break;
             case "form":
-                $qry = "insert into HRFORMS2_FORMS_ARCHIVE select * from HRFORMS2_FORMS where form_id = :form_id";
+                $qry = "insert into HRFORMS2_FORMS_ARCHIVE 
+                    select form_id, created_by, created_date, trunc(to_timestamp(.form_data.effDate,'YYYY-MM-DD\"T\"HH24:MI:SS.FF3\"Z\"')), form_data 
+                    from HRFORMS2_FORMS f where form_id = :form_id";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":form_id",$this->req[1]);
                 $r = oci_execute($stmt);
