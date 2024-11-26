@@ -10,9 +10,9 @@ export default function useListsQueries() {
     }
     const getListData = (...args) => {
         const LIST_ID = args[0]?.LIST_ID||args[0];
-        const options = args[0]?.options||args[1]||{};
-        if (!options.hasOwnProperty('staleTime')) options.staleTime = 900000; // 15 minutes
-        if (!options.hasOwnProperty('refetchOnMount')) options.refetchOnMount = false;
+        let options = args[0]?.options||args[1]||{};
+        // set default options
+        options = {staleTime:900000,refetchOnMount:false,...options};
         return useQuery(['listdata',LIST_ID],q(`listdata/${LIST_ID}`),options);
     }
 
