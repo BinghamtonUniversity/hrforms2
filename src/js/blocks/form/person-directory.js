@@ -124,7 +124,7 @@ function PersonDirectoryAddresses() {
     const handleSave = index => {
         clearErrors(`${name}.${index}`);
         const arrayData = getValues(`${name}.${index}`);
-        console.debug(arrayData);
+        console.debug('Address Data:',arrayData);
 
         /* Required fields */
         if (testField(index,'line1')&&!arrayData?.ADDRESS_1) setError(`${name}.${index}.ADDRESS_1`,{type:'manual',message:'Address Line 1 is required'});
@@ -400,7 +400,7 @@ function PersonDirectoryPhone() {
     }
     const handleSave = index => {
         clearErrors(`${name}.${index}`);
-        console.debug(arrayData);
+        console.debug('Phone Number Data:',arrayData);
 
         /* Required fields */
         const arrayData = getValues(`${name}.${index}`);
@@ -593,7 +593,7 @@ function PersonDirectoryEmail() {
     const handleSave = index => {
         clearErrors(`${name}.${index}`);
         const arrayData = getValues(`${name}.${index}`);
-        console.debug(arrayData);
+        console.debug('Email Address Data:',arrayData);
 
         /* Required fields */
         if (!arrayData?.EMAIL_ADDRESS) setError(`${name}.${index}.EMAIL_ADDRESS`,{type:'manual',message:'Email Address is required'});
