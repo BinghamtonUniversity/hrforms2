@@ -8,7 +8,7 @@ import useListsQueries from "../queries/lists";
 
 export default function SUNYAccount(props) {
     const name = props.name||'SUNYAccounts';
-    const {control,getValues,setValue} = useFormContext();
+    const { control, getValues, setValue } = useFormContext();
     const { fields, append, remove } = useFieldArray({control,name:name});
 
     const [showSplit,setShowSplit] = useState(false);
@@ -72,6 +72,7 @@ export default function SUNYAccount(props) {
                                     selected={field.value} 
                                     onBlur={e=>handleBlur(field,0,e)} 
                                     disabled={showSplit||props.disabled}
+                                    isInvalid={!!props.isInvalid} 
                                 />}
                             />
                             {!props.noSplit &&
@@ -79,6 +80,7 @@ export default function SUNYAccount(props) {
                                     <AppButton format="none" variant={(showSplit)?'secondary':'primary'} onClick={()=>toggleSplit()} disabled={props.disabled}>Split</AppButton>
                                 </InputGroup.Append>
                             }
+                            <Form.Control.Feedback type="invalid">{props.isInvalid}</Form.Control.Feedback>
                         </InputGroup>
                     }
                 </Col>
@@ -120,9 +122,11 @@ export function SingleSUNYAccount(props) {
                         onBlur={e=>handleBlur(field,e)}
                         selected={field.value} 
                         disabled={props.disabled}
+                        isInvalid={!!props.isInvalid} 
                     />}
                 />
             }
+            <Form.Control.Feedback type="invalid">{props.isInvalid}</Form.Control.Feedback>
         </>
     );
 }

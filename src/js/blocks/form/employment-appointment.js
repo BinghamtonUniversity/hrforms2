@@ -8,13 +8,14 @@ import { Loading, DepartmentSelector } from "../components";
 import { Icon } from "@iconify/react";
 import DatePicker from "react-datepicker";
 import useListsQueries from "../../queries/lists";
+import { get } from "lodash";
 
 const baseName = 'employment.appointment';
 
 export default function EmploymentAppointment() {
     const { canEdit, activeNav } = useHRFormContext();
 
-    const { control, getValues, setValue } = useFormContext();
+    const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const watchPayroll = useWatch({name:['payroll.PAYROLL_CODE','selectedRow.PAYROLL_AGENCY_CODE'],control:control});
     const watchFaculty = useWatch({name:`${baseName}.DERIVED_FAC_TYPE`,control:control});
     const watchAdjunct = useWatch({name:`${baseName}.isAdjunct`,control:control});
@@ -70,7 +71,7 @@ export default function EmploymentAppointment() {
                             <Col xs="auto" className="pt-2">
                                 <Controller
                                     name={`${baseName}.DERIVED_FAC_TYPE`}
-                                    defaultValue={false}
+                                    defaultValue="N"
                                     control={control}
                                     render={({field}) => (
                                         <>
@@ -89,7 +90,7 @@ export default function EmploymentAppointment() {
                             <Col xs="auto">
                             <Controller
                                     name={`${baseName}.isAdjunct`}
-                                    defaultValue={false}
+                                    defaultValue="N"
                                     control={control}
                                     render={({field}) => (
                                         <>
@@ -112,7 +113,7 @@ export default function EmploymentAppointment() {
                                         control={control}
                                         render={({field}) => (
                                             <>
-                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${baseName}.TENURE_STATUS.id.message`,false)} disabled={!canEdit}>
                                                     <option></option>
                                                     {tenure.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
                                                 </Form.Control>
@@ -120,6 +121,7 @@ export default function EmploymentAppointment() {
                                         )}
                                     />
                                 }
+                                <Form.Control.Feedback type="invalid">{get(errors,`${baseName}.TENURE_STATUS.id.message`,'')}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>
                         </>
@@ -222,8 +224,9 @@ export default function EmploymentAppointment() {
                                 name={`${baseName}.REPORTING_DEPARTMENT_CODE.id`}
                                 control={control}
                                 defaultValue=""
-                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}/>}
+                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${baseName}.REPORTING_DEPARTMENT_CODE.id.message`,false)} disabled={!canEdit}/>}
                             />
+                            <Form.Control.Feedback type="invalid">{get(errors,`${baseName}.REPORTING_DEPARTMENT_CODE.id.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
 
@@ -236,7 +239,7 @@ export default function EmploymentAppointment() {
     );
 }
 function AppointmentSupervisor() {
-    const { control, getValues, setValue } = useFormContext();
+    const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const { canEdit } = useHRFormContext();
     const [searchFilter,setSearchFilter] = useState('');
     const { getSupervisorNames } = useFormQueries();
@@ -271,8 +274,10 @@ function AppointmentSupervisor() {
                         placeholder="Search for supervisor..."
                         selected={field.value}
                         disabled={!canEdit}
+                        isInvalid={!!get(errors,`${baseName}.supervisor.message`,false)}
                     />}
                 />
+                <Form.Control.Feedback type="invalid">{get(errors,`${baseName}.supervisor.message`,'')}</Form.Control.Feedback>
             </Col>
         </Form.Group>
     );
@@ -280,8 +285,16 @@ function AppointmentSupervisor() {
 
 function FacultyDetails({watchFaculty,watchAdjunct}) {
     const name = `${baseName}.facultyDetails`;
-    const { control, setValue } = useFormContext();
-    const watchCourses = useWatch({name:[`${name}.fallCourses`,`${name}.springCourses`,],control:control})||0;
+    const { control, setValue, formState: { errors } } = useFormContext();
+    const watchCourses = useWatch({name:[`${name}.fallCourses`,`${name}.springCourses`,],control:control});
+
+    const handleCountChange = (e,field) => {
+        if (parseInt(e.target.value,10) < 0 || parseInt(e.target.value,10) > 20) return false;
+        field.onChange(e);
+    }
+    const handleCountBlur = (e,field) => {
+        if (!e.target.value) setValue(field.name,'0');
+    }
 
     const handleRangeChange = (e,fieldName) => setValue(fieldName,e.target.value);
 
@@ -304,9 +317,9 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                                         name={`${name}.${c.id}.count`}
                                         defaultValue=""
                                         control={control}
-                                        rules={{min:{value:0,message:`${c.label} cannot be less than 0`},max:{value:20,message:`${c.label} cannot be greater than 20`}}}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={20} disabled={!canEdit}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={20} onChange={e=>handleCountChange(e,field)} onBlur={e=>handleCountBlur(e,field)} isInvalid={get(errors,`${name}.message`,false)} disabled={!canEdit}/>}
                                     />
+                                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.message`,'')}</Form.Control.Feedback>
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
                                     <Form.Control type="range" name={`${c.id}Range`} id={`${c.id}Range`} min={0} max={20} value={watchCourses[i].count} onChange={e=>handleRangeChange(e,`${name}.${c.id}.count`)} disabled={!canEdit}/>
@@ -319,9 +332,9 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                                         name={`${name}.${c.id}.credits`}
                                         defaultValue=""
                                         control={control}
-                                        rules={{min:{value:0,message:`${c.label} cannot be less than 0`}}}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} disabled={!canEdit}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" min={0} isInvalid={get(errors,`${name}.${c.id}.credits.message`,false)} disabled={!canEdit||watchCourses[i].count==0}/>}
                                     />
+                                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.${c.id}.credits.message`,'')}</Form.Control.Feedback>
                                 </Col>
                             </Form.Group>
                             <Form.Group as={Row}>
@@ -331,8 +344,9 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                                         name={`${name}.${c.id}.list`}
                                         defaultValue=""
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} as="textarea" rows={5} disabled={!canEdit}/>}
+                                        render={({field}) => <Form.Control {...field} as="textarea" rows={5} isInvalid={get(errors,`${name}.${c.id}.list.message`,false)} disabled={!canEdit||watchCourses[i].count==0}/>}
                                     />
+                                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.${c.id}.list.message`,'')}</Form.Control.Feedback>
                                 </Col>
                             </Form.Group>
                         </div>

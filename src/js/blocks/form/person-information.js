@@ -96,9 +96,9 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.LEGAL_FIRST_NAME`}
                                     control={control}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit} isInvalid={get(errors,'person.information.LEGAL_FIRST_NAME',false)}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit} isInvalid={get(errors,`${name}.LEGAL_FIRST_NAME.message`,false)}/>}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,'person.information.LEGAL_FIRST_NAME.message','')}</Form.Control.Feedback>
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.LEGAL_FIRST_NAME.message`,'')}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>
                         <Form.Group as={Row}>
@@ -127,9 +127,9 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.LEGAL_LAST_NAME`}
                                     control={control}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit} isInvalid={get(errors,'person.information.LEGAL_LAST_NAME',false)}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit} isInvalid={get(errors,`${name}.LEGAL_LAST_NAME.message`,false)}/>}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,'person.information.LEGAL_LAST_NAME.message','')}</Form.Control.Feedback>
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.LEGAL_LAST_NAME.message`,'')}</Form.Control.Feedback>
                             </Col>
                         </Form.Group>
                         <Form.Group as={Row}>
@@ -213,8 +213,9 @@ export default function PersonInfo() {
                                         <Controller
                                             name={`${name}.RETIRED_FROM`}
                                             control={control}
-                                            render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
+                                            render={({field})=><Form.Control {...field} type="text" isInvalid={get(errors,`${name}.RETIRED_FROM.message`,false)} disabled={!canEdit}/>}
                                         />
+                                        <Form.Control.Feedback type="invalid">{get(errors,`${name}.RETIRED_FROM.message`,'')}</Form.Control.Feedback>
                                     </Col>
                                 </Form.Group>
                             </>
