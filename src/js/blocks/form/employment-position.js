@@ -9,6 +9,7 @@ import { EmploymentPositionInfoBox } from "../../pages/form";
 import { useHRFormContext } from "../../config/form";
 import { Icon } from "@iconify/react";
 import useListsQueries from "../../queries/lists";
+import { get } from "lodash";
 
 const name = 'employment.position';
 
@@ -33,8 +34,8 @@ function EmploymentPositionSearch({setShowResults}) {
     const { canEdit, activeNav } = useHRFormContext();
     const ref = useRef();
 
-    const { control, setValue } = useFormContext();
-    const handleSearch = e => setShowResults(true);
+    const { control, setValue, formState: { errors } } = useFormContext();
+    const handleSearch = () => setShowResults(true);
     const handleClear = () => {
         setShowResults(false);
         setValue(`${name}.LINE_ITEM_NUMBER`,'');
@@ -65,8 +66,9 @@ function EmploymentPositionSearch({setShowResults}) {
                     <Controller
                         name={`${name}.LINE_ITEM_NUMBER`}
                         control={control}
-                        render={({field})=><Form.Control {...field} ref={ref} type="search" onKeyDown={handleKeyDown} onChange={e=>handleChange(field,e)} disabled={!canEdit}/>}
+                        render={({field})=><Form.Control {...field} ref={ref} type="search" onKeyDown={handleKeyDown} onChange={e=>handleChange(field,e)} isInvalid={get(errors,`${name}.LINE_ITEM_NUMBER.message`,false)} disabled={!canEdit}/>}
                     />
+                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.LINE_ITEM_NUMBER.message`,'')}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
             {canEdit &&
@@ -235,7 +237,7 @@ function EmploymentAppointmentInformation() {
 }
 
 function AppointmentType() {
-    const { control, setValue } = useFormContext();
+    const { control, setValue, formState: { errors } } = useFormContext();
     const { canEdit } = useHRFormContext();
 
     const { getListData } = useListsQueries();
@@ -258,13 +260,14 @@ function AppointmentType() {
                         name={`${name}.APPOINTMENT_TYPE.id`}
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${name}.APPOINTMENT_TYPE.id.message`,false)} disabled={!canEdit}>
                                 <option></option>
                                 {appttypes.data.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
                             </Form.Control>
                         )}
                     />
                 }
+                <Form.Control.Feedback type="invalid">{get(errors,`${name}.APPOINTMENT_TYPE.id.message`,'')}</Form.Control.Feedback>
             </Col>
         </Form.Group>
     );
@@ -306,7 +309,7 @@ function BenefitsFlag() {
     );
 }
 function CheckSortCode() {
-    const { control, setValue } = useFormContext();
+    const { control, setValue, formState: { errors } } = useFormContext();
     const { canEdit } = useHRFormContext();
 
     const { getListData } = useListsQueries();
@@ -330,7 +333,7 @@ function CheckSortCode() {
                         control={control}
                         defaultValue=""
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${name}.PAYROLL_MAIL_DROP_ID.id.message`,false)} disabled={!canEdit}>
                                 <option></option>
                                 {checksortcodes.data.map(c=><option key={c[0]} value={c[0]}>{c[1]}</option>)}
                             </Form.Control>
@@ -338,6 +341,7 @@ function CheckSortCode() {
                     />
                 }
                 <Form.Text muted>Also known as Mail Drop ID</Form.Text>
+                <Form.Control.Feedback type="invalid">{get(errors,`${name}.PAYROLL_MAIL_DROP_ID.id.message`,'')}</Form.Control.Feedback>
             </Col>
         </Form.Group>
     );

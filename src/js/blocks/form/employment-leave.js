@@ -6,13 +6,14 @@ import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import { Loading, CurrencyFormat } from "../components";
 import useListsQueries from "../../queries/lists";
+import get from "lodash/get";
 
 const name = 'employment.leave';
 
 export default function EmploymentLeave() {
     const { canEdit, activeNav, formType } = useHRFormContext();
 
-    const { control, getValues, setValue } = useFormContext();
+    const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const watchLeavePercent = useWatch({name:`${name}.leavePercent`,control:control})||0;
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
 
@@ -100,6 +101,7 @@ export default function EmploymentLeave() {
                                         onChange={field.onChange}
                                         autoComplete="off"
                                         disabled={!canEdit}
+                                        isInvalid={!!get(errors,field.name,false)}
                                     />}
                                 />
                                 <InputGroup.Append>
@@ -108,6 +110,9 @@ export default function EmploymentLeave() {
                                     </InputGroup.Text>
                                 </InputGroup.Append>
                             </InputGroup>
+                            {get(errors,`${name}.leaveEndDate.message`,false)&&
+                                <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${name}.leaveEndDate.message`,'')}</Form.Control.Feedback>
+                            }
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row}>
@@ -120,13 +125,14 @@ export default function EmploymentLeave() {
                                     name={`${name}.justification.id`}
                                     control={control}
                                     render={({field}) => (
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}>
                                             <option></option>
                                             {justification.data.map(j=>!j.excludePayrolls.includes(watchPayroll)&&<option key={j.id} value={j.id}>{j.title}</option>)}
                                         </Form.Control>
                                     )}
                                 />
                             }
+                            <Form.Control.Feedback type="invalid">{get(errors,`${name}.justification.id.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
                 </article>

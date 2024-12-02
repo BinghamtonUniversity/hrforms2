@@ -6,6 +6,7 @@ import { DateFormat } from "../components";
 import DatePicker from "react-datepicker";
 import { subDays } from "date-fns";
 import { useHRFormContext } from "../../config/form";
+import { get } from "lodash";
 
 const name = 'employment.separation';
 
@@ -13,7 +14,7 @@ export default function EmploymentSeparation() {
     const { canEdit, activeNav } = useHRFormContext();
     const ref = useRef();
 
-    const { control } = useFormContext();
+    const { control, formState: { errors } } = useFormContext();
     const watchEffectiveDate = useWatch({name:'effDate',control:control});
 
     useEffect(()=>(canEdit&&ref.current)&&ref.current.setFocus(),[activeNav]);
@@ -46,6 +47,7 @@ export default function EmploymentSeparation() {
                                 maxDate={(watchEffectiveDate&&subDays(watchEffectiveDate,1))}
                                 autoComplete="off"
                                 disabled={!canEdit}
+                                isInvalid={!!get(errors,field.name,false)}
                             />}
                         />
                         <InputGroup.Append>
@@ -54,6 +56,9 @@ export default function EmploymentSeparation() {
                             </InputGroup.Text>
                         </InputGroup.Append>
                     </InputGroup>
+                    {get(errors,`${name}.lastDateWorked.message`,false)&&
+                        <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${name}.lastDateWorked.message`,'')}</Form.Control.Feedback>
+                    }
                 </Col>
             </Form.Group>
        </article>

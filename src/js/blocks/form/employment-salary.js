@@ -16,7 +16,7 @@ const name = 'employment.salary';
 export default function EmploymentAppointment() {
     const { canEdit, activeNav, showInTest, testHighlight, formType } = useHRFormContext();
 
-    const { control, setValue } = useFormContext();
+    const { control, setValue, formState: { errors } } = useFormContext();
     const watchAmounts = useWatch({name:[
         `${name}.RATE_AMOUNT`,
         `${name}.NUMBER_OF_PAYMENTS`,
@@ -35,6 +35,21 @@ export default function EmploymentAppointment() {
                 return "Full-Time";
         }
     },[watchPayBasis]);
+
+    const handleNumPmtsField = (e,field) => {
+        switch (e.type) {
+            case 'change':
+                if (parseInt(e.target.value,10) < 1) return false;
+                field.onChange(e);
+                break;
+            case 'blur':
+                if (!e.target.value) setValue(field.name,1);
+                break;
+            default:
+                break;
+        }
+    }
+
     useEffect(() => {
         if (['BIW', 'FEE', 'HRY'].includes(watchPayBasis)) {
             setValue(`${name}.totalSalary`,(+watchAmounts[0]*+watchAmounts[1]).toFixed(2));
@@ -69,6 +84,7 @@ export default function EmploymentAppointment() {
                                     onChange={field.onChange}
                                     autoComplete="off"
                                     disabled={!canEdit}
+                                    isInvalid={!!get(errors,field.name,false)}
                                 />}
                             />
                             <InputGroup.Append>
@@ -77,6 +93,9 @@ export default function EmploymentAppointment() {
                                 </InputGroup.Text>
                             </InputGroup.Append>
                         </InputGroup>
+                        {get(errors,`${name}.effDate.message`,false)&&
+                            <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${name}.effDate.message`,'')}</Form.Control.Feedback>
+                        }
                     </Col>
                 </Form.Group>
                 <Form.Group as={Row}>
@@ -101,8 +120,9 @@ export default function EmploymentAppointment() {
                                 name={`${name}.NUMBER_OF_PAYMENTS`}
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <Form.Control {...field} type="number" min={1} disabled={!canEdit}/>}
+                                render={({field}) => <Form.Control {...field} type="number" min={1} onBlur={e=>handleNumPmtsField(e,field)} onChange={e=>handleNumPmtsField(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                             />
+                            <Form.Control.Feedback type="invalid">{get(errors,`${name}.NUMBER_OF_PAYMENTS.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
                 }
@@ -113,8 +133,9 @@ export default function EmploymentAppointment() {
                             name={`${name}.RATE_AMOUNT`}
                             defaultValue=""
                             control={control}
-                            render={({field}) => <Form.Control {...field} type="text" disabled={!canEdit}/>}
+                            render={({field}) => <Form.Control {...field} type="text" isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                         />
+                        <Form.Control.Feedback type="invalid">{get(errors,`${name}.RATE_AMOUNT.message`,'')}</Form.Control.Feedback>
                     </Col>
                 </Form.Group>
                 <Form.Group as={Row}>
@@ -128,7 +149,7 @@ export default function EmploymentAppointment() {
                         />
                     </Col>
                 </Form.Group>
-                <SUNYAccount name={`${name}.SUNY_ACCOUNTS`} disabled={!canEdit}/>
+                <SUNYAccount name={`${name}.SUNY_ACCOUNTS`} isInvalid={get(errors,`${name}.SUNY_ACCOUNTS.message`,false)} disabled={!canEdit}/>
             </section>
             
             <AdditionalSalary/>
@@ -143,7 +164,8 @@ export default function EmploymentAppointment() {
 function AdditionalSalary() {
     const blockName = `${name}.ADDITIONAL_SALARY`;
 
-    const { control, getValues, setValue, clearErrors } = useFormContext();
+    const { control, getValues, setValue, setError, clearErrors, formState: { errors } } = useFormContext();
+    const { setLockTabs } = useHRFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
         name:blockName
@@ -171,48 +193,74 @@ function AdditionalSalary() {
         });
         setEditIndex(fields.length);
         setIsNew(true);
+        setLockTabs(true);
     }
     const handleEdit = index => {
         setEditIndex(index);
         setEditValues(cloneDeep(getValues(`${blockName}.${index}`)));
         setIsNew(false); // can only edit existing
+        setLockTabs(true);
     }
     const handleCancel = index => {
-        const checkFields = Object.keys(fields[index]).map(f=>`${blockName}.${index}.${f}`);
-        clearErrors(checkFields);
+        //const checkFields = Object.keys(fields[index]).map(f=>`${blockName}.${index}.${f}`);
+        clearErrors(`${blockName}.${index}`);
         update(index,editValues);
         setEditValues(undefined);
         setEditIndex(undefined);
+        setLockTabs(false);
     }
     const handleSave = index => {
-        /*const checkFields = Object.keys(fields[index]).map(f=>`${name}.${index}.${f}`);
-        trigger(checkFields).then(valid => {
-            if (!valid) {
-                console.log('Errors!',errors);
-            } else {
-                console.log('valid');
-                setEditIndex(undefined);
-                setEditValues(undefined);
-                setIsNew(false);
-            }
-        }).catch(e=>console.error(e));*/
-        setValue(`${blockName}.${index}.total`,calcTotal(index));
+        clearErrors(`${blockName}.${index}`);
+        const arrayData = getValues(`${blockName}.${index}`);
+        setValue(`${blockName}.${index}.total`,calcTotal(index)); // here?
+        console.debug('Additional Salary Data:',arrayData);
 
-        setEditIndex(undefined);
-        setEditValues(undefined);
-        setIsNew(false);
+        /* Required fields */
+        if (!arrayData.type.id) setError(`${blockName}.${index}.type.id`,{type:'manual',message:'Type is required'});
+        if (!arrayData.startDate) setError(`${blockName}.${index}.startDate`,{type:'manual',message:'Start Date is required'});
+        if (!arrayData.endDate) setError(`${blockName}.${index}.endDate`,{type:'manual',message:'End Date is required'});
+        if (!get(arrayData,'account.0.id','')) setError(`${blockName}.${index}.account`,{type:'manual',message:'Account is required'});
+        if (!arrayData.payments) setError(`${blockName}.${index}.payments`,{type:'manual',message:'Pmts is required'});
+        if (parseInt(arrayData.payments,10)<1) setError(`${blockName}.${index}.payments`,{type:'manual',message:'Pmts must be greater than zero'});
+        if (parseInt(arrayData.amount,10)<1) setError(`${blockName}.${index}.amount`,{type:'manual',message:'Amount must be greater than zero'});
+        
+        if (Object.keys(get(errors,`${blockName}.${index}`,{})).length > 0) {
+            console.error(errors);
+            return false;
+        } else {
+            setEditIndex(undefined);
+            setEditValues(undefined);
+            setIsNew(false);
+            setLockTabs(false);
+        }
     }
+
     const handleRemove = index => {
         remove(index);
         setEditIndex(undefined);
         setEditValues(undefined);
         setIsNew(false);
+        setLockTabs(false);
     }
 
     const handleSelectChange = (e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
+    }
+
+    const handlePmtsField = (e,field) => {
+        switch (e.type) {
+            case 'change':
+                if (parseInt(e.target.value,10) < 1) return false;
+                field.onChange(e);
+                break;
+            case 'blur':
+                if (!e.target.value) setValue(field.name,1);
+                break;
+            default:
+                break;
+        }
     }
 
     const calcTotal = useCallback(index=>{
@@ -245,12 +293,13 @@ function AdditionalSalary() {
                                         defaultValue=""
                                         control={control}
                                         render={({field}) => (
-                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index}>
+                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,field.name,false)} disabled={editIndex!=index}>
                                                 <option></option>
                                                 {types.data && types.data.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
                                             </Form.Control>
                                         )}
                                     />
+                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.type.id.message`,'')}</Form.Control.Feedback>
                                 </Col>
                                 <Col xs="auto" className="mb-2">
                                     <Form.Label>Start Date:</Form.Label>
@@ -267,6 +316,7 @@ function AdditionalSalary() {
                                                 autoComplete="off"
                                                 disabled={editIndex!=index}
                                                 maxDate={()=>new Date()}
+                                                isInvalid={get(errors,field.name,false)}
                                             />}
                                         />
                                         <InputGroup.Append>
@@ -275,6 +325,9 @@ function AdditionalSalary() {
                                             </InputGroup.Text>
                                         </InputGroup.Append>
                                     </InputGroup>
+                                    {get(errors,`${blockName}.${index}.startDate.message`,false)&&
+                                        <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${blockName}.${index}.startDate.message`,'')}</Form.Control.Feedback>
+                                    }
                                 </Col>
                                 <Col xs="auto" className="mb-2">
                                     <Form.Label>End Date:</Form.Label>
@@ -290,6 +343,7 @@ function AdditionalSalary() {
                                                 onChange={field.onChange}
                                                 autoComplete="off"
                                                 disabled={editIndex!=index}
+                                                isInvalid={get(errors,field.name,false)}
                                             />}
                                         />
                                         <InputGroup.Append>
@@ -298,10 +352,13 @@ function AdditionalSalary() {
                                             </InputGroup.Text>
                                         </InputGroup.Append>
                                     </InputGroup>
+                                    {get(errors,`${blockName}.${index}.endDate.message`,false)&&
+                                        <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${blockName}.${index}.endDate.message`,'')}</Form.Control.Feedback>
+                                    }
                                 </Col>
                                 <Col xs={6} md={4} className="mb-2">
                                     <Form.Label>Account:</Form.Label>
-                                    <SingleSUNYAccount name={`${blockName}.${index}.account`} disabled={editIndex!=index}/>
+                                    <SingleSUNYAccount name={`${blockName}.${index}.account`} isInvalid={get(errors,`${blockName}.${index}.account.message`,'')} disabled={editIndex!=index}/>
                                 </Col>
                                 <Col xs={2} md={1} className="mb-2">
                                     <Form.Label>Pmts:</Form.Label>
@@ -309,8 +366,9 @@ function AdditionalSalary() {
                                         name={`${blockName}.${index}.payments`}
                                         defaultValue=""
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" disabled={editIndex!=index}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" min={1} onChange={e=>handlePmtsField(e,field)} onBlur={e=>handlePmtsField(e,field)} isInvalid={get(errors,field.name,false)} disabled={editIndex!=index}/>}
                                     />
+                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.payments.message`,'')}</Form.Control.Feedback>
                                 </Col>
                                 <Col xs={4} sm={3} md={2} className="mb-2">
                                     <Form.Label>Amount:</Form.Label>
@@ -318,8 +376,9 @@ function AdditionalSalary() {
                                         name={`${blockName}.${index}.amount`}
                                         defaultValue=""
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" disabled={editIndex!=index}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" isInvalid={get(errors,field.name,false)} disabled={editIndex!=index}/>}
                                     />
+                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.amount.message`,'')}</Form.Control.Feedback>
                                 </Col>
                                 <Col xs={4} sm={3} md={2} className="mb-2">
                                     <Form.Label>Total:</Form.Label>

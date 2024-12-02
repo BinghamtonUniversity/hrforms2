@@ -45,28 +45,65 @@ export {allTabs}; //used on paytrans
 const requiredFields = {
     "person.information.LEGAL_FIRST_NAME":v=>!!v||'First Name is required',
     "person.information.LEGAL_LAST_NAME":v=>!!v||'Last Name is required',
-    "employment.separation.lastDateWorked":v=>!!v||'TESTING!',
+    "person.demographics.birthDate":v=>!!v||'Birth Date is required',
+    "person.demographics.GENDER.id":v=>!!v||'Legal Sex is required',
+    "employment.position.LINE_ITEM_NUMBER":v=>!!v||'Line Number is required',
+    "employment.position.APPOINTMENT_TYPE.id":v=>!!v||'Position Appointment Type is required',
+    "employment.position.PAYROLL_MAIL_DROP_ID.id":v=>!!v||'Check Sort Code is required',
+    "employment.appointment.supervisor":v=>!!get(v,'0.id','')||'Supervisor is required', 
+    "employment.appointment.REPORTING_DEPARTMENT_CODE.id":v=>!!v||'Appointment Department is required',
+    "employment.salary.NUMBER_OF_PAYMENTS":v=>parseInt(v,10)>0||'Number of payments must be greater than zero', 
+    "employment.salary.RATE_AMOUNT":v=>parseInt(v,10)>0||'Rate must be greater than zero', 
+    "employment.separation.lastDateWorked":v=>!!v||'Last Date Worked is required',
+    "employment.leave.leaveEndDate":v=>!!v||'Leave End Date is required',
+    "employment.leave.justfication.id":v=>!!v||'Justification is required',
     "comment":v=>!!v||'Comment is required',
 }
 
-/* ArrayFields or Fields with dependencies */
-const arrayFields = {
-    "person.information.RETIRED_FROM": frmData =>{
-        const rehire = get(frmData,'person.information.REHIRE_RETIREE','0');
-        if (rehire != 1) return true;
-        if (!get(frmData,'person.information.RETIRED_FROM','')) return "Retired From is required";
+/* Advanced Fields */
+const advancedFields = {
+    "person.information.RETIRED_FROM":(frmData,v)=>get(frmData,'person.information.REHIRE_RETIREE','0') != 1 ? true : (!!v||'Retired From is reqired'),
+    "person.demographics.NON_CITIZEN_TYPE.id":(frmData,v)=>get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Non-US Citizen Type is required"),
+    "person.demographics.CITIZENSHIP_COUNTRY_CODE.id":(frmData,v) => get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Country of Citizenship is required"),
+    "person.demographics.VISA_CODE.id":(frmData,v) => get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Visa Type is required"),
+    "person.directory.address":(frmData,v) => get(frmData,'person.directory.address',[]).some(a=>a?.ADDRESS_TYPE=='LEGAL') ? true : 'Legal Address is required',
+    "person.directory.phone":(frmData,v) => get(frmData,'person.directory.phone',[]).some(p=>['HOME','CELL'].includes(p?.PHONE_TYPE)) ? true : 'Home or Cell phone number is required',
+    "person.directory.email":(frmData,v) => get(frmData,'person.directory.email',[]).some(e=>e?.EMAIL_TYPE=='HOME') ? true : 'Home email is required',
+    "employment.appointment.TENURE_STATUS.id":(frmData,v)=>get(frmData,'employment.appointment.DERIVED_FAC_TYPE','N') == 'N' ? true : (!!v||'Tenure Status is required'),
+    //TODO: facultyDetails could be consolidated to one function
+    "employment.appointment.facultyDetails":(frmData,v) => {
+        if (get(frmData,'employment.appointment.isAdjunct','N')=='N') return true;
+        return (parseInt(get(frmData,'employment.appointment.facultyDetails.fallCourses.count',0),10)+parseInt(get(frmData,'employment.appointment.facultyDetails.springCourses.count',0),10)>0)?true:'Fall/Spring Courses required';
     },
-    "person.directory.phone": frmData => {
-        return (get(frmData,'person.directory.phone',[]).length > 0) ? true : 'At least one phone number is required'
+    "employment.appointment.facultyDetails.fallCourses.credits":(frmData,v) => {
+        if (get(frmData,'employment.appointment.isAdjunct','N')=='N') return true;
+        if (parseInt(get(frmData,'employment.appointment.facultyDetails.fallCourses.count',0),10)==0) return true;
+        return (parseInt(v,10)>0)?true:'Fall Credits cannot be zero';
     },
-    "person.directory.email": frmData => {
-        //EMAIL_TYPE and EMAIL_ADDRESS are '' while entering
-        const test = get(frmData,'person.directory.email').some(v => v?.EMAIL_TYPE=='HOME');
-        return (!test) ? 'Home email is required' : true;
-    }
+    "employment.appointment.facultyDetails.fallCourses.list":(frmData,v) => {
+        if (get(frmData,'employment.appointment.isAdjunct','N')=='N') return true;
+        if (parseInt(get(frmData,'employment.appointment.facultyDetails.fallCourses.count',0),10)==0) return true;
+        return (v.length>0)?true:'Fall Courses List cannot be empty';
+    },
+    "employment.appointment.facultyDetails.springCourses.credits":(frmData,v) => {
+        if (get(frmData,'employment.appointment.isAdjunct','N')=='N') return true;
+        if (parseInt(get(frmData,'employment.appointment.facultyDetails.springCourses.count',0),10)==0) return true;
+        return (parseInt(v,10)>0)?true:'Spring Credits cannot be zero';
+    },
+    "employment.appointment.facultyDetails.springCourses.list":(frmData,v) => {
+        if (get(frmData,'employment.appointment.isAdjunct','N')=='N') return true;
+        if (parseInt(get(frmData,'employment.appointment.facultyDetails.springCourses.count',0),10)==0) return true;
+        return (v.length>0)?true:'Spring Courses List cannot be empty';
+    },
+    "employment.salary.SUNY_ACCOUNTS":(frmData,v) => {
+        if (!v.every(a => a?.account?.at(0)?.id)) return 'SUNY Account is required';
+        if (v.reduce((a,c)=>a+parseInt(c?.pct,10)||0,0)!=100) return 'SUNY Account percentage must equal 100';
+        return true;
+    },
 }
 
-export const checkFields = [...Object.keys(requiredFields),...Object.keys(arrayFields)];
+
+export const checkFields = [...Object.keys(requiredFields),...Object.keys(advancedFields)];
 
 export async function validateForm(frmData,context,options) {
     //console.log(frmData,options);
@@ -75,16 +112,16 @@ export async function validateForm(frmData,context,options) {
     for (const field of options.names) {
         const test = invoke(requiredFields,field,get(frmData,field,''));
         if (test === undefined) continue;
-        if (test !== true) set(errors,field,{type:'custom',message:test});
+        if (test !== true) set(errors,field,{type:'custom-required',message:test});
     };
     
-    const arrayFieldKeys = Object.keys(arrayFields);
-    arrayFieldKeys.forEach(key => {
-        // Do not validate if we are in the arrayField - will cause errors when saving the arrayField block.
-        if (!(options.names.length == 1 && arrayFieldKeys.includes(options.names[0]))) {
+    const advancedFieldKeys = Object.keys(advancedFields);
+    advancedFieldKeys.forEach(key => {
+        // Do not validate if we are in the advancedField - will cause errors when saving the advancedField block.
+        if (!(options.names.length == 1 && advancedFieldKeys.includes(options.names[0]))) {
             if (options.names.filter(n => n.startsWith(key)).length > 0) {
-                const test = arrayFields[key](frmData);
-                if (test !== true) set(errors,key,{type:'custom',message:test});
+                const test = advancedFields[key](frmData,get(frmData,key,''));
+                if (test !== true) set(errors,key,{type:'custom-advanced',message:test});
             }
         }
     });

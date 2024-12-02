@@ -6,13 +6,14 @@ import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import { Loading, CountrySelector } from "../components";
 import useListsQueries from "../../queries/lists";
+import { get } from "lodash";
 
 const name = 'person.demographics';
 
 export default function PersonDemographics() {
     const { canEdit, activeNav } = useHRFormContext();
 
-    const { control, getValues, setValue } = useFormContext();
+    const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const watchCitizen = useWatch({name:`${name}.US_CITIZEN_INDICATOR`});
     const watchVeteran = useWatch({name:`${name}.VETERAN_INDICATOR`});
 
@@ -51,6 +52,7 @@ export default function PersonDemographics() {
                                         onChange={field.onChange}
                                         autoComplete="off"
                                         disabled={!canEdit}
+                                        isInvalid={get(errors,`${name}.birthDate.message`,false)}
                                     />}
                                 />
                                 <InputGroup.Append>
@@ -59,6 +61,9 @@ export default function PersonDemographics() {
                                     </InputGroup.Text>
                                 </InputGroup.Append>
                             </InputGroup>
+                            {get(errors,`${name}.birthDate.message`,false)&&
+                                <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${name}.birthDate.message`,'')}</Form.Control.Feedback>
+                            }
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row}>
@@ -71,13 +76,14 @@ export default function PersonDemographics() {
                                     name={`${name}.GENDER.id`}
                                     control={control}
                                     render={({field})=>(
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${name}.GENDER.id.message`,false)} disabled={!canEdit}>
                                             <option></option>
                                             {legalsex.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
                                         </Form.Control>
                                     )}
                                 />
                             }
+                            <Form.Control.Feedback type="invalid">{get(errors,`${name}.GENDER.id.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row}>
@@ -185,7 +191,7 @@ function PersonDemographicsMilitaryStatus() {
 }
 
 function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
-    const { control } = useFormContext();
+    const { control, formState: { errors } } = useFormContext();
 
     const watchCitizenType = useWatch({name:`${name}.NON_CITIZEN_TYPE`});
 
@@ -208,7 +214,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                                         {citizentype.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
                                         {citizentype.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
                                         {citizentype.data && 
-                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${name}.NON_CITIZEN_TYPE.id.message`,false)} disabled={!canEdit}>
                                                 <option></option>
                                                 {citizentype.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
                                             </Form.Control>
@@ -216,6 +222,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                                     </>
                                 )}
                             />
+                            <Form.Control.Feedback type="invalid">{get(errors,`${name}.NON_CITIZEN_TYPE.id.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
                     {(watchCitizenType?.id=='OT'||showInTest) && 
@@ -242,8 +249,9 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                                 name={`${name}.CITIZENSHIP_COUNTRY_CODE.id`}
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}/>}
+                                render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${name}.CITIZENSHIP_COUNTRY_CODE.id.message`,false)} disabled={!canEdit}/>}
                             />
+                            <Form.Control.Feedback type="invalid">{get(errors,`${name}.CITIZENSHIP_COUNTRY_CODE.id.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
@@ -257,13 +265,14 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                                     {visatype.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
                                     {visatype.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
                                     {visatype.data &&
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${name}.VISA_CODE.id`,false)} disabled={!canEdit}>
                                             <option></option>
                                             {visatype.data.map(k=><option key={k[0]} value={k[0]}>{k[0]} - {k[1]}</option>)}
                                         </Form.Control>
                                     }
                                 </>)}
                             />
+                            <Form.Control.Feedback type="invalid">{get(errors,`${name}.VISA_CODE.id.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
                 </>
