@@ -598,6 +598,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             <FormProvider {...methods}>
                 <HRFormContext.Provider value={{
                     formId:formId,
+                    defaultValues:defaultVals,
                     createdBy:data.createdBy,
                     tabs:tabList,
                     tabsVisited:tabsVisited,
