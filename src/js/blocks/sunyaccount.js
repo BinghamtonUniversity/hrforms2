@@ -8,6 +8,7 @@ import useListsQueries from "../queries/lists";
 
 export default function SUNYAccount(props) {
     const name = props.name||'SUNYAccounts';
+    const label = props.label||'SUNY Account:';
     const { control, getValues, setValue } = useFormContext();
     const { fields, append, remove } = useFieldArray({control,name:name});
 
@@ -52,7 +53,7 @@ export default function SUNYAccount(props) {
     return(
         <>
             <Form.Group as={Row}>
-                <Form.Label column md={2}>SUNY Account:</Form.Label>
+                <Form.Label column md={2}>{label}</Form.Label>
                 <Col xl={5} lg={6} md={7}>
                     {accounts.isLoading && <Loading>Loading SUNY Accounts</Loading>}
                     {accounts.isError && <Loading isError>Error Loading SUNY Accounts</Loading>}
