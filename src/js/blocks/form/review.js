@@ -24,9 +24,12 @@ const ReviewComments = lazy(()=>import("./review/review-comments"));
 const ReviewSubmitterInfo = lazy(()=>import("./review/review-submitter"));
 
 export default function Review() {
-    const { getValues } = useFormContext();
+    const { getValues, formState: { isValid, errors } } = useFormContext();
     const { journalStatus } = useHRFormContext();
-    useEffect(()=>console.debug('Review Form Data:',getValues()),[]);
+    useEffect(()=>{
+        console.debug('Review Form Data:',getValues());
+        if (!isValid) console.debug('Form Errors: ',errors);
+    },[]);
     return (
         <article id="form-review" className="mt-3">
             {journalStatus!='Z' && 
