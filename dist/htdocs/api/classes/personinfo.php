@@ -64,13 +64,12 @@ class PersonInfo extends HRForms2 {
 			
 				// hispanic_flag, ethnicity_mult_codes, ethnicity_source_dsc, disability_indicator - not currently using
 				$qry = "select distinct birth_date, gender, gender_identity,
-						us_citizen_indicator, non_citizen_type, emp_authorize_card_indicator, visa_code, citizenship_country_code, 
-						--hispanic_flag, ethnicity_mult_codes, ethnicity_source_dsc, disability_indicator, 
-						military_status_code, veteran_indicator, protected_vet_status_code, military_separation_date
-					from buhr_person_mv@banner.cc.binghamton.edu a
-					join (select hr_person_id, max(role_end_date) as max_end_date from buhr_person_mv@banner.cc.binghamton.edu where role_type <> 'STSCH' group by hr_person_id) b on (a.hr_person_id = b.hr_person_id and a.role_end_date = b.max_end_date)
-					where a.hr_person_id = :hr_person_id
-					and role_type <> 'STSCH'";
+					us_citizen_indicator, non_citizen_type, emp_authorize_card_indicator, visa_code, citizenship_country_code, 
+					military_status_code, veteran_indicator, protected_vet_status_code, military_separation_date
+				from buhr_person_mv@banner.cc.binghamton.edu a
+				join (select hr_person_id, max(nvl(role_end_date,sysdate)) as max_end_date from buhr_person_mv@banner.cc.binghamton.edu where role_type <> 'STSCH' group by hr_person_id) b on (a.hr_person_id = b.hr_person_id and nvl(a.role_end_date,sysdate) = b.max_end_date)
+				where a.hr_person_id = :hr_person_id
+				and role_type <> 'STSCH'";
 				$stmt = oci_parse($this->db,$qry);
 				oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
 				$r = oci_execute($stmt);
