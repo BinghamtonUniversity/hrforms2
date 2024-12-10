@@ -208,9 +208,11 @@ class PersonInfo extends HRForms2 {
 				break;
 			case "education":
 				$degreeTypes = (new listdata(array('degreeTypes'),false))->returnData;
+				$degreePrograms = (new listdata(array('degreePrograms'),false))->returnData;
 				$countryCodes = (new listdata(array('countryCodes'),false))->returnData;
 
 				$qry = "select e.degree_year, e.degree_month, e.pending_degree_flag, e.degree_type,
+				e.degree_program_code, e.degree_program_description,
 				i.country_code, i.institution_state, i.institution_city, i.institution_id, i.institution, 
 				e.highest_degree_flag, e.terminal_degree_flag, e.degree_verified, e.create_date
 				from BUHR.BUHR_POST_SECONDARY_MV@banner.cc.binghamton.edu e
@@ -228,6 +230,11 @@ class PersonInfo extends HRForms2 {
 					//Degree Type
 					$key = array_search($row['DEGREE_TYPE'],array_column($degreeTypes,'DEGREE_TYPE_CODE'));
 					$row['DEGREE_TYPE'] = array(array("id"=>$row['DEGREE_TYPE'],"label"=>($key!==false)?$degreeTypes[$key]['DEGREE_TYPE_DESC']:""));
+					//Degree Program
+					$key = array_search($row['DEGREE_PROGRAM_CODE'],array_column($degreePrograms,'DEGREE_PGM_CODE'));
+					$row['DEGREE_PROGRAM'] = array(array("id"=>$row['DEGREE_PROGRAM_CODE'],"label"=>($key!==false)?$degreePrograms[$key]['DEGREE_PGM_DESC']:""));
+					unset($row['DEGREE_PROGRAM_CODE']);
+					unset($row['DEGREE_PROGRAM_DESCRIPTION']);
 					//Country Code
 					$key = array_search($row['COUNTRY_CODE'],array_column($countryCodes,'COUNTRY_CODE'));
 					$row['COUNTRY_CODE'] = array("id"=>$row['COUNTRY_CODE'],"label"=>($key!==false)?$countryCodes[$key]['COUNTRY_SHORT_DESC']:"");

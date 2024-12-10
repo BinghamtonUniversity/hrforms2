@@ -19,6 +19,27 @@ const yesNoOptions = [
     {id:'DEGREE_VERIFIED',title:'Verified Degree',unique:false}
 ];
 
+const defaultValues = {
+    "DEGREE_YEAR": "",
+    "DEGREE_MONTH": "",
+    "PENDING_DEGREE_FLAG": "N",
+    "DEGREE_TYPE": [{id:"",label:""}],
+    "DEGREE_PROGRAM": [{id:"",label:""}],
+    "COUNTRY_CODE": {id:"",label:""},
+    "INSTITUTION_STATE": "",
+    "INSTITUTION_CITY": "",
+    "INSTITUTION_ID": "",
+    "INSTITUTION": "",
+    "HIGHEST_DEGREE_FLAG": "N",
+    "TERMINAL_DEGREE_FLAG": "N",
+    "DEGREE_VERIFIED": "N",
+    "CREATE_DATE": "",
+    "awardDate": null,
+    "institutionName":[{id:"",label:""}],
+    "institutionCity":[],
+    "createDate":new Date()
+}
+
 export default function PersonEducation() {
     const { control, getValues, setValue, setError, clearErrors, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
@@ -41,26 +62,7 @@ export default function PersonEducation() {
 
     const handleNew = () => {
         if (fields.length > 2) return;
-        append({
-            "DEGREE_YEAR": "",
-            "DEGREE_MONTH": "",
-            "PENDING_DEGREE_FLAG": "N",
-            "DEGREE_TYPE": [],
-            "COUNTRY_CODE": {id:"",label:""},
-            "INSTITUTION_STATE": "",
-            "INSTITUTION_CITY": "",
-            "INSTITUTION_ID": "",
-            "INSTITUTION": "",
-            "HIGHEST_DEGREE_FLAG": "N",
-            "TERMINAL_DEGREE_FLAG": "N",
-            "DEGREE_VERIFIED": "N",
-            "CREATE_DATE": "",
-            "awardDate":null,
-            "specialization":"",
-            "institutionName":[],
-            "institutionCity":[],
-            "createDate":new Date()
-        });
+        append(defaultValues);
         setEditIndex(fields.length);
         setIsNew(true);
         setLockTabs(true);
@@ -81,11 +83,12 @@ export default function PersonEducation() {
     const handleSave = index => {
         clearErrors(`${name}.${index}`);
         const arrayData = getValues(`${name}.${index}`);
-        console.debug(arrayData);
+        console.debug('Education Data:',arrayData);
 
         /* Required fields */
         if (!arrayData?.awardDate) setError(`${name}.${index}.awardDate`,{type:'manual',message:'Award Date is required'});
         if (arrayData?.DEGREE_TYPE?.length!=1) setError(`${name}.${index}.DEGREE_TYPE`,{type:'manual',message:'Degree Type is required'});
+        if (!arrayData?.DEGREE_PROGRAM?.at(0)?.label) setError(`${name}.${index}.DEGREE_PROGRAM`,{type:'manual',message:'Degree Program/Major is required'});
         if (!arrayData?.COUNTRY_CODE?.id) setError(`${name}.${index}.COUNTRY_CODE.id`,{type:'manual',message:'University/College Country is required'});
         if (arrayData?.COUNTRY_CODE?.id == 'USA') {
             if (!arrayData?.INSTITUTION_STATE) {
@@ -94,7 +97,7 @@ export default function PersonEducation() {
                 if (arrayData?.institutionCity?.length!=1) setError(`${name}.${index}.institutionCity`,{type:'manual',message:'University/College City is required'});
             }
         } 
-        if (arrayData?.institutionName?.length!=1) setError(`${name}.${index}.institutionName`,{type:'manual',message:'University/College Name is required'});
+        if (!arrayData?.institutionName?.at(0)?.label) setError(`${name}.${index}.institutionName`,{type:'manual',message:'University/College Name is required'});
 
         if (Object.keys(get(errors,`${name}.${index}`,{})).length > 0) {
             console.error(errors);
@@ -204,7 +207,6 @@ export default function PersonEducation() {
                                         name={field.name}
                                         dateFormat="MMM yyyy"
                                         showMonthYearPicker
-
                                         minDate={getMinMaxDate(index,'min')}
                                         maxDate={getMinMaxDate(index,'max')}
                                         selected={field.value}
@@ -250,24 +252,16 @@ export default function PersonEducation() {
                                         allowNew={true} 
                                         selected={field.value}
                                         disabled={editIndex!=index}
-                                        isInvalid={typeof get(errors,field.name,false) == 'object'}
+                                        isInvalid={!!get(errors,field.name,false)}
                                     />}
                                 />
                             }
                             <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].DEGREE_TYPE.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
-                    <Form.Group as={Row} className="mb-1">
-                        <Form.Label column md={3}>Degree Specialization:</Form.Label>
-                        <Col xs={12} md={8}>
-                            <Controller
-                                name={`${name}.${index}.specialization`}
-                                defaultValue=""
-                                control={control}
-                                render={({field}) => <Form.Control {...field} disabled={editIndex!=index}/>}
-                            />
-                        </Col>
-                    </Form.Group>
+
+                    <DegreeProgramComponent index={index} editIndex={editIndex}/>
+
                     <Form.Group as={Row} className="mb-1">
                         <Form.Label column md={3}>University/College Country*:</Form.Label>
                         <Col xs="auto">
@@ -275,7 +269,7 @@ export default function PersonEducation() {
                                 name={`${name}.${index}.COUNTRY_CODE.id`}
                                 defaultValue=""
                                 control={control}
-                                render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}/>}
+                                render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
                             />
                             <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].COUNTRY_CODE.id.message`,'')}</Form.Control.Feedback>
                         </Col>
@@ -289,7 +283,7 @@ export default function PersonEducation() {
                                         name={`${name}.${index}.INSTITUTION_STATE`}
                                         defaultValue=""
                                         control={control}
-                                        render={({field}) => <StateSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}/>}
+                                        render={({field}) => <StateSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
                                     />
                                     <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].INSTITUTION_STATE.message`,'')}</Form.Control.Feedback>
                                 </Col>
@@ -351,6 +345,50 @@ export default function PersonEducation() {
     );
 }
 
+function DegreeProgramComponent({editIndex,index}) {
+    const { control, setValue, formState: { errors } } = useFormContext();
+
+    const { getListData } = useListsQueries();
+    const programs = getListData('degreePrograms',{select:d=>{
+        return d.map(p=>{return {id:p.DEGREE_PGM_CODE,label:p.DEGREE_PGM_DESC}});
+    }});
+
+    const handleBlur = (e,field) => {
+        if (!field.value.length) setValue(field.name,[{customOption:true,label:e.target.value,id:'new-id-1'}]);
+    }
+
+    return (
+        <Form.Group as={Row} className="mb-1">
+            <Form.Label column md={3}>Degree Program/Major*:</Form.Label>
+            <Col xs={12} md={8}>
+                {programs.isError && <Loading isError error={programs.error}>Error Loading Degree Programs</Loading>}
+                {programs.isLoading && <Loading>Loading Degree Programs</Loading>}
+                {programs.data &&
+                    <Controller
+                        name={`${name}.${index}.DEGREE_PROGRAM`}
+                        defaultValue=""
+                        control={control}
+                        render={({field}) => <Typeahead 
+                            {...field} 
+                            id={`degreeProgram-${index}`}
+                            options={programs.data} 
+                            flip={true} 
+                            minLength={2} 
+                            allowNew={true} 
+                            selected={field.value||defaultValues.DEGREE_PROGRAM} 
+                            onChange={field.onChange}
+                            onBlur={e=>handleBlur(e,field)}
+                            disabled={editIndex!=index}
+                            isInvalid={!!get(errors,field.name,false)}
+                        />}
+                    />
+                }
+                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.DEGREE_PROGRAM.message`,'')}</Form.Control.Feedback>
+            </Col>
+        </Form.Group>
+    );
+}
+
 function UniversityCityComponent({editIndex,index}) {
     const { control, setValue, formState: { errors } } = useFormContext();
     const watchState = useWatch({name:`${name}.${index}.INSTITUTION_STATE`,control});
@@ -366,7 +404,7 @@ function UniversityCityComponent({editIndex,index}) {
     const handleChange = (e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
-        setValue(`${nameBase}.institutionName`,[]);
+        setValue(`${nameBase}.institutionName`,defaultValues.institutionName); // Clear Institution Name when City is changed
     }
 
     return (
@@ -387,14 +425,14 @@ function UniversityCityComponent({editIndex,index}) {
                             flip={true} 
                             minLength={2} 
                             allowNew={true} 
-                            selected={field.value}
+                            selected={field.value||defaultValues.institutionCity}
                             onChange={(e)=>handleChange(e,field)}
                             disabled={editIndex!=index}
-                            isInvalid={typeof get(errors,field.name,false) == 'object'}
+                            isInvalid={!!get(errors,field.name,false)}
                         />}
                     />
                 }
-                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].institutionCity.message`,'')}</Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.institutionCity.message`,'')}</Form.Control.Feedback>
             </Col>
         </Form.Group>
     );
@@ -435,13 +473,13 @@ function UniversityNameComponent({editIndex,index}) {
                             flip={true} 
                             minLength={2} 
                             allowNew={true} 
-                            selected={field.value}
+                            selected={field.value||defaultValues.institutionName}
                             disabled={editIndex!=index}
-                            isInvalid={typeof get(errors,field.name,false) == 'object'}
+                            isInvalid={!!get(errors,field.name,false)}
                         />}
                     />
                 }
-                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].institutionName.message`,'')}</Form.Control.Feedback>
+                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.institutionName.message`,'')}</Form.Control.Feedback>
             </Col>
         </Form.Group>
     );
