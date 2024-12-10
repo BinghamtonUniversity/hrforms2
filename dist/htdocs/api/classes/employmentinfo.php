@@ -214,7 +214,7 @@ class EmploymentInfo extends HRForms2 {
 					where lin_itm_nbr = :line_number
 					and data_sts = 'C'
 					and osc_ern_cd in ('RGS','RGH','FEE')
-					and end_chk_dt >= :effective_date
+					and end_chk_dt <= :effective_date
 					order by eff_chk_dt desc";
 				$stmt = oci_parse($this->db,$qry);
 				oci_bind_by_name($stmt,":line_number", $row['LINE_ITEM_NUMBER']);
