@@ -142,6 +142,7 @@ pre {
   bottom: 2rem;
   right: 2rem;
   opacity:0.9;
+  font-size: initial;
 }
 .button-group {
   display:flex;
