@@ -12,7 +12,7 @@ const name = 'person.information';
 
 export default function PersonInfo() {
     const { control, getValues, setValue, formState: { errors } } = useFormContext();
-    const { canEdit, activeNav } = useHRFormContext();
+    const { canEdit, activeNav, defaultValues } = useHRFormContext();
 
     const watchRehireRetiree = useWatch({name:`${name}.REHIRE_RETIREE`});
 
@@ -50,6 +50,7 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.SUNY_ID`}
                                     control={control}
+                                    defaultValue={defaultValues[`${name}.SUNY_ID`]}
                                     render={({field})=><Form.Control {...field} type="text" disabled={getValues('selectedRow.SUNY_ID')||!canEdit}/>}
                                 />
                             </Col>
@@ -60,6 +61,7 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.LOCAL_CAMPUS_ID`}
                                     control={control}
+                                    defaultValue={defaultValues[`${name}.LOCAL_CAMPUS_ID`]}
                                     render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
                                 />
                             </Col>
@@ -75,6 +77,7 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.SALUTATION_CODE.id`}
                                     control={control}
+                                    defaultValue={defaultValues[`${name}.SALUTATION_CODE.id`]}
                                     render={({field})=>(
                                         <>
                                             {salutations.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
@@ -96,7 +99,8 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.LEGAL_FIRST_NAME`}
                                     control={control}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit} isInvalid={get(errors,`${name}.LEGAL_FIRST_NAME.message`,false)}/>}
+                                    defaultValue={defaultValues[`${name}.LEGAL_FIRST_NAME`]}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}.LEGAL_FIRST_NAME.message`,'')}</Form.Control.Feedback>
                             </Col>
@@ -107,6 +111,7 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.ALIAS_FIRST_NAME`}
                                     control={control}
+                                    defaultValue={defaultValues[`${name}.ALIAS_FIRST_NAME`]}
                                     render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
                                 />
                             </Col>
@@ -117,6 +122,7 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.LEGAL_MIDDLE_NAME`}
                                     control={control}
+                                    defaultValue={defaultValues[`${name}.LEGAL_MIDDLE_NAME`]}
                                     render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
                                 />
                             </Col>
@@ -127,7 +133,8 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.LEGAL_LAST_NAME`}
                                     control={control}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit} isInvalid={get(errors,`${name}.LEGAL_LAST_NAME.message`,false)}/>}
+                                    defaultValue={defaultValues[`${name}.LEGAL_LAST_NAME`]}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}.LEGAL_LAST_NAME.message`,'')}</Form.Control.Feedback>
                             </Col>
@@ -138,6 +145,7 @@ export default function PersonInfo() {
                                 <Controller
                                     name={`${name}.SUFFIX_CODE`}
                                     control={control}
+                                    defaultValue={defaultValues[`${name}.SUFFIX_CODE`]}
                                     render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
                                 />
                             </Col>
@@ -152,7 +160,7 @@ export default function PersonInfo() {
                             <Col xs="auto" className="pt-2">
                                 <Controller
                                     name={`${name}.VOLUNTEER_FIRE_FLAG`}
-                                    defaultValue="0"
+                                    defaultValue={defaultValues[`${name}.VOLUNTEER_FIRE_FLAG`]}
                                     control={control}
                                     render={({field}) => (
                                         <>
@@ -168,7 +176,7 @@ export default function PersonInfo() {
                             <Col xs="auto" className="pt-2">
                                 <Controller
                                     name={`${name}.REHIRE_RETIREE`}
-                                    defaultValue="0"
+                                    defaultValue={defaultValues[`${name}.REHIRE_RETIREE`]}
                                     control={control}
                                     render={({field}) => (
                                         <>
@@ -187,7 +195,7 @@ export default function PersonInfo() {
                                         <InputGroup>
                                             <Controller
                                                 name={`${name}.retiredDate`}
-                                                defaultValue=""
+                                                defaultValue={defaultValues[`${name}.retiredDate`]}
                                                 control={control}
                                                 render={({field}) => <Form.Control
                                                     as={DatePicker}
@@ -208,12 +216,13 @@ export default function PersonInfo() {
                                     </Col>
                                 </Form.Group>
                                 <Form.Group as={Row} className={testHighlight(watchRehireRetiree=='1')}>
-                                    <Form.Label column md={2}>Retired From:</Form.Label>
+                                    <Form.Label column md={2}>Retired From*:</Form.Label>
                                     <Col xs="auto">
                                         <Controller
                                             name={`${name}.RETIRED_FROM`}
                                             control={control}
-                                            render={({field})=><Form.Control {...field} type="text" isInvalid={get(errors,`${name}.RETIRED_FROM.message`,false)} disabled={!canEdit}/>}
+                                            defaultValue={defaultValues[`${name}.RETIRED_FROM`]}
+                                            render={({field})=><Form.Control {...field} type="text" isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                                         />
                                         <Form.Control.Feedback type="invalid">{get(errors,`${name}.RETIRED_FROM.message`,'')}</Form.Control.Feedback>
                                     </Col>

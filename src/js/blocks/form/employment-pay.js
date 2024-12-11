@@ -29,12 +29,23 @@ export default function EmploymentPay() {
 
 function ExistingEmploymentPayTable() {
     const blockName = `${name}.existingPay`;
-    const { getValues, control } = useFormContext();
+    const { getValues, setError, clearErrors, control, formState: { errors } } = useFormContext();
+    const { defaultValues } = useHRFormContext();
     const data = getValues(blockName);
 
     const CalendarPortal = ({children}) => {
         return createPortal(<div>{children}</div>,document.body);
     };
+
+    const handleEndDateBlur = (e,field) => {
+        if (e.target.value == "") {
+            setError(field.name,{type:'custom',message:'Existing Pay End Date is required'});
+            console.log(field.name);
+            console.log(errors);
+        } else {
+            clearErrors(field.name);
+        }
+    }
 
     const ExpandedComponent = ({data}) => <pre className="m-3"><span className="font-weight-bold">Duties:</span> {data.DUTIES}</pre>
     const columns = useMemo(() => [
@@ -43,14 +54,17 @@ function ExistingEmploymentPayTable() {
             <Controller
                 name={`${blockName}.${index}.commitmentEndDate`}
                 control={control}
+                defaultValue={defaultValues[`${blockName}.${index}.commitmentEndDate`]}
                 render={({field}) => <Form.Control 
                     as={DatePicker} 
                     name={field.name}
                     selected={field.value} 
                     closeOnScroll={true} 
                     onChange={field.onChange}
+                    onBlur={e=>handleEndDateBlur(e,field)}
                     autoComplete="off"
                     popperContainer={CalendarPortal}
+                    isInvalid={!!get(errors,field.name,false)}
                 />}
             />
         )},
@@ -59,7 +73,7 @@ function ExistingEmploymentPayTable() {
         {name:'Supervisor',selector:row=>row.supervisorSortName},
         {name:'Hourly Rate',selector:row=><CurrencyFormat>{row.COMMITMENT_RATE}</CurrencyFormat>},
         {name:'Award Amount',selector:row=><CurrencyFormat>{row.STUDENT_AWARD_AMOUNT}</CurrencyFormat>,hide:!getValues('payroll.ADDITIONAL_INFO.showStudentAwardAmount')}
-    ],[data]);
+    ],[data,errors]);
     return (
         <section>
             <Row as="header">
@@ -87,9 +101,9 @@ function ExistingEmploymentPayTable() {
 
 function NewEmploymentPay() {
     const blockName = `${name}.newPay`;
-    const { canEdit } = useHRFormContext();
+    const { canEdit, setLockTabs } = useHRFormContext();
 
-    const { control, getValues, setValue, clearErrors, trigger, formState: { errors } } = useFormContext();
+    const { control, getValues, setValue, clearErrors, setError, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
         name:blockName
@@ -101,23 +115,26 @@ function NewEmploymentPay() {
     const [minDate,setMinDate] = useState();
     const [maxDate,setMaxDate] = useState();
 
+    const defaultValues = {
+        startDate:getValues('effDate')||new Date(),
+        endDate:"",
+        account:[{id:"",label:""}],
+        hourlyRate:"",
+        awardAmount:"",
+        department:{id:"",label:""},
+        supervisor:[{id:"",label:""}],
+        duties:"",
+        created:new Date()
+    };
+
     const handleNew = () => {
         if (fields.length > 2) return;
-        append({
-            startDate:"",
-            endDate:"",
-            account:[],
-            hourlyRate:"",
-            awardAmount:"",
-            department:{id:"",label:""},
-            supervisor:[],
-            duties:"",
-            created:new Date
-        },{
+        append(defaultValues,{
             focusName:`${blockName}.${fields.length}.startDate`
         });
         setEditIndex(fields.length);
         setIsNew(true);
+        setLockTabs(true);
     }
     const handleEdit = index => {
         setEditIndex(index);
@@ -125,29 +142,43 @@ function NewEmploymentPay() {
         setMinDate(addDays(getValues(`${blockName}.${index}.startDate`),1));
         setMaxDate(subDays(getValues(`${blockName}.${index}.endDate`),1));
         setIsNew(false); // can only edit existing
+        setLockTabs(true);
     }
     const handleCancel = index => {
-        const checkFields = Object.keys(fields[index]).map(f=>`${blockName}.${index}.${f}`);
-        clearErrors(checkFields);
+        clearErrors(`${blockName}.${index}`);
         update(index,editValues);
         setEditValues(undefined);
         setEditIndex(undefined);
         setMinDate(undefined);
         setMaxDate(undefined);
+        setLockTabs(false);
     }
     const handleSave = index => {
-        const checkFields = Object.keys(fields[index]).map(f=>`${blockName}.${index}.${f}`);
-        trigger(checkFields).then(valid => {
-            if (!valid) {
-                console.error('Errors!',errors);
-            } else {
-                setMinDate(undefined);
-                setMaxDate(undefined);
-                setEditIndex(undefined);
-                setEditValues(undefined);
-                setIsNew(false);
-            }
-        }).catch(e=>console.error(e));
+        clearErrors(`${blockName}.${index}`);
+        const arrayData = getValues(`${blockName}.${index}`);
+        console.debug('New Pay Data:',arrayData);
+
+        /* Required fields */
+        if (!arrayData.startDate) setError(`${blockName}.${index}.startDate`,{type:'manual',message:'Start Date is required'});
+        if (!arrayData.endDate) setError(`${blockName}.${index}.endDate`,{type:'manual',message:'End Date is required'});
+        if (!get(arrayData,'account.0.label','')) setError(`${blockName}.${index}.account`,{type:'manual',message:'Account is required'});
+        if (parseInt(arrayData.hourlyRate,10)<=0) setError(`${blockName}.${index}.hourlyRate`,{type:'manual',message:'Hourly Rate must be greater than zero'});
+        if (!arrayData.hourlyRate) setError(`${blockName}.${index}.hourlyRate`,{type:'manual',message:'Hourly Rate is required'});
+        if (!get(arrayData,'department.id','')) setError(`${blockName}.${index}.department.id`,{type:'manual',message:'Department is required'});
+        if (!get(arrayData,'supervisor.0.label','')) setError(`${blockName}.${index}.supervisor`,{type:'manual',message:'Supervisor is required'});
+        if (!arrayData.duties) setError(`${blockName}.${index}.duties`,{type:'manual',message:'Duties are required'});
+        
+        if (Object.keys(get(errors,`${blockName}.${index}`,{})).length > 0) {
+            console.error(errors);
+            return false;
+        } else {
+            setMinDate(undefined);
+            setMaxDate(undefined);
+            setEditIndex(undefined);
+            setEditValues(undefined);
+            setIsNew(false);
+            setLockTabs(false);
+        }
     }
     const handleRemove = index => {
         remove(index);
@@ -156,6 +187,7 @@ function NewEmploymentPay() {
         setEditIndex(undefined);
         setEditValues(undefined);
         setIsNew(false);
+        setLockTabs(false);
     }
 
     const handleDateChange = useCallback((d,field) => {
@@ -179,13 +211,12 @@ function NewEmploymentPay() {
                 <section key={flds.id} className="border rounded p-2 mb-2">
                     <Form.Row>
                         <Col xs="auto" className="mb-2">
-                            <Form.Label>Start Date:</Form.Label>
+                            <Form.Label>Start Date*:</Form.Label>
                             <InputGroup>
                                 <Controller
                                     name={`${blockName}.${index}.startDate`}
-                                    defaultValue=""
+                                    defaultValue={defaultValues.startDate}
                                     control={control}
-                                    rules={{required:{value:true,message:'Start Date is Required'}}}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
                                         name={field.name}
@@ -193,7 +224,7 @@ function NewEmploymentPay() {
                                         selected={field.value}
                                         onChange={d=>handleDateChange(d,field,index)}
                                         disabled={editIndex!=index}
-                                        isInvalid={get(errors,field.name,false)}
+                                        isInvalid={!!get(errors,field.name,false)}
                                         autoComplete="off"
                                         maxDate={maxDate}
                                         autoFocus
@@ -205,16 +236,15 @@ function NewEmploymentPay() {
                                     </InputGroup.Text>
                                 </InputGroup.Append>
                             </InputGroup>
-                            <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].startDate`,false)?'block':'none'}}>{get(errors,`${name}.${index}.startDate.message`,'')}</Form.Control.Feedback>
+                            <Form.Control.Feedback type="invalid" style={{display:get(errors,`${blockName}.${index}.startDate`,false)?'block':'none'}}>{get(errors,`${blockName}.${index}.startDate.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col xs="auto" className="mb-2">
-                            <Form.Label>End Date:</Form.Label>
+                            <Form.Label>End Date*:</Form.Label>
                             <InputGroup>
                                 <Controller
                                     name={`${blockName}.${index}.endDate`}
-                                    defaultValue=""
+                                    defaultValue={defaultValues.endDate}
                                     control={control}
-                                    rules={{required:{value:true,message:'End Date is Required'}}}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
                                         name={field.name}
@@ -222,7 +252,7 @@ function NewEmploymentPay() {
                                         selected={field.value}
                                         onChange={d=>handleDateChange(d,field,index)}
                                         disabled={editIndex!=index}
-                                        isInvalid={get(errors,field.name,false)}
+                                        isInvalid={!!get(errors,field.name,false)}
                                         autoComplete="off"
                                         minDate={minDate}
                                     />}
@@ -233,54 +263,57 @@ function NewEmploymentPay() {
                                     </InputGroup.Text>
                                 </InputGroup.Append>
                             </InputGroup>
-                            <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].endDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].endDate.message`,'')}</Form.Control.Feedback>
+                            <Form.Control.Feedback type="invalid" style={{display:get(errors,`${blockName}.${index}.endDate`,false)?'block':'none'}}>{get(errors,`${blockName}.${index}.endDate.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col xs={6} md={4} className="mb-2">
-                            <Form.Label>Account:</Form.Label>
-                            <SingleSUNYAccount name={`${blockName}.${index}.account`} disabled={editIndex!=index}/>
+                            <Form.Label>Account*:</Form.Label>
+                            <SingleSUNYAccount name={`${blockName}.${index}.account`} isInvalid={!!get(errors,`${blockName}.${index}.account.message`,false)} disabled={editIndex!=index}/>
                         </Col>
                         <Col xs={6} sm={3} md={2} className="mb-2">
-                            <Form.Label>Hourly Rate:</Form.Label>
+                            <Form.Label>Hourly Rate*:</Form.Label>
                             <Controller
                                 name={`${blockName}.${index}.hourlyRate`}
-                                defaultValue=""
+                                defaultValue={defaultValues.hourlyRate}
                                 control={control}
-                                render={({field}) => <Form.Control {...field} type="number" disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Control {...field} type="number" min={0} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                             />
+                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.hourlyRate.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col xs={6} sm={3} md={2} className="mb-2">
                             <Form.Label>Award Amount:</Form.Label>
                             <Controller
                                 name={`${blockName}.${index}.awardAmount`}
-                                defaultValue=""
+                                defaultValue={defaultValues.awardAmount}
                                 control={control}
-                                render={({field}) => <Form.Control {...field} type="number" disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Control {...field} type="number" min={0} disabled={editIndex!=index}/>}
                             />
                         </Col>
                     </Form.Row>
                     <Form.Group as={Row}>
-                        <Form.Label column xs={4} sm={3} md={2} xl={1}>Department:</Form.Label>
+                        <Form.Label column xs={4} sm={3} md={2} xl={1}>Department*:</Form.Label>
                         <Col xs="auto">
                             <Controller
                                 name={`${blockName}.${index}.department.id`}
                                 control={control}
-                                defaultValue=""
-                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index}/>}
+                                defaultValue={defaultValues.department}
+                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                             />
+                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.department.id.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
 
                     <PaySupervisor index={index} editIndex={editIndex}/>
 
                     <Form.Group as={Row}>
-                        <Form.Label column xs={4} sm={3} md={2} xl={1}>Duties:</Form.Label>
+                        <Form.Label column xs={4} sm={3} md={2} xl={1}>Duties*:</Form.Label>
                         <Col xs={8} md={7} xl={6}>
                             <Controller
                                 name={`${blockName}.${index}.duties`}
                                 control={control}
-                                defaultValue=""
-                                render={({field}) => <Form.Control {...field} disabled={editIndex!=index}/>}
+                                defaultValue={defaultValues.duties}
+                                render={({field}) => <Form.Control {...field} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                             />
+                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.duties.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
                     <Row>
@@ -314,7 +347,7 @@ function NewEmploymentPay() {
 
 function PaySupervisor({index,editIndex}) {
     const blockName = `${name}.newPay`;
-    const { control, getValues, setValue } = useFormContext();
+    const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const [searchFilter,setSearchFilter] = useState('');
     const { getSupervisorNames } = useFormQueries();
     const supervisors = getSupervisorNames(searchFilter,{enabled:false});
@@ -335,11 +368,11 @@ function PaySupervisor({index,editIndex}) {
     },[searchFilter]);
     return (
         <Form.Group as={Row}>
-            <Form.Label column xs={4} sm={3} md={2} xl={1}>Supervisor:</Form.Label>
+            <Form.Label column xs={4} sm={3} md={2} xl={1}>Supervisor*:</Form.Label>
             <Col xs="auto">
                 <Controller
                     name={`${blockName}.${index}.supervisor`}
-                    defaultValue=""
+                    defaultValue={[{id:'',label:''}]}
                     control={control}
                     render={({field}) => <AsyncTypeahead
                         {...field}
@@ -355,8 +388,10 @@ function PaySupervisor({index,editIndex}) {
                         selected={field.value}
                         placeholder="Search for supervisor..."
                         disabled={editIndex!=index}
+                        isInvalid={!!get(errors,field.name,false)}
                     />}
                 />
+                <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.supervisor.message`,'')}</Form.Control.Feedback>
             </Col>
         </Form.Group>
     );

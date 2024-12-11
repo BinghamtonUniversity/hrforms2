@@ -13,10 +13,10 @@ import useListsQueries from "../../queries/lists";
 const name = 'employment.volunteer';
 
 export default function EmploymentSeparation() {
-    const { canEdit, activeNav } = useHRFormContext();
+    const { canEdit, activeNav, defaultValues, showInTest, testHighlight } = useHRFormContext();
     const ref = useRef();
 
-    const { control, setValue, formState: { errors } } = useFormContext();
+    const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const [subRoleId] = useWatch({name:[`${name}.subRole.id`]});
 
     const { getListData } = useListsQueries();
@@ -31,8 +31,8 @@ export default function EmploymentSeparation() {
         if (nameBase == `${name}.subRole`) {
             // clear conditional fields: tenureStatus, univOfficial, and supervisor
             setValue(`${name}.tenureStatus`,'');
-            setValue(`${name}.univOfficial`,[]);
-            setValue(`${name}.supervisor`,[]);
+            setValue(`${name}.univOfficial`,[{id:'',label:''}]);
+            setValue(`${name}.supervisor`,[{id:'',label:''}]);
         }
     }
 
@@ -44,31 +44,34 @@ export default function EmploymentSeparation() {
                 <Col as="h3">Volunteer</Col>
             </Row>
             <Form.Group as={Row}>
-                <Form.Label column md={2}>Sub-Role:</Form.Label>
+                <Form.Label column md={2}>Sub-Role*:</Form.Label>
                 <Col xs="auto">
                     {subroles.isLoading && <Loading>Loading Data</Loading>}
                     {subroles.isError && <Loading isError>Failed to Load</Loading>}
                     {subroles.data &&
                         <Controller
                             name={`${name}.subRole.id`}
+                            defaultValue={defaultValues[`${name}.subRole.id`]}
                             control={control}
                             render={({field}) => (
-                                <Form.Control {...field} as="select" ref={ref} onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                                <Form.Control {...field} as="select" ref={ref} onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}>
                                     <option></option>
                                     {subroles.data.map(r=><option key={r[0]} value={r[0]}>{r[1]}</option>)}
                                 </Form.Control>
                             )}
                         />
                     }
+                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.subRole.id.message`,'')}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
-                <Form.Label column md={2}>Start Date:</Form.Label>
+                <Form.Label column md={2}>Start Date*:</Form.Label>
                 <Col xs="auto">
                     <InputGroup>
                         <Controller
                             name={`${name}.startDate`}
                             control={control}
+                            defaultValue={getValues('effDate')}
                             render={({field}) => <Form.Control
                                 as={DatePicker}
                                 name={field.name}
@@ -77,6 +80,7 @@ export default function EmploymentSeparation() {
                                 onChange={field.onChange}
                                 autoComplete="off"
                                 disabled={!canEdit}
+                                isInvalid={!!get(errors,field.name,false)}
                             />}
                         />
                         <InputGroup.Append>
@@ -85,14 +89,16 @@ export default function EmploymentSeparation() {
                             </InputGroup.Text>
                         </InputGroup.Append>
                     </InputGroup>
+                    <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}.startDate`,false)?'block':'none'}}>{get(errors,`${name}.startDate.message`,'')}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
-                <Form.Label column md={2}>End Date:</Form.Label>
+                <Form.Label column md={2}>End Date*:</Form.Label>
                 <Col xs="auto">
                     <InputGroup>
                         <Controller
                             name={`${name}.endDate`}
+                            defaultValue={defaultValues[`${name}.endDate`]}
                             control={control}
                             render={({field}) => <Form.Control
                                 as={DatePicker}
@@ -102,6 +108,7 @@ export default function EmploymentSeparation() {
                                 onChange={field.onChange}
                                 autoComplete="off"
                                 disabled={!canEdit}
+                                isInvalid={!!get(errors,field.name,false)}
                             />}
                         />
                         <InputGroup.Append>
@@ -110,10 +117,11 @@ export default function EmploymentSeparation() {
                             </InputGroup.Text>
                         </InputGroup.Append>
                     </InputGroup>
+                    <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}.endDate`,false)?'block':'none'}}>{get(errors,`${name}.endDate.message`,'')}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
-            {subRoleId=='Instructor'&&
-                <Form.Group as={Row}>
+            {(subRoleId=='Instructor'||showInTest)&&
+                <Form.Group as={Row} className={testHighlight(subRoleId=='Instructor')}>
                     <Form.Label column md={2}>Tenure Status:</Form.Label>
                     <Col xs="auto">
                         {tenurestatus.isLoading && <Loading>Loading Data</Loading>}
@@ -121,6 +129,7 @@ export default function EmploymentSeparation() {
                         {tenurestatus.data &&
                             <Controller
                                 name={`${name}.tenureStatus.id`}
+                                defaultValue={defaultValues[`${name}.tenureStatus`]}
                                 control={control}
                                 render={({field}) => (
                                     <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
@@ -134,72 +143,75 @@ export default function EmploymentSeparation() {
                 </Form.Group>
             }
             <Form.Group as={Row}>
-                <Form.Label column md={2}>Hours/Week:</Form.Label>
+                <Form.Label column md={2}>Hours/Week*:</Form.Label>
                 <Col xs="auto">
                     <Controller
                         name={`${name}.hoursPerWeek`}
-                        defaultValue="1"
+                        defaultValue={defaultValues[`${name}.hoursPerWeek`]}
                         control={control}
-                        rules={{min:{value:1,message:'Hours/Week cannot be less than 1'},max:{value:40,message:'Hours/Week cannot be greater than 40'}}}
-                        render={({field}) => <Form.Control {...field} type="number" min={1} max={40} isInvalid={get(errors,field.name,false)} disabled={!canEdit}/>}
+                        render={({field}) => <Form.Control {...field} type="number" min={1} max={40} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
                     <Form.Control.Feedback type="invalid">{get(errors,`${name}.hoursPerWeek.message`,'')}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
-                <Form.Label column md={2}>Service Type:</Form.Label>
+                <Form.Label column md={2}>Service Type*:</Form.Label>
                 <Col xs="auto">
                     {servicetypes.isLoading && <Loading>Loading Data</Loading>}
                     {servicetypes.isError && <Loading isError>Failed to Load</Loading>}
                     {servicetypes.data &&
                         <Controller
                             name={`${name}.serviceType.id`}
+                            defaultValue={defaultValues[`${name}.serviceType`]}
                             control={control}
                             render={({field}) => (
-                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}>
                                     <option></option>
                                     {servicetypes.data.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}
                                 </Form.Control>
                             )}
                         />
                     }
+                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.serviceType.id.message`,'')}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
-                <Form.Label column md={2}>Department:</Form.Label>
+                <Form.Label column md={2}>Department*:</Form.Label>
                 <Col xs="auto">
                     <Controller
                         name={`${name}.department.id`}
                         control={control}
-                        defaultValue=""
-                        render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}/>}
+                        defaultValue={defaultValues[`${name}.department`]}
+                        render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
+                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.department.id.message`,'')}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
-            {(subRoleId&&subRoleId.startsWith('CP'))&& 
-                <VolunteerSupervisor fieldName={`${name}.univOfficial`} fieldLabel="Responsible Univ Official"/>
+            {(subRoleId&&subRoleId.startsWith('CP')||showInTest)&& 
+                <VolunteerSupervisor fieldName={`${name}.univOfficial`} fieldLabel="Responsible Univ Official*" testHighlight={testHighlight(subRoleId&&subRoleId.startsWith('CP'))}/>
             }
-            {(subRoleId&&!subRoleId.startsWith('CP'))&& 
-                <VolunteerSupervisor fieldName={`${name}.supervisor`} fieldLabel="Supervisor"/>
+            {(subRoleId&&!subRoleId.startsWith('CP')||showInTest)&& 
+                <VolunteerSupervisor fieldName={`${name}.supervisor`} fieldLabel="Supervisor*" testHighlight={testHighlight(subRoleId&&!subRoleId.startsWith('CP'))}/>
             }
             <Form.Group as={Row}>
-                <Form.Label column md={2}>Duties:</Form.Label>
+                <Form.Label column md={2}>Duties*:</Form.Label>
                 <Col xs={12} sm={10} md={8} lg={6}>
                     <Controller
                         name={`${name}.duties`}
-                        defaultValue=""
+                        defaultValue={defaultValues[`${name}.duties`]}
                         control={control}
-                        render={({field}) => <Form.Control {...field} as="textarea" rows={4} disabled={!canEdit}/>}
+                        render={({field}) => <Form.Control {...field} as="textarea" rows={4} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
+                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.duties.message`,'')}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
         </article>
     );
 }
 
-function VolunteerSupervisor({fieldName,fieldLabel}) {
-    const { control, getValues, setValue } = useFormContext();
-    const { canEdit } = useHRFormContext();
+function VolunteerSupervisor({fieldName,fieldLabel,testHighlight}) {
+    const { control, getValues, setValue, formState: { errors } } = useFormContext();
+    const { canEdit, defaultValues } = useHRFormContext();
     const [searchFilter,setSearchFilter] = useState('');
     const { getSupervisorNames } = useFormQueries();
     const supervisors = getSupervisorNames(searchFilter,{enabled:false});
@@ -213,12 +225,13 @@ function VolunteerSupervisor({fieldName,fieldLabel}) {
     }
     useEffect(() => searchFilter&&supervisors.refetch(),[searchFilter]);
     return (
-        <Form.Group as={Row}>
+        <Form.Group as={Row} className={testHighlight}>
             <Form.Label column md={2}>{fieldLabel}:</Form.Label>
             <Col xs={10} sm={8} md={6} lg={5} xl={4}>
                 <Controller
                     name={fieldName}
                     control={control}
+                    defaultValue={defaultValues[fieldName]}
                     render={({field}) => <AsyncTypeahead
                         {...field}
                         filterBy={()=>true}
@@ -233,8 +246,10 @@ function VolunteerSupervisor({fieldName,fieldLabel}) {
                         placeholder="Search for people..."
                         selected={field.value}
                         disabled={!canEdit}
+                        isInvalid={!!get(errors,fieldName,false)}
                     />}
                 />
+                <Form.Control.Feedback type="invalid">{get(errors,`${fieldName}.message`,'')}</Form.Control.Feedback>
             </Col>
         </Form.Group>
     );

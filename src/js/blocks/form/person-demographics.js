@@ -11,7 +11,7 @@ import { get } from "lodash";
 const name = 'person.demographics';
 
 export default function PersonDemographics() {
-    const { canEdit, activeNav } = useHRFormContext();
+    const { canEdit, activeNav, defaultValues } = useHRFormContext();
 
     const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const watchCitizen = useWatch({name:`${name}.US_CITIZEN_INDICATOR`});
@@ -38,12 +38,13 @@ export default function PersonDemographics() {
                         <Col as="h3">Demographics</Col>
                     </Row>
                     <Form.Group as={Row}>
-                        <Form.Label column md={2}>Date of Birth:</Form.Label>
+                        <Form.Label column md={2}>Date of Birth*:</Form.Label>
                         <Col xs="auto">
                             <InputGroup>
                                 <Controller
                                     name={`${name}.birthDate`}
                                     control={control}
+                                    defaultValue={defaultValues[`${name}.birthDate`]}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
                                         name={field.name}
@@ -52,7 +53,7 @@ export default function PersonDemographics() {
                                         onChange={field.onChange}
                                         autoComplete="off"
                                         disabled={!canEdit}
-                                        isInvalid={get(errors,`${name}.birthDate.message`,false)}
+                                        isInvalid={!!get(errors,field.name,false)}
                                     />}
                                 />
                                 <InputGroup.Append>
@@ -67,7 +68,7 @@ export default function PersonDemographics() {
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row}>
-                        <Form.Label column md={2}>Legal Sex:</Form.Label>
+                        <Form.Label column md={2}>Legal Sex*:</Form.Label>
                         <Col xs="auto">
                             {legalsex.isLoading && <Loading>Loading Data</Loading>}
                             {legalsex.isError && <Loading isError>Failed to Load</Loading>}
@@ -75,8 +76,9 @@ export default function PersonDemographics() {
                                 <Controller
                                     name={`${name}.GENDER.id`}
                                     control={control}
+                                    defaultValue={defaultValues[`${name}.GENDER`]}
                                     render={({field})=>(
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${name}.GENDER.id.message`,false)} disabled={!canEdit}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}>
                                             <option></option>
                                             {legalsex.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
                                         </Form.Control>
@@ -95,6 +97,7 @@ export default function PersonDemographics() {
                                 <Controller
                                     name={`${name}.GENDER_IDENTITY.id`}
                                     control={control}
+                                    defaultValue={defaultValues[`${name}.GENDER_IDENTITY`]}
                                     render={({field})=>(
                                         <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
                                             <option></option>
@@ -106,11 +109,11 @@ export default function PersonDemographics() {
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row}>
-                        <Form.Label column md={2}>US Citizen:</Form.Label>
+                        <Form.Label column md={2}>US Citizen*:</Form.Label>
                         <Col xs="auto" className="pt-2">
                             <Controller
                                 name={`${name}.US_CITIZEN_INDICATOR`}
-                                defaultValue="Yes"
+                                defaultValue={defaultValues[`${name}.US_CITIZEN_INDICATOR`]}
                                 control={control}
                                 render={({field}) => (
                                     <>
@@ -131,7 +134,7 @@ export default function PersonDemographics() {
                         <Col xs="auto" className="pt-2">
                             <Controller
                                 name={`${name}.VETERAN_INDICATOR`}
-                                defaultValue="Yes"
+                                defaultValue={defaultValues[`${name}.VETERAN_INDICATOR`]}
                                 control={control}
                                 render={({field}) => (
                                     <>
@@ -152,6 +155,7 @@ export default function PersonDemographics() {
 
 function PersonDemographicsMilitaryStatus() {
     const { control } = useFormContext();
+    const { defaultValues } = useHRFormContext();
 
     const {getListData} = useListsQueries();
     const milstatus = getListData('militaryStatus');
@@ -179,7 +183,7 @@ function PersonDemographicsMilitaryStatus() {
                         {milstatus.data && 
                         <Controller
                             name={`${name}.militaryStatus`}
-                            defaultValue="Yes"
+                            defaultValue={defaultValues[`${name}.militaryStatus`]}
                             control={control}
                             render={({field}) => milstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.findIndex(v=>v[0]==s[0])!=-1} onChange={e=>handleChange(e,field)} disabled={!canEdit}/>)}
                         />}
@@ -192,6 +196,7 @@ function PersonDemographicsMilitaryStatus() {
 
 function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
     const { control, formState: { errors } } = useFormContext();
+    const { defaultValues } = useHRFormContext();
 
     const watchCitizenType = useWatch({name:`${name}.NON_CITIZEN_TYPE`});
 
@@ -204,17 +209,18 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
             {({showInTest,testHighlight,canEdit}) => (
                 <>
                     <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
-                        <Form.Label column md={2}>Non-US Citizen Type:</Form.Label>
+                        <Form.Label column md={2}>Non-US Citizen Type*:</Form.Label>
                         <Col xs="auto">
                             <Controller
                                 name={`${name}.NON_CITIZEN_TYPE.id`}
                                 control={control}
+                                defaultValue={defaultValues[`${name}.NON_CITIZEN_TYPE`]}
                                 render={({field})=>(
                                     <>
                                         {citizentype.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
                                         {citizentype.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
                                         {citizentype.data && 
-                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${name}.NON_CITIZEN_TYPE.id.message`,false)} disabled={!canEdit}>
+                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}>
                                                 <option></option>
                                                 {citizentype.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
                                             </Form.Control>
@@ -227,11 +233,12 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                     </Form.Group>
                     {(watchCitizenType?.id=='OT'||showInTest) && 
                         <Form.Group as={Row} className={testHighlight(watchCitizen!='Y'&&watchCitizenType?.id=='OT')}>
-                            <Form.Label column md={2}>Employment Authorization Card Only:</Form.Label>
+                            <Form.Label column md={2}>Employment Authorization Card Only*:</Form.Label>
                             <Col xs="auto" className="pt-2">
                                 <Controller
                                     name={`${name}.EMP_AUTHORIZE_CARD_INDICATOR`}
                                     control={control}
+                                    defaultValue={defaultValues[`${name}.EMP_AUTHORIZE_CARD_INDICATOR`]}
                                     render={({field}) => (
                                         <>
                                             <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={!canEdit}/>
@@ -243,29 +250,30 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                         </Form.Group>
                     }
                     <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
-                        <Form.Label column md={2}>Country of Citizenship:</Form.Label>
+                        <Form.Label column md={2}>Country of Citizenship*:</Form.Label>
                         <Col xs="auto">
                             <Controller
                                 name={`${name}.CITIZENSHIP_COUNTRY_CODE.id`}
-                                defaultValue=""
+                                defaultValue={defaultValues[`${name}.CITIZENSHIP_COUNTRY_CODE`]}
                                 control={control}
-                                render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${name}.CITIZENSHIP_COUNTRY_CODE.id.message`,false)} disabled={!canEdit}/>}
+                                render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                             />
                             <Form.Control.Feedback type="invalid">{get(errors,`${name}.CITIZENSHIP_COUNTRY_CODE.id.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
-                        <Form.Label column md={2}>Visa Type:</Form.Label>
+                        <Form.Label column md={2}>Visa Type*:</Form.Label>
                         <Col xs="auto">
                             <Controller
                                 name={`${name}.VISA_CODE.id`}
                                 control={control}
+                                defaultValue={defaultValues[`${name}.VISA_CODE`]}
                                 render={({field})=>(
                                 <>
                                     {visatype.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
                                     {visatype.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
                                     {visatype.data &&
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${name}.VISA_CODE.id`,false)} disabled={!canEdit}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}>
                                             <option></option>
                                             {visatype.data.map(k=><option key={k[0]} value={k[0]}>{k[0]} - {k[1]}</option>)}
                                         </Form.Control>
@@ -283,6 +291,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
 
 function PersonDemographicsVeteranDetails({watchVeteran}) {
     const { control } = useFormContext();
+    const { defaultValues } = useHRFormContext();
 
     const {getListData} = useListsQueries();
     const vetstatus = getListData('protectedVeteranStatus');
@@ -312,6 +321,7 @@ function PersonDemographicsVeteranDetails({watchVeteran}) {
                             <Controller
                                 name={`${name}.protectedVetStatus`}
                                 control={control}
+                                defaultValue={defaultValues[`${name}.protectedVetStatus`]}
                                 render={({field}) => vetstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.findIndex(v=>v[0]==s[0])!=-1} onChange={e=>handleChange(e,field)} disabled={!canEdit}/>)}
                             />}
                         </Col>
@@ -323,6 +333,7 @@ function PersonDemographicsVeteranDetails({watchVeteran}) {
                                 <Controller
                                     name={`${name}.militarySepDate`}
                                     control={control}
+                                    defaultValue={defaultValues[`${name}.militarySepDate`]}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
                                         name={field.name}

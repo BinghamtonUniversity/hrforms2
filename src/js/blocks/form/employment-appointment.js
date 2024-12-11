@@ -13,7 +13,7 @@ import { get } from "lodash";
 const baseName = 'employment.appointment';
 
 export default function EmploymentAppointment() {
-    const { canEdit, activeNav } = useHRFormContext();
+    const { canEdit, activeNav, defaultValues } = useHRFormContext();
 
     const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const watchPayroll = useWatch({name:['payroll.PAYROLL_CODE','selectedRow.PAYROLL_AGENCY_CODE'],control:control});
@@ -67,11 +67,11 @@ export default function EmploymentAppointment() {
                     </Row>
                     {((watchPayroll[0]=='28020'&&watchPayroll[1]=='')||showInTest) &&
                         <Form.Group as={Row} className={testHighlight((watchPayroll[0]=='28020'&&watchPayroll[1]==''))}>
-                            <Form.Label column md={2}>Faculty:</Form.Label>
+                            <Form.Label column md={2}>Faculty*:</Form.Label>
                             <Col xs="auto" className="pt-2">
                                 <Controller
                                     name={`${baseName}.DERIVED_FAC_TYPE`}
-                                    defaultValue="N"
+                                    defaultValue={defaultValues[`${baseName}.DERIVED_FAC_TYPE`]}
                                     control={control}
                                     render={({field}) => (
                                         <>
@@ -86,11 +86,11 @@ export default function EmploymentAppointment() {
                     {(watchFaculty=='Y'||showInTest) &&
                         <>
                         <Form.Group as={Row} className={testHighlight(watchFaculty=='Y')}>
-                            <Form.Label column md={2}>Adjunct:</Form.Label>
+                            <Form.Label column md={2}>Adjunct*:</Form.Label>
                             <Col xs="auto">
                             <Controller
                                     name={`${baseName}.isAdjunct`}
-                                    defaultValue="N"
+                                    defaultValue={defaultValues[`${baseName}.isAdjunct`]}
                                     control={control}
                                     render={({field}) => (
                                         <>
@@ -103,7 +103,7 @@ export default function EmploymentAppointment() {
                         </Form.Group>
 
                         <Form.Group as={Row} className={testHighlight(watchFaculty=='Y')}>
-                            <Form.Label column md={2}>Tenure Status:</Form.Label>
+                            <Form.Label column md={2}>Tenure Status*:</Form.Label>
                             <Col xs="auto">
                                 {tenure.isLoading && <Loading>Loading Data</Loading>}
                                 {tenure.isError && <Loading isError>Failed to Load</Loading>}
@@ -111,9 +111,10 @@ export default function EmploymentAppointment() {
                                     <Controller
                                         name={`${baseName}.TENURE_STATUS.id`}
                                         control={control}
+                                        defaultValue={defaultValues[`${baseName}.TENURE_STATUS`]}
                                         render={({field}) => (
                                             <>
-                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${baseName}.TENURE_STATUS.id.message`,false)} disabled={!canEdit}>
+                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}>
                                                     <option></option>
                                                     {tenure.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
                                                 </Form.Control>
@@ -128,14 +129,13 @@ export default function EmploymentAppointment() {
                     }
                     {(displayTermDuration||showInTest) && 
                         <Form.Group as={Row} className={testHighlight(displayTermDuration)}>
-                            <Form.Label column md={2}>Term Duration:</Form.Label>
+                            <Form.Label column md={2}>Term Duration*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
                                     name={`${baseName}.TERM_DURATION`}
-                                    defaultValue=""
+                                    defaultValue={defaultValues[`${baseName}.TERM_DURATION`]}
                                     control={control}
-                                    rules={{min:{value:1,message:'Term Duration cannot be less than 0'},max:{value:5,message:'Term Duration cannot be greater than 5'}}}
-                                    render={({field}) => <Form.Control {...field} type="number" min={1} max={5} disabled={!canEdit} onChange={e=>handleTermDurationChange(e,field)}/>}
+                                    render={({field}) => <Form.Control {...field} type="number" min={1} max={5} onChange={e=>handleTermDurationChange(e,field)} disabled={!canEdit} />}
                                 />
                             </Col>
                             <Col sm={8} md={6} className="pt-2">
@@ -158,6 +158,7 @@ export default function EmploymentAppointment() {
                                 <InputGroup>
                                     <Controller
                                         name={`${baseName}.noticeDate`}
+                                        defaultValue={defaultValues[`${baseName}.noticeDate`]}
                                         control={control}
                                         render={({field}) => <Form.Control
                                             as={DatePicker}
@@ -183,6 +184,7 @@ export default function EmploymentAppointment() {
                                 <InputGroup>
                                     <Controller
                                         name={`${baseName}.contPermDate`}
+                                        defaultValue={defaultValues[`${baseName}.contPermDate`]}
                                         control={control}
                                         render={({field}) => <Form.Control
                                             as={DatePicker}
@@ -209,6 +211,7 @@ export default function EmploymentAppointment() {
                         <Col xs={10} sm={9} md={8} lg={6} xl={5}>
                             <Controller
                                 name={`${baseName}.CAMPUS_TITLE`}
+                                defaultValue={defaultValues[`${baseName}.CAMPUS_TITLE`]}
                                 control={control}
                                 render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
                             />
@@ -218,13 +221,13 @@ export default function EmploymentAppointment() {
                     <AppointmentSupervisor/>
 
                     <Form.Group as={Row}>
-                        <Form.Label column md={2}>Department:</Form.Label>
+                        <Form.Label column md={2}>Department*:</Form.Label>
                         <Col xs="auto">
                             <Controller
                                 name={`${baseName}.REPORTING_DEPARTMENT_CODE.id`}
                                 control={control}
-                                defaultValue=""
-                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${baseName}.REPORTING_DEPARTMENT_CODE.id.message`,false)} disabled={!canEdit}/>}
+                                defaultValue={defaultValues[`${baseName}.REPORTING_DEPARTMENT_CODE`]}
+                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                             />
                             <Form.Control.Feedback type="invalid">{get(errors,`${baseName}.REPORTING_DEPARTMENT_CODE.id.message`,'')}</Form.Control.Feedback>
                         </Col>
@@ -240,7 +243,7 @@ export default function EmploymentAppointment() {
 }
 function AppointmentSupervisor() {
     const { control, getValues, setValue, formState: { errors } } = useFormContext();
-    const { canEdit } = useHRFormContext();
+    const { canEdit, defaultValues } = useHRFormContext();
     const [searchFilter,setSearchFilter] = useState('');
     const { getSupervisorNames } = useFormQueries();
     const supervisors = getSupervisorNames(searchFilter,{enabled:false});
@@ -255,10 +258,11 @@ function AppointmentSupervisor() {
     useEffect(() => searchFilter&&supervisors.refetch(),[searchFilter]);
     return (
         <Form.Group as={Row}>
-            <Form.Label column md={2}>Supervisor:</Form.Label>
+            <Form.Label column md={2}>Supervisor*:</Form.Label>
             <Col xs={10} sm={8} md={6} lg={5} xl={4}>
                 <Controller
                     name={`${baseName}.supervisor`}
+                    defaultValue={defaultValues[`${baseName}.supervisor`]}
                     control={control}
                     render={({field}) => <AsyncTypeahead
                         {...field}
@@ -274,7 +278,7 @@ function AppointmentSupervisor() {
                         placeholder="Search for supervisor..."
                         selected={field.value}
                         disabled={!canEdit}
-                        isInvalid={!!get(errors,`${baseName}.supervisor.message`,false)}
+                        isInvalid={!!get(errors,field.name,false)}
                     />}
                 />
                 <Form.Control.Feedback type="invalid">{get(errors,`${baseName}.supervisor.message`,'')}</Form.Control.Feedback>
@@ -286,6 +290,7 @@ function AppointmentSupervisor() {
 function FacultyDetails({watchFaculty,watchAdjunct}) {
     const name = `${baseName}.facultyDetails`;
     const { control, setValue, formState: { errors } } = useFormContext();
+    const { defaultValues } = useHRFormContext();
     const watchCourses = useWatch({name:[`${name}.fallCourses`,`${name}.springCourses`,],control:control});
 
     const handleCountChange = (e,field) => {
@@ -311,13 +316,13 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                     ].map((c,i) => (
                         <div key={c.id} id={c.id}>
                             <Form.Group as={Row}>
-                                <Form.Label column md={2}>{c.label}:</Form.Label>
+                                <Form.Label column md={2}>{c.label}*:</Form.Label>
                                 <Col xs="auto">
                                     <Controller
                                         name={`${name}.${c.id}.count`}
-                                        defaultValue=""
+                                        defaultValue={defaultValues[`${name}.${c.id}.count`]}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={20} onChange={e=>handleCountChange(e,field)} onBlur={e=>handleCountBlur(e,field)} isInvalid={get(errors,`${name}.message`,false)} disabled={!canEdit}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={20} onChange={e=>handleCountChange(e,field)} onBlur={e=>handleCountBlur(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                                     />
                                     <Form.Control.Feedback type="invalid">{get(errors,`${name}.message`,'')}</Form.Control.Feedback>
                                 </Col>
@@ -326,25 +331,25 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                                 </Col>
                             </Form.Group>
                             <Form.Group as={Row}>
-                                <Form.Label column md={2}>Credits:</Form.Label>
+                                <Form.Label column md={2}>Credits*:</Form.Label>
                                 <Col xs="auto">
                                     <Controller
                                         name={`${name}.${c.id}.credits`}
-                                        defaultValue=""
+                                        defaultValue={defaultValues[`${name}.${c.id}.credits`]}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} isInvalid={get(errors,`${name}.${c.id}.credits.message`,false)} disabled={!canEdit||watchCourses[i].count==0}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" min={0} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit||watchCourses[i].count==0}/>}
                                     />
                                     <Form.Control.Feedback type="invalid">{get(errors,`${name}.${c.id}.credits.message`,'')}</Form.Control.Feedback>
                                 </Col>
                             </Form.Group>
                             <Form.Group as={Row}>
-                                <Form.Label column md={2}>{c.label} List:</Form.Label>
+                                <Form.Label column md={2}>{c.label} List*:</Form.Label>
                                 <Col md={9}>
                                     <Controller
                                         name={`${name}.${c.id}.list`}
-                                        defaultValue=""
+                                        defaultValue={defaultValues[`${name}.${c.id}.list`]}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} as="textarea" rows={5} isInvalid={get(errors,`${name}.${c.id}.list.message`,false)} disabled={!canEdit||watchCourses[i].count==0}/>}
+                                        render={({field}) => <Form.Control {...field} as="textarea" rows={5} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit||watchCourses[i].count==0}/>}
                                     />
                                     <Form.Control.Feedback type="invalid">{get(errors,`${name}.${c.id}.list.message`,'')}</Form.Control.Feedback>
                                 </Col>
@@ -361,6 +366,7 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
     const name = `${baseName}.studentDetails`;
 
     const { control, getValues, setValue } = useFormContext();
+    const { defaultValues } = useHRFormContext();
     const watchCredits = useWatch({name:[`${name}.fall.credits`,`${name}.spring.credits`,],control:control})||0;
     const watchFellowship = useWatch({name:`${name}.fellowship`,control:control});
     const data = getValues(name);
@@ -373,7 +379,7 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
     useEffect(()=>watchFellowship=='N' && setValue(`${name}.fellowshipSource`,{"id":"","label":""}),[watchFellowship]);
     return (
         <HRFormContext.Consumer>
-            {({testHighlight,canEdit}) => (
+            {({testHighlight,canEdit,showInTest}) => (
                 <section className={`mt-4 ${testHighlight(watchPayroll[0]=='28029')}`}>
                     <Row as="header">
                         <Col as="h4">Student Details</Col>
@@ -408,7 +414,7 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                                 <Col xs={12} sm={6} md={4} lg={3}>
                                     <Controller
                                         name={`${name}.${c.id}.tuition`}
-                                        defaultValue=""
+                                        defaultValue={defaultValues[`${name}.${c.id}.tuition`]}
                                         control={control}
                                         render={({field}) => <Form.Control {...field} type="text" disabled={!canEdit}/>}
                                     />
@@ -419,9 +425,8 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                                 <Col xs="auto">
                                     <Controller
                                         name={`${name}.${c.id}.credits`}
-                                        defaultValue={0}
+                                        defaultValue={defaultValues[`${name}.${c.id}.credits`]}
                                         control={control}
-                                        rules={{min:{value:0,message:`${c.label} cannot be less than 0`},max:{value:30,message:`${c.label} cannot be greater than 30`}}}
                                         render={({field}) => <Form.Control {...field} type="number" min={0} max={30} disabled={!canEdit}/>}
                                     />
                                 </Col>
@@ -436,7 +441,7 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                         <Col xs="auto" className="pt-2">
                             <Controller
                                 name={`${name}.fellowship`}
-                                defaultValue={false}
+                                defaultValue={defaultValues[`${name}.fellowship`]}
                                 control={control}
                                 render={({field}) => (
                                     <>
@@ -447,8 +452,8 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                             />
                         </Col>
                     </Form.Group>
-                    {watchFellowship=='Y' && 
-                        <Form.Group as={Row}>
+                    {(watchFellowship=='Y'||showInTest) && 
+                        <Form.Group as={Row} className={testHighlight(watchFellowship=='Y')}>
                             <Form.Label column md={2}>Source of Fellowship:</Form.Label>
                             <Col xs="auto">
                                 {fellowshipsources.isLoading && <Loading>Loading Data</Loading>}
@@ -456,6 +461,7 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                                 {fellowshipsources.data &&
                                     <Controller
                                         name={`${name}.fellowshipSource.id`}
+                                        defaultValue={defaultValues[`${name}.fellowshipSource`]}
                                         control={control}
                                         render={({field}) => (
                                             <>

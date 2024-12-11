@@ -31,7 +31,7 @@ export default function EmploymentPosition() {
 }
 
 function EmploymentPositionSearch({setShowResults}) {
-    const { canEdit, activeNav } = useHRFormContext();
+    const { canEdit, activeNav, defaultValues } = useHRFormContext();
     const ref = useRef();
 
     const { control, setValue, formState: { errors } } = useFormContext();
@@ -61,12 +61,13 @@ function EmploymentPositionSearch({setShowResults}) {
                 <Col as="h4">Position Search</Col>
             </Row>
             <Form.Group as={Row}>
-                <Form.Label column md={2}>Line Number:</Form.Label>
+                <Form.Label column md={2}>Line Number*:</Form.Label>
                 <Col xs="auto">
                     <Controller
                         name={`${name}.LINE_ITEM_NUMBER`}
+                        defaultValue={defaultValues[`${name}.LINE_ITEM_NUMBER`]}
                         control={control}
-                        render={({field})=><Form.Control {...field} ref={ref} type="search" onKeyDown={handleKeyDown} onChange={e=>handleChange(field,e)} isInvalid={get(errors,`${name}.LINE_ITEM_NUMBER.message`,false)} disabled={!canEdit}/>}
+                        render={({field})=><Form.Control {...field} ref={ref} type="search" onKeyDown={handleKeyDown} onChange={e=>handleChange(field,e)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
                     <Form.Control.Feedback type="invalid">{get(errors,`${name}.LINE_ITEM_NUMBER.message`,'')}</Form.Control.Feedback>
                 </Col>
@@ -123,7 +124,7 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
 
 function EmploymentAppointmentInformation() {
     const { control, setValue, getValues } = useFormContext();
-    const { canEdit } = useHRFormContext();
+    const { canEdit, defaultValues, showInTest, testHighlight } = useHRFormContext();
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
     const watchEffectiveDate = useWatch({name:`${name}.apptEffDate`,control:control,defaultValue:new Date(0)});
     const watchApptPercent = useWatch({name:`${name}.APPOINTMENT_PERCENT`,control:control});
@@ -151,27 +152,24 @@ function EmploymentAppointmentInformation() {
             <AppointmentType/>
             
             <Form.Group as={Row}>
-                <Form.Label column md={2}>Apointment Percent:</Form.Label>
+                <Form.Label column md={2}>Apointment Percent*:</Form.Label>
                 <Col xs="auto">
                     <Controller
                         name={`${name}.APPOINTMENT_PERCENT`}
                         defaultValue={maxPercent}
                         control={control}
-                        rules={{
-                            min:{value:1,message:'Appointment Percent cannot be less than 1%'},
-                            max:{value:maxPercent,message:`Appointment Percent cannot be greater than ${maxPercent}%`}
-                        }}
                         render={({field}) => <Form.Control {...field} type="number" min={1} max={maxPercent} disabled={!canEdit} value={field.value||maxPercent} onChange={e=>handlePctChange(e,field)}/>}
                     />
                 </Col>
                 <Col sm={8} md={6} className="pt-2">
-                    <Form.Control type="range" name="apptPercentRange" id="apptPercentRange" min={1} max={100} value={watchApptPercent} onChange={handleRangeChange} disabled={!canEdit} list="markers"/>
+                    <Form.Control type="range" name="apptPercentRange" id="apptPercentRange" min={1} max={maxPercent} value={watchApptPercent} onChange={handleRangeChange} disabled={!canEdit} list="markers"/>
                     <datalist id="markers" className="marker">
-                        <option value="0">0%</option>
-                        <option value="25">25%</option>
-                        <option value="50">50%</option>
-                        <option value="75">75%</option>
-                        <option value="100">100%</option>
+                        <option value="1">1%</option>
+                        {[.25,.5,.75].map(r => {
+                            const pct = Math.round(parseInt(maxPercent,10)*r,0);
+                            return <option key={pct} value={pct}></option>;
+                        })}
+                        <option value={maxPercent}>{maxPercent}%</option>
                     </datalist>
                 </Col>
             </Form.Group>
@@ -190,6 +188,7 @@ function EmploymentAppointmentInformation() {
                     <InputGroup>
                         <Controller
                             name={`${name}.apptEndDate`}
+                            defaultValue={defaultValues[`${name}.apptEndDate`]}
                             control={control}
                             render={({field}) => <Form.Control
                                 as={DatePicker}
@@ -210,13 +209,13 @@ function EmploymentAppointmentInformation() {
                     </InputGroup>
                 </Col>
             </Form.Group>
-            {watchPayroll == '28020' && 
-                <Form.Group as={Row}>
+            {(watchPayroll=='28020'||showInTest) && 
+                <Form.Group as={Row} className={testHighlight(watchPayroll=='28020')}>
                     <Form.Label column md={2}>Voluntary Reduction:</Form.Label>
                     <Col xs="auto" className="pt-2">
                         <Controller
                             name={`${name}.VOLUNTARY_REDUCTION`}
-                            defaultValue="N"
+                            defaultValue={defaultValues[`${name}.VOLUNTARY_REDUCTION`]}
                             control={control}
                             render={({field}) => (
                                 <>
@@ -238,7 +237,7 @@ function EmploymentAppointmentInformation() {
 
 function AppointmentType() {
     const { control, setValue, formState: { errors } } = useFormContext();
-    const { canEdit } = useHRFormContext();
+    const { canEdit, defaultValues } = useHRFormContext();
 
     const { getListData } = useListsQueries();
     const appttypes = getListData('appointmentTypes');
@@ -251,16 +250,17 @@ function AppointmentType() {
 
     return (
         <Form.Group as={Row}>
-            <Form.Label column md={2}>Appointment Type:</Form.Label>
+            <Form.Label column md={2}>Appointment Type*:</Form.Label>
             <Col xs="auto">
                 {appttypes.isLoading && <Loading>Loading Data</Loading>}
                 {appttypes.isError && <Loading isError>Failed to Load</Loading>}
                 {appttypes.data &&
                     <Controller
                         name={`${name}.APPOINTMENT_TYPE.id`}
+                        defaultValue={defaultValues[`${name}.APPOINTMENT_TYPE`]}
                         control={control}
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${name}.APPOINTMENT_TYPE.id.message`,false)} disabled={!canEdit}>
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}>
                                 <option></option>
                                 {appttypes.data.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
                             </Form.Control>
@@ -274,7 +274,7 @@ function AppointmentType() {
 }
 function BenefitsFlag() {
     const { control, setValue } = useFormContext();
-    const { canEdit } = useHRFormContext();
+    const { canEdit, defaultValues } = useHRFormContext();
     const watchHasBenefits = useWatch({name:'payroll.ADDITIONAL_INFO.hasBenefits',control:control});
     
     const { getListData } = useListsQueries();
@@ -288,7 +288,7 @@ function BenefitsFlag() {
 
     return (
         <Form.Group as={Row}>
-            <Form.Label column md={2}>Benefits Flag:</Form.Label>
+            <Form.Label column md={2}>Benefits Flag*:</Form.Label>
             <Col xs="auto">
                 {benefitcodes.isLoading && <Loading>Loading Data</Loading>}
                 {benefitcodes.isError && <Loading isError>Failed to Load</Loading>}
@@ -296,7 +296,7 @@ function BenefitsFlag() {
                     <Controller
                         name={`${name}.BENEFIT_FLAG.id`}
                         control={control}
-                        defaultValue="9"
+                        defaultValue={defaultValues[`${name}.BENEFIT_FLAG`]}
                         render={({field}) => (
                             <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!watchHasBenefits||!canEdit}>
                                 {benefitcodes.data.map(b=><option key={b[0]} value={b[0]}>{b[1]}</option>)}
@@ -310,7 +310,7 @@ function BenefitsFlag() {
 }
 function CheckSortCode() {
     const { control, setValue, formState: { errors } } = useFormContext();
-    const { canEdit } = useHRFormContext();
+    const { canEdit, defaultValues } = useHRFormContext();
 
     const { getListData } = useListsQueries();
     const checksortcodes = getListData('checkSortCodes');
@@ -323,7 +323,7 @@ function CheckSortCode() {
 
     return (
         <Form.Group as={Row}>
-            <Form.Label column md={2}>Check Sort Codes:</Form.Label>
+            <Form.Label column md={2}>Check Sort Codes*:</Form.Label>
             <Col xs="auto">
                 {checksortcodes.isLoading && <Loading>Loading Data</Loading>}
                 {checksortcodes.isError && <Loading isError>Failed to Load</Loading>}
@@ -331,9 +331,9 @@ function CheckSortCode() {
                     <Controller
                         name={`${name}.PAYROLL_MAIL_DROP_ID.id`}
                         control={control}
-                        defaultValue=""
+                        defaultValue={defaultValues[`${name}.PAYROLL_MAIL_DROP_ID`]}
                         render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={get(errors,`${name}.PAYROLL_MAIL_DROP_ID.id.message`,false)} disabled={!canEdit}>
+                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}>
                                 <option></option>
                                 {checksortcodes.data.map(c=><option key={c[0]} value={c[0]}>{c[1]}</option>)}
                             </Form.Control>
@@ -348,7 +348,7 @@ function CheckSortCode() {
 }
 function PositionJustification() {
     const { control, setValue } = useFormContext();
-    const { canEdit } = useHRFormContext();
+    const { canEdit, defaultValues } = useHRFormContext();
 
     const { getListData } = useListsQueries();
     const positionjustification = getListData('positionJustification');
@@ -369,7 +369,7 @@ function PositionJustification() {
                     <Controller
                         name={`${name}.justification.id`}
                         control={control}
-                        defaultValue=""
+                        defaultValue={defaultValues[`${name}.justification`]}
                         render={({field}) => (
                             <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
                                 <option></option>

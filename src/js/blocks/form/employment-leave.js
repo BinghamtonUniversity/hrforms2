@@ -11,12 +11,23 @@ import get from "lodash/get";
 const name = 'employment.leave';
 
 export default function EmploymentLeave() {
-    const { canEdit, activeNav, formType } = useHRFormContext();
+    const { canEdit, activeNav, formType, defaultValues } = useHRFormContext();
 
     const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const watchLeavePercent = useWatch({name:`${name}.leavePercent`,control:control})||0;
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
 
+    const handleLeavePct = (e,field) => {
+        switch(e.type) {
+            case "change":
+                if (parseInt(e.target.value,10) < 0 || parseInt(e.target.value,10) > 100) return false;
+                field.onChange(e);
+                break;
+            case "blur":
+                if (!e.target.value) setValue(`${name}.leavePercent`,0);
+                break;
+        }
+    }
     const handleRangeChange = e => setValue(`${name}.leavePercent`,e.target.value);
 
     const { getListData } = useListsQueries();
@@ -41,7 +52,7 @@ export default function EmploymentLeave() {
 
     return (
         <HRFormContext.Consumer>
-            {({canEdit}) => (
+            {({canEdit,showInTest,testHighlight}) => (
                 <article>
                     <Row as="header">
                         <Col as="h3">Leave</Col>
@@ -51,6 +62,7 @@ export default function EmploymentLeave() {
                         <Col xs="auto">
                             <Controller
                                 name={`${name}.CALCULATED_ANNUAL`}
+                                defaultValue={defaultValues[`${name}.CALCULATED_ANNUAL`]}
                                 control={control}
                                 render={({field}) => <p className="mb-0"><CurrencyFormat>{field.value}</CurrencyFormat></p>}
                             />
@@ -58,21 +70,27 @@ export default function EmploymentLeave() {
                     </Form.Group>
 
                     {/* Show Leave Pct and Leave Sal for Partial Paid Leaves */}
-                    {conditionalFields.partialLeave.includes(formType) && 
+                    {(conditionalFields.partialLeave.includes(formType)||showInTest) && 
                         <>
-                            <Form.Group as={Row}>
+                            <Form.Group as={Row} className={testHighlight(conditionalFields.partialLeave.includes(formType))}>
                                 <Form.Label column md={2}>Leave Percent:</Form.Label>
                                 <Col xs="auto">
                                     <Controller
                                         name={`${name}.leavePercent`}
-                                        defaultValue="0"
+                                        defaultValue={defaultValues[`${name}.leavePercent`]}
                                         control={control}
-                                        rules={{min:{value:0,message:'Leave Percent cannot be less than 0%'},max:{value:100,message:'Leave Percent cannot be greater than 100%'}}}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={100} disabled={!canEdit}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={100} onChange={e=>handleLeavePct(e,field)} onBlur={e=>handleLeavePct(e,field)} disabled={!canEdit}/>}
                                     />
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
-                                    <Form.Control type="range" name="leavePercentRange" id="leavePercentRange" min={0} max={100} value={watchLeavePercent} onChange={handleRangeChange} disabled={!canEdit}/>
+                                    <Form.Control type="range" name="leavePercentRange" id="leavePercentRange" min={0} max={100} value={watchLeavePercent} onChange={handleRangeChange} disabled={!canEdit} list="markers"/>
+                                    <datalist id="markers" className="marker">
+                                        <option value="0">0%</option>
+                                        <option value="25">25%</option>
+                                        <option value="50">50%</option>
+                                        <option value="75">75%</option>
+                                        <option value="100">100%</option>
+                                    </datalist>
                                 </Col>
                             </Form.Group>
                             <Form.Group as={Row}>
@@ -87,11 +105,12 @@ export default function EmploymentLeave() {
                     }
 
                     <Form.Group as={Row}>
-                        <Form.Label column md={2}>Leave End Date:</Form.Label>
+                        <Form.Label column md={2}>Leave End Date*:</Form.Label>
                         <Col xs="auto">
                             <InputGroup>
                                 <Controller
                                     name={`${name}.leaveEndDate`}
+                                    defaultValue={defaultValues[`${name}.leaveEndDate`]}
                                     control={control}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
@@ -116,13 +135,14 @@ export default function EmploymentLeave() {
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row}>
-                        <Form.Label column md={2}>Justification:</Form.Label>
+                        <Form.Label column md={2}>Justification*:</Form.Label>
                         <Col xs="auto">
                             {justification.isLoading && <Loading>Loading Data</Loading>}
                             {justification.isError && <Loading isError>Failed to Load</Loading>}
                             {justification.data &&
                                 <Controller
                                     name={`${name}.justification.id`}
+                                    defaultValue={defaultValues[`${name}.justification`]}
                                     control={control}
                                     render={({field}) => (
                                         <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}>
@@ -137,6 +157,6 @@ export default function EmploymentLeave() {
                     </Form.Group>
                 </article>
             )}
-        </HRFormContext.Consumer>    
+        </HRFormContext.Consumer>
     );
 }
