@@ -11,10 +11,11 @@ import { get } from "lodash";
 const name = 'employment.separation';
 
 export default function EmploymentSeparation() {
-    const { canEdit, activeNav, defaultValues } = useHRFormContext();
     const ref = useRef();
 
-    const { control, formState: { errors } } = useFormContext();
+    const { control, formState: { defaultValues, errors } } = useFormContext();
+    const { canEdit, activeNav } = useHRFormContext();
+
     const watchEffectiveDate = useWatch({name:'effDate',control:control});
 
     useEffect(()=>(canEdit&&ref.current)&&ref.current.setFocus(),[activeNav]);

@@ -13,10 +13,11 @@ import useListsQueries from "../../queries/lists";
 const name = 'employment.volunteer';
 
 export default function EmploymentSeparation() {
-    const { canEdit, activeNav, defaultValues, showInTest, testHighlight } = useHRFormContext();
     const ref = useRef();
 
-    const { control, getValues, setValue, formState: { errors } } = useFormContext();
+    const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { canEdit, activeNav, showInTest, testHighlight } = useHRFormContext();
+
     const [subRoleId] = useWatch({name:[`${name}.subRole.id`]});
 
     const { getListData } = useListsQueries();
@@ -210,8 +211,8 @@ export default function EmploymentSeparation() {
 }
 
 function VolunteerSupervisor({fieldName,fieldLabel,testHighlight}) {
-    const { control, getValues, setValue, formState: { errors } } = useFormContext();
-    const { canEdit, defaultValues } = useHRFormContext();
+    const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { canEdit } = useHRFormContext();
     const [searchFilter,setSearchFilter] = useState('');
     const { getSupervisorNames } = useFormQueries();
     const supervisors = getSupervisorNames(searchFilter,{enabled:false});

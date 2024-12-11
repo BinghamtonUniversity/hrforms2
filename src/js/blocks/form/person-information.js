@@ -11,8 +11,8 @@ import get from "lodash/get";
 const name = 'person.information';
 
 export default function PersonInfo() {
-    const { control, getValues, setValue, formState: { errors } } = useFormContext();
-    const { canEdit, activeNav, defaultValues } = useHRFormContext();
+    const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { canEdit, activeNav } = useHRFormContext();
 
     const watchRehireRetiree = useWatch({name:`${name}.REHIRE_RETIREE`});
 

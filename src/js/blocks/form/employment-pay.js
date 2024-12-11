@@ -29,8 +29,7 @@ export default function EmploymentPay() {
 
 function ExistingEmploymentPayTable() {
     const blockName = `${name}.existingPay`;
-    const { getValues, setError, clearErrors, control, formState: { errors } } = useFormContext();
-    const { defaultValues } = useHRFormContext();
+    const { getValues, setError, clearErrors, control, formState: { defaultValues, errors } } = useFormContext();
     const data = getValues(blockName);
 
     const CalendarPortal = ({children}) => {

@@ -15,8 +15,10 @@ const name = 'employment.salary';
 
 export default function EmploymentAppointment() {
     const [editing,setEditing] = useState(undefined);
-    const { canEdit, activeNav, showInTest, testHighlight, formType, defaultValues } = useHRFormContext();
-    const { control, getValues, setValue, formState: { errors } } = useFormContext();
+
+    const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { canEdit, activeNav, showInTest, testHighlight, formType } = useHRFormContext();
+
     const watchAmounts = useWatch({name:[
         `${name}.RATE_AMOUNT`,
         `${name}.NUMBER_OF_PAYMENTS`,
