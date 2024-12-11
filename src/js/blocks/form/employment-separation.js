@@ -11,7 +11,7 @@ import { get } from "lodash";
 const name = 'employment.separation';
 
 export default function EmploymentSeparation() {
-    const { canEdit, activeNav } = useHRFormContext();
+    const { canEdit, activeNav, defaultValues } = useHRFormContext();
     const ref = useRef();
 
     const { control, formState: { errors } } = useFormContext();
@@ -37,6 +37,7 @@ export default function EmploymentSeparation() {
                         <Controller
                             name={`${name}.lastDateWorked`}
                             control={control}
+                            defaultValue={defaultValues[`${name}.lastDateWorked`]}
                             render={({field}) => <Form.Control
                                 as={DatePicker}
                                 ref={ref}

@@ -210,7 +210,8 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         mode:'onBlur',
         reValidateMode:'onChange',
         defaultValues: merge({},defaultVals,data),
-        resolver: validateForm
+        resolver: validateForm,
+        context: {isNew:isNew,activeTab:activeTab,activeNav:activeNav},
     });
     const watchFormActions = useWatch({name:'formActions',control:methods.control});
     const watchIds = useWatch({name:['person.information.HR_PERSON_ID','person.information.SUNY_ID','person.information.LOCAL_CAMPUS_ID'],control:methods.control});
@@ -261,10 +262,11 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         setActiveNav(nav);    
     }
 
-    const handleSubmit = data => {
+    const handleSubmit = (d,e) => {
+        const data = d.hasOwnProperty('formId')?d:methods.getValues(); // make sure we have data
         setHasErrors(false);
         if (!data.action) return; // just validating the form, not saving
-        console.debug('Submitting Form Data:',data);
+        console.debug('Form Data:',data);
         const action = data.action;
         setIsSaving(true);
         setIsBlocking(true); //TODO: when true should be full block with no prompt?
@@ -278,7 +280,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             return;
         }
         if (isDraft) {
-            if (isNew || data.action=='submit') {
+            if (isNew || action=='submit') {
                 // submit draft form
                 toast.promise(new Promise((resolve,reject) => {
                     createForm.mutateAsync(data).then(d=>resolve(d)).catch(e=>reject(e));
@@ -426,11 +428,13 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             setTabList(allTabs.filter(t=>t.value=='basic-info'));
             setIsBlocking(false);
             setLockTabs(true);
+            methods.setValue('formActions.TABS',[]);
         } else {
             console.debug('Display Tabs: ',tabs);
             setInfoComplete(true);
             setIsBlocking(true);
             setLockTabs(false);
+            methods.setValue('formActions.TABS',tabs);
             const tlist = [allTabs.find(t=>t.value=='basic-info')];
             ['person','employment'].forEach(t=>{
                 if (tabs.filter(v=>v.startsWith(t)).length>0) {
@@ -581,6 +585,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         if (activeTab == 'review'||tabsVisited.includes('review')) {
             // Exclude fields from tabs that are not displayed.  Always include comments.
             const tabs = methods.getValues('formActions.TABS');
+            console.log(tabs);
             const fields = checkFields.filter(field => {
                 const t = field.split('.').slice(0,2).join('-');
                 if (t == 'comment' || tabs.includes(t)) return field;

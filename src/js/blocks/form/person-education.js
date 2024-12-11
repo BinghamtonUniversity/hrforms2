@@ -87,7 +87,7 @@ export default function PersonEducation() {
 
         /* Required fields */
         if (!arrayData?.awardDate) setError(`${name}.${index}.awardDate`,{type:'manual',message:'Award Date is required'});
-        if (arrayData?.DEGREE_TYPE?.length!=1) setError(`${name}.${index}.DEGREE_TYPE`,{type:'manual',message:'Degree Type is required'});
+        if (!arrayData?.DEGREE_TYPE?.at(0)?.label) setError(`${name}.${index}.DEGREE_TYPE`,{type:'manual',message:'Degree Type is required'});
         if (!arrayData?.DEGREE_PROGRAM?.at(0)?.label) setError(`${name}.${index}.DEGREE_PROGRAM`,{type:'manual',message:'Degree Program/Major is required'});
         if (!arrayData?.COUNTRY_CODE?.id) setError(`${name}.${index}.COUNTRY_CODE.id`,{type:'manual',message:'University/College Country is required'});
         if (arrayData?.COUNTRY_CODE?.id == 'USA') {
@@ -200,7 +200,7 @@ export default function PersonEducation() {
                             <InputGroup>
                                 <Controller
                                     name={`${name}.${index}.awardDate`}
-                                    defaultValue=""
+                                    defaultValue={defaultValues.awardDate}
                                     control={control}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
@@ -212,7 +212,7 @@ export default function PersonEducation() {
                                         selected={field.value}
                                         onChange={field.onChange}
                                         disabled={editIndex!=index}
-                                        isInvalid={get(errors,field.name,false)}
+                                        isInvalid={!!get(errors,field.name,false)}
                                         autoComplete="off"
                                     />}
                                 />
@@ -222,12 +222,12 @@ export default function PersonEducation() {
                                     </InputGroup.Text>
                                 </InputGroup.Append>
                             </InputGroup>
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].awardDate.message`,'')}</Form.Control.Feedback>
+                            <Form.Control.Feedback type="invalid" style={{display:(!!get(errors,`${name}[${index}].awardDate`))?'block':'none'}}>{get(errors,`${name}[${index}].awardDate.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col className="pt-2">
                             <Controller
                                 name={`${name}.${index}.PENDING_DEGREE_FLAG`}
-                                defaultValue=""
+                                defaultValue={defaultValues.PENDING_DEGREE_FLAG}
                                 control={control}
                                 render={({field}) => <Form.Check {...field} label="Pending Degree" onChange={()=>handlePendingChange(field)} checked={field.value=='Y'} disabled={editIndex!=index}/>}
                             />
@@ -241,7 +241,7 @@ export default function PersonEducation() {
                             {degreeTypes.data &&
                                 <Controller
                                     name={`${name}.${index}.DEGREE_TYPE`}
-                                    defaultValue=""
+                                    defaultValue={defaultValues.DEGREE_TYPE}
                                     control={control}
                                     render={({field}) => <Typeahead 
                                         {...field} 
@@ -267,7 +267,7 @@ export default function PersonEducation() {
                         <Col xs="auto">
                             <Controller
                                 name={`${name}.${index}.COUNTRY_CODE.id`}
-                                defaultValue=""
+                                defaultValue={defaultValues.COUNTRY_CODE}
                                 control={control}
                                 render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
                             />
@@ -281,7 +281,7 @@ export default function PersonEducation() {
                                 <Col xs="auto">
                                     <Controller
                                         name={`${name}.${index}.INSTITUTION_STATE`}
-                                        defaultValue=""
+                                        defaultValue={defaultValues.INSTITUTION_STATE}
                                         control={control}
                                         render={({field}) => <StateSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
                                     />
@@ -299,7 +299,7 @@ export default function PersonEducation() {
                             <Col xs="auto" className="pt-2">
                                 <Controller
                                     name={`${name}.${index}.${yn.id}`}
-                                    defaultValue={false}
+                                    defaultValue={defaultValues[yn.id]}
                                     control={control}
                                     render={({field}) => (
                                         <>

@@ -78,28 +78,25 @@ function PersonDirectoryAddresses() {
         if (endsWith(fieldName,'.department')) setValue(`${baseName}.ADDRESS_1`,e.target.selectedOptions[0].label);
         if (endsWith(fieldName,'.building')) setValue(`${baseName}.ADDRESS_2`,e.target.selectedOptions[0].label);
     }
+
+    const defaultValues = {
+        "ADDRESS_CODE": "",
+        "ADDRESS_1": "",
+        "ADDRESS_2": "",
+        "ADDRESS_3": "",
+        "ADDRESS_CITY": "",
+        "STATE_CODE": "",
+        "ADDRESS_POSTAL_CODE": "",
+        "CREATE_DATE": "",
+        "department": {"id": "", "label": ""},
+        "building": {"id": "", "label": ""},
+        "effDate":getValues('effDate'),
+        "createDate":new Date()
+    }
+
     const handleNew = () => {
         if (fields.length > 2) return;
-        append({
-            "ADDRESS_CODE": "",
-            "ADDRESS_1": "",
-            "ADDRESS_2": "",
-            "ADDRESS_3": "",
-            "ADDRESS_CITY": "",
-            "STATE_CODE": "",
-            "ADDRESS_POSTAL_CODE": "",
-            "CREATE_DATE": "",
-            "department": {
-              "id": "",
-              "label": ""
-            },
-            "building": {
-              "id": "",
-              "label": ""
-            },
-            "effDate":new Date(),
-            "createDate":new Date()
-        });
+        append(defaultValues);
         setEditIndex(fields.length);
         setIsNew(true);
         setLockTabs(true);
@@ -178,6 +175,7 @@ function PersonDirectoryAddresses() {
                             {addressCodes.data && 
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_CODE`}
+                                    defaultValue={defaultValues.ADDRESS_CODE}
                                     control={control}
                                     render={({field}) => addressCodes.data.map(c => {
                                         if (!c.show) return null;
@@ -194,8 +192,9 @@ function PersonDirectoryAddresses() {
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_1`}
+                                    defaultValue={defaultValues.ADDRESS_1}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_1.message`,'')}</Form.Control.Feedback>
                             </Col>
@@ -207,6 +206,7 @@ function PersonDirectoryAddresses() {
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_2`}
+                                    defaultValue={defaultValues.ADDRESS_2}
                                     control={control}
                                     render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)}/>}
                                 />
@@ -219,17 +219,19 @@ function PersonDirectoryAddresses() {
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_1`}
+                                    defaultValue={defaultValues.ADDRESS_1}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'department')} isInvalid={get(errors,field.name,false)}/>}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'department')} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.ADDRESS_1.message`,'')}</Form.Control.Feedback>
                             </Col>
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.department.id`}
+                                    defaultValue={defaultValues.department}
                                     control={control}
                                     render={({field}) => (
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,`${name}.${index}.department.text`,false)}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,`${name}.${index}.department.text`,false)}>
                                             <option></option>
                                             {depts.data&&depts.data.map(d=><option key={d.DEPARTMENT_CODE} value={d.DEPARTMENT_CODE}>{d.DEPARTMENT_DESC}</option>)}
                                         </Form.Control>
@@ -244,17 +246,19 @@ function PersonDirectoryAddresses() {
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_2`}
+                                    defaultValue={defaultValues.ADDRESS_2}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'building')} isInvalid={get(errors,field.name,false)}/>}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'building')} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.ADDRESS_2.message`,'')}</Form.Control.Feedback>
                             </Col>
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.building.id`}
+                                    defaultValue={defaultValues.building}
                                     control={control}
                                     render={({field}) => (
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,`${name}.${index}.building.text`,false)}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,`${name}.${index}.building.text`,false)}>
                                             <option></option>
                                             {buildings.data&&buildings.data.map(b=><option key={b[0]} value={b[0]}>{b[0]} - {b[1]}</option>)}
                                         </Form.Control>
@@ -269,6 +273,7 @@ function PersonDirectoryAddresses() {
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_3`}
+                                    defaultValue={defaultValues.ADDRESS_3}
                                     control={control}
                                     render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)}/>}
                                 />
@@ -281,24 +286,27 @@ function PersonDirectoryAddresses() {
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_CITY`}
+                                    defaultValue={defaultValues.ADDRESS_CITY}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
+                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_CITY.message`,'')}</Form.Control.Feedback>
                             </Col>
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.STATE_CODE`}
+                                    defaultValue={defaultValues.STATE_CODE}
                                     control={control}
-                                    render={({field}) => <StateSelector field={field} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
+                                    render={({field}) => <StateSelector field={field} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].STATE_CODE.message`,'')}</Form.Control.Feedback>
                             </Col>
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_POSTAL_CODE`}
+                                    defaultValue={defaultValues.ADDRESS_POSTAL_CODE}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} disabled={editIndex!=index||!editableType(index)} isInvalid={get(errors,field.name,false)}/>}
+                                    render={({field}) => <Form.Control {...field} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_POSTAL_CODE.message`,'')}</Form.Control.Feedback>
                             </Col>
@@ -368,15 +376,18 @@ function PersonDirectoryPhone() {
             setValue(`${name}.${index}.parsed`,'');
         }
     }
+
+    const defaultValues = {
+        PHONE_TYPE:"",
+        PHONE_NUMBER:"",
+        CREATE_DATE:"",
+        effDate:getValues('effDate'),
+        createDate:new Date()
+    };
+
     const handleNew = () => {
         if (fields.length > 2) return;
-        append({
-            PHONE_TYPE:"",
-            PHONE_NUMBER:"",
-            CREATE_DATE:"",
-            effDate:new Date(),
-            createDate:new Date()
-        });
+        append(defaultValues);
         setEditIndex(fields.length);
         setIsNew(true);
         setLockTabs(true);
@@ -449,7 +460,7 @@ function PersonDirectoryPhone() {
                             {phoneTypes.data && 
                                 <Controller
                                     name={`${name}.${index}.PHONE_TYPE`}
-                                    defaultValue=""
+                                    defaultValue={defaultValues.PHONE_TYPE}
                                     control={control}
                                     render={({field}) => phoneTypes.data.map(c => {
                                         if (!c.show) return null;
@@ -466,7 +477,7 @@ function PersonDirectoryPhone() {
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.PHONE_NUMBER`}
-                                    defaultValue=""
+                                    defaultValue={defaultValues.PHONE_NUMBER}
                                     control={control}
                                     render={({field}) => <PhoneInput 
                                         {...field} 
@@ -476,7 +487,7 @@ function PersonDirectoryPhone() {
                                         inputClass="form-control" 
                                         onChange={(...args)=>handlePhoneChange(args,index,field)} 
                                         disabled={editIndex!=index||!editableType(index)}
-                                        isInvalid={get(errors,field.name,false)}
+                                        isValid={()=>!get(errors,field.name,false)}
                                     />}
                                 />
                                 <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].PHONE_NUMBER`,false)?'block':'none'}}>{get(errors,`${name}[${index}].PHONE_NUMBER.message`,'')}</Form.Control.Feedback>
@@ -486,6 +497,7 @@ function PersonDirectoryPhone() {
                                 <InputGroup>
                                     <Controller
                                         name={`${name}.${index}.effDate`}
+                                        defaultValue={defaultValues.effDate}
                                         control={control}
                                         render={({field}) => <Form.Control
                                             as={DatePicker}
@@ -494,7 +506,7 @@ function PersonDirectoryPhone() {
                                             selected={field.value}
                                             onChange={field.onChange}
                                             disabled={editIndex!=index||!editableType(index)}
-                                            isInvalid={get(errors,field.name,false)}
+                                            isInvalid={!!get(errors,field.name,false)}
                                             autoComplete="off"
                                         />}
                                     />
@@ -560,15 +572,17 @@ function PersonDirectoryEmail() {
         return emailTypes.data.find(c=>c.id==watchEmail?.[index]?.EMAIL_TYPE)?.edit;
     },[emailTypes.data,watchEmail]);
 
+    const defaultValues = {
+        "EMAIL_TYPE": "",
+        "EMAIL_ADDRESS": "",
+        "CREATE_DATE": "",
+        "effDate":getValues('effDate'),
+        "createDate":new Date()
+    };
+
     const handleNew = () => {
         if (fields.length > 2) return;
-        append({
-            "EMAIL_TYPE": "",
-            "EMAIL_ADDRESS": "",
-            "CREATE_DATE": "",
-            "effDate":new Date(),
-            "createDate":new Date()
-        });
+        append(defaultValues);
         setEditIndex(fields.length);
         setIsNew(true);
         setLockTabs(true);
@@ -641,7 +655,7 @@ function PersonDirectoryEmail() {
                             {emailTypes.data && 
                                 <Controller
                                     name={`${name}.${index}.EMAIL_TYPE`}
-                                    defaultValue=""
+                                    defaultValue={defaultValues.EMAIL_TYPE}
                                     control={control}
                                     render={({field}) => emailTypes.data.map(c => {
                                         if (!c.show) return null;
@@ -658,13 +672,13 @@ function PersonDirectoryEmail() {
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.EMAIL_ADDRESS`}
-                                    defaultValue=""
+                                    defaultValue={defaultValues.EMAIL_ADDRESS}
                                     control={control}
                                     render={({field}) => <Form.Control
                                         {...field} 
                                         type="email"
                                         disabled={editIndex!=index||!editableType(index)}
-                                        isInvalid={get(errors,field.name,false)}
+                                        isInvalid={!!get(errors,field.name,false)}
                                     />}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].EMAIL_ADDRESS.message`,'')}</Form.Control.Feedback>
@@ -674,7 +688,7 @@ function PersonDirectoryEmail() {
                                 <InputGroup>
                                     <Controller
                                         name={`${name}.${index}.effDate`}
-                                        defaultValue=""
+                                        defaultValue={defaultValues.effDate}
                                         control={control}
                                         render={({field}) => <Form.Control
                                             as={DatePicker}
@@ -683,7 +697,7 @@ function PersonDirectoryEmail() {
                                             selected={field.value}
                                             onChange={field.onChange}
                                             disabled={editIndex!=index||!editableType(index)}
-                                            isInvalid={get(errors,field.name,false)}
+                                            isInvalid={!!get(errors,field.name,false)}
                                             autoComplete="off"
                                         />}
                                     />

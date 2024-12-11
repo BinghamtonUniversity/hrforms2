@@ -35,28 +35,30 @@ export default function PersonContacts() {
     const {getListData} = useListsQueries();
     const relationships = getListData('contactRelationships');
 
+    const defaultValues = {
+        "EMR_CTC_RANK": "",
+        "EMR_CTC_FIRST_NAME": "",
+        "EMR_CTC_LAST_NAME": "",
+        "EMR_CTC_ADDRESS_1": "",
+        "EMR_CTC_ADDRESS_2": "",
+        "EMR_CTC_CITY": "",
+        "EMR_CTC_STATE_CODE": "",
+        "EMR_CTC_ZIP": "",
+        "EMR_CTC_COUNTRY_CODE": {id: "", label: ""},
+        "EMR_CTC_DAY_PHONE": "",
+        "EMR_CTC_NIGHT_PHONE": "",
+        "EMR_CTC_CELL_PHONE": "",
+        "EMR_CTC_INTERNATIONAL_PHONE": "",
+        "EMR_CTC_EMAIL": "",
+        "EMR_CTC_RELATIONSHIP": {"id": "","label": ""},
+        "CREATE_DATE": "",
+        "isPrimary": "N",
+        "createDate":new Date()
+    };
+
     const handleNew = () => {
         if (fields.length > 2) return;
-        append({
-            "EMR_CTC_RANK": "",
-            "EMR_CTC_FIRST_NAME": "",
-            "EMR_CTC_LAST_NAME": "",
-            "EMR_CTC_ADDRESS_1": "",
-            "EMR_CTC_ADDRESS_2": "",
-            "EMR_CTC_CITY": "",
-            "EMR_CTC_STATE_CODE": "",
-            "EMR_CTC_ZIP": "",
-            "EMR_CTC_COUNTRY_CODE": {id: "", label: ""},
-            "EMR_CTC_DAY_PHONE": "",
-            "EMR_CTC_NIGHT_PHONE": "",
-            "EMR_CTC_CELL_PHONE": "",
-            "EMR_CTC_INTERNATIONAL_PHONE": "",
-            "EMR_CTC_EMAIL": "",
-            "EMR_CTC_RELATIONSHIP": {"id": "","label": ""},
-            "CREATE_DATE": "",
-            "isPrimary": "N",
-            "createDate":new Date()
-        });
+        append(defaultValues);
         setEditIndex(fields.length);
         setIsNew(true);
         setLockTabs(true);
@@ -83,6 +85,7 @@ export default function PersonContacts() {
         if (!arrayData?.EMR_CTC_FIRST_NAME) setError(`${name}.${index}.EMR_CTC_FIRST_NAME`,{type:'manual',message:'First Name is required'});
         if (!arrayData?.EMR_CTC_FIRST_NAME) setError(`${name}.${index}.EMR_CTC_LAST_NAME`,{type:'manual',message:'Last Name is required'});
         if (!arrayData?.EMR_CTC_RELATIONSHIP?.id) setError(`${name}.${index}.EMR_CTC_RELATIONSHIP.id`,{type:'manual',message:'Relationship is required'});
+        if (!arrayData?.EMR_CTC_DAY_PHONE&&!arrayData?.EMR_CTC_CELL_PHONE&&!arrayData?.EMR_CTC_NIGHT_PHONE&&!arrayData?.EMR_CTC_INTERNATIONAL_PHONE) setError(`${name}.${index}.EMR_CTC_PHONE`,{type:'manual',message:'A phone number is required'});
 
         if (Object.keys(get(errors,`${name}.${index}`,{})).length > 0) {
             console.error(errors);
@@ -149,7 +152,7 @@ export default function PersonContacts() {
                         <Col xs="auto" className="pt-2">
                             <Controller
                                 name={`${name}.${index}.isPrimary`}
-                                defaultValue={false}
+                                defaultValue={defaultValues.isPrimary}
                                 control={control}
                                 render={({field}) => (
                                     <>
@@ -170,18 +173,18 @@ export default function PersonContacts() {
                         <Col xs={6} md={4}>
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_FIRST_NAME`}
-                                defaultValue=""
+                                defaultValue={defaultValues.EMR_CTC_FIRST_NAME}
                                 control={control}
-                                render={({field}) => <Form.Control {...field} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}/>}
+                                render={({field}) => <Form.Control {...field} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
                             />
                             <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].EMR_CTC_FIRST_NAME.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col xs={6} md={4}>
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_LAST_NAME`}
-                                defaultValue=""
+                                defaultValue={defaultValues.EMR_CTC_LAST_NAME}
                                 control={control}
-                                render={({field}) => <Form.Control {...field} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}/>}
+                                render={({field}) => <Form.Control {...field} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
                             />
                             <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].EMR_CTC_LAST_NAME.message`,'')}</Form.Control.Feedback>
                         </Col>
@@ -191,7 +194,7 @@ export default function PersonContacts() {
                         <Col xs={12} md={8}>
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_ADDRESS_1`}
-                                defaultValue=""
+                                defaultValue={defaultValues.EMR_CTC_ADDRESS_1}
                                 control={control}
                                 render={({field}) => <Form.Control {...field} disabled={editIndex!=index}/>}
                             />
@@ -202,7 +205,7 @@ export default function PersonContacts() {
                         <Col xs={12} md={8}>
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_ADDRESS_2`}
-                                defaultValue=""
+                                defaultValue={defaultValues.EMR_CTC_ADDRESS_2}
                                 control={control}
                                 render={({field}) => <Form.Control {...field} disabled={editIndex!=index}/>}
                             />
@@ -213,7 +216,7 @@ export default function PersonContacts() {
                         <Col xs="auto">
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_CITY`}
-                                defaultValue=""
+                                defaultValue={defaultValues.EMR_CTC_CITY}
                                 control={control}
                                 render={({field}) => <Form.Control {...field} disabled={editIndex!=index}/>}
                             />
@@ -221,7 +224,7 @@ export default function PersonContacts() {
                         <Col xs="auto">
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_STATE_CODE`}
-                                defaultValue=""
+                                defaultValue={defaultValues.EMR_CTC_STATE_CODE}
                                 control={control}
                                 render={({field}) => <StateSelector field={field} disabled={editIndex!=index}/>}
                             />
@@ -229,7 +232,7 @@ export default function PersonContacts() {
                         <Col xs="auto">
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_ZIP`}
-                                defaultValue=""
+                                defaultValue={defaultValues.EMR_CTC_ZIP}
                                 control={control}
                                 render={({field}) => <Form.Control {...field} disabled={editIndex!=index}/>}
                             />
@@ -240,7 +243,7 @@ export default function PersonContacts() {
                         <Col xs="auto">
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_COUNTRY_CODE.id`}
-                                defaultValue=""
+                                defaultValue={defaultValues.EMR_CTC_COUNTRY_CODE}
                                 control={control}
                                 render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index}/>}
                             />
@@ -252,7 +255,7 @@ export default function PersonContacts() {
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.${p.id}`}
-                                    defaultValue=""
+                                    defaultValue={defaultValues[p.id]}
                                     control={control}
                                     render={({field}) => <PhoneInput 
                                         {...field} 
@@ -263,6 +266,7 @@ export default function PersonContacts() {
                                         disableCountryCode={true}
                                         inputClass="form-control" 
                                         disabled={editIndex!=index}
+                                        isValid={()=>!get(errors,`${name}.${index}.EMR_CTC_PHONE`,false)}
                                     />}
                                 />
                             </Col>
@@ -273,7 +277,7 @@ export default function PersonContacts() {
                         <Col xs="auto">
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_INTERNATIONAL_PHONE`}
-                                defaultValue=""
+                                defaultValue={defaultValues.EMR_CTC_INTERNATIONAL_PHONE}
                                 control={control}
                                 render={({field}) => <PhoneInput 
                                     {...field} 
@@ -281,8 +285,10 @@ export default function PersonContacts() {
                                     enableLongNumbers={true}
                                     inputClass="form-control" 
                                     disabled={editIndex!=index}
+                                    isValid={()=>!get(errors,`${name}.${index}.EMR_CTC_PHONE`,false)}
                                 />}
                             />
+                            <Form.Control.Feedback type="invalid" style={{display:!!get(errors,`${name}.${index}.EMR_CTC_PHONE`,false)?'block':'none'}}>{get(errors,`${name}.${index}.EMR_CTC_PHONE.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row} className="mb-1">
@@ -290,7 +296,7 @@ export default function PersonContacts() {
                         <Col xs={12} md={8}>
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_EMAIL`}
-                                defaultValue=""
+                                defaultValue={defaultValues.EMR_CTC_EMAIL}
                                 control={control}
                                 render={({field}) => <Form.Control {...field} type="email" disabled={editIndex!=index}/>}
                             />
@@ -304,10 +310,10 @@ export default function PersonContacts() {
                             {relationships.data &&
                                 <Controller
                                     name={`${name}.${index}.EMR_CTC_RELATIONSHIP.id`}
-                                    defaultValue=""
+                                    defaultValue={defaultValues.EMR_CTC_RELATIONSHIP}
                                     control={control}
                                     render={({field}) => (
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={get(errors,field.name,false)}>
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}>
                                             <option></option>
                                             {relationships.data.map(r=><option key={r[0]} value={r[0]}>{r[1]}</option>)}
                                         </Form.Control>

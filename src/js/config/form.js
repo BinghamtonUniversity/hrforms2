@@ -50,19 +50,31 @@ const requiredFields = {
     "employment.position.LINE_ITEM_NUMBER":v=>!!v||'Line Number is required',
     "employment.position.APPOINTMENT_TYPE.id":v=>!!v||'Position Appointment Type is required',
     "employment.position.PAYROLL_MAIL_DROP_ID.id":v=>!!v||'Check Sort Code is required',
-    "employment.appointment.supervisor":v=>!!get(v,'0.id','')||'Supervisor is required', 
+    "employment.appointment.supervisor":v=>!!get(v,'0.label','')||'Supervisor is required', 
     "employment.appointment.REPORTING_DEPARTMENT_CODE.id":v=>!!v||'Appointment Department is required',
     "employment.salary.NUMBER_OF_PAYMENTS":v=>parseInt(v,10)>0||'Number of payments must be greater than zero', 
     "employment.salary.RATE_AMOUNT":v=>parseInt(v,10)>0||'Rate must be greater than zero', 
     "employment.separation.lastDateWorked":v=>!!v||'Last Date Worked is required',
     "employment.leave.leaveEndDate":v=>!!v||'Leave End Date is required',
-    "employment.leave.justfication.id":v=>!!v||'Justification is required',
+    "employment.leave.justification.id":v=>!!v||'Justification is required',
+    "employment.volunteer.subRole.id":v=>!!v||'Volunteer Sub-Role is required',
+    "employment.volunteer.startDate":v=>!!v||'Volunteer Start Date is required',
+    "employment.volunteer.endDate":v=>!!v||'Volunteer End Date is required',
+    "employment.volunteer.hoursPerWeek":v => {
+        if (parseInt(v,10) <= 0) return 'Volunteer Hours per week must be greater than zero';
+        if (parseInt(v,10) > 40) return 'Volunteer Hours per week must be less than 40';
+        if (!v) return 'Volunteer Hours per week is required';
+        return true;
+    },
+    "employment.volunteer.serviceType.id":v=>!!v||'Volunteer Service Type is required',
+    "employment.volunteer.department.id":v=>!!v||'Volunteer Department is required',
+    "employment.volunteer.duties":v=>!!v||'Volunteer Duties are required',
     "comment":v=>!!v||'Comment is required',
 }
 
 /* Advanced Fields */
 const advancedFields = {
-    "person.information.RETIRED_FROM":(frmData,v)=>get(frmData,'person.information.REHIRE_RETIREE','0') != 1 ? true : (!!v||'Retired From is reqired'),
+    "person.information.RETIRED_FROM":(frmData,v)=>get(frmData,'person.information.REHIRE_RETIREE','0') != 1 ? true : (!!v||'Retired From is required'),
     "person.demographics.NON_CITIZEN_TYPE.id":(frmData,v)=>get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Non-US Citizen Type is required"),
     "person.demographics.CITIZENSHIP_COUNTRY_CODE.id":(frmData,v) => get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Country of Citizenship is required"),
     "person.demographics.VISA_CODE.id":(frmData,v) => get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Visa Type is required"),
@@ -100,13 +112,30 @@ const advancedFields = {
         if (v.reduce((a,c)=>a+parseInt(c?.pct,10)||0,0)!=100) return 'SUNY Account percentage must equal 100';
         return true;
     },
+    "employment.salary.SPLIT_ASSIGNMENTS":(frmData,v) => {
+        const formCode = [get(frmData,'formActions.formCode.FORM_CODE',''),get(frmData,'formActions.actionCode.ACTION_CODE'),get(frmData,'formActions.transactionCode.TRANSACTION_CODE')].join('-');
+        if (conditionalFields.splitAssignment.includes(formCode)) {
+            const totalPct = v.reduce((a,c)=>a+parseInt(c?.WORK_PERCENT,10)||0,0);
+            if (totalPct!= 100) return 'Split Assignments percentage must equal 100';
+        }
+        return true;
+    },
+    "employment.volunteer.supervisor":(frmData,v) => {
+        if (get(frmData,'employment.volunteer.subRole.id','').startsWith('CP')) return true;
+        if (!get(v,'0.label','')) return 'Volunteer Supervisor is required';
+        return true;
+    },
+    "employment.volunteer.univOfficial":(frmData,v) => {
+        if (!get(frmData,'employment.volunteer.subRole.id','').startsWith('CP')) return true;
+        if (!get(v,'0.label','')) return 'Volunteer University Official is required';
+        return true;
+    },
 }
-
 
 export const checkFields = [...Object.keys(requiredFields),...Object.keys(advancedFields)];
 
 export async function validateForm(frmData,context,options) {
-    //console.log(frmData,options);
+    //console.log(context,options);
     const errors = {};
 
     for (const field of options.names) {
@@ -138,6 +167,7 @@ const defaultFormActions = {
     formCode:{FORM_CODE:"",FORM_TITLE:"",FORM_DESCRIPTION:""},
     actionCode:{ACTION_CODE:"",ACTION_TITLE:"",ACTION_DESCRIPTION:""},
     transactionCode:{TRANSACTION_CODE:"",TRANSACTION_TITLE:"",TRANSACTION_DESCRIPTION:""},
+    TABS:[],
     ROUTE_BY:"",
     PR_REQUIRED:"0"
 };
@@ -213,10 +243,10 @@ const initFormValues = {
             "LINE_ITEM_NUMBER": "",
             "APPOINTMENT_TYPE": {"id": "","label": ""},
             "APPOINTMENT_PERCENT": "",
-            "BENEFIT_FLAG": {"id": "","label": ""},
+            "BENEFIT_FLAG": {"id": "9","label": "No Benefits"},
             "APPOINTMENT_EFFECTIVE_DATE": "",
             "APPOINTMENT_END_DATE": "",
-            "VOLUNTARY_REDUCTION": "",
+            "VOLUNTARY_REDUCTION": "N",
             "PAYROLL_MAIL_DROP_ID": {"id": "","label": ""},
             "positionDetails": {},
             "apptEffDate": "",
@@ -224,7 +254,7 @@ const initFormValues = {
             "justification": {"id": "","label": ""}
         },
         appointment: {
-            "TERM_DURATION": "",
+            "TERM_DURATION": "1",
             "NOTICE_DATE": "",
             "CONTINUING_PERMANENCY_DATE": "",
             "TENURE_STATUS": {"id": "", "label": ""},
@@ -234,7 +264,7 @@ const initFormValues = {
             "REPORTING_DEPARTMENT_CODE": {"id": "", "label": ""},
             "DERIVED_FAC_TYPE": "N",
             "isAdjunct": "N",
-            "supervisor": [],
+            "supervisor": [{id:"", label:""}],
             "noticeDate": "",
             "contPermDate": "",
             "facultyDetails": {
@@ -310,11 +340,11 @@ const initFormValues = {
             startDate:"",
             endDate:"",
             tenureStatus:{id:"",labe:""},
-            hoursPerWeek:"",
+            hoursPerWeek:"1",
             serviceType:{id:"",label:""},
             department:{id:"",label:""},
             univOfficial:[],
-            supervisor: [],
+            supervisor: [{id:"",label:""}],
             duties:""
         }
     },
