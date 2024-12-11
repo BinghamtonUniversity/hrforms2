@@ -11,9 +11,9 @@ import get from "lodash/get";
 const name = 'employment.leave';
 
 export default function EmploymentLeave() {
-    const { canEdit, activeNav, formType, defaultValues } = useHRFormContext();
+    const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { canEdit, activeNav, formType } = useHRFormContext();
 
-    const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const watchLeavePercent = useWatch({name:`${name}.leavePercent`,control:control})||0;
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
 

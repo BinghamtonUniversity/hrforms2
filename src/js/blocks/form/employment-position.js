@@ -31,10 +31,10 @@ export default function EmploymentPosition() {
 }
 
 function EmploymentPositionSearch({setShowResults}) {
-    const { canEdit, activeNav, defaultValues } = useHRFormContext();
     const ref = useRef();
+    const { control, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { canEdit, activeNav } = useHRFormContext();
 
-    const { control, setValue, formState: { errors } } = useFormContext();
     const handleSearch = () => setShowResults(true);
     const handleClear = () => {
         setShowResults(false);
@@ -123,8 +123,8 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
 }
 
 function EmploymentAppointmentInformation() {
-    const { control, setValue, getValues } = useFormContext();
-    const { canEdit, defaultValues, showInTest, testHighlight } = useHRFormContext();
+    const { control, setValue, getValues, formState: { defaultValues } } = useFormContext();
+    const { canEdit, showInTest, testHighlight } = useHRFormContext();
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
     const watchEffectiveDate = useWatch({name:`${name}.apptEffDate`,control:control,defaultValue:new Date(0)});
     const watchApptPercent = useWatch({name:`${name}.APPOINTMENT_PERCENT`,control:control});
@@ -236,8 +236,8 @@ function EmploymentAppointmentInformation() {
 }
 
 function AppointmentType() {
-    const { control, setValue, formState: { errors } } = useFormContext();
-    const { canEdit, defaultValues } = useHRFormContext();
+    const { control, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { canEdit } = useHRFormContext();
 
     const { getListData } = useListsQueries();
     const appttypes = getListData('appointmentTypes');
@@ -273,8 +273,8 @@ function AppointmentType() {
     );
 }
 function BenefitsFlag() {
-    const { control, setValue } = useFormContext();
-    const { canEdit, defaultValues } = useHRFormContext();
+    const { control, setValue, formState: { defaultValues } } = useFormContext();
+    const { canEdit } = useHRFormContext();
     const watchHasBenefits = useWatch({name:'payroll.ADDITIONAL_INFO.hasBenefits',control:control});
     
     const { getListData } = useListsQueries();
@@ -309,8 +309,8 @@ function BenefitsFlag() {
     );
 }
 function CheckSortCode() {
-    const { control, setValue, formState: { errors } } = useFormContext();
-    const { canEdit, defaultValues } = useHRFormContext();
+    const { control, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { canEdit } = useHRFormContext();
 
     const { getListData } = useListsQueries();
     const checksortcodes = getListData('checkSortCodes');
@@ -347,8 +347,8 @@ function CheckSortCode() {
     );
 }
 function PositionJustification() {
-    const { control, setValue } = useFormContext();
-    const { canEdit, defaultValues } = useHRFormContext();
+    const { control, setValue, formState: { defaultValues } } = useFormContext();
+    const { canEdit } = useHRFormContext();
 
     const { getListData } = useListsQueries();
     const positionjustification = getListData('positionJustification');

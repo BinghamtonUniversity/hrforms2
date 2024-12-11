@@ -11,9 +11,9 @@ import { get } from "lodash";
 const name = 'person.demographics';
 
 export default function PersonDemographics() {
-    const { canEdit, activeNav, defaultValues } = useHRFormContext();
+    const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { canEdit, activeNav } = useHRFormContext();
 
-    const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const watchCitizen = useWatch({name:`${name}.US_CITIZEN_INDICATOR`});
     const watchVeteran = useWatch({name:`${name}.VETERAN_INDICATOR`});
 
@@ -154,8 +154,7 @@ export default function PersonDemographics() {
 }
 
 function PersonDemographicsMilitaryStatus() {
-    const { control } = useFormContext();
-    const { defaultValues } = useHRFormContext();
+    const { control, formState: { defaultValues } } = useFormContext();
 
     const {getListData} = useListsQueries();
     const milstatus = getListData('militaryStatus');
@@ -195,8 +194,7 @@ function PersonDemographicsMilitaryStatus() {
 }
 
 function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
-    const { control, formState: { errors } } = useFormContext();
-    const { defaultValues } = useHRFormContext();
+    const { control, formState: { defaultValues, errors } } = useFormContext();
 
     const watchCitizenType = useWatch({name:`${name}.NON_CITIZEN_TYPE`});
 
@@ -290,8 +288,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
 }
 
 function PersonDemographicsVeteranDetails({watchVeteran}) {
-    const { control } = useFormContext();
-    const { defaultValues } = useHRFormContext();
+    const { control, formState: { defaultValues } } = useFormContext();
 
     const {getListData} = useListsQueries();
     const vetstatus = getListData('protectedVeteranStatus');

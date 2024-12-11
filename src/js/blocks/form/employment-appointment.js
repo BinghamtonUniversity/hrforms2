@@ -13,9 +13,9 @@ import { get } from "lodash";
 const baseName = 'employment.appointment';
 
 export default function EmploymentAppointment() {
-    const { canEdit, activeNav, defaultValues } = useHRFormContext();
+    const { canEdit, activeNav } = useHRFormContext();
 
-    const { control, getValues, setValue, formState: { errors } } = useFormContext();
+    const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
     const watchPayroll = useWatch({name:['payroll.PAYROLL_CODE','selectedRow.PAYROLL_AGENCY_CODE'],control:control});
     const watchFaculty = useWatch({name:`${baseName}.DERIVED_FAC_TYPE`,control:control});
     const watchAdjunct = useWatch({name:`${baseName}.isAdjunct`,control:control});
@@ -242,8 +242,8 @@ export default function EmploymentAppointment() {
     );
 }
 function AppointmentSupervisor() {
-    const { control, getValues, setValue, formState: { errors } } = useFormContext();
-    const { canEdit, defaultValues } = useHRFormContext();
+    const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { canEdit } = useHRFormContext();
     const [searchFilter,setSearchFilter] = useState('');
     const { getSupervisorNames } = useFormQueries();
     const supervisors = getSupervisorNames(searchFilter,{enabled:false});
@@ -289,8 +289,7 @@ function AppointmentSupervisor() {
 
 function FacultyDetails({watchFaculty,watchAdjunct}) {
     const name = `${baseName}.facultyDetails`;
-    const { control, setValue, formState: { errors } } = useFormContext();
-    const { defaultValues } = useHRFormContext();
+    const { control, setValue, formState: { defaultValues, errors } } = useFormContext();
     const watchCourses = useWatch({name:[`${name}.fallCourses`,`${name}.springCourses`,],control:control});
 
     const handleCountChange = (e,field) => {
@@ -365,8 +364,7 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
 function StudentDetails({watchPayroll,handleSelectChange}) {
     const name = `${baseName}.studentDetails`;
 
-    const { control, getValues, setValue } = useFormContext();
-    const { defaultValues } = useHRFormContext();
+    const { control, getValues, setValue, formState: { defaultValues } } = useFormContext();
     const watchCredits = useWatch({name:[`${name}.fall.credits`,`${name}.spring.credits`,],control:control})||0;
     const watchFellowship = useWatch({name:`${name}.fellowship`,control:control});
     const data = getValues(name);
