@@ -9,7 +9,7 @@ import { EmploymentPositionInfoBox } from "../../pages/form";
 import { useHRFormContext } from "../../config/form";
 import { Icon } from "@iconify/react";
 import useListsQueries from "../../queries/lists";
-import { get } from "lodash";
+import { defaultTo, get } from "lodash";
 
 const name = 'employment.position';
 
@@ -129,14 +129,14 @@ function EmploymentAppointmentInformation() {
     const watchEffectiveDate = useWatch({name:`${name}.apptEffDate`,control:control,defaultValue:new Date(0)});
     const watchApptPercent = useWatch({name:`${name}.APPOINTMENT_PERCENT`,control:control});
 
-    const maxPercent = useMemo(()=>(!getValues(`${name}.APPOINTMENT_PERCENT`))?100:getValues(`${name}.APPOINTMENT_PERCENT`),[]);
+    const maxPercent = useMemo(()=>defaultTo(getValues(`${name}.positionDetails.POSITION_PERCENT`),100),[]);
     const getMinDate = useMemo(()=>(!watchEffectiveDate)?addDays(new Date(),-1):addDays(watchEffectiveDate,1),[watchEffectiveDate]);
 
     const handleAppointmentPercent = (e,field) => {
-        const max = maxPercent || 100;
+        //const max = maxPercent || 100;
         switch (e.type) {
             case "change":
-                if (e.target.value != "" && (parseInt(e.target.value,10) < 0 || parseInt(e.target.value,10) > max)) return false;
+                if (e.target.value != "" && (parseInt(e.target.value,10) < 0 || parseInt(e.target.value,10) > maxPercent)) return false;
                 field.onChange(e);
                 break;
             case "blur":
