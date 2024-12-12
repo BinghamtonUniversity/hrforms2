@@ -58,12 +58,13 @@ class PersonInfo extends HRForms2 {
 			case "demographics":
 				$legalSex = (new listdata(array('legalSex'),false))->returnData;
 				$gender = (new listdata(array('gender'),false))->returnData;
+				$education = (new listdata(array('highestEducation'),false))->returnData;
 				$countryCodes = (new listdata(array('countryCodes'),false))->returnData;
 				$militaryStatus = (new listdata(array('militaryStatus'),false))->returnData;
 				$protectedVeteranStatus = (new listdata(array('protectedVeteranStatus'),false))->returnData;
 			
 				// hispanic_flag, ethnicity_mult_codes, ethnicity_source_dsc, disability_indicator - not currently using
-				$qry = "select distinct birth_date, gender, gender_identity,
+				$qry = "select distinct birth_date, gender, gender_identity, highest_education_level,
 					us_citizen_indicator, non_citizen_type, emp_authorize_card_indicator, visa_code, citizenship_country_code, 
 					military_status_code, veteran_indicator, protected_vet_status_code, military_separation_date
 				from buhr_person_mv@banner.cc.binghamton.edu a
@@ -83,6 +84,11 @@ class PersonInfo extends HRForms2 {
 				// Gender Identity Code and Description
 				$key = array_search($row['GENDER_IDENTITY'],array_column($gender,0));
 				$row['GENDER_IDENTITY'] = array("id"=>$row['GENDER_IDENTITY'],"label"=>($key!==false)?$gender[$key][1]:"");
+
+				// Highest Education Code and Description
+				$fields = array_keys($education[0]);
+				$key = array_search($row['HIGHEST_EDUCATION_LEVEL'],array_column($education,$fields[0]));
+				$row['HIGHEST_EDUCATION_LEVEL'] = array("id"=>$row['HIGHEST_EDUCATION_LEVEL'],"label"=>($key!==false)?$education[$key][$fields[1]]:"");
 
 				// Country Code
 				$fields = array_keys($countryCodes[0]);
