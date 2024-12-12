@@ -81,6 +81,7 @@ const advancedFields = {
     "person.directory.address":(frmData,v) => get(frmData,'person.directory.address',[]).some(a=>a?.ADDRESS_TYPE=='LEGAL') ? true : 'Legal Address is required',
     "person.directory.phone":(frmData,v) => get(frmData,'person.directory.phone',[]).some(p=>['HOME','CELL'].includes(p?.PHONE_TYPE)) ? true : 'Home or Cell phone number is required',
     "person.directory.email":(frmData,v) => get(frmData,'person.directory.email',[]).some(e=>e?.EMAIL_TYPE=='HOME') ? true : 'Home email is required',
+    "person.education.institutions":(frmData,v) => (['AS','BA','MA','DO','PR','GR'].includes(get(frmData,'person.demographics.HIGHEST_EDUCATION_LEVEL.id','')) && !!v.length)?true:'Education is required',
     "employment.appointment.TENURE_STATUS.id":(frmData,v)=>get(frmData,'employment.appointment.DERIVED_FAC_TYPE','N') == 'N' ? true : (!!v||'Tenure Status is required'),
     //TODO: facultyDetails could be consolidated to one function
     "employment.appointment.facultyDetails":(frmData,v) => {
@@ -206,13 +207,14 @@ const initFormValues = {
         },
         demographics: {
             "BIRTH_DATE": "",
+            "GENDER": {"id": "","label": ""},
+            "GENDER_IDENTITY":{"id": "","label":""},
+            "HIGHEST_EDUCATION_LEVEL":{"id": "","label":""},
             "US_CITIZEN_INDICATOR": "Y",
             "NON_CITIZEN_TYPE": {"id": "","label": ""},
             "EMP_AUTHORIZE_CARD_INDICATOR": "",
             "VISA_CODE": {"id": "","label": ""},
             "CITIZENSHIP_COUNTRY_CODE": {"id": "","label": ""},
-            "GENDER": {"id": "","label": ""},
-            "GENDER_IDENTITY":{"id": "","label":""},
             "HISPANIC_FLAG": "N",
             "ETHNICITY_MULT_CODES": "",
             "ETHNICITY_SOURCE_DSC": "",

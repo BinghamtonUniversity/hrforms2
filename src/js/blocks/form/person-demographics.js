@@ -20,6 +20,7 @@ export default function PersonDemographics() {
     const {getListData} = useListsQueries();
     const legalsex = getListData('legalSex');
     const gender = getListData('gender');
+    const education = getListData('highestEducation');
 
     const handleSelectChange = (e,field) => {
         field.onChange(e);
@@ -102,6 +103,26 @@ export default function PersonDemographics() {
                                         <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
                                             <option></option>
                                             {gender.data.map(k=><option key={k[0]} value={k[0]}>{k[1]}</option>)}
+                                        </Form.Control>
+                                    )}
+                                />
+                            }
+                        </Col>
+                    </Form.Group>
+                    <Form.Group as={Row}>
+                        <Form.Label column md={2}>Highest Education Level:</Form.Label>
+                        <Col xs="auto">
+                            {education.isLoading && <Loading>Loading Data</Loading>}
+                            {education.isError && <Loading isError>Failed to Load</Loading>}
+                            {education.data &&
+                                <Controller
+                                    name={`${name}.HIGHEST_EDUCATION_LEVEL.id`}
+                                    control={control}
+                                    defaultValue={defaultValues[`${name}.HIGHEST_EDUCATION_LEVEL`]}
+                                    render={({field})=>(
+                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                                            <option></option>
+                                            {education.data.map(k=><option key={k.CODE_VALUE} value={k.CODE_VALUE}>{k.LONG_DSC}</option>)}
                                         </Form.Control>
                                     )}
                                 />
