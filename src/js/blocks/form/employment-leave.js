@@ -20,11 +20,11 @@ export default function EmploymentLeave() {
     const handleLeavePct = (e,field) => {
         switch(e.type) {
             case "change":
-                if (parseInt(e.target.value,10) < 0 || parseInt(e.target.value,10) > 100) return false;
+                if (!!e.target.value && (parseInt(e.target.value,10) < 0 || parseInt(e.target.value,10) > 100)) return false;
                 field.onChange(e);
                 break;
             case "blur":
-                if (!e.target.value) setValue(`${name}.leavePercent`,0);
+                if (!e.target.value) setValue(field.name,0);
                 break;
         }
     }

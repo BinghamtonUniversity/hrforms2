@@ -19,7 +19,7 @@ export default function EmploymentAppointment() {
     const watchPayroll = useWatch({name:['payroll.PAYROLL_CODE','selectedRow.PAYROLL_AGENCY_CODE'],control:control});
     const watchFaculty = useWatch({name:`${baseName}.DERIVED_FAC_TYPE`,control:control});
     const watchAdjunct = useWatch({name:`${baseName}.isAdjunct`,control:control});
-    const watchTermDuration = useWatch({name:`${baseName}.TERM_DURATION`,control:control,defaultValue:0});
+    const watchTermDuration = useWatch({name:`${baseName}.TERM_DURATION`,control:control,defaultValue:"1"});
     const watchFields = useWatch({name:[
         'payroll.PAYROLL_CODE',
         'employment.position.APPOINTMENT_TYPE.id',
@@ -32,9 +32,15 @@ export default function EmploymentAppointment() {
         setValue(`${baseName}.TERM_DURATION`,value);
     }
 
-    const handleTermDurationChange = (e,field) => {
-        if (!e.target.value || parseInt(e.target.value,10)>5) return false;
-        field.onChange(e);
+    const handleTermDuration = (e,field) => {
+        switch(e.type) {
+            case "change":
+                if (e.target.value != "" && (e.target.value < 1 || e.target.value > 5)) return false;
+                field.onChange(e);
+                break;
+            case "blur":
+                if (!e.target.value) setValue(field.name,1);
+        }
     }
 
     const { getListData } = useListsQueries();
@@ -57,7 +63,7 @@ export default function EmploymentAppointment() {
         const field = document.querySelector(`#${activeNav} input:not([disabled])`);
         (canEdit&&field)&&field.focus({focusVisible:true});
     },[activeNav]);
-    
+
     return (
         <HRFormContext.Consumer>
             {({showInTest,testHighlight,canEdit}) => (
@@ -135,7 +141,7 @@ export default function EmploymentAppointment() {
                                     name={`${baseName}.TERM_DURATION`}
                                     defaultValue={defaultValues[`${baseName}.TERM_DURATION`]}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="number" min={1} max={5} onChange={e=>handleTermDurationChange(e,field)} disabled={!canEdit} />}
+                                    render={({field}) => <Form.Control {...field} type="number" min={1} max={5} onBlur={e=>handleTermDuration(e,field)} onChange={e=>handleTermDuration(e,field)} disabled={!canEdit} />}
                                 />
                             </Col>
                             <Col sm={8} md={6} className="pt-2">
@@ -326,7 +332,14 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                                     <Form.Control.Feedback type="invalid">{get(errors,`${name}.message`,'')}</Form.Control.Feedback>
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
-                                    <Form.Control type="range" name={`${c.id}Range`} id={`${c.id}Range`} min={0} max={20} value={watchCourses[i].count} onChange={e=>handleRangeChange(e,`${name}.${c.id}.count`)} disabled={!canEdit}/>
+                                    <Form.Control type="range" name={`${c.id}Range`} id={`${c.id}Range`} min={0} max={20} value={watchCourses[i].count} onChange={e=>handleRangeChange(e,`${name}.${c.id}.count`)} disabled={!canEdit} list={`markers-${c.id}`}/>
+                                    <datalist id={`markers-${c.id}`} className="marker" style={{padding:"0 0.2rem"}}>
+                                        <option value="0">0</option>
+                                        <option value="5" style={{marginLeft:'7px'}}>5</option>
+                                        <option value="10" style={{marginLeft:'5px'}}>10</option>
+                                        <option value="15" style={{marginLeft:'3px'}}>15</option>
+                                        <option value="20">20</option>
+                                    </datalist>
                                 </Col>
                             </Form.Group>
                             <Form.Group as={Row}>
@@ -369,6 +382,16 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
     const watchFellowship = useWatch({name:`${name}.fellowship`,control:control});
     const data = getValues(name);
 
+    const handleCreditsChange = (e,field) => {
+        switch (e.type) {
+            case "change":
+                if (e.target.value != "" && (parseInt(e.target.value,10)<0 || parseInt(e.target.value,10)>30)) return false;
+                field.onChange(e);
+                break;
+            case "blur":
+                if (!e.target.value) setValue(field.name,0);
+        }
+    }
     const handleRangeChange = (e,fieldName) => setValue(fieldName,e.target.value);
 
     const { getListData } = useListsQueries();
@@ -425,11 +448,20 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                                         name={`${name}.${c.id}.credits`}
                                         defaultValue={defaultValues[`${name}.${c.id}.credits`]}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={30} disabled={!canEdit}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={30} onBlur={e=>handleCreditsChange(e,field)} onChange={e=>handleCreditsChange(e,field)} disabled={!canEdit}/>}
                                     />
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
-                                    <Form.Control type="range" name={`${c.id}CreditsRange`} id={`${c.id}CreditsRange`} min={0} max={30} value={watchCredits[i]} onChange={e=>handleRangeChange(e,`${name}.${c.id}.credits`)} disabled={!canEdit}/>
+                                    <Form.Control type="range" name={`${c.id}CreditsRange`} id={`${c.id}CreditsRange`} min={0} max={30} value={watchCredits[i]} onChange={e=>handleRangeChange(e,`${name}.${c.id}.credits`)} disabled={!canEdit} list={`markers-${c.id}`}/>
+                                    <datalist id={`markers-${c.id}`} className="marker" style={{padding:"0 0.2rem"}}>
+                                        <option value="0">0</option>
+                                        <option value="5"></option>
+                                        <option value="10">10</option>
+                                        <option value="15"></option>
+                                        <option value="20">20</option>
+                                        <option value="25"></option>
+                                        <option value="30">30</option>
+                                    </datalist>
                                 </Col>
                             </Form.Group>
                         </div>

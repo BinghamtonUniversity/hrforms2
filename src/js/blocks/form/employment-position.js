@@ -132,16 +132,19 @@ function EmploymentAppointmentInformation() {
     const maxPercent = useMemo(()=>(!getValues(`${name}.APPOINTMENT_PERCENT`))?100:getValues(`${name}.APPOINTMENT_PERCENT`),[]);
     const getMinDate = useMemo(()=>(!watchEffectiveDate)?addDays(new Date(),-1):addDays(watchEffectiveDate,1),[watchEffectiveDate]);
 
-    const handleRangeChange = e => {
-        const value = (parseInt(e.target.value,10)<=maxPercent)?parseInt(e.target.value,10):maxPercent;
-        setValue(`${name}.APPOINTMENT_PERCENT`,value);
-    }
-
-    const handlePctChange = (e,field) => {
+    const handleAppointmentPercent = (e,field) => {
         const max = maxPercent || 100;
-        if (!e.target.value || parseInt(e.target.value,10)>max) return false;
-        field.onChange(e);
+        switch (e.type) {
+            case "change":
+                if (e.target.value != "" && (parseInt(e.target.value,10) < 0 || parseInt(e.target.value,10) > max)) return false;
+                field.onChange(e);
+                break;
+            case "blur":
+                if (!e.target.value) setValue(field.name,max);
+        }
     }
+    const handleRangeChange = e => setValue(`${name}.APPOINTMENT_PERCENT`,e.target.value);
+
 
     return (
         <section className="mt-3">
@@ -158,7 +161,7 @@ function EmploymentAppointmentInformation() {
                         name={`${name}.APPOINTMENT_PERCENT`}
                         defaultValue={maxPercent}
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="number" min={1} max={maxPercent} disabled={!canEdit} value={field.value||maxPercent} onChange={e=>handlePctChange(e,field)}/>}
+                        render={({field}) => <Form.Control {...field} type="number" min={1} max={maxPercent} disabled={!canEdit} onBlur={e=>handleAppointmentPercent(e,field)} onChange={e=>handleAppointmentPercent(e,field)}/>}
                     />
                 </Col>
                 <Col sm={8} md={6} className="pt-2">

@@ -166,7 +166,7 @@ export default function EmploymentAppointment() {
                         />
                     </Col>
                 </Form.Group>
-                <SUNYAccount label="SUNY Account*:" name={`${name}.SUNY_ACCOUNTS`} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit||['a','s'].includes(editing)}/>
+                <SUNYAccount label="SUNY Account*:" name={`${name}.SUNY_ACCOUNTS`} isInvalid={!!get(errors,`${name}.SUNY_ACCOUNTS`,false)} disabled={!canEdit||['a','s'].includes(editing)}/>
             </section>
             
             <AdditionalSalary editing={editing} setEditing={setEditing}/>
