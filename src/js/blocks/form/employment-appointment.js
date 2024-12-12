@@ -295,11 +295,13 @@ function AppointmentSupervisor() {
 
 function FacultyDetails({watchFaculty,watchAdjunct}) {
     const name = `${baseName}.facultyDetails`;
+    const maxCourses = 3;
+
     const { control, setValue, formState: { defaultValues, errors } } = useFormContext();
     const watchCourses = useWatch({name:[`${name}.fallCourses`,`${name}.springCourses`,],control:control});
 
     const handleCountChange = (e,field) => {
-        if (parseInt(e.target.value,10) < 0 || parseInt(e.target.value,10) > 20) return false;
+        if (parseInt(e.target.value,10) < 0 || parseInt(e.target.value,10) > maxCourses) return false;
         field.onChange(e);
     }
     const handleCountBlur = (e,field) => {
@@ -327,18 +329,17 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                                         name={`${name}.${c.id}.count`}
                                         defaultValue={defaultValues[`${name}.${c.id}.count`]}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={20} onChange={e=>handleCountChange(e,field)} onBlur={e=>handleCountBlur(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={maxCourses} onChange={e=>handleCountChange(e,field)} onBlur={e=>handleCountBlur(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                                     />
                                     <Form.Control.Feedback type="invalid">{get(errors,`${name}.message`,'')}</Form.Control.Feedback>
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
-                                    <Form.Control type="range" name={`${c.id}Range`} id={`${c.id}Range`} min={0} max={20} value={watchCourses[i].count} onChange={e=>handleRangeChange(e,`${name}.${c.id}.count`)} disabled={!canEdit} list={`markers-${c.id}`}/>
+                                    <Form.Control type="range" name={`${c.id}Range`} id={`${c.id}Range`} min={0} max={maxCourses} value={watchCourses[i].count} onChange={e=>handleRangeChange(e,`${name}.${c.id}.count`)} disabled={!canEdit} list={`markers-${c.id}`}/>
                                     <datalist id={`markers-${c.id}`} className="marker" style={{padding:"0 0.2rem"}}>
                                         <option value="0">0</option>
-                                        <option value="5" style={{marginLeft:'7px'}}>5</option>
-                                        <option value="10" style={{marginLeft:'5px'}}>10</option>
-                                        <option value="15" style={{marginLeft:'3px'}}>15</option>
-                                        <option value="20">20</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value={maxCourses}>{maxCourses}</option>
                                     </datalist>
                                 </Col>
                             </Form.Group>
@@ -376,6 +377,7 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
 
 function StudentDetails({watchPayroll,handleSelectChange}) {
     const name = `${baseName}.studentDetails`;
+    const maxCredits = 20;
 
     const { control, getValues, setValue, formState: { defaultValues } } = useFormContext();
     const watchCredits = useWatch({name:[`${name}.fall.credits`,`${name}.spring.credits`,],control:control})||0;
@@ -385,7 +387,7 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
     const handleCreditsChange = (e,field) => {
         switch (e.type) {
             case "change":
-                if (e.target.value != "" && (parseInt(e.target.value,10)<0 || parseInt(e.target.value,10)>30)) return false;
+                if (e.target.value != "" && (parseInt(e.target.value,10)<0 || parseInt(e.target.value,10)>maxCredits)) return false;
                 field.onChange(e);
                 break;
             case "blur":
@@ -448,19 +450,17 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                                         name={`${name}.${c.id}.credits`}
                                         defaultValue={defaultValues[`${name}.${c.id}.credits`]}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={30} onBlur={e=>handleCreditsChange(e,field)} onChange={e=>handleCreditsChange(e,field)} disabled={!canEdit}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={maxCredits} onBlur={e=>handleCreditsChange(e,field)} onChange={e=>handleCreditsChange(e,field)} disabled={!canEdit}/>}
                                     />
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
-                                    <Form.Control type="range" name={`${c.id}CreditsRange`} id={`${c.id}CreditsRange`} min={0} max={30} value={watchCredits[i]} onChange={e=>handleRangeChange(e,`${name}.${c.id}.credits`)} disabled={!canEdit} list={`markers-${c.id}`}/>
+                                    <Form.Control type="range" name={`${c.id}CreditsRange`} id={`${c.id}CreditsRange`} min={0} max={maxCredits} value={watchCredits[i]} onChange={e=>handleRangeChange(e,`${name}.${c.id}.credits`)} disabled={!canEdit} list={`markers-${c.id}`}/>
                                     <datalist id={`markers-${c.id}`} className="marker" style={{padding:"0 0.2rem"}}>
                                         <option value="0">0</option>
-                                        <option value="5"></option>
-                                        <option value="10">10</option>
-                                        <option value="15"></option>
-                                        <option value="20">20</option>
-                                        <option value="25"></option>
-                                        <option value="30">30</option>
+                                        <option value="5" style={{marginLeft:'7px'}}>5</option>
+                                        <option value="10" style={{marginLeft:'5px'}}>10</option>
+                                        <option value="15" style={{marginLeft:'3px'}}>15</option>
+                                        <option value={maxCredits}>{maxCredits}</option>
                                     </datalist>
                                 </Col>
                             </Form.Group>
