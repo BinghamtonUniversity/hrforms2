@@ -59,7 +59,7 @@ class User extends HRForms2 {
 		// must use: user_info = '{}' instead of user_info = EMPTY_CLOB(); causes TWO TASK error on server.
 		// local does not work with user_info = '{}'; wants user_info = EMPTY_CLOB()
 		$update_qry = "update HRFORMS2_USERS 
-			set refresh_date = sysdate, user_info = '{}' 
+			set refresh_date = sysdate, user_info = '[]' 
 			where suny_id = :suny_id
 			returning user_info into :user_info";
 		$update_stmt = oci_parse($this->db,$update_qry);
@@ -67,6 +67,11 @@ class User extends HRForms2 {
 		oci_bind_by_name($update_stmt,":suny_id", $this->req[0]);	
 		oci_bind_by_name($update_stmt,":user_info", $clob, -1, OCI_B_CLOB);
         $r = oci_execute($update_stmt,OCI_NO_AUTO_COMMIT);
+		if (!$r) {
+			$e = oci_error($update_stmt);
+			var_dump($e);
+			$this->raiseError();
+		}
 		$clob->save(json_encode($data));
 		oci_commit($this->db);
 		oci_free_statement($update_stmt);
@@ -138,7 +143,6 @@ class User extends HRForms2 {
 					$end_diff = $diff->d*1440+$diff->h*60+$diff->i;
 					$end_diff = ($diff->invert == 1)?$end_diff*-1:$end_diff;
 				}
-
 				// User is Inactive/Ended
 				if ($end_diff > 0) {
 					if ($user['USER_INFO'] != '' && $user['USER_INFO'] != '{}') { // user has user_info
@@ -174,13 +178,13 @@ class User extends HRForms2 {
 					// check refresh date
 					$settings = (new settings(array(),false))->returnData;
 					$refresh_date = DateTime::createFromFormat('d-M-Y h:i:s A',$user['REFRESH_DATE']);
-					$refresh_diff = INF;
+					$refresh_diff = $settings['general']['userRefresh']+1;
 					if ($user['REFRESH_DATE']) {
 						$diff = $refresh_date->diff($now);
 						$refresh_diff = ($diff->invert == 1)?$diff->days*-1:$diff->days;
-						if ($user['USER_INFO'] == "" || $user['USER_INFO'] == "{}") $refresh_diff = INF;
+						if ($user['USER_INFO'] == "" || $user['USER_INFO'] == "{}") $refresh_diff = $settings['general']['userRefresh']+1;
 					}
-	
+		
 					if ($refresh_diff > $settings['general']['userRefresh']) { // user_info is "stale" or missing
 						$this->_arr = $this->getSUNYHRUser();
 						if (!$this->_arr) { // No SUNY HR data; use existing cached data
