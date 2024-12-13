@@ -579,6 +579,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         methods.setValue('tabsVisited',merged);
     },[tabsVisited]);
     useEffect(()=>{
+        if (!canEdit) return; // if user cannot edit the do not validate fields
         // NOTE: for review tab get validated fields and pass as array
         // for other tabs let normal validation occur.  It operates off mounted fields.
         // If review has been visited then always validate all fields
@@ -594,7 +595,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         } else {
             methods.trigger();
         }
-    },[methods,activeTab,activeNav]);
+    },[methods,activeTab,activeNav,canEdit]);
 
     if (redirect) return <Redirect to={redirect}/>;
     if (dataLoadError) return <ErrorFallback error={dataLoadError}/>;
