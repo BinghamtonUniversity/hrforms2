@@ -743,13 +743,15 @@ function FormActionsTransactionCode({transactionCodes,description,formCode,actio
 
 function FormPRRequired() {
     const { control } = useFormContext();
+    const { journalStatus } = useHRFormContext();
     return (
         <Alert variant="warning">
              <Controller
                 name="formActions.PR_REQUIRED"
                 control={control}
+                defaultValue={0}
                 render={({field}) => (
-                    <Form.Check {...field} type="checkbox" id="PR_REQUIRED" value={1} checked={field.value=='1'} label="Have you completed a Position Request?"/>
+                    <Form.Check {...field} type="checkbox" id="PR_REQUIRED" value={1} checked={!!field.value} label="Have you completed a Position Request?" disabled={journalStatus!=""}/>
                 )}
             />
         </Alert>
