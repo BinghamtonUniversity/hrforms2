@@ -128,7 +128,6 @@ class Journal extends HRForms2 {
             $gh = (new groupshistory($this->req,false))->returnData;
             $group_ids = array_column($gh,'GROUP_ID');
         }
-
         $qry = "select j.".$this->k['id'].", b.created_by_suny_id,
         to_char(journal_date,'DD-MON-YYYY HH24:MI:SS') as journal_date,
         j.suny_id, status, hierarchy_id, workflow_id, sequence, 
@@ -146,7 +145,8 @@ class Journal extends HRForms2 {
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
         while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
-            $this->getUser($row);
+            // This needs to be optimized and uniq-ed
+            //$this->getUser($row);
             if ($this->k['archive']) {
                 if ($row['GROUP_FROM']) {
                     $key = array_search($row['GROUP_FROM'],$group_ids);
@@ -161,6 +161,19 @@ class Journal extends HRForms2 {
             }
             $this->_arr[] = $row;
         }
+        
+        $ids = array_unique(array_column($this->_arr,'SUNY_ID'));
+        array_walk($ids,function(&$id) {
+            $id = array('SUNY_ID' => $id);
+            $this->getUser($id);
+        });
+    
+        $keys = array_column($ids, 'SUNY_ID');
+        array_walk($this->_arr,function(&$row) use($keys,$ids) {
+            $key = array_search($row['SUNY_ID'],$keys);
+            $row = array_merge($row,$ids[$key]);
+        });
+        
         oci_free_statement($stmt);
         $this->returnData = $this->_arr;
         if ($this->retJSON) $this->toJSON($this->returnData);
