@@ -81,7 +81,7 @@ const advancedFields = {
     "person.directory.address":(frmData,v) => get(frmData,'person.directory.address',[]).some(a=>a?.ADDRESS_TYPE=='LEGAL') ? true : 'Legal Address is required',
     "person.directory.phone":(frmData,v) => get(frmData,'person.directory.phone',[]).some(p=>['HOME','CELL'].includes(p?.PHONE_TYPE)) ? true : 'Home or Cell phone number is required',
     "person.directory.email":(frmData,v) => get(frmData,'person.directory.email',[]).some(e=>e?.EMAIL_TYPE=='HOME') ? true : 'Home email is required',
-    "person.education.institutions":(frmData,v) => (['AS','BA','MA','DO','PR','GR'].includes(get(frmData,'person.demographics.HIGHEST_EDUCATION_LEVEL.id','')) && !!v.length)?true:'Education is required',
+    "person.education.institutions":(frmData,v) => (['AS','BA','MA','DO','PR','GR'].includes(get(frmData,'person.demographics.HIGHEST_EDUCATION_LEVEL.id','')) && !v.length)?'Education is required':true,
     "employment.appointment.TENURE_STATUS.id":(frmData,v)=>get(frmData,'employment.appointment.DERIVED_FAC_TYPE','N') == 'N' ? true : (!!v||'Tenure Status is required'),
     //TODO: facultyDetails could be consolidated to one function
     "employment.appointment.facultyDetails":(frmData,v) => {
