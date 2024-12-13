@@ -312,6 +312,36 @@ function PersonDirectoryAddresses() {
                             </Col>
                         </Form.Group>
                     }
+                    {!!watchAddress?.[index]?.ADDRESS_CODE &&
+                        <Form.Group as={Row} className="mb-1">
+                            <Form.Label column md={2}>Effective Date*:</Form.Label>
+                            <Col xs="auto">
+                                <InputGroup>
+                                    <Controller
+                                        name={`${name}.${index}.effDate`}
+                                        defaultValue={defaultValues.effDate}
+                                        control={control}
+                                        render={({field}) => <Form.Control
+                                            as={DatePicker}
+                                            name={field.name}
+                                            closeOnScroll={true}
+                                            selected={field.value}
+                                            onChange={field.onChange}
+                                            disabled={editIndex!=index||!editableType(index)}
+                                            isInvalid={!!get(errors,field.name,false)}
+                                            autoComplete="off"
+                                        />}
+                                    />
+                                    <InputGroup.Append>
+                                        <InputGroup.Text>
+                                            <Icon icon="mdi:calendar-blank"/>
+                                        </InputGroup.Text>
+                                    </InputGroup.Append>
+                                </InputGroup>
+                                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].effDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].effDate.message`,'')}</Form.Control.Feedback>
+                            </Col>
+                        </Form.Group>
+                    }
                     {canEdit &&
                         <Row>
                             <Col className="button-group-sm">
