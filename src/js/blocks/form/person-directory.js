@@ -85,7 +85,7 @@ function PersonDirectoryAddresses() {
         "ADDRESS_2": "",
         "ADDRESS_3": "",
         "ADDRESS_CITY": "",
-        "STATE_CODE": "",
+        "STATE_CODE": "NY",
         "ADDRESS_POSTAL_CODE": "",
         "CREATE_DATE": "",
         "department": {"id": "", "label": ""},
