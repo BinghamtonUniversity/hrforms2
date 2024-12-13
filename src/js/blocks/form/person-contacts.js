@@ -13,7 +13,7 @@ const name = 'person.contact.contacts';
 
 const phoneTypes = [
     {id:'EMR_CTC_DAY_PHONE',title:'Day Phone'},
-    {id:'EMR_CTC_NIGHT_PHONE',title:'Night Phone'},
+    {id:'EMR_CTC_NIGHT_PHONE',title:'Home Phone'},
     {id:'EMR_CTC_CELL_PHONE',title:'Cell Phone'},
 ];
 
