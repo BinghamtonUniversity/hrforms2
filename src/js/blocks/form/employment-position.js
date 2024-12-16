@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Row, Col, Form, Alert, InputGroup } from "react-bootstrap";
+import { Row, Col, Form, Alert, InputGroup, OverlayTrigger, Popover, Table } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { AppButton, DateFormat, Loading } from "../components";
 import useFormQueries from "../../queries/forms";
@@ -32,6 +32,7 @@ export default function EmploymentPosition() {
 
 function EmploymentPositionSearch({setShowResults}) {
     const ref = useRef();
+
     const { control, setValue, formState: { defaultValues, errors } } = useFormContext();
     const { canEdit, activeNav } = useHRFormContext();
 
@@ -53,8 +54,14 @@ function EmploymentPositionSearch({setShowResults}) {
         field.onChange(e);
     }
 
+    const handleTableClick = e => {
+        if (e.target.nodeName != 'TD') return;
+        const lineNum = e.target.parentElement.children[0].textContent;
+        setValue(`${name}.LINE_ITEM_NUMBER`,lineNum);
+    }
+
     useEffect(() => (canEdit&&ref.current)&&ref.current.focus(),[activeNav]);
-    
+   
     return (
         <section className="mt-3">
             <Row as="header">
@@ -70,6 +77,63 @@ function EmploymentPositionSearch({setShowResults}) {
                         render={({field})=><Form.Control {...field} ref={ref} type="search" onKeyDown={handleKeyDown} onChange={e=>handleChange(field,e)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
                     <Form.Control.Feedback type="invalid">{get(errors,`${name}.LINE_ITEM_NUMBER.message`,'')}</Form.Control.Feedback>
+                </Col>
+                <Col xs="auto" className="p-0 align-self-center">
+                    <OverlayTrigger
+                        placement="auto"
+                        trigger="click"
+                        rootClose
+                        flip={true}
+                        overlay={
+                            <Popover id="lineNumber-help">
+                                <Popover.Title as="h3" style={{fontSize:'1.2rem'}}>Line Number Search Help</Popover.Title>
+                                <Popover.Content>
+                                    <article>
+                                        <header>
+                                            <h4 style={{fontSize:'1rem'}}>Generic Line Numbers:</h4>
+                                        </header>
+                                        <Table size="sm" className="table-row-clickable mb-0" striped bordered hover onClick={e=>handleTableClick(e)}>
+                                            <thead>
+                                                <tr>
+                                                    <th scope="col">Line#</th>
+                                                    <th scope="col">Description</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>20000</td>
+                                                    <td>Student Assistant</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>46200</td>
+                                                    <td>Sum/Win Session Instructor (CSL)</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>48100</td>
+                                                    <td>Sum/Win Session Adjunct Lecturer</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>80000</td>
+                                                    <td>Federal College Work Study</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>90000</td>
+                                                    <td>Teaching Assistant</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>92000</td>
+                                                    <td>Graduate Assistant</td>
+                                                </tr>
+                                            </tbody>
+                                        </Table>
+                                        <p className="font-size-85 font-italic my-1">*click row to select</p>
+                                    </article>
+                                </Popover.Content>
+                            </Popover>
+                        }
+                    >
+                        <AppButton size="sm" format="info" variant="outline-primary"/>
+                    </OverlayTrigger>
                 </Col>
             </Form.Group>
             {canEdit &&
