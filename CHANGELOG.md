@@ -1,5 +1,34 @@
 # Changelog
 
+## Version 2.0.0(DEV-20241216)
+  * Required fields in Forms
+  * Lock tabs when editing blocks (e.g. directory, education, etc).
+  * Added Adjunct radio option on Employment->Appointment tab.  Only Adjunct = 'Yes' displays Faculty Details section.
+  * Sort Form Action and Transaction values alphabetically.
+  * Updated React Datepicker from 3.8.0 to 7.5.0
+  * Updated Icons to be preloaded dynmically from the formats configuration in components.  Added option to prevent pre-loading; {preload:false}
+  * Improvements to displaying of Archived menu/home item
+  * Added settings and display warnings for "old" Forms and Requests
+  * Added background refetching for counts every 30 seconds; disabled after ~10 minutes of inactivity.
+  * Updated Archive tables to include Effective Date as a field and partition by the field. 
+  * Fixed no data returned for demographics when Role End Date is null.
+  * Set default value on all form fields; using form default from configuration.
+  * Added Highest Education Level to Form Demographics and related validation.
+  * Added Effective Date to Directory Address block in Forms.
+
+
+## Version 2.0.0(DEV-20241004)
+  * Fixed error reporting in Requests to be more responsive.
+  * Fixed bug in Forms Payroll Transaction detail when no tabs were selected.  Initialize variable to an empty array.
+  * Added non-production alert banner.
+  * Fixed the link on the navbar title.  Clicking on HR Forms 2 went to a page not found error.
+  * Added newspaper icon to news alert block.
+  * Disable "New" menu item when draft count exceeds limit.
+  * Fixed timeout handling in Basic Info for PayTrans request.
+  * More fixes for user caching.  Fixed issue where cached user information was an empty object, but was not being refreshed.
+  * Fixed missing field values in Form Review.
+
+
 ## Version 2.0.0(DEV-20240621)
   * Fixed issue where Benefits were not being populated due to incorrect array reference in server code in employmentinfo.php.
   * Fixed issue where Appointment and Salary tab information was not populating on existing roles.
