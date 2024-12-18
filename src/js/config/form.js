@@ -47,6 +47,10 @@ const requiredFields = {
     "person.information.LEGAL_LAST_NAME":v=>!!v||'Last Name is required',
     "person.demographics.birthDate":v=>!!v||'Birth Date is required',
     "person.demographics.GENDER.id":v=>!!v||'Legal Sex is required',
+    "person.directory.address":v=>{
+        const codes = v.map(a=>a.ADDRESS_CODE)
+        return ['CMP','LGL'].every(c=>codes.includes(c))||'Campus and Legal Addresses required';
+    },
     "employment.position.LINE_ITEM_NUMBER":v=>!!v||'Line Number is required',
     "employment.position.APPOINTMENT_TYPE.id":v=>!!v||'Position Appointment Type is required',
     "employment.position.PAYROLL_MAIL_DROP_ID.id":v=>!!v||'Check Sort Code is required',
@@ -78,7 +82,6 @@ const advancedFields = {
     "person.demographics.NON_CITIZEN_TYPE.id":(frmData,v)=>get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Non-US Citizen Type is required"),
     "person.demographics.CITIZENSHIP_COUNTRY_CODE.id":(frmData,v) => get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Country of Citizenship is required"),
     "person.demographics.VISA_CODE.id":(frmData,v) => get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Visa Type is required"),
-    "person.directory.address":(frmData,v) => get(frmData,'person.directory.address',[]).some(a=>['LEGAL','CAMPUS'].includes(a?.ADDRESS_TYPE)) ? true : 'Legal and Campus Addresses required',
     "person.directory.phone":(frmData,v) => get(frmData,'person.directory.phone',[]).some(p=>['HOME','CELL'].includes(p?.PHONE_TYPE)) ? true : 'Home or Cell phone number is required',
     "person.directory.email":(frmData,v) => get(frmData,'person.directory.email',[]).some(e=>e?.EMAIL_TYPE=='HOME') ? true : 'Home email is required',
     "person.education.institutions":(frmData,v) => (['AS','BA','MA','DO','PR','GR'].includes(get(frmData,'person.demographics.HIGHEST_EDUCATION_LEVEL.id','')) && !v.length)?'Education is required':true,
