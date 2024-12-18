@@ -37,7 +37,7 @@ export default function EmploymentSeparation() {
         }
     }
 
-    useEffect(()=>(canEdit&&ref.current)&&ref.current.focus(),[activeNav,subroles]);
+    useEffect(()=>(canEdit&&ref.current)&&ref.current.focus(),[activeNav]);
 
     return (
         <article>
