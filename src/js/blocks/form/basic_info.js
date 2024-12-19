@@ -132,7 +132,6 @@ function PersonLookup({results}) {
     }
     
     const handleFocus = e => {
-        //setValue('selectedRow',{});
         switch(e.target.name) {
             case "lookup.values.lastName":
             case "lookup.values.dob":
@@ -392,7 +391,8 @@ function PayrollDate({selectedId,selectedPayroll}) {
             }
         }
         // set field focus
-        if (!payrollRef.current || !effDateRef.current) return;
+        if (watchPayrollDate.every(v=>!!v)) return; // do not focus if fields are already set
+        if (!payrollRef.current || !effDateRef.current) return; //do not focus if the refs are undefined
         if (payrollRef.current.disabled) {
             effDateRef.current.setFocus(); //Datepicker method; cannot scrollIntoView because of popover conflict
         } else {
@@ -446,7 +446,6 @@ function PayrollDate({selectedId,selectedPayroll}) {
                                     ref={effDateRef}
                                     name={field.name}
                                     selected={field.value}
-                                    closeOnScroll={true}
                                     onChange={d=>handleFieldChange(d,field)}
                                     isInvalid={errors.effDate}
                                     autoComplete="off"
@@ -750,9 +749,7 @@ function FormPRRequired() {
                 name="formActions.PR_REQUIRED"
                 control={control}
                 defaultValue={0}
-                render={({field}) => (
-                    <Form.Check {...field} type="checkbox" id="PR_REQUIRED" value={1} checked={!!field.value} label="Have you completed a Position Request?" disabled={journalStatus!=""}/>
-                )}
+                render={({field}) => (<Form.Check {...field} type="checkbox" id="PR_REQUIRED" value={1} checked={field.value=="1"} label="Have you completed a Position Request?" disabled={journalStatus!=""}/>)}
             />
         </Alert>
     );
