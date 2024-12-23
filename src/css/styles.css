@@ -366,3 +366,8 @@ datalist.marker {
   cursor: move; 
   margin-bottom: -3px;
 }
+
+/* Make BS table rows "clickable" */
+table.table.table-row-clickable tbody tr {
+  cursor: pointer;
+}
