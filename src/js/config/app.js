@@ -2,7 +2,6 @@
 import { formats } from "../blocks/components";
 import { get } from "lodash";
 import bracesIcon from "../../images/mdi--code-braces.png";
-import { orderBy } from "lodash";
 
 const mustacheVarsList = {
     FORM_ID:'Form ID',
