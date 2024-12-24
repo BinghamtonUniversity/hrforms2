@@ -182,9 +182,10 @@ class User extends HRForms2 {
 					if ($user['REFRESH_DATE']) {
 						$diff = $refresh_date->diff($now);
 						$refresh_diff = ($diff->invert == 1)?$diff->days*-1:$diff->days;
-						if ($user['USER_INFO'] == "" || $user['USER_INFO'] == "{}") $refresh_diff = $settings['general']['userRefresh']+1;
+						$userInfo = json_decode($user['USER_INFO'],true);
+						if ($user['USER_INFO'] == "" || !array_key_exists('SUNY_ID',$userInfo)) $refresh_diff = $settings['general']['userRefresh']+1;
 					}
-		
+					
 					if ($refresh_diff > $settings['general']['userRefresh']) { // user_info is "stale" or missing
 						$this->_arr = $this->getSUNYHRUser();
 						if (!$this->_arr) { // No SUNY HR data; use existing cached data
