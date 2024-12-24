@@ -41,6 +41,11 @@ export default function Request() {
         }
     },[id,sunyid,ts]);
     if (!reqId) return null;
+    if (!SUNY_ID) return (
+        <Alert variant="danger">
+            Error: Invalid user SUNY ID. Please contact system administrator for assistance.
+        </Alert>
+    );
     return(
         <RequestWrapper reqId={reqId} isDraft={isDraft} isNew={isNew} reset={id=='new'}/>
     );
