@@ -57,7 +57,7 @@ class PayTrans extends HRForms2 {
 			$row['TABS'] = json_decode($row['TABS']);
 			$this->_arr[] = $row;
 		}
-        $this->returnData = $this->_arr;
+		$this->returnData = $this->null2Empty($this->_arr);
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
 
