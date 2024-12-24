@@ -140,7 +140,11 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
     },[user.data]);
     useEffect(()=>user.refetch(),[OVR_SUNY_ID]);
     if (user.isLoading) return <LoadingApp/>;
-    if (user.isError) return <LoadingAppError>Failed to retreive user information</LoadingAppError>
+    if (user.isError) return <LoadingAppError>Failed to retreive user information</LoadingAppError>;
+    if (!!userData && !userData?.SUNY_ID) {
+        console.error('Missing user information',userData);
+        return <LoadingAppError>Missing/Incomplete user information.  Contact system administrator.</LoadingAppError>;
+    }
     return (
         <UserContext.Provider value={{...userData,setUserData}}>
             <PageChange/>
