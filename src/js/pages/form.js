@@ -52,6 +52,11 @@ export default function HRForm() {
         }
     },[id,sunyid,ts]);
     if (!formId) return null;
+    if (!SUNY_ID) return (
+        <Alert variant="danger">
+            Error: Invalid user SUNY ID. Please contact system administrator for assistance.
+        </Alert>
+    );
     return(
         <HRFormWrapper 
             formId={formId} 
