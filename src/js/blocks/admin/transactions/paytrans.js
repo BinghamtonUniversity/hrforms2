@@ -274,7 +274,7 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
     }
 
     const handleFormSubmit = data => {
-        console.debug(data);
+        console.debug('Payroll Transaction Data: ',data);
         if (isNew || selectedRow.isCopy) {
             const test = paytransdata.find(p=>p.PAYROLL_CODE==data.PAYROLL_CODE&&
                 p.FORM_CODE==data.FORM_CODE&&
@@ -286,9 +286,15 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
                 methods.setError('ACTION_CODE',{type:'custom',message:'Duplicate Payroll Transaction'});
                 methods.setError('TRANSACTION_CODE',{type:'custom',message:'Duplicate Payroll Transaction'});
                 methods.setFocus('PAYROLL_CODE');
-                methods.setStatus({state:'error',message:'A Payroll Transaction with these values already exists.'});
+                setStatus({state:'error',message:'A Payroll Transaction with these values already exists.'});
+                console.error('A Payroll Transaction with these values already exists.');
                 return;
             }
+        }
+        if (data.TABS.length == 0) {
+            setStatus({state:'error',message:'At least one tab must be selected'});
+            console.error('At least one tab must be selected');
+            return;
         }
         const d = {...data}
         d.ACTIVE = (data.ACTIVE)?1:0;
@@ -341,14 +347,14 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
                         <Modal.Title>{selectedRow.isCopy&&<span>Copy </span>}Payroll Transaction</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
+                        <Row>
+                            <Col>
+                                {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
+                            </Col>
+                        </Row>
                         <Tabs activeKey={activeTab} onSelect={navigate} id="payroll-transaction-tabs">
                             <Tab eventKey="paytrans-info" title="Information">
                                 <Container className="mt-3" fluid>
-                                    <Row>
-                                        <Col>
-                                            {status.state == 'error' && <Alert variant="danger">{status.message}</Alert>}
-                                        </Col>
-                                    </Row>
                                     <PayTransInfoTab 
                                         selectedRow={selectedRow} 
                                         payrollcodes={payrollcodes} 
