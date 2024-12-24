@@ -139,6 +139,9 @@ class Groups extends HRForms2 {
 		$this->done();
 	}
 	function DELETE() {
+		// Prevent deletion of "special" groups
+		if ((int)$this->req[0] <= 0) $this->raiseError(E_BAD_REQUEST, array('errMsg'=>'Group cannot be deleted'));
+
 		// Check if group is used in a workflow:
 		$message = $this->checkWorkflow('delete');
 		if ($message != "") $this->raiseError(E_BAD_REQUEST, array('errMsg'=>$message));

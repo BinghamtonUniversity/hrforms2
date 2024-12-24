@@ -181,7 +181,11 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
                 <div className="button-group">
                     {row.active && <AppButton format="deactivate-group" size="sm" title="Deactivate Group" onClick={()=>setToggleGroup(row)}/>}
                     {!row.active && <AppButton format="activate-group" size="sm" title="Restore Group" onClick={()=>setToggleGroup(row)}/>}
-                    <AppButton format="delete" size="sm" title="Delete Group" onClick={()=>setDeleteGroup(row)}/>
+                    {(parseInt(row.GROUP_ID,10)<=0)?
+                        <AppButton format="delete" variant="secondary" size="sm" title="Group Cannot Be Deleted" disabled />
+                    :
+                        <AppButton format="delete" size="sm" title="Delete Group" onClick={()=>setDeleteGroup(row)} />
+                    }
                 </div>
             );
         },ignoreRowClick:true},
