@@ -56,7 +56,7 @@ class Session extends HRForms2 {
     function GET() {
         $this->checkAuth();
         $lastInfo = $this->getLastInfo();
-        $this->sessionData = array_merge($this->sessionData,$lastInfo);
+        $this->sessionData = array_merge($this->sessionData,$lastInfo,array('BUILD_TIME'=>BUILD_TIME));
         $this->toJSON($this->sessionData);
     }
 
