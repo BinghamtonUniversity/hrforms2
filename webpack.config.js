@@ -1,10 +1,13 @@
 const path = require("path");
+const webpack = require('webpack');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 
 const dist = "dist/htdocs";
+
+const PACKAGE = require('./package.json');
 
 module.exports = (env, argv) => {
   return {
@@ -68,7 +71,14 @@ module.exports = (env, argv) => {
         'shorthands': true,
         'caching': true,
         'cloning': true
-      })
+      }),
+      new webpack.DefinePlugin({
+        __VERSION__: JSON.stringify(PACKAGE.version),
+        __REVISION__: JSON.stringify(PACKAGE.revision),
+        __BUILD_DATE__: JSON.stringify(new Date().toLocaleString()),
+        __BUILD_TIME__:JSON.stringify(Date.now()),
+        __ENV_TEST__: JSON.stringify(env.test),
+      }),
     ],
     optimization: {
       minimize: true,
