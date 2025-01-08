@@ -607,7 +607,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
             }
             setLookupState('valid');
             setStatus({save:true});
-            reset(Object.assign({},defaultVals,{
+            const userLookupData = Object.assign({},defaultVals,{
                 SUNYID:userData.SUNYHR_SUNY_ID||'',
                 bNumber:userData.B_NUMBER||'',
                 firstName:userData.LEGAL_FIRST_NAME||'',
@@ -618,7 +618,11 @@ function UserInfo({newUser,setStatus,closeModal}) {
                 refreshDate: userData.refreshDateFmt||'never',
                 deptGroupId:userData.GROUP_ID||'',
                 deptGroup:userData.GROUP_NAME||'',
-            }));
+                assignedGroups:getValues('assignedGroups'),
+                availableGroups:getValues('availableGroups')
+            });
+            console.debug('User Lookup Data: ',userLookupData);
+            reset(userLookupData);
         });
     }
     const handleChange = (e,field) => {
@@ -817,6 +821,9 @@ function UserGroups() {
         setFilteredGroups(filtered);
     },[filterText]);
     useEffect(()=>ref.current.focus(),[]);
+    useEffect(()=>{
+        console.log(getValues('availableGroups'));
+    },[]);
     return (
         <>
             <Form.Row>

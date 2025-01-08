@@ -56,10 +56,9 @@ class User extends HRForms2 {
 		unset($data['REFRESH_DATE']);
 		// Add SUNY_ID if not set
 		if (!isset($data['SUNY_ID'])) $data['SUNY_ID'] = $data['SUNYHR_SUNY_ID'];
-		// must use: user_info = '{}' instead of user_info = EMPTY_CLOB(); causes TWO TASK error on server.
-		// local does not work with user_info = '{}'; wants user_info = EMPTY_CLOB()
+		// must use: user_info = '[]' instead of user_info = EMPTY_CLOB(); causes TWO TASK error on server.
 		$update_qry = "update HRFORMS2_USERS 
-			set refresh_date = sysdate, user_info = '[]' 
+			set refresh_date = sysdate, user_info = '[]'
 			where suny_id = :suny_id
 			returning user_info into :user_info";
 		$update_stmt = oci_parse($this->db,$update_qry);
@@ -243,13 +242,12 @@ class User extends HRForms2 {
 		oci_commit($this->db);
 		oci_free_statement($stmt);
 		new usergroups(array($this->POSTvars['SUNY_ID']));
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-		$this->GET();
+		$this->done();
 	}
 
 	function POST() {
 		$options = json_encode($this->POSTvars['OPTIONS']);
-		$qry = "insert into hrforms2_users values(:suny_id, sysdate, :created_by, :start_date, :end_date, null, EMPTY_CLOB(), :options) returning user_info into :user_info";
+		$qry = "insert into hrforms2_users values(:suny_id, sysdate, :created_by, :start_date, :end_date, null, '[]', :options) returning user_info into :user_info";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt,":suny_id", $this->POSTvars['SUNY_ID']);
 		oci_bind_by_name($stmt,":created_by", $this->sessionData['EFFECTIVE_SUNY_ID']);
@@ -264,9 +262,7 @@ class User extends HRForms2 {
 		oci_commit($this->db);
 		oci_free_statement($stmt);
 		new usergroups(array($this->POSTvars['SUNY_ID']),false);
-		// Fetch user to force the refresh action and return the user data in JSON response.
-		$_SERVER['REQUEST_METHOD'] = 'GET';
-		new user(array($this->POSTvars['SUNY_ID']));
+		$this->done();
 	}
 
 	function PATCH() {
