@@ -9,6 +9,7 @@ import { t } from "../config/text";
 import { Helmet } from "react-helmet";
 
 export default function Page() {
+    const { isViewer } = useUserContext();
     return (
         <>
             <Welcome/>
@@ -17,7 +18,7 @@ export default function Page() {
                     <News/>
                 </Col>
             </Row>
-            <DashBoardCards />
+            {!isViewer && <DashBoardCards />}
         </>
     );
 }
