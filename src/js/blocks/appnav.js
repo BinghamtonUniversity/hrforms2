@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Navbar, Nav, NavDropdown } from "react-bootstrap";
-import { useAuthContext } from "../app";
+import { useAuthContext, useUserContext } from "../app";
 import capitalize from "lodash/capitalize";
 import { MenuCounts } from "./components";
 
 export default function AppNav() {
     const { isAdmin, OVR_SUNY_ID, INSTANCE } = useAuthContext();
+    const { userGroups, isViewer } = useUserContext();
+
     const logout = e => {
         e.preventDefault();
         //TODO: handle logout
@@ -23,8 +25,12 @@ export default function AppNav() {
                             const single = c.slice(0,-1);
                             return (
                                 <NavDropdown key={`${single}-menu`} title={capitalize(c)} id="request-nav-dropdown" alignRight>
-                                    <MenuCounts menu={c} showOn="menu" showNew/>
-                                    <NavDropdown.Divider/>
+                                    {!isViewer && 
+                                        <>
+                                            <MenuCounts menu={c} showOn="menu" showNew/>
+                                            <NavDropdown.Divider/>
+                                        </>
+                                    }
                                     <NavDropdown.Item as={Link} to={`/${single}/journal`}>{capitalize(c)} Journal</NavDropdown.Item>
                                 </NavDropdown>
                             );
@@ -49,6 +55,7 @@ export default function AppNav() {
                         {INSTANCE == 'LOCAL' &&
                             <NavDropdown title="Testing" id="testing-nav-dropdown" alignRight>
                                 <NavDropdown.Item as={Link} to="/test/users">Users</NavDropdown.Item>
+                                <NavDropdown.Item as={Link} to="/test/email">Email Test</NavDropdown.Item>
                                 <NavDropdown.Item as={Link} to="/test/error">Error Test</NavDropdown.Item>
                             </NavDropdown>
                         }
