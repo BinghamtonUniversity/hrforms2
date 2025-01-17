@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef, lazy } from "react";
 import {useParams} from "react-router-dom";
 import { useQueryClient } from "react-query";
 import useFormQueries from "../../queries/forms";
@@ -48,7 +48,7 @@ export default function FormList() {
                     </header>
                     <section>
                         <ListAgeWarning enabled={forms.agewarn.enabled} maxage={forms.agewarn.age} countAge={countAge}/>
-                        <ListData list={(part)?part:'all'} />
+                        <ListData list={(part)?part:'all'}/>
                     </section>
                 </>
             )}}
@@ -71,10 +71,8 @@ function ListData({list}) {
     const {getFormList} = useFormQueries();
     const groups = getGroups();
     const listdata = getFormList(list,{enabled:!!groups.data,select:d=>{
-        return d.map(l => {
-            if (list != 'archived') {
-                l.GROUPS_ARRAY = (!l.GROUPS)?[]:l.GROUPS.split(',').map(g=>pick(find(groups.data,{GROUP_ID:g}),['GROUP_ID','GROUP_NAME','GROUP_DESCRIPTION']));
-            }
+        return d.map(l => {            
+            l.GROUPS_ARRAY = (!l.GROUPS)?[]:l.GROUPS.split(',').map(g=>pick(find(groups.data,{GROUP_ID:g}),['GROUP_ID','GROUP_NAME','GROUP_DESCRIPTION']));
             return l;
         });
     }});
@@ -120,15 +118,10 @@ function ListTable({data,list}) {
     const delFrm = deleteForm();
 
     const handleRowClick = row => {
-        switch (list) {
-            case 'drafts':
-                setRedirect('/form/'+row.FORM_ID.replaceAll('-','/'));
-                break;
-            case 'archived':
-                setRedirect('/form/archive/'+row.FORM_ID);
-                break;
-            default:
-                setRedirect('/form/'+row.FORM_ID);
+        if (list == 'drafts') {
+            setRedirect('/form/'+row.FORM_ID.replaceAll('-','/'));
+        } else {
+            setRedirect('/form/'+row.FORM_ID);
         }
     };
 
@@ -226,7 +219,7 @@ function ListTable({data,list}) {
                 <div className="button-group">
                     {(list=='drafts')&&<AppButton format="delete" size="sm" title="Delete Draft" onClick={()=>handleAction('delete',row)}></AppButton>}
                     {(list!='drafts')&&<AppButton format="info" size="sm" title="Show Journal" onClick={()=>handleAction('journal',row)}></AppButton>}
-                    {!(['drafts','pending','rejections','archived'].includes(list))&&
+                    {!(['drafts','pending','rejections'].includes(list))&&
                         <>
                             <AppButton format="approve" size="sm" title="Approve" onClick={()=>handleAction('approve',row)}></AppButton>
                             <AppButton format="reject" size="sm" title="Reject" onClick={()=>handleAction('reject',row)}></AppButton>
