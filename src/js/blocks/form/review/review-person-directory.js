@@ -33,10 +33,10 @@ function ReviewPersonDirectoryAddress({data}) {
                     if (addrType == undefined) return null;
                     return (
                         <React.Fragment key={i}>
-                            <Col as="dt" md={2} className="mb-0">Address Type:</Col>
-                            <Col as="dd" md={10} className="mb-0">{addrType.title}</Col>
-                            <Col as="dt" md={2} className="mb-3">Address:</Col>
-                            <Col as="dd" md={10} className="mb-3">
+                            <Col as="dt" sm={3} md={2} className="mb-0">Address Type:</Col>
+                            <Col as="dd" sm={9} md={10} className="mb-0">{addrType.title}</Col>
+                            <Col as="dt" sm={3} md={2} className="mb-3">Address:</Col>
+                            <Col as="dd" sm={9} md={10} className="mb-3">
                                 <address>
                                     {includes(addrType?.fields,'line1')&&<p className="mb-0">{a.ADDRESS_1}</p>}
                                     {includes(addrType?.fields,'line2')&&<p className="mb-0">{a.ADDRESS_2}</p>}

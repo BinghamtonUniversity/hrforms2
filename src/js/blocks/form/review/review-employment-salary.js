@@ -15,29 +15,29 @@ export default function ReviewEmploymentSalary() {
                 <Col as="h5">Salary</Col>
             </Row>
             <Row as="dl" className="mb-0">
-                <Col as="dt" md={2} className="mb-0">Effective Date:</Col>
-                <Col as="dd" md={4} className="mb-0"><DateFormat>{salary.effDate||position.apptEffDate}</DateFormat></Col>
-                <Col as="dt" md={2} className="mb-0">Pay Basis:</Col>
-                <Col as="dd" md={4} className="mb-0">{position.positionDetails.PAY_BASIS}</Col>
-                <Col as="dt" md={2} className="mb-0">Percent:</Col>
-                <Col as="dd" md={4} className="mb-0">{position.APPOINTMENT_PERCENT}%</Col>
-                <Col as="dt" md={2} className="mb-0">Payments:</Col>
-                <Col as="dd" md={4} className="mb-0">{salary.NUMBER_OF_PAYMENTS}</Col>
-                <Col as="dt" md={2} className="mb-0">Rate:</Col>
-                <Col as="dd" md={4} className="mb-0"><CurrencyFormat>{salary.RATE_AMOUNT}</CurrencyFormat></Col>
-                <Col as="dt" md={2} className="mb-0">Total:</Col>
-                <Col as="dd" md={4} className="mb-0"><CurrencyFormat>{salary.totalSalary}</CurrencyFormat></Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Effective Date:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0"><DateFormat>{salary.effDate||position.apptEffDate}</DateFormat></Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Pay Basis:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0">{position.positionDetails.PAY_BASIS}</Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Percent:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0">{position.APPOINTMENT_PERCENT}%</Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Payments:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0">{salary.NUMBER_OF_PAYMENTS}</Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Rate:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0"><CurrencyFormat>{salary.RATE_AMOUNT}</CurrencyFormat></Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Total:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0"><CurrencyFormat>{salary.totalSalary}</CurrencyFormat></Col>
                 <NewLine/>
                 {(!salary.SUNY_ACCOUNTSSplit) && 
                     <>
-                        <Col as="dt" md={2} className="mb-0">Account:</Col>
-                        <Col as="dd" md={4} className="mb-0">{salary.SUNY_ACCOUNTS?.at(0)?.account?.at(0)?.label}</Col>
+                        <Col as="dt" sm={3} md={2} className="mb-0">Account:</Col>
+                        <Col as="dd" sm={9} md={4} className="mb-0">{salary.SUNY_ACCOUNTS?.at(0)?.account?.at(0)?.label}</Col>
                     </>
                 }
                 {(salary.SUNY_ACCOUNTSSplit) && 
                     <>
-                        <Col as="dt" md={2} className="mb-0">Split Account:</Col>
-                        <Col as="dd" md={4} className="mb-0">Yes</Col>
+                        <Col as="dt" sm={3} md={2} className="mb-0">Split Account:</Col>
+                        <Col as="dd" sm={9} md={4} className="mb-0">Yes</Col>
                     </>
                 }
             </Row>

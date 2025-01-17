@@ -12,10 +12,10 @@ export default function ReviewEmploymentSeparation() {
                 <Col as="h5">Separation</Col>
             </Row>
             <Row as="dl" className="mb-0">
-                <Col as="dt" md={2} className="mb-0">Effective Date:</Col>
-                <Col as="dd" md={4} className="mb-0"><DateFormat>{effDate}</DateFormat></Col>
-                <Col as="dt" md={2} className="mb-0">Last Date Worked:</Col>
-                <Col as="dd" md={4} className="mb-0"><DateFormat>{lastDate}</DateFormat></Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Effective Date:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0"><DateFormat>{effDate}</DateFormat></Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Last Date Worked:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0"><DateFormat>{lastDate}</DateFormat></Col>
             </Row>
         </article>
     );

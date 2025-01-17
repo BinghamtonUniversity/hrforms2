@@ -68,14 +68,14 @@ function ReviewFormData() {
                 </Col>
             </Row>
             <Row as="dl" className="mb-0">
-                <Col as="dt" md={2} className="mb-0">Form ID:</Col>
-                <Col as="dd" md={10} className="mb-0">{formId} {isNew && <span className="text-warning">[<Icon className="iconify-inline" icon="mdi:alert"/>not saved]</span>}</Col>
-                <Col as="dt" md={2} className="mb-0">Form Type:</Col>
-                <Col as="dd" md={10} className="mb-0"><FormTypeDisplay/></Col>
-                <Col as="dt" md={2} className="mb-0">Payroll:</Col>
-                <Col as="dd" md={10} className="mb-0">{payroll?.title||payroll.PAYROLL_TITLE}</Col>
-                <Col as="dt" md={2} className="mb-0">Effective Date:</Col>
-                <Col as="dd" md={10} className="mb-0"><DateFormat>{effDate}</DateFormat></Col>
+                <Col as="dt" sm={3} className="mb-0">Form ID:</Col>
+                <Col as="dd" sm={9} className="mb-0">{formId} {isNew && <span className="text-warning">[<Icon className="iconify-inline" icon="mdi:alert"/>not saved]</span>}</Col>
+                <Col as="dt" sm={3} className="mb-0">Form Type:</Col>
+                <Col as="dd" sm={9} className="mb-0"><FormTypeDisplay/></Col>
+                <Col as="dt" sm={3} className="mb-0">Payroll:</Col>
+                <Col as="dd" sm={9} className="mb-0">{payroll?.title||payroll.PAYROLL_TITLE}</Col>
+                <Col as="dt" sm={3} className="mb-0">Effective Date:</Col>
+                <Col as="dd" sm={9} className="mb-0"><DateFormat>{effDate}</DateFormat></Col>
             </Row>
         </section>
     );

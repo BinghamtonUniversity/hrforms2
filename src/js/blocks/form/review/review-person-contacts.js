@@ -15,12 +15,12 @@ export default function ReviewPersonContacts() {
                 {contacts.map((c,i) => (
                     <Col key={i} md={6} className={`mb-md-0 ${(i<contacts.length-1)?"mb-sm-4":""}`}>
                         <Row as="dl" className="mb-0">
-                            <Col as="dt" md={4} className="mb-0">Primary:</Col>
-                            <Col as="dd" md={8} className="mb-0">{(c.isPrimary)=="Y"?"Yes":"No"}</Col>
-                            <Col as="dt" md={4} className="mb-0">Name:</Col>
-                            <Col as="dd" md={8} className="mb-0">{[c.EMR_CTC_FIRST_NAME,c.EMR_CTC_LAST_NAME].join(' ')}</Col>
-                            <Col as="dt" md={4} className="mb-0">Address:</Col>
-                            <Col as="dd" md={8} className="mb-0">
+                            <Col as="dt" sm={3} className="mb-0">Primary:</Col>
+                            <Col as="dd" sm={9} className="mb-0">{(c.isPrimary)=="Y"?"Yes":"No"}</Col>
+                            <Col as="dt" sm={3} className="mb-0">Name:</Col>
+                            <Col as="dd" sm={9} className="mb-0">{[c.EMR_CTC_FIRST_NAME,c.EMR_CTC_LAST_NAME].join(' ')}</Col>
+                            <Col as="dt" sm={3} className="mb-0">Address:</Col>
+                            <Col as="dd" sm={9} className="mb-0">
                                 <address>
                                     <p className="mb-0">{c.EMR_CTC_ADDRESS_1}</p>
                                     {c.EMR_CTC_ADDRESS_2 && <p className="mb-0">{c.EMR_CTC_ADDRESS_2}</p>}
@@ -30,14 +30,14 @@ export default function ReviewPersonContacts() {
                             </Col>
                             {['day','night','international','cell'].map(p => (
                                 <React.Fragment key={p}>
-                                    <Col as="dt" md={4} className="mb-0">{startCase(p)} Phone:</Col>
-                                    <Col as="dd" md={8} className="mb-0">{c[`EMR_CTC_${upperCase(p)}_PHONE`]}</Col>
+                                    <Col as="dt" sm={3} className="mb-0">{startCase(p)} Phone:</Col>
+                                    <Col as="dd" sm={9} className="mb-0">{c[`EMR_CTC_${upperCase(p)}_PHONE`]}</Col>
                                 </React.Fragment>
                             ))}
-                            <Col as="dt" md={4} className="mb-0">Email Address:</Col>
-                            <Col as="dd" md={8} className="mb-0">{c.EMR_CTC_EMAIL}</Col>
-                            <Col as="dt" md={4} className="mb-0">Relationship:</Col>
-                            <Col as="dd" md={8} className="mb-0">{c.EMR_CTC_RELATIONSHIP.label}</Col>
+                            <Col as="dt" sm={3} className="mb-0">Email Address:</Col>
+                            <Col as="dd" sm={9} className="mb-0">{c.EMR_CTC_EMAIL}</Col>
+                            <Col as="dt" sm={3} className="mb-0">Relationship:</Col>
+                            <Col as="dd" sm={9} className="mb-0">{c.EMR_CTC_RELATIONSHIP.label}</Col>
                         </Row>
                     </Col>
                 ))}
