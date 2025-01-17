@@ -415,7 +415,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                 canEdit:canEdit
             }}>
                 <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
-                    <Tabs activeKey={activeTab} onSelect={navigate} id="position-request-tabs">
+                    <Tabs activeKey={activeTab} onSelect={navigate} className="d-print-none" id="position-request-tabs">
                         {tabs.map(t=>(
                             <Tab key={t.id} eventKey={t.id} title={t.title} disabled={t.id!='information'&&lockTabs}>
                                 <Container as="article" className="mt-3" fluid>
