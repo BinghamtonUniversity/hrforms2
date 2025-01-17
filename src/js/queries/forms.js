@@ -41,6 +41,10 @@ export default function useFormQueries(FORM_ID) {
         options.select = data => {
             if (!data) return;
             data.effDate = (data.effDate)?new Date(data.effDate):"";
+            if (data.createdBy) {
+                const fName = (data.createdBy?.ALIAS_FIRST_NAME)?data.createdBy.ALIAS_FIRST_NAME:(data.createdBy?.LEGAL_FIRST_NAME)?data.createdBy.LEGAL_FIRST_NAME:'';
+                data.createdBy.fullName = (fName)?`${fName} ${data.createdBy.LEGAL_LAST_NAME}`:'';
+            }
             return (options.select2)?options.select2(data):data;
         }
         return useQuery(['forms','archive',FORM_ID],q(`forms/archive/${formIdAsPath}`),options);
@@ -73,6 +77,22 @@ export default function useFormQueries(FORM_ID) {
         return useQuery([SUNY_ID,'formlist',list],q(`formlist/${list}`),options);
     }
 
+    const getArchiveFormList = (...args) => {
+        const params = args[0]?.params||args[0]||{};
+        const filteredParams = Object.fromEntries(Object.entries(params).filter(([_, v])=>!!v));
+        delete filteredParams.days; // not used or needed
+        if (filteredParams.hasOwnProperty('formId')) {
+            delete filteredParams.startDate;
+            delete filteredParams.endDate;
+        } else {
+            filteredParams['startDate'] = format(filteredParams.startDate,'dd-MMM-yyyy');
+            filteredParams['endDate'] = format(filteredParams.endDate,'dd-MMM-yyyy');
+        }
+        const options = args[0]?.options||args[1]||{};
+        const urlParams = new URLSearchParams(filteredParams).toString();
+        return useQuery(['archivelist','form',{...filteredParams}],q(`archivelist/form?${urlParams}`),options);
+    }
+
     const getJournal = (...args) => {
         const options = args[0]?.options||args[0]||{};
         if(options.select) options.select2 = options.select;
@@ -92,6 +112,6 @@ export default function useFormQueries(FORM_ID) {
     }
 
 
-    return {getEducationInstitutions,getPosition,getSupervisorNames,getJournal,
-        getForm,getArchiveForm,postForm,putForm,patchForm,deleteForm,getFormList}
+    return {getEducationInstitutions,getPosition,getSupervisorNames,getArchiveFormList,
+        getJournal,getForm,getArchiveForm,postForm,putForm,patchForm,deleteForm,getFormList}
 }

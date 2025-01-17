@@ -26,6 +26,7 @@ const RequestList = lazy(()=>import("./pages/request/list"));
 const RequestJournal = lazy(()=>import("./pages/request/journal"));
 const HRForm = lazy(()=>import("./pages/form"));
 const HRFormArchiveView = lazy(()=>import("./pages/form/view"));
+const HRFormArchiveList = lazy(()=>import("./pages/form/archive"));
 const HRFormList = lazy(()=>import("./pages/form/list"));
 const HRFormJournal = lazy(()=>import("./pages/form/journal"));
 const AdminPages = lazy(()=>import("./pages/admin"));
@@ -170,6 +171,7 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
                             <Route exact path="/form/journal" component={HRFormJournal}/>
                             <Route path="/form/journal/:id" component={HRFormJournal}/>
                             <Route exact path="/form/list" component={HRFormList}/>
+                            <Route exact path="/form/list/archived" component={HRFormArchiveList}/>
                             <Route path="/form/list/:part" component={HRFormList}/>
                             <Route path="/form/archive/:id" component={HRFormArchiveView}/>
                             <Route path="/form/:id/:sunyid/:ts" component={HRForm}/>

@@ -28,7 +28,7 @@ export default function Review() {
     const { journalStatus } = useHRFormContext();
     useEffect(()=>{
         console.debug('Review Form Data:',getValues());
-        if (!isValid) console.debug('Form Errors: ',errors);
+        if (!isValid&&journalStatus!='Z') console.debug('Form Errors: ',errors);
     },[]);
     return (
         <article id="form-review" className="mt-3">
