@@ -14,14 +14,14 @@ export default function ReviewSubmitterInfo() {
             </Row>
             {createdBy && 
                 <Row as="dl" className="mb-0">
-                    <Col as="dt" md={2} className="mb-0">SUNY ID:</Col>
-                    <Col as="dd" md={10} className="mb-0">{createdBy.SUNY_ID}</Col>
-                    <Col as="dt" md={2} className="mb-0">Name:</Col>
-                    <Col as="dd" md={10} className="mb-0">{createdBy.fullName}</Col>
-                    <Col as="dt" md={2} className="mb-0">Email:</Col>
-                    <Col as="dd" md={10} className="mb-0">{createdBy.EMAIL_ADDRESS_WORK}</Col>
-                    <Col as="dt" md={2} className="mb-0">Department:</Col>
-                    <Col as="dd" md={10} className="mb-0">{createdBy.REPORTING_DEPARTMENT_NAME}</Col>
+                    <Col as="dt" sm={3} md={2} className="mb-0">SUNY ID:</Col>
+                    <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.SUNY_ID}</Col>
+                    <Col as="dt" sm={3} md={2} className="mb-0">Name:</Col>
+                    <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.fullName}</Col>
+                    <Col as="dt" sm={3} md={2} className="mb-0">Email:</Col>
+                    <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.EMAIL_ADDRESS_WORK}</Col>
+                    <Col as="dt" sm={3} md={2} className="mb-0">Department:</Col>
+                    <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.REPORTING_DEPARTMENT_NAME}</Col>
                 </Row>
             }
         </section>
