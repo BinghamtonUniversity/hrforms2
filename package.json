@@ -57,7 +57,7 @@
     "react-cookie": "^7.2.2",
     "react-csv": "^2.2.2",
     "react-data-table-component": "^7.4.7",
-    "react-datepicker": "^7.0.0",
+    "react-datepicker": "^7.6.0",
     "react-dom": "^17.0.1",
     "react-error-boundary": "^3.1.4",
     "react-helmet": "^6.1.0",
