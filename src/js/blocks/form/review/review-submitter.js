@@ -28,27 +28,3 @@ export default function ReviewSubmitterInfo() {
     );
 }
 
-/*function ReviewSubmitterUserDetails({SUNY_ID}) {
-    const { lookupUser } = useUserQueries(SUNY_ID);
-    const user = lookupUser({
-        select:d=>head(d),
-        initialData:[{
-            LEGAL_FIRST_NAME:'',
-            LEGAL_LAST_NAME:'',
-            EMAIL_ADDRESS_WORK:'',
-            REPORTING_DEPARTMENT_NAME:''
-        }]
-    });
-    return (
-        <Row as="dl" className="mb-0">
-            <Col as="dt" md={2} className="mb-0">SUNY ID:</Col>
-            <Col as="dd" md={10} className="mb-0">{SUNY_ID}</Col>
-            <Col as="dt" md={2} className="mb-0">Name:</Col>
-            <Col as="dd" md={10} className="mb-0">{user.data.fullName}</Col>
-            <Col as="dt" md={2} className="mb-0">Email:</Col>
-            <Col as="dd" md={10} className="mb-0">{user.data.EMAIL_ADDRESS_WORK}</Col>
-            <Col as="dt" md={2} className="mb-0">Department:</Col>
-            <Col as="dd" md={10} className="mb-0">{user.data.REPORTING_DEPARTMENT_NAME}</Col>
-        </Row>
-    );
-}*/
