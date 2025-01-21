@@ -168,10 +168,10 @@ class Journal extends HRForms2 {
     
         $keys = array_column($ids, 'SUNY_ID');
         array_walk($this->_arr,function(&$row) use($keys,$ids) {
-            $key = array_search($row['SUNY_ID'],$keys);
+            $key = array_search($row['SUNY_ID'],$ids);
             $row = array_merge($row,$ids[$key]);
         });
-        
+
         oci_free_statement($stmt);
         $this->returnData = $this->_arr;
         if ($this->retJSON) $this->toJSON($this->returnData);
