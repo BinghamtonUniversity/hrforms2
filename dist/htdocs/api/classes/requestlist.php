@@ -113,7 +113,7 @@ class RequestList extends HRForms2 {
 				where r.request_id = j.request_id
 				and r.created_by.SUNY_ID != :suny_id";
 				break;
-			case "archived":
+/*			case "archived":
 				$qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id,
 				to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
@@ -131,6 +131,7 @@ class RequestList extends HRForms2 {
 				where r.request_id = j.request_id
 				and r.created_by.SUNY_ID = :suny_id";
 				break;
+*/
 			default:
 				$this->raiseError(E_BAD_REQUEST);
 		}

@@ -67,8 +67,13 @@ export default function ListArchiveTable() {
     }
 
     const [filter,setFilter] = useReducer((state,action) => {
-        const dates = calculateDates(action);
-        const newState = {...state, ...action,...dates};
+        let newState = {};
+        if (action?.formId) {
+            newState = {...defaultValues, ...action};
+        } else {
+            const dates = calculateDates(action);
+            newState = {...state, ...action,...dates};
+        }
         return newState;
     },defaultValues,calculateDates);
 
@@ -274,6 +279,7 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
     const handleFilterChange = e => {
         const obj = {};
         obj[e.target.id] = e.target.value;
+        if (e.target.id == 'formId') setCreatedBySearch([{id:'',label:''}]);
         setFilter(obj);
         handleReset(false);
     }
@@ -387,6 +393,7 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                         allowNew={false}
                         options={filteredUsers}
                         placeholder="Search for people..."
+                        disabled={filter.formId!=""}
                     />
                 </Form.Group>
             </Form.Row>
