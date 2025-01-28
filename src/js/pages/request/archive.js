@@ -1,33 +1,55 @@
-import React, { useState, useReducer } from "react";
+import React, { useState, useReducer, useEffect, useMemo, lazy, useRef } from "react";
 import useRequestQueries from "../../queries/requests";
-import { Row, Col, Form, Button, ButtonGroup } from "react-bootstrap";
+import { Row, Col, Form, Button, ButtonGroup, Modal, Accordion, Card } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { format, endOfToday, subDays } from "date-fns";
 import DataTable from 'react-data-table-component';
-import { AppButton, Loading } from "../../blocks/components";
+import { AppButton, Loading, DescriptionPopover, WorkflowExpandedComponent } from "../../blocks/components";
 import useListsQueries from "../../queries/lists";
+import { useQueryClient } from "react-query";
+import { useSettingsContext, useAuthContext } from "../../app";
+import useGroupQueries from "../../queries/groups";
+import { find, orderBy, pick } from "lodash";
+import { AsyncTypeahead } from "react-bootstrap-typeahead";
+import useUserQueries from "../../queries/users";
+
+const ArchiveView = lazy(()=>import("./view"));
 
 const defaultValues = {
     days:30,
-    startDate:null,
-    endDate:null,
+    startDate:subDays(endOfToday(),31),
+    endDate:endOfToday(),
     reqId:'',
     posType:'',
     reqType:'',
     candidateName:'',
     lineNumber:'',
-    createdBy:''
+    createdBy:'',
+    page:1,
+    results:10,
+    sortField:'effdate',
+    sortDir:'desc'
 };
 
 export default function ListArchiveTable() {
-    //const {general} = useSettingsContext();
-    const [data,setData] = useState([]);
-    const [page,setPage] = useState(1);
-    const [results,setResults] = useState(10);
-    const [submitted,setSubmitted] = useState(false);
+    const {isAdmin} = useAuthContext();
+    const {general} = useSettingsContext();
 
-    const {getArchiveRequestList} = useRequestQueries();
-    const listdata = getArchiveRequestList({page:page,results:results});
+    const accordionViewRef = useRef();
+
+    const [data,setData] = useState([]);
+    const [userData,setUserData] = useState([]);
+    const [totalRows,setTotalRows] = useState(0);
+    const [submitted,setSubmitted] = useState(false);
+    const [selectedRowId,setSelectedRowId] = useState();
+
+    const { getUsers } = useUserQueries();
+    const { getGroups } = useGroupQueries();
+    const users = getUsers({onSuccess: d => {
+        const r = orderBy(d.filter(u=>(!!u.LEGAL_FIRST_NAME&&!!u.LEGAL_LAST_NAME)),['LEGAL_LAST_NAME','LEGAL_FIRST_NAME'],['asc','asc']).map(u=>({id:u.SUNY_ID, label:`${u.LEGAL_FIRST_NAME} ${u.LEGAL_LAST_NAME}`}));
+        setUserData(r);
+    }});
+    const groups = getGroups();
 
     const calculateDates = args => {
         const obj = {...args};
@@ -39,58 +61,69 @@ export default function ListArchiveTable() {
     }
 
     const [filter,setFilter] = useReducer((state,action) => {
-        //console.log(action);
-        const dates = calculateDates(action);
-        //console.log(dates);
-        const newState = {...state, ...action,...dates};
-        //console.log(newState);
+        let newState = {};
+        if (action?.reqId) {
+            newState = {...defaultValues, ...action};
+        } else {
+            const dates = calculateDates(action);
+            newState = {...state, ...action,...dates};
+        }
         return newState;
     },defaultValues,calculateDates);
 
+    const queryClient = useQueryClient();
+    const {getArchiveRequestList} = useRequestQueries();
+    const listdata = getArchiveRequestList(filter,{
+        enabled:submitted,
+        keepPreviousData:true,
+        staleTime:30000
+    });
+
     const handleSearch = () => {
-        const data = {...filter};
-        data.startDate = filter.startDate ? format(filter.startDate,'dd-MMM-yyyy') : '';
-        data.endDate = filter.startDate ? format(filter.endDate,'dd-MMM-yyyy') : '';
-        listdata.mutateAsync(data).then(d => {
-            for (const r of d.results) {
-                if (r.CREATED_BY_SUNY_ID) {
-                    const fName = (r?.ALIAS_FIRST_NAME)?r.ALIAS_FIRST_NAME:(r?.LEGAL_FIRST_NAME)?r.LEGAL_FIRST_NAME:'';
-                    r.fullName = (fName)?`${fName} ${r.LEGAL_LAST_NAME}`:'';
-                }
-            }
-            setData(d.results);
-            setSubmitted(true);
-        });
+        setSubmitted(true);
     }
 
-    const handleReset = () => {
+    const handleReset = (reset=true) => {
         setSubmitted(false);
-        setData(undefined);
-        setFilter(defaultValues);
+        setSelectedRowId(null);
+        queryClient.removeQueries(['archivelist','request']);
+        setData([]);
+        if (reset) setFilter(defaultValues);
     }
-
-    const columns = [
-        {name:'ID',selector:row=>row.REQUEST_ID,sortable:true},
-        {name:'Position Type',selector:row=>row.POSTYPE.id,format:row=>`${row.POSTYPE.id} - ${row.POSTYPE.title}`,sortable:true},
-        {name:'Request Type',selector:row=>row.REQTYPE.id,format:row=>`${row.REQTYPE.id} - ${row.REQTYPE.title}`,sortable:true},
-        {name:'Effective Date',selector:row=>row.EFFDATE,format:row=>format(new Date(row.EFFDATE),'P'),sortable:true},
-        {name:'Candidate Name',selector:row=>row.CANDIDATENAME,sortable:true,wrap:true},
-        {name:'Line #',selector:row=>row.LINENUMBER,sortable:true},
-        {name:'Title',selector:row=>row.REQBUDGETTITLE,sortable:true,wrap:true},
-        {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortField:'UNIX_TS',grow:2},
-        {name:'Created By',selector:row=>row.CREATED_BY_SUNY_ID,sortable:true,format:row=>`${row.fullName} (${row.CREATED_BY_SUNY_ID})`,wrap:true},
-    ];
 
     const handleChangePage = page => {
-        console.log(page);
-        setPage(page);
+        setFilter({page:page});
+        handleSearch();
     }
 
     const handleChangeRowsPerPage = (newPerPage,page) => {
-        console.log(newPerPage,page);
-        setPage(page);
-        setResults(newPerPage);
+        setFilter({page:page,results:newPerPage});
+        handleSearch();
     }
+
+    const handleSort = (column, sortDirection) => {
+        console.log(column?.id, sortDirection);
+        setFilter({sortField:column?.id,sortDir:sortDirection});
+        handleSearch();
+    }
+
+    const handleRowClick = row => {
+        accordionViewRef.current.click();
+        setSelectedRowId(row.REQUEST_ID);
+    }
+
+    const expandRow = useMemo(()=>((isAdmin && general.showFormWF == 'A')||general.showFormWF == 'Y'),[general,isAdmin]);
+
+    const columns = [
+        {id:'request_id',name:'ID',selector:row=>row.REQUEST_ID,sortable:true},
+        {id:'pos_type',name:'Position Type',selector:row=>row.POSTYPE.id,format:row=>`${row.POSTYPE.id} - ${row.POSTYPE.title}`,sortable:true},
+        {id:'req_type',name:'Request Type',selector:row=>row.REQTYPE.id,format:row=>`${row.REQTYPE.id} - ${row.REQTYPE.title}`,sortable:true},
+        {id:'effdate',name:'Effective Date',selector:row=>row.EFFDATE,format:row=>format(new Date(row.EFFDATE),'P'),sortable:true},
+        {id:'candidate_name',name:'Candidate Name',selector:row=>row.CANDIDATENAME,sortable:true,wrap:true},
+        {id:'line_number',name:'Line #',selector:row=>row.LINENUMBER,sortable:true},
+        {id:'title',name:'Title',selector:row=>row.REQBUDGETTITLE,sortable:true,wrap:true},
+        {id:'created_by',name:'Created By',selector:row=>row.CREATED_BY_SUNY_ID,sortable:true,format:row=>`${row.fullName} (${row.CREATED_BY_SUNY_ID})`,wrap:true},
+    ];
 
     const customStyles = {
         subHeader: {
@@ -105,8 +138,81 @@ export default function ListArchiveTable() {
         }
     };
 
+    const conditionalRowStyles = [
+        {
+            when: row => row.REQUEST_ID == selectedRowId,
+            classNames: ['bg-primary-light']
+        }
+    ];
+
+    useEffect(() => {
+        if (!submitted) return;
+        listdata.refetch().then(d => {
+            for (const r of d.data.results) {
+                if (r.CREATED_BY_SUNY_ID) r.createdByFullName = [r.CREATED_BY_FIRST_NAME,r.CREATED_BY_LEGAL_LAST_NAME].join(' ');
+                r.fullName = [r.FIRST_NAME,r.LEGAL_LAST_NAME].join(' ');
+                r.sortName = [r.LEGAL_LAST_NAME,r.FIRST_NAME].join(', ') + ' ' + (r.LEGAL_MIDDLE_NAME && r.LEGAL_MIDDLE_NAME.slice(0,1));
+                r.GROUPS_ARRAY = (!r.GROUPS)?[]:r.GROUPS.split(',').map(g=>pick(find(groups.data,{GROUP_ID:g}),['GROUP_ID','GROUP_NAME','GROUP_DESCRIPTION']));
+            }
+            setData(d.data.results);
+            setTotalRows(d.data.info.total_rows);
+            setSubmitted(false);
+        });
+    },[filter,submitted,groups,listdata]);
+
     if (listdata.isError) return <Loading type="alert" isError>Error Loading List Data</Loading>;
     return (
+        <Accordion defaultActiveKey="0">
+            <Card style={{overflow:'visible'}}>
+                <Accordion.Toggle as={Card.Header} className="d-print-none" eventKey="0">
+                    <h3 className="m-0">Archive Search</h3>
+                </Accordion.Toggle>
+                <Accordion.Collapse eventKey="0">
+                    <DataTable 
+                        keyField="REQUEST_ID"
+                        defaultSortFieldId={4}
+                        defaultSortAsc={false}
+                        className="compact"
+                        columns={columns} 
+                        data={data}
+                        noDataComponent={<div className="p-3">{listdata.isFetched?"No Records Found":"Perform A Search"}</div>}
+                        persistTableHead
+                        progressPending={listdata.isLoading}
+                        pagination 
+                        paginationServer
+                        paginationTotalRows={totalRows}
+                        subHeader
+                        subHeaderComponent={<ArchiveTableSubHeader filter={filter} setFilter={setFilter} handleSearch={handleSearch} handleReset={handleReset} calculateDates={calculateDates} userData={userData}/>}
+                        onChangeRowsPerPage={handleChangeRowsPerPage}
+                        onChangePage={handleChangePage}
+                        onRowClicked={handleRowClick}
+                        striped 
+                        responsive
+                        pointerOnHover
+                        highlightOnHover
+                        customStyles={customStyles}
+                        conditionalRowStyles={conditionalRowStyles}
+                        expandableRows={expandRow}
+                        expandableRowsComponent={WorkflowExpandedComponent}
+                        sortServer={true}
+                        onSort={handleSort}
+                    />
+                </Accordion.Collapse>
+            </Card>
+            <Card>
+                <Accordion.Toggle ref={accordionViewRef} as={Card.Header} className="d-print-none" eventKey="1">
+                    <h3 className="m-0">Archive View</h3>
+                </Accordion.Toggle>
+                <Accordion.Collapse eventKey="1">
+                    <Card.Body>
+                        {!selectedRowId?<p className="mb-0 text-center">Perform a search and select a row</p>:<ArchiveView reqId={selectedRowId}/>}
+                    </Card.Body>
+                </Accordion.Collapse>
+            </Card>
+        </Accordion>
+    );
+}
+/*
         <DataTable 
             keyField="REQUEST_ID"
             className="compact"
@@ -126,10 +232,9 @@ export default function ListArchiveTable() {
             highlightOnHover
             customStyles={customStyles}
         />
-    )
-}
+*/
 
-function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset}) {
+function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calculateDates,userData}) {
     const daysButtons = [
         {id: 'btn-days-14', label: '14 Days', value: '14' },
         { id: 'btn-days-30', label: '30 Days', value: '30' },
@@ -138,6 +243,10 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset}) {
         { id: 'btn-days-custom', label: 'Custom', value: '-1' }
     ];
     const [days,setDays] = useState('btn-days-30');
+    const [filteredUsers,setFilteredUsers] = useState(userData);
+    const [createdBySearch,setCreatedBySearch] = useState([{id:'',label:''}]);
+    const [dateRange,setDateRange] = useState([filter.startDate,filter.endDate]);
+    const [startDate,endDate] = dateRange;
 
     // get position type and request type
     const { getListData } = useListsQueries();
@@ -146,19 +255,36 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset}) {
 
     const handleDaysChange = e => {
         setDays(e.target.id);
-        setFilter({days:daysButtons.find(d=>d.id === e.target.id)?.value||''});
+        const daysObj = calculateDates({days:daysButtons.find(d=>d.id === e.target.id)?.value||0});
+        setDateRange([daysObj.startDate,daysObj.endDate]);
+        setFilter({days:daysObj.days});
+        handleReset(false);
     }
 
-    const handleDateChange = range => { setFilter({startDate:range[0], endDate:range[1]});}
+    const handleDateChange = range => { 
+        setDateRange(range);
+        if (!!range[0]&&!!range[1]) setFilter({startDate:range[0], endDate:range[1]});
+    }
 
     const handleFilterChange = e => {
         const obj = {};
         obj[e.target.id] = e.target.value;
+        if (e.target.id == 'reqId') setCreatedBySearch([{id:'',label:''}]);
         setFilter(obj);
+        handleReset(false);
+    }
+
+    const handlePersonSearch = search => {
+        setFilteredUsers(userData.filter(u=>u.label.toLowerCase().includes(search.toLowerCase())));
+    }
+    const handlePersonSearchChange = value => {
+        setCreatedBySearch(value);
+        setFilter({createdBy:value[0]?.id});
     }
 
     const resetDays = () => {
         setDays('btn-days-30');
+        setCreatedBySearch([{id:'',label:''}]);
         handleReset();
     }
 
@@ -196,7 +322,21 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset}) {
                 </Form.Group>
                 <Form.Group as={Col} sm={3} md={2} controlId="createdBy">
                     <Form.Label>Created By</Form.Label>
-                    <Form.Control type="search" size="sm" value={filter.createdBy} onChange={handleFilterChange} placeholder="Created By"  disabled={filter.reqId!=""}/>
+                    <AsyncTypeahead
+                        size="sm"
+                        id="createdBy-search"
+                        clearButton
+                        filterBy={()=>true}
+                        onSearch={handlePersonSearch}
+                        onChange={handlePersonSearchChange}
+                        selected={createdBySearch}
+                        minLength={2}
+                        flip={true}
+                        allowNew={false}
+                        options={filteredUsers}
+                        placeholder="Search for people..."
+                        disabled={filter.reqId!=""}
+                    />
                 </Form.Group>
             </Form.Row>
             <Form.Row className="justify-content-end">
@@ -212,8 +352,8 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset}) {
                         name="customDateRange"
                         autoComplete="off"
                         selectsRange={true}
-                        startDate={filter.startDate}
-                        endDate={filter.endDate}
+                        startDate={startDate}
+                        endDate={endDate}
                         onChange={handleDateChange}
                         isClearable={true}
                         placeholderText="Select Custom Date Range"

@@ -4,8 +4,7 @@ import { useFormContext } from "react-hook-form";
 import { Icon } from '@iconify/react';
 import { AppButton, DateFormat } from "../components";
 import { CommentsTable } from "./comments";
-import { useRequestContext } from "../../config/request";
-import { ReviewSubmitterInfo } from "../../blocks/form/review/review-submitter";
+import { useRequestContext } from "../../config/request"
 
 export default function Review() {
     const { getValues } = useFormContext();
@@ -133,7 +132,27 @@ export default function Review() {
                     </article>
                 }
             </section>
-            {(!isDraft&&createdBy) && <ReviewSubmitterInfo/>}
+            {(!isDraft&&createdBy) && 
+                <section className="mb-4">
+                    <Row as="header">
+                        <Col>
+                            <h4 className="border-bottom border-main">Submitter Information</h4>
+                        </Col>
+                    </Row>
+                    {createdBy && 
+                        <Row as="dl" className="mb-0">
+                            <Col as="dt" sm={3} md={2} className="mb-0">SUNY ID:</Col>
+                            <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.SUNY_ID}</Col>
+                            <Col as="dt" sm={3} md={2} className="mb-0">Name:</Col>
+                            <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.fullName}</Col>
+                            <Col as="dt" sm={3} md={2} className="mb-0">Email:</Col>
+                            <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.EMAIL_ADDRESS_WORK}</Col>
+                            <Col as="dt" sm={3} md={2} className="mb-0">Department:</Col>
+                            <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.REPORTING_DEPARTMENT_NAME}</Col>
+                        </Row>
+                    }
+                </section>
+            }
         </article>
     );
 }

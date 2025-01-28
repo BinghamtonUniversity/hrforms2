@@ -1,40 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { Row, Col } from "react-bootstrap";
+import React from "react";
 import { useForm, FormProvider } from "react-hook-form";
-import { Redirect, useHistory, useParams } from "react-router-dom";
-import { RequestContext, tabs, defaultVals } from "../../config/request";
-import { get, merge } from "lodash";
-import { AppButton } from "../../blocks/components";
+import { useParams } from "react-router-dom";
+import { RequestContext, defaultVals } from "../../config/request";
+import { merge } from "lodash";
 import useRequestQueries from "../../queries/requests";
 import Review from "../../blocks/request/review";
 
-export default function RequestArchiveView() {
+export default function RequestArchiveView({reqId}) {
     const { id } = useParams();
-    const history = useHistory();
 
-    const [showReturn,setShowReturn] = useState(false);
-    const [redirect,setRedirect] = useState('');
-
-    const { getArchiveRequest } = useRequestQueries(id);
+    const { getArchiveRequest } = useRequestQueries(id||reqId);
     const reqData = getArchiveRequest();
 
-    const handleReturnToList = () => setRedirect(get(history.location,'state.from',''));
-    useEffect(()=>setShowReturn(get(history.location,'state.from','').startsWith('/request/list')),[history]);
-
-    if (redirect) return <Redirect to={redirect}/>;
     return (
-        <>
-            <section>
-                <header>
-                    <Row>
-                        <Col>
-                            <h2>Archive View {showReturn && <AppButton format="previous" onClick={handleReturnToList}>Return to List</AppButton>}</h2>
-                        </Col>
-                    </Row>
-                </header>
-                {reqData.data && <RequestViewData data={reqData.data}/>}
-            </section>
-        </>
+        <section>
+            {reqData.data && <RequestViewData data={reqData.data}/>}
+        </section>
     );
 }
 
@@ -45,7 +26,10 @@ function RequestViewData({data}) {
             <RequestContext.Provider value={{
                 reqId:data.reqId,
                 isDraft:false,
-                canEdit:false
+                canEdit:false,
+                createdBy:data.createdBy,
+                //posTypes:postypes.data, //Not needed?
+                //lastJournal:data.lastJournal, //DNE
             }}>
                 <Review/>
             </RequestContext.Provider>
