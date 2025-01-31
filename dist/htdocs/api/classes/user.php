@@ -56,11 +56,19 @@ class User extends HRForms2 {
 		unset($data['REFRESH_DATE']);
 		// Add SUNY_ID if not set
 		if (!isset($data['SUNY_ID'])) $data['SUNY_ID'] = $data['SUNYHR_SUNY_ID'];
-		// must use: user_info = '[]' instead of user_info = EMPTY_CLOB(); causes TWO TASK error on server.
-		$update_qry = "update HRFORMS2_USERS 
-			set refresh_date = sysdate, user_info = '[]'
-			where suny_id = :suny_id
-			returning user_info into :user_info";
+		// must use: user_info = '{}' instead of user_info = EMPTY_CLOB(); causes TWO TASK error on server.
+		// local does not work with user_info = '{}'; wants user_info = EMPTY_CLOB()
+		if (INSTANCE == "LOCAL") {
+			$update_qry = "update HRFORMS2_USERS 
+				set refresh_date = sysdate, user_info = EMPTY_CLOB()
+				where suny_id = :suny_id
+				returning user_info into :user_info";
+		} else {
+			$update_qry = "update HRFORMS2_USERS 
+				set refresh_date = sysdate, user_info = '{}'
+				where suny_id = :suny_id
+				returning user_info into :user_info";
+		}
 		$update_stmt = oci_parse($this->db,$update_qry);
 		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
 		oci_bind_by_name($update_stmt,":suny_id", $this->req[0]);	
@@ -204,7 +212,7 @@ class User extends HRForms2 {
 							$this->_arr = json_decode($user['USER_INFO'], true);
 						} else { // update cached data and refresh date	
 							if (!isset($this->_arr['SUNY_ID'])) $this->_arr['SUNY_ID'] = $this->_arr['SUNYHR_SUNY_ID'];
-							$a = $this->updateUserInfo($this->_arr);
+							$this->updateUserInfo($this->_arr);
 							$this->_arr['REFRESH_DATE'] = date('d-M-y h:i:s A', time());
 							$this->_arr['CACHED_DATA'] = false;
 						}
@@ -223,6 +231,12 @@ class User extends HRForms2 {
 	}
 
 	function PUT() {
+		if ($this->POSTvars['refresh']) {
+			$data = $this->getSUNYHRUser();
+			$this->updateUserInfo($data);
+			$this->done();
+			return;
+		}
 		$qry = "update hrforms2_users 
 			set start_date = :start_date, 
 			end_date = :end_date,
