@@ -17,6 +17,11 @@ const mustacheVarsList = {
     SUBMITTED_BY: 'The SUNY ID of the user who submitted the Form/Request',
 };
 
+// Icons not used by the AppButton component formats
+const additionalIcons = [
+    'mdi:newspaper'
+];
+
 // Editor Configuration
 export function editorConfig(...args) {
     if (args[0] == 'source') {
@@ -73,4 +78,5 @@ export const datatablesConfig = {
 }
 
 // Preload Icons
-export const icons = Array.from(new Set(Object.values(formats).map(f=>get(f,'preload',true)&&f.icon)));
+export const icons = Array.from(new Set([...Object.values(formats).map(f=>get(f,'preload',true)&&f.icon),...additionalIcons]));
+
