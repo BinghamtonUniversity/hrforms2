@@ -136,7 +136,10 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
     const user = getUser();
     const [userData,setUserData] = useState();
     useEffect(() => {
-        setUserData(head(user.data));
+        if (!user.data) return;
+        const data = head(user.data);
+        setUserData(data);
+        console.debug("User Data: ",data);
         queryclient.refetchQueries(SUNY_ID);
     },[user.data]);
     useEffect(()=>user.refetch(),[OVR_SUNY_ID]);
