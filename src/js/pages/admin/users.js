@@ -4,7 +4,7 @@ import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
 import useSessionQueries from "../../queries/session";
 import { Loading, ModalConfirm, AppButton, errorToast, DescriptionPopover } from "../../blocks/components";
-import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, Button, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, Button } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { orderBy, sortBy, difference, capitalize, startsWith } from "lodash";
 import DataTable from 'react-data-table-component';
