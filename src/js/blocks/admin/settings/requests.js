@@ -389,7 +389,7 @@ function SettingsRequestsEmail() {
 }
 
 function SettingsRequestsEmailStatus() {
-    const { control } = useFormContext();
+    const { control, setValue } = useFormContext();
     const { requests } = useSettingsContext();
     const mailOptions = [
         ["submitter","Submitter"],
@@ -404,6 +404,17 @@ function SettingsRequestsEmailStatus() {
         ["default","Default"],
         ["error","Error"]
     ];
+
+    const handleMailChange = (e,field) => {
+        const value = new Set(field.value);
+        if (e.target.checked) {
+            value.add(e.target.value);
+        } else {
+            value.delete(e.target.value);
+        }
+        setValue(field.name,Array.from(value));
+    };
+
     return (
         <>
             <Table striped bordered>
@@ -430,17 +441,17 @@ function SettingsRequestsEmailStatus() {
                             <td>{mailOptions.map(o=>(
                                 <Controller
                                     key={`mailto_${o[0]}`}
-                                    name={`requests.email.status.${s}.mailto.${o[0]}`}
+                                    name={`requests.email.status.${s}.mailto`}
                                     control={control}
-                                    render={({field}) => <Form.Check {...field} type="checkbox" label={o[1]} checked={field.value}/>}
+                                    render={({field}) => <Form.Check {...field} type="checkbox" label={o[1]} checked={field.value.includes(o[0])} onChange={e=>handleMailChange(e,field)} value={o[0]}/>}
                                 />
                             ))}</td>
                             <td>{mailOptions.map(o=>(
                                 <Controller
                                     key={`mailcc_${o[0]}`}
-                                    name={`requests.email.status.${s}.mailcc.${o[0]}`}
+                                    name={`requests.email.status.${s}.mailcc`}
                                     control={control}
-                                    render={({field}) => <Form.Check {...field} type="checkbox" label={o[1]} checked={field.value}/>}
+                                    render={({field}) => <Form.Check {...field} type="checkbox" label={o[1]} checked={field.value.includes(o[0])} onChange={e=>handleMailChange(e,field)} value={o[0]}/>}
                                 />
                             ))}</td>
                             <td>{replyToOptions.map(o=>(
