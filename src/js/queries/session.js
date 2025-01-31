@@ -6,5 +6,7 @@ export default function useSessionQueries() {
     
     const patchSession = () => useMutation(q('session','PATCH',{}));
 
-    return {getSession,patchSession};
+    const getLoginHistory = () => useQuery('loginhistory',q('loginhistory'));
+
+    return {getSession,patchSession,getLoginHistory};
 }
