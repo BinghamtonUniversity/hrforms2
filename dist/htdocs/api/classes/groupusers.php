@@ -44,8 +44,9 @@ class GroupUsers extends HRForms2 {
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
 		$qry = "select u.suny_id as user_suny_id, u.start_date, u.end_date, 
-			u.user_options.notifications as notifications, u.user_info
+			u.user_options.notifications as notifications, u.user_info, e.email_address_work
 			from hrforms2_users u, hrforms2_user_groups ug
+			left join (select suny_id, email_address as EMAIL_ADDRESS_WORK from sunyhr.hr_email@banner.cc.binghamton.edu where email_type = 'WORK') e on (e.suny_id = ug.suny_id)
 			where u.suny_id = ug.suny_id
 			and ug.group_id = :group_id";
 		$stmt = oci_parse($this->db,$qry);
