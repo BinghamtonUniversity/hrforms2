@@ -24,9 +24,15 @@ export default function useUserQueries(SUNY_ID) {
         const now = Date.now();
         const {INSTANCE} = useAuthContext();
         return useQuery([CURRENT_SUNY_ID,'counts'],q('counts'),{
-            // refetch 30 seconds; disable when inactive for ~10 minutes.
-            refetchInterval:(_,query)=>(query.state.dataUpdatedAt-now<600000&&INSTANCE!="LOCAL")?30000:false,
-            refetchIntervalInBackground:true,
+            // refetch 60 seconds; disable when inactive for ~30 minutes.
+            //refetchInterval:(_,query)=>(query.state.dataUpdatedAt-now<3600000&&INSTANCE!="LOCAL")?60000:false,
+            /*refetchInterval:(_,query)=>{
+                //console.log(query);
+                console.log(query.state.dataUpdatedAt-now);
+                return (query.state.dataUpdatedAt-now<3600000)?60000:false;
+            },
+            refetchIntervalInBackground:true,*/
+            refetchOnWindowFocus:true,
             staleTime:60000
         });
     }
