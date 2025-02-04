@@ -451,12 +451,21 @@ Class HRForms2 {
 			return "No email notification for this status";
 		}
 
+		// Get Groups Info
+		$groups = (new groups(array(),false))->returnData;
+		$group_to_id = array_search($journal['group_to'],array_column($groups,'GROUP_ID'));
+		$vars['GROUP_TO_NAME'] = $groups[$group_to_id]['GROUP_NAME'];
+		$vars['GROUP_TO_DESCRIPTION'] = $groups[$group_to_id]['GROUP_DESCRIPTION'];
+		$group_from_id = array_search($journal['group_to'],array_column($groups,'GROUP_ID'));
+		$vars['GROUP_FROM_NAME'] = $groups[$group_from_id]['GROUP_NAME'];
+		$vars['GROUP_FROM_DESCRIPTION'] = $groups[$group_from_id]['GROUP_DESCRIPTION'];
+		
 		// Collect Email Addresses
 		$email_list = array('mailto'=>[],'mailcc'=>[]);
 		foreach (array_keys($email_list) as $key) {
 			foreach ($options[$key] as $opt=>$b) {
 				if (!$b) continue;
-				switch($opt) {
+				switch($b) {
 					case "submitter":
 						$email_list[$key] = array_merge($email_list[$key],$this->getUserEmail($journal['submitted_by']));
 						break;
@@ -536,7 +545,7 @@ Class HRForms2 {
 		$content = str_replace('{{&gt;','{{>',$tmpl['TEMPLATE']); // fix partial HTML entities 
 		// append notProduction and debugInformation partials to the beginning of the $content
 		$content = "{{#ERROR}}{{{ERROR}}}{{/ERROR}}{{>notProduction}}<br>" . $content . "<br><br><hr>{{>debugInformation}}";
-		
+
 		// start PHP mailer
 		ob_start();
 		if ($settings[$type]['email']['enabled']) {
@@ -565,7 +574,7 @@ Class HRForms2 {
 				$emailTo = empty($this->sessionData['EMAIL'])?$errorEmail:$this->sessionData['EMAIL'];
 				$mail->addAddress($emailTo);
 			}
-			if (!!$replyto) $mail->addReplyTo($replyto);
+			if ($replyto!="") $mail->addReplyTo($replyto);
 			
 			$mail->Subject = $subject;
 			$htmlBody = $m->render($content,$vars);
