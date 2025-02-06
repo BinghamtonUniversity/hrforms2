@@ -168,8 +168,9 @@ function UsersTable({users,newUser,setNewUser}) {
             return <><del>{row.USER_SUNY_ID}</del> <em>(inactive)</em></>;
         },sortable:true,sortField:'USER_SUNY_ID'},
         {name:'Name',selector:row=>(
-            <div><DescriptionPopover
+            <DescriptionPopover
                 id={`${row.SUNY_ID}_details`}
+                placement="right"
                 title="User Details"
                 width={25}
                 content={
@@ -187,8 +188,13 @@ function UsersTable({users,newUser,setNewUser}) {
                     </dl>
                 }
             >
-                <Icon className="iconify-inline" icon="mdi:clipboard-account" width={24} height={24}/>
-            </DescriptionPopover> {row.sortName}</div>
+                {({ref,...triggerHandler}) => (
+                    <div>
+                        <Icon ref={ref} {...triggerHandler} className="iconify-inline" icon="mdi:clipboard-account" width={24} height={24}/>
+                        {row.sortName}
+                    </div>
+                )}
+            </DescriptionPopover>
         ),sortable:true,sortField:'sortName',minWidth:'15rem'},
         {name:'Email',selector:row=>row.email,sortable:true,sortField:'email'},
         {name:'Dept Group',selector:row=>row.GROUP_NAME,sortable:true},
