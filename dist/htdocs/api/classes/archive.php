@@ -56,7 +56,7 @@ class Archive extends HRForms2 {
                 break;
             case "form":
                 $qry = "insert into HRFORMS2_FORMS_ARCHIVE 
-                    select form_id, created_by, created_date, trunc(to_timestamp(.form_data.effDate,'YYYY-MM-DD\"T\"HH24:MI:SS.FF3\"Z\"')), form_data 
+                    select form_id, created_by, created_date, trunc(to_timestamp(f.form_data.effDate,'YYYY-MM-DD\"T\"HH24:MI:SS.FF3\"Z\"')), form_data 
                     from HRFORMS2_FORMS f where form_id = :form_id";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":form_id",$this->req[1]);
