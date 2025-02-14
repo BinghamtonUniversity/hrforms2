@@ -160,7 +160,7 @@ function SettingsFormsDefaultRouting() {
     const { getWorkflow } = useWorkflowQueries('form');
     const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME']),initialData:[]});
     const workflows = getWorkflow({
-        enabled:!!groups.data,
+        enabled:!!groups.data.length,
         select:d=>{
             const selectedWF = getValues('forms.defaultWorkflow');
             if (selectedWF != "" && d.length > 0) {
