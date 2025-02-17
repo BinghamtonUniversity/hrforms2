@@ -19,7 +19,9 @@ const mustacheVarsList = {
 
 // Icons not used by the AppButton component formats
 const additionalIcons = [
-    'mdi:newspaper'
+    'mdi:calendar-blank',
+    'mdi:clipboard-account',
+    'mdi:newspaper',
 ];
 
 // Editor Configuration

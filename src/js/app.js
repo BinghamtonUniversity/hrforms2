@@ -119,7 +119,7 @@ export default function StartApp() {
                                 titleTemplate="HR Forms 2 - %s"
                                 defaultTitle="HR Forms 2"
                             />
-                            <AppContent SUNY_ID={authData.SUNY_ID} OVR_SUNY_ID={authData.OVR_SUNY_ID}/>
+                            <AppContent OVR_SUNY_ID={authData.OVR_SUNY_ID}/>
                             {(session.data?.DEBUG&&session.data?.isAdmin) && <ReactQueryDevtools initialIsOpen={false} />}
                         </ErrorBoundary>
                     </TextContext.Provider>
@@ -130,8 +130,7 @@ export default function StartApp() {
     return <LoadingApp/>;
 }
 
-function AppContent({SUNY_ID,OVR_SUNY_ID}) {
-    const queryclient = useQueryClient();
+function AppContent({OVR_SUNY_ID}) {
     const { getUser } = useUserQueries();
     const user = getUser();
     const [userData,setUserData] = useState();
@@ -140,7 +139,6 @@ function AppContent({SUNY_ID,OVR_SUNY_ID}) {
         const data = head(user.data);
         setUserData(data);
         console.debug("User Data: ",data);
-        queryclient.refetchQueries(SUNY_ID);
     },[user.data]);
     useEffect(()=>user.refetch(),[OVR_SUNY_ID]);
     if (user.isLoading) return <LoadingApp/>;
@@ -257,7 +255,7 @@ function ImpersonationAlert({SUNY_ID,fullname}) {
             queryclient.refetchQueries('session').then(()=>{
                 location.pathname != '/' && history.push('/');
             });
-        });        
+        });
     }
     return (
         <Alert variant="primary" onClose={endImpersonation} dismissible>Impersonating <strong>{fullname} ({SUNY_ID})</strong> - Close to end impersonation</Alert>
