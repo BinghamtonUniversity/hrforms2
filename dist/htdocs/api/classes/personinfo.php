@@ -138,7 +138,7 @@ class PersonInfo extends HRForms2 {
 				$addressCodes = (new listdata(array('addressCodes'),false))->returnData;
 				$deptOrgs = (new listdata(array('deptOrgs'),false))->returnData;
 				$buildings = (new listdata(array('buildings'),false))->returnData;
-
+				
 				// Get Address
 				$qry = "select a.address_code, a.address_1, a.address_2, a.address_3, a.address_city, a.state_code, a.address_postal_code, a.create_date 
 				from buhr_address_mv@banner.cc.binghamton.edu a
@@ -146,20 +146,22 @@ class PersonInfo extends HRForms2 {
 				$stmt = oci_parse($this->db,$qry);
 				oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
 				$r = oci_execute($stmt);
-				if (!$r) $this->raiseError();
+				if (!$r) $this->raiseError();				
 
 				$hasDepartment = array();
-				foreach(array_keys(array_filter(array_column($addressCodes,'fields'),function($fields) {
-					return array_search('department',$fields)!==false;
-				})) as $i) {
-					array_push($hasDepartment,$addressCodes[$i]->id);
+				foreach($addressCodes as $ac) {
+					if (!$ac->fields) continue;
+					if (array_search('department',$ac->fields)!==false) {
+						array_push($hasDepartment,$ac->id);
+					}
 				}
 
 				$hasBuilding = array();
-				foreach(array_keys(array_filter(array_column($addressCodes,'fields'),function($fields) {
-					return array_search('building',$fields)!==false;
-				})) as $i) {
-					array_push($hasBuilding,$addressCodes[$i]->id);
+				foreach($addressCodes as $ac) {
+					if (!$ac->fields) continue;
+					if (array_search('building',$ac->fields)!==false) {
+						array_push($hasBuilding,$ac->id);
+					}
 				}
 				
 				while($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
