@@ -48,8 +48,11 @@ class ArchiveList extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		$page = $_GET['page'] ?? 1;
-		$results = $_GET['results'] ?? 10;
+		//server cannot use null coalescing operator.  TODO: Change this
+		#$page = $_GET['page'] ?? 1;
+		#$results = $_GET['results'] ?? 10;
+		$page = isset($_GET['page']) ? $_GET['page'] : 1;
+		$results = isset($_GET['results']) ? $_GET['results'] : 10;
 		$offset = ($page-1)*$results;
 
 		switch($this->k['id']) {
@@ -99,7 +102,10 @@ class ArchiveList extends HRForms2 {
 				}
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
-				[$total] = oci_fetch_array($stmt,OCI_NUM);
+				// Server cannot use destructuring assignment.  TODO: Change this
+				//[$total] = oci_fetch_array($stmt,OCI_NUM);
+				$row = oci_fetch_array($stmt,OCI_NUM);
+				$total = $row[0];
 				oci_free_statement($stmt);
 
 				// get data using offset and fetch/limit
@@ -205,7 +211,10 @@ class ArchiveList extends HRForms2 {
 				}
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
-				[$total] = oci_fetch_array($stmt,OCI_NUM);
+				// Server cannot use destructuring assignment.  TODO: Change this
+				//[$total] = oci_fetch_array($stmt,OCI_NUM);
+				$row = oci_fetch_array($stmt,OCI_NUM);
+				$total = $row[0];
 				oci_free_statement($stmt);
 	
 				$qry = "select f.form_id, f.created_by.SUNY_ID as created_by_suny_id, 
