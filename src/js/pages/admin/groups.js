@@ -194,22 +194,22 @@ function GroupsTable({groups,newGroup,setNewGroup}) {
             const name = (row.active)?row.GROUP_NAME:<><del>{row.GROUP_NAME}</del> <em>(inactive)</em></>;
             const description = row.GROUP_DESCRIPTION || <em>No Description</em>;
             return (
-                <DescriptionPopover
-                    id={`${row.GROUP_ID}_description`}
-                    title="Group Description"
-                    width={25}
-                    placement="right"
-                    content={
-                        <p>{description}</p>
-                    }
-                >
-                    {({ref,...triggerHandler}) => (
-                        <div>
-                            <Icon ref={ref} {...triggerHandler} className="iconify-inline" icon="mdi:information-variant-box" width={24} height={24}/>
-                            {name}
-                        </div>
-                    )}
-                </DescriptionPopover>
+                <>
+                    <DescriptionPopover
+                        id={`${row.GROUP_ID}_description`}
+                        title="Group Description"
+                        width={25}
+                        placement="top"
+                        content={
+                            <p>{description}</p>
+                        }
+                    >
+                        <span>
+                            <Icon className="iconify-inline" icon="mdi:information-variant-box" width={24} height={24}/>
+                        </span>
+                    </DescriptionPopover>
+                    {name}
+                </>
             );
         },sortable:true,sortField:'GROUP_NAME',grow:3},
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
