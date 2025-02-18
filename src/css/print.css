@@ -1,4 +1,6 @@
 @media print {
+    body { font-size: 16pt }
+    .rdt_Table .rdt_TableBody .rdt_TableRow { font-size: 13pt }    
     .ReactQueryDevtools, 
     .button-group, 
     .btn,
