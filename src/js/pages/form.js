@@ -5,7 +5,7 @@ import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
 import { Loading, AppButton, DateFormat } from "../blocks/components";
-import { get, set, has, zip, cloneDeep, merge, difference } from "lodash";
+import { get, set, has, zip, cloneDeep, merge, difference, defaultTo } from "lodash";
 import useFormQueries from "../queries/forms";
 import { flattenObject } from "../utility";
 import { allTabs, fetchFormData, initFormValues, HRFormContext, validateForm, checkFields } from "../config/form";
@@ -38,6 +38,7 @@ export default function HRForm() {
 
     const {id,sunyid,ts} = useParams();
     const {SUNY_ID} = useUserContext();
+    const history = useHistory();
 
     useEffect(() => {
         if (!id||id=="new") {
@@ -65,11 +66,12 @@ export default function HRForm() {
             infoComplete={infoComplete}
             setInfoComplete={setInfoComplete}
             reset={id=='new'}
+            historyFrom={get(history,'location.state.from')}
         />
     );
 }
 
-function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete,reset}) {
+function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete,reset,historyFrom}) {
     const [formData,setFormData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
 
@@ -130,6 +132,7 @@ function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete,reset}
                 infoComplete={infoComplete}
                 setInfoComplete={setInfoComplete}
                 reset={reset}
+                historyFrom={historyFrom}
             />}
             {formData && <BlockNav formId={formId} when={isBlocking} isDraft={isNew}/>}
         </section>
@@ -195,7 +198,7 @@ function BlockNav({formId,when,isDraft}) {
     );
 }
 
-function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInfoComplete,reset}) {
+function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInfoComplete,reset,historyFrom}) {
     //TODO: probably need to change to useReducer?
     const [tabList,setTabList] = useState(allTabs.filter(t=>t.value=='basic-info'));
     const [tabsVisited,setTabsVisited] = useState(['basic-info']);
@@ -230,6 +233,8 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const updateForm = putForm(formId);
     const delForm = deleteForm(formId);
 
+    const history = useHistory();
+
     const fetchData = fetchFormData({
         watchIds:watchIds,
         effectiveDate:methods.getValues('effDate'),
@@ -242,7 +247,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             setIsSaving(false);
             setLockTabs(false);
             setIsBlocking(false);
-            setRedirect('/');
+            setRedirect(defaultTo(historyFrom,'/'));
         }).catch(e => {
             setShowDeleteModal(false);
             setIsSaving(false);
@@ -374,7 +379,6 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             console.error('Form Errors:',errors);
         }
     }
-    const history = useHistory();
     const handleReset = () => {
         console.debug('Resetting Form');
         /* TODO: maybe?
@@ -664,7 +668,9 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                                                 }
                                                 {(get(data,'lastJournal.STATUS')=='R'&&canEdit) && <AppButton format="delete" onClick={()=>setShowDeleteModal(true)} disabled={isSaving}>Delete</AppButton>}
 
-                                                {!(isNew&&lockTabs)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
+                                                {(canEdit&&!(isNew&&lockTabs))&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
+                                                
+                                                {(!isNew&&!isDraft) && <AppButton format="close" id="close" onClick={()=>handleRedirect()} disabled={isSaving||lockTabs}>Close</AppButton>}
 
                                                 {activeTab!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}                                                
                                                 
