@@ -144,7 +144,6 @@ class EmploymentInfo extends HRForms2 {
 				$row['APPOINTMENT_TYPE'] = array("id"=>$row['APPOINTMENT_TYPE'],"label"=>($key!==false)?$appointmentTypes[$key][1]:"");
 
 				// hasBenefits:
-				
 				$payroll = (new codes(array('payroll',$row['PAYROLL_AGENCY_CODE']),false))->returnData[0];
 				if ($payroll['ADDITIONAL_INFO']['hasBenefits']) {
 					$row['hasBenefits'] = true;
@@ -183,24 +182,21 @@ class EmploymentInfo extends HRForms2 {
 				if (!$pos) $pos = array();
 				$row = array_merge($row,$pos);
 
-				if ($row['PAY_BASIS'] == 'FEE') {
+				if (in_array($row['PAY_BASIS'],array('FEE','BIW'))) {
 					$qry = "select commitment_effective_date as rate_effective_date, commitment_rate as rate_amount, number_of_payments
 						from buhr.buhr_commitment_mv@banner.cc.binghamton.edu 
 						where data_status <> 'H'
 						and suny_id = :suny_id
-						and commitment_effective_date <= :effective_date
 						order by commitment_effective_date desc";
 				} else {
 					$qry = "select salary_effective_date as rate_effective_date, fta_rate as rate_amount, 1 as number_of_payments
 						from buhr.buhr_salary_mv@banner.cc.binghamton.edu
 						where data_status <> 'H'
 						and suny_id = :suny_id
-						and salary_effective_date >= : effective_date
 						order by salary_effective_date desc";
 				}
 				$stmt = oci_parse($this->db,$qry);
 				oci_bind_by_name($stmt,":suny_id", $row['SUNY_ID']);
-				oci_bind_by_name($stmt,":effective_date", $row['EFFECTIVE_DATE']);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				$pay = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
@@ -214,7 +210,7 @@ class EmploymentInfo extends HRForms2 {
 					where lin_itm_nbr = :line_number
 					and data_sts = 'C'
 					and osc_ern_cd in ('RGS','RGH','FEE')
-					and end_chk_dt <= :effective_date
+					and end_chk_dt >= :effective_date
 					order by eff_chk_dt desc";
 				$stmt = oci_parse($this->db,$qry);
 				oci_bind_by_name($stmt,":line_number", $row['LINE_ITEM_NUMBER']);
