@@ -225,7 +225,7 @@ function PersonLookup({results}) {
 }
 
 function LookupResults({data}) {
-    const { setValue } = useFormContext();
+    const { getValues, setValue } = useFormContext();
     const { infoComplete } = useHRFormContext();
 
     const [selectedId,setSelectedId] = useState((infoComplete)?data[0].id:undefined);
@@ -247,6 +247,7 @@ function LookupResults({data}) {
         setValue('formActions',defaultFormActions);
         setValue('person.information.HR_PERSON_ID',newRow?.HR_PERSON_ID);
         setValue('person.information.SUNY_ID',newRow?.SUNY_ID);
+        if (newRow.id == "0") setValue('person.demographics.birthDate',getValues('lookup.values.dob'));
     }
 
     const rowSelectCritera = row => {
