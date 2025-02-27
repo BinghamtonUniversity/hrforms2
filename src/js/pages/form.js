@@ -672,7 +672,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                                                 
                                                 {(!isNew&&!isDraft) && <AppButton format="close" id="close" onClick={()=>handleRedirect()} disabled={isSaving||lockTabs}>Close</AppButton>}
 
-                                                {activeTab!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}                                                
+                                                {activeTab!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
                                                 
                                                 {activeTab=='review'&&isDraft&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={!methods.formState.isValid||hasErrors||isSaving}>Submit</AppButton>}
                                                 
