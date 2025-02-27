@@ -70,7 +70,7 @@ class Groups extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-        $qry = "select * from hrforms2_groups";
+        $qry = "select * from hrforms2_groups where group_id not in ('-99')";
 		$stmt = oci_parse($this->db,$qry);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
