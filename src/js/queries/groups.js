@@ -32,7 +32,11 @@ export default function useGroupQueries(GROUP_ID) {
             });
             return (options.select2)?options.select2(data):data;
         }
-        return useQuery('groups',q('groups'),options);
+        return useQuery('groups',q('groups'),{
+            staleTime:60000,
+            cacheTime:60000,
+            ...options
+        });
     }
     const postGroup = () => useMutation(d=>q('groups','POST',d)());
     const putGroup = () => useMutation(d=>q(`groups/${GROUP_ID}`,'PUT',d)());

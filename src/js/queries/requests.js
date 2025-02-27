@@ -60,7 +60,11 @@ export default function useRequestQueries(REQUEST_ID) {
             });
             return (options.select2)?options.select2(data):data;
         }
-        return useQuery([SUNY_ID,'requestlist',list],q(`requestlist/${list}`),options);
+        return useQuery([SUNY_ID,'requestlist',list],q(`requestlist/${list}`),{
+            refetchOnWindowFocus:true,
+            staleTime:60000,
+            ...options
+        });
     }
 
     const getArchiveRequestList = (...args) => {
