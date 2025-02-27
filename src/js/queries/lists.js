@@ -10,10 +10,13 @@ export default function useListsQueries() {
     }
     const getListData = (...args) => {
         const LIST_ID = args[0]?.LIST_ID||args[0];
-        let options = args[0]?.options||args[1]||{};
+        const options = args[0]?.options||args[1]||{};
         // set default options
-        options = {staleTime:900000,refetchOnMount:false,...options};
-        return useQuery(['listdata',LIST_ID],q(`listdata/${LIST_ID}`),options);
+        return useQuery(['listdata',LIST_ID],q(`listdata/${LIST_ID}`),{
+            staleTime:900000,
+            refetchOnMount:false, //TODO: why?
+            ...options
+        });
     }
 
     const postList = () => useMutation(d=>q('lists','POST',d)());
