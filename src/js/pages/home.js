@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Row, Col, Card, ListGroup } from "react-bootstrap";
 import { capitalize } from "lodash";
@@ -9,7 +9,6 @@ import { t } from "../config/text";
 import { Helmet } from "react-helmet";
 
 export default function Page() {
-    const { isViewer } = useUserContext();
     return (
         <>
             <Welcome/>
@@ -18,7 +17,7 @@ export default function Page() {
                     <News/>
                 </Col>
             </Row>
-            {!isViewer && <DashBoardCards />}
+            <DashBoardCards/>
         </>
     );
 }
@@ -42,6 +41,7 @@ function Welcome() {
 }
 
 function DashBoardCards() {
+    const { isViewer } = useUserContext();
     return (
         <Row>
             {['requests','forms'].map(c => (
@@ -49,7 +49,7 @@ function DashBoardCards() {
                     <Card border="main">
                         <Card.Header className="bg-main text-white"><Link className="text-white" to={`/${c}/list`}>{capitalize(c)}</Link></Card.Header>
                         <ListGroup variant="flush">
-                            <MenuCounts menu={c} showOn="home" showNew/>
+                            <MenuCounts menu={c} showOn="home" showNew={!isViewer} isViewer={isViewer}/>
                         </ListGroup>
                     </Card>
                 </Col>

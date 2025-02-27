@@ -18,6 +18,7 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 
 export default function FormList() {
     const {part} = useParams();
+    const { isViewer } = useUserContext();
     const [redirect,setRedirect] = useState();
     const [countAge,setCountAge] = useState();
     const { getCounts } = useUserQueries();
@@ -40,15 +41,17 @@ export default function FormList() {
                         <Helmet>
                             <title>Forms List: {forms.menu[part]?.title}</title>
                         </Helmet>
-                        <Row>
-                            <Col>
-                                <h2>Forms List: {forms.menu[part]?.title} <AppButton format="add" onClick={()=>setRedirect('/form')}>New Form</AppButton></h2>
-                            </Col>
-                        </Row>
+                        {!isViewer && 
+                            <Row>
+                                <Col>
+                                    <h2>Forms List: {forms.menu[part]?.title} <AppButton format="add" onClick={()=>setRedirect('/form')}>New Form</AppButton></h2>
+                                </Col>
+                            </Row>
+                        }
                     </header>
                     <section>
                         <ListAgeWarning enabled={forms.agewarn.enabled} maxage={forms.agewarn.age} countAge={countAge}/>
-                        <ListData list={(part)?part:'all'}/>
+                        <ListData list={(part)?part:''}/>
                     </section>
                 </>
             )}}

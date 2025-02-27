@@ -3,6 +3,7 @@ import { useQueryClient } from "react-query";
 import useUserQueries from "../../queries/users";
 import useGroupQueries from "../../queries/groups";
 import useSessionQueries from "../../queries/session";
+import useListsQueries from "../../queries/lists";
 import { Loading, ModalConfirm, AppButton, errorToast, DescriptionPopover } from "../../blocks/components";
 import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, Button } from "react-bootstrap";
 import { Icon } from "@iconify/react";
@@ -29,11 +30,14 @@ const defaultVals = {
     lastName:'',
     email:'',
     notifications:"Y",
+    viewer:"N",
     dept:'',
     startDate:new Date(),
     endDate:'',
     assignedGroups:[],
-    availableGroups:[]
+    availableGroups:[],
+    assignedDepts:[],
+    availableDepts:[]
 };
 
 export default function AdminUsers() {
@@ -168,7 +172,7 @@ function UsersTable({users,newUser,setNewUser}) {
             return <><del>{row.USER_SUNY_ID}</del> <em>(inactive)</em></>;
         },sortable:true,sortField:'USER_SUNY_ID'},
         {name:'Name',selector:row=>(
-            <DescriptionPopover
+            <div><DescriptionPopover
                 id={`${row.SUNY_ID}_details`}
                 placement="right"
                 title="User Details"
@@ -188,13 +192,10 @@ function UsersTable({users,newUser,setNewUser}) {
                     </dl>
                 }
             >
-                {({ref,...triggerHandler}) => (
-                    <div>
-                        <Icon ref={ref} {...triggerHandler} className="iconify-inline" icon="mdi:clipboard-account" width={24} height={24}/>
-                        {row.sortName}
-                    </div>
-                )}
-            </DescriptionPopover>
+                <span>
+                    <Icon className="iconify-inline" icon="mdi:clipboard-account" width={24} height={24}/>
+                </span>
+            </DescriptionPopover> {row.sortName}</div>
         ),sortable:true,sortField:'sortName',minWidth:'15rem'},
         {name:'Email',selector:row=>row.email,sortable:true,sortField:'email'},
         {name:'Dept Group',selector:row=>row.GROUP_NAME,sortable:true},
@@ -205,6 +206,7 @@ function UsersTable({users,newUser,setNewUser}) {
             return (
                 <div><DescriptionPopover
                     id={`${row.SUNY_ID}_refresh_date`}
+                    placement="top"
                     content={<p className="m-0 p-1">{row.refreshDateFmt}</p>}
                 >
                     <div>{row.refreshDateDuration} ago</div>
@@ -368,10 +370,12 @@ function DeleteUser({user,setDeleteUser}) {
 }
 
 function AddEditUserForm(props) {
-    const tabs = [
+    const allTabs = [
         {id:'info',title:'Info'},
         {id:'groups',title:'Groups'},
+        {id:'depts',title:'Departments'}
     ];
+    const [tabs,setTabs] = useState(allTabs);
     const defaultStatus = {state:'',message:'',icon:'',spin:false,cancel:true,save:false};
 
     const [activeTab,setActiveTab] = useState('info');
@@ -396,6 +400,7 @@ function AddEditUserForm(props) {
             lastName:props.LEGAL_LAST_NAME||'',
             email:props.email||'',
             notifications:props.NOTIFICATIONS||'N',
+            viewer:props.VIEWER||'N',
             dept:props.REPORTING_DEPARTMENT_NAME||'No Department',
             deptGroupId:props.GROUP_ID||'',
             deptGroup:props.GROUP_NAME||'N/A',
@@ -409,7 +414,9 @@ function AddEditUserForm(props) {
     const queryclient = useQueryClient();
     const {getUserGroups,postUser,putUser} = useUserQueries(props.SUNY_ID);
     const {getGroups} = useGroupQueries();
+    const {getListData} = useListsQueries();
     const groups = getGroups({enabled:false,select:data=>sortBy(data.filter(g=>g.active),['GROUP_NAME'])});
+    const depts = getListData('deptOrgs',{enabled:false});
     const usergroups = getUserGroups({enabled:false,select:data=>sortBy(data,['GROUP_NAME'])});
     const updateuser = putUser();
     const createuser = postUser();
@@ -442,7 +449,8 @@ function AddEditUserForm(props) {
             ADD_GROUPS:addGroups,
             DEL_GROUPS:delGroups,
             OPTIONS:{
-                notifications:data.notifications
+                notifications:data.notifications,
+                viewer:data.viewer
             }
         }
         setStatus({state:'saving'});
@@ -479,11 +487,16 @@ function AddEditUserForm(props) {
 
     useEffect(() => {
         setStatus({state:'loading'});
-        groups.refetch().then(({data:groupsData}) => {
+        Promise.all([
+            groups.refetch(),
+            depts.refetch()
+        ]).then((r) => {
+            const [{data:groupsData},{data:deptsData}] = r;
             if (props.newUser) {
                 setStatus({state:'clear'});
                 methods.reset(Object.assign({},defaultVals,{
-                    availableGroups:groupsData
+                    availableGroups:groupsData,
+                    availableDepts:deptsData
                 }));
             } else {
                 usergroups.refetch().then(({data:usergroupData}) => {
@@ -499,17 +512,27 @@ function AddEditUserForm(props) {
                         deptGroup:props.GROUP_NAME||'',
                         email:props.email||'',
                         notifications:props.NOTIFICATIONS||'N',
+                        viewer:props.VIEWER||'N',
                         startDate: props.startDate,
                         endDate: props.endDate,
                         refreshDate: props.refreshDateFmt||'never',
                         assignedGroups:usergroupData,
-                        availableGroups:filtered
+                        availableGroups:filtered,
+                        availableDepts:deptsData,
+                        assignedDepts:[]
                     });
                     setStatus({state:'clear',save:true});
                 });
             }
-        })
+        });
     },[props.SUNY_ID,props.newUser]);
+
+    useEffect(() => {
+        const { unsubscribe } = methods.watch(data => {
+            setTabs([...allTabs.filter(tab=>(data.viewer=='Y')?tab.id!='groups':tab.id!='depts')]);
+        });
+        return () => unsubscribe();
+    },[methods.watch]);
     return (
         <Modal show={true} onHide={closeModal} backdrop="static" size="lg">
             <FormProvider {...methods}>
@@ -545,6 +568,7 @@ const TabRouter = React.memo(({tab,newUser,setStatus,closeModal}) => {
     switch(tab) {
         case "info": return <UserInfo newUser={newUser} setStatus={setStatus} closeModal={closeModal}/>;
         case "groups": return <UserGroups/>;
+        case "depts": return <UserDepts/>;
         default: return <NotFound/>;
     }
 });
@@ -620,12 +644,16 @@ function UserInfo({newUser,setStatus,closeModal}) {
                 lastName:userData.LEGAL_LAST_NAME||'',
                 email:userData.EMAIL_ADDRESS_WORK||'',
                 notifications:(!userData.EMAIL_ADDRESS_WORK)?'N':userData.NOTIFICATIONS,
+                viewer:userData.VIEWER||'N',
                 dept:userData.REPORTING_DEPARTMENT_NAME||'',
                 refreshDate: userData.refreshDateFmt||'never',
                 deptGroupId:userData.GROUP_ID||'',
                 deptGroup:userData.GROUP_NAME||'',
                 assignedGroups:getValues('assignedGroups'),
-                availableGroups:getValues('availableGroups')
+                availableGroups:getValues('availableGroups'),
+                assignedDepts:getValues('assignedDepts'),
+                availableDepts:getValues('availableDepts')
+
             });
             console.debug('User Lookup Data: ',userLookupData);
             reset(userLookupData);
@@ -764,6 +792,20 @@ function UserInfo({newUser,setStatus,closeModal}) {
                 </Form.Group>
             </Form.Row>
             <Form.Row>
+                <Form.Group as={Col} controlId="viewer">
+                    <Form.Label>Viewer:</Form.Label>
+                    <Controller
+                        name="viewer"
+                        defaultValue="N"
+                        control={control}
+                        render={({field}) => {
+                            return <Form.Check {...field} className="ml-2" type="checkbox" inline onChange={e=>handleCheck(e,field)} value="Y" checked={field.value=="Y"} aria-describedby="viewerHelp"/>;
+                        }}
+                    />
+                    <Form.Text id="viewerHelp" muted>Viewers cannot submit requests or forms.  They may only view submitted requests and forms for the departments they are assigned to. </Form.Text>
+                </Form.Group>
+            </Form.Row>
+            <Form.Row>
                 <Form.Group as={Col} controlId="start_date">
                     <Form.Label>Start Date:</Form.Label>
                     <InputGroup>
@@ -827,9 +869,6 @@ function UserGroups() {
         setFilteredGroups(filtered);
     },[filterText]);
     useEffect(()=>ref.current.focus(),[]);
-    useEffect(()=>{
-        console.log(getValues('availableGroups'));
-    },[]);
     return (
         <>
             <Form.Row>
@@ -859,10 +898,12 @@ function UserGroupsList({filteredGroups,filterText}) {
         if (source.droppableId == 'available') {
             insertAssignedGroups(destination.index,availablegroups[source.index]);
             removeAvailableGroups(source.index);
+            console.debug('Assign Group: ',availablegroups[source.index]);
         }
         if (source.droppableId == 'assigned') {
             insertAvailableGroups(destination.index,assignedgroups[source.index]);
             removeAssignedGroups(source.index);
+            console.debug('Deassign Group: ',availablegroups[source.index]);
         }
     }
     const handleDblClick = useCallback(e => {
@@ -915,6 +956,129 @@ function UserGroupsList({filteredGroups,filterText}) {
                                         data-list="assigned" data-idx={i}
                                     >
                                         {(g.active)?g.GROUP_NAME:<><del>{g.GROUP_NAME}</del> <em>(inactive)</em></>}
+                                    </div>
+                                )}
+                            </Draggable>
+                        ))}
+                        {provided.placeholder}
+                    </div>
+                )}
+            </Droppable>
+        </DragDropContext>
+    );
+}
+
+function UserDepts() {
+    const ref = useRef();
+    const [filterText,setFilterText] = useState('');
+    const [filteredDepts,setFilteredDepts] = useState([]);
+    const { getValues} = useFormContext();
+    const handleOnKeyDown = e => {
+        if (e.key == 'Escape') {
+            e.stopPropagation();
+            setFilterText('');
+        }
+    }
+    const handleOnChange = e => setFilterText(e.target.value);
+    useEffect(() => {
+        /*const filtered = getValues('availableGroups').filter(row =>{
+            return Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
+        }).map(f=>f.GROUP_ID);
+        setFilteredGroups(filtered);*/
+    },[filterText]);
+    useEffect(()=>ref.current.focus(),[]);
+    return (
+        <>
+            <Row>
+                <Col>
+                    <Alert variant="warning">Viewers cannot submit requests or forms.  They may only view submitted requests and forms for the departments they are assigned to.</Alert>
+                </Col>
+            </Row>
+            <Form.Row>
+                <Form.Group as={Col}>
+                    <Form.Label>Filter Departments:</Form.Label>
+                    <Form.Control ref={ref} type="search" placeholder="filter available departments..." value={filterText} onChange={handleOnChange} onKeyDown={handleOnKeyDown}/>
+                </Form.Group>
+            </Form.Row>
+            <div className="drag-col-2">
+                <div className="dlh1">Unassigned Departments</div>
+                <div className="dlh2">Assigned Departments</div>
+                <UserDeptsList filteredGroups={filteredDepts} filterText={filterText}/>
+            </div>
+        </>
+    );
+}
+
+function UserDeptsList({filteredDepts,filterText}) {
+    const { control } = useFormContext();
+    const { insert:insertAssignedDepts, remove:removeAssignedDepts } = useFieldArray({control:control,name:'assignedDepts'});
+    const { insert:insertAvailableDepts, remove:removeAvailableGroups } = useFieldArray({control:control,name:'availableDepts'});
+    const assigneddepts = useWatch({name:'assignedDepts',control:control});
+    const availabledepts = useWatch({name:'availableDepts',control:control});
+
+    const onDragEnd = ({source,destination}) => {
+        if (source.droppableId == destination.droppableId) return false; //no reordering
+        if (source.droppableId == 'available') {
+            insertAssignedDepts(destination.index,availabledepts[source.index]);
+            removeAvailableGroups(source.index);
+            console.debug('Assign Department: ',availabledepts[source.index]);
+        }
+        if (source.droppableId == 'assigned') {
+            insertAvailableDepts(destination.index,assigneddepts[source.index]);
+            removeAssignedDepts(source.index);
+            console.debug('Deassign Department: ',availabledepts[source.index]);
+        }
+    }
+    const handleDblClick = useCallback(e => {
+        const {list,idx} = e.target.dataset;
+        onDragEnd({
+            source:{droppableId:list,index:parseInt(idx,10)},
+            destination:{droppableId:(list=='available'?'assigned':'available'),index:0}
+        });
+    },[availabledepts,assigneddepts]);
+    return(
+        <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="available">
+                {(provided, snapshot) => ( 
+                    <div ref={provided.innerRef} className={`droplist dl1 ${snapshot.isDraggingOver?'over':''}`}>
+                        {availabledepts.map((d,i) => {
+                            if (filterText&&!filteredDepts.includes(d.DEPARTMENT_CODE)) return null;
+                            return (
+                                <Draggable key={d.DEPARTMENT_CODE} draggableId={d.DEPARTMENT_CODE} index={i}>
+                                    {(provided,snapshot) => (
+                                        <div
+                                            ref={provided.innerRef} 
+                                            {...provided.draggableProps} 
+                                            {...provided.dragHandleProps}
+                                            className={snapshot.isDragging?'dragging':''}
+                                            onDoubleClick={handleDblClick}
+                                            data-list="available" data-idx={i}
+                                        >
+                                            {d.DEPARTMENT_DESC}
+                                        </div>
+                                    )}
+                                </Draggable>
+                            );
+                        })}
+                        {provided.placeholder}
+                    </div>
+                )}
+            </Droppable>
+            <Droppable droppableId="assigned">
+                {(provided, snapshot) => ( 
+                    <div ref={provided.innerRef} className={`droplist dl2 ${snapshot.isDraggingOver?'over':''}`}>
+                        {assigneddepts.map((d,i) => (
+                            <Draggable key={d.DEPARTMENT_CODE} draggableId={d.DEPARTMENT_CODE} index={i}>
+                                {(provided,snapshot) => (
+                                    <div
+                                        ref={provided.innerRef} 
+                                        {...provided.draggableProps} 
+                                        {...provided.dragHandleProps}
+                                        className={snapshot.isDragging?'dragging':''}
+                                        onDoubleClick={handleDblClick}
+                                        data-list="assigned" data-idx={i}
+                                    >
+                                        {d.DEPARTMENT_DESC}
                                     </div>
                                 )}
                             </Draggable>
