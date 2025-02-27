@@ -1,11 +1,13 @@
 import q from '../queries';
 import { useQuery, useMutation } from "react-query";
 import { format, parse, formatDistanceToNowStrict } from "date-fns";
-import { useAuthContext } from '../app';
+import { useAuthContext, useUserContext } from '../app';
 
 export default function useUserQueries(SUNY_ID) {
     const authData = useAuthContext();
+    const userData = useUserContext();
     const CURRENT_SUNY_ID = (authData.OVR_SUNY_ID)?authData.OVR_SUNY_ID:authData.SUNY_ID;
+    const isViewer = userData?.isViewer||false;
 
     /* always gets current user */
     /* TODO: change name of this function? */
@@ -21,9 +23,11 @@ export default function useUserQueries(SUNY_ID) {
         }});
     }    
     const getCounts = () => {
-        const now = Date.now();
-        const {INSTANCE} = useAuthContext();
-        return useQuery([CURRENT_SUNY_ID,'counts'],q('counts'),{
+        const url = (isViewer) ? 'counts/viewer' : 'counts';
+        //const now = Date.now();
+        //const {INSTANCE} = useAuthContext();
+        //return useQuery(['counts',CURRENT_SUNY_ID,],q(url),{
+        return useQuery([CURRENT_SUNY_ID,'counts',{isViewer:isViewer}],q(url),{
             // refetch 60 seconds; disable when inactive for ~30 minutes.
             //refetchInterval:(_,query)=>(query.state.dataUpdatedAt-now<3600000&&INSTANCE!="LOCAL")?60000:false,
             /*refetchInterval:(_,query)=>{
