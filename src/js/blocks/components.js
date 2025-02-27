@@ -151,7 +151,7 @@ const AppButton = React.memo(({children,format,icon,spin,...props}) => {
     );
 });
 
-const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
+const MenuCounts = React.memo(({menu,showOn,showNew=false,isViewer=false}) => {
     /* showOn: home or menu */
     const { getCounts } = useUserQueries();
     const location = useLocation();
@@ -175,8 +175,8 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
             let linkTo = `/${single}/`;
             const agewarn = get(settings,`${menu}.agewarn.enabled`,false);
             const agemax = get(settings,`${menu}.agewarn.age`,0);
-            if (location.pathname.startsWith(linkTo)) linkTo += 'new';
-            const menuItems = Object.keys(settings[menu].menu).sort((a,b) => parseInt(settings[menu].menu[a].order,10)>parseInt(settings['forms'].menu[b].order,10)?1:parseInt(settings[menu].menu[a].order,10)==parseInt(settings[menu].menu[b].order,10)?0:-1);
+            if (location.pathname.startsWith(linkTo)) linkTo += 'new';            
+            const menuItems = (isViewer)?['pending','archived']:Object.keys(settings[menu].menu).sort((a,b) => parseInt(settings[menu].menu[a].order,10)>parseInt(settings['forms'].menu[b].order,10)?1:parseInt(settings[menu].menu[a].order,10)==parseInt(settings[menu].menu[b].order,10)?0:-1);
             return (
                 <>
                     {(showNew && showOn=='home') && <Link key={`${menu}.new`} to={`/${single}/`} component={DashBoardListComponent} disabled={overLimit}><span className="font-italic">New {capitalize(single)}</span> {counts.isSuccess&&overLimit && <small className="text-danger"><Icon icon="mdi:alert" className="iconify-inline" style={{top:'-1px'}}/>draft limit exceeded</small>}</Link> }
@@ -194,7 +194,7 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
                         if (!get(settings,`${key}.enabled`,true)) return null;
                         const title = get(settings,`${key}.title`,l);
                         const show = get(settings,`${key}.showOn${capitalize(showOn)}`,false);
-                        if (!show) return null;
+                        if (!show&&!isViewer) return null;
                         const cnt = get(counts.data,`${menu}.${l}.count`,0);
                         const age = get(counts.data,`${menu}.${l}.age`,0);
                         const ageClass = {home:'',homeIcon:'',menu:''};
@@ -207,7 +207,7 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
                             );
                             ageClass['menu'] = 'text-danger'
                         }
-                        if (showOn == 'home') return <Link key={key} className={`d-flex justify-content-between ${ageClass.home}`} to={`/${single}/list/${l}`} component={DashBoardListComponent}><span>{ageClass.homeIcon}{title}</span>{has(counts.data,`${menu}.${l}.count`)&&cnt}</Link>;
+                        if (showOn == 'home'||isViewer) return <Link key={key} className={`d-flex justify-content-between ${ageClass.home}`} to={`/${single}/list/${l}`} component={DashBoardListComponent}><span>{ageClass.homeIcon}{title}</span>{has(counts.data,`${menu}.${l}.count`)&&cnt}</Link>;
                         if (showOn == 'menu') return <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`} className={ageClass['menu']}>{title} {has(counts.data,`${menu}.${l}.count`)&&<span>({cnt})</span>}</NavDropdown.Item>;
                     })}
                 </>
@@ -216,16 +216,6 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false}) => {
         </SettingsContext.Consumer>
     );
 });
-
-/*
-                        if (showOn == 'menu') return (
-                            <>
-                                {!has(counts.data,`${menu}.${l}.count`)&& <NavDropdown.Divider/>}
-                                <NavDropdown.Item key={l} as={Link} to={`/${single}/list/${l}`}>{title} {has(counts.data,`${menu}.${l}.count`)&&<span>({cnt})</span>}</NavDropdown.Item>
-                            </>
-                        );
-
-*/
 
 const DashBoardListComponent = props => {
     return <ListGroup.Item className={props.className} href={props.href} action disabled={props.disabled}>{props.children}</ListGroup.Item>;
@@ -332,8 +322,8 @@ const DescriptionPopover = ({title,content,showempty,children,...props}) => {
         <OverlayTrigger 
             key={props.id} 
             trigger={props?.trigger||['focus','hover']} 
-            placement={props?.placement||"auto"} 
-            flip={props?.flip}
+            placement={props?.placement||"right"} 
+            flip={props?.flip||false}
             overlay={
                 <Popover id={props.id} style={s}>
                     {title&&<Popover.Title>{title}</Popover.Title>}
