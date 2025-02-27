@@ -127,7 +127,7 @@ function HierarchyTable() {
                 <DescriptionPopover
                     id={`${row.HIERARCHY_ID}_groups_information`}
                     title="Assigned Groups"
-                    content={row.HIERARCHY_GROUPS_ARRAY.map(g=>g.GROUP_NAME).sort().join(', ')}
+                    content={row.HIERARCHY_GROUPS_ARRAY.map(g=>g.GROUP_NAME).sort().map(g=>(<p key={g} className="mb-0">{g}</p>))}
                 >
                     <Badge variant="info" style={{fontSize:"14px",verticalAlign:"bottom",padding:"1px"}}><Icon icon="mdi:information-variant"/></Badge>
                 </DescriptionPopover>
