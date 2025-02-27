@@ -25,7 +25,7 @@ Class HRForms2 {
 	protected $allowedMethods = "";	protected $hasError = false;
 
 	protected $sessionData = array('VERSION'=>VERSION,'REVISION'=>REVISION,'INSTANCE'=>INSTANCE,'HOST'=>HOST,'DEBUG'=>DEBUG);
-	protected $userData = array();
+	//protected $userData = array();
 	public $returnData;
 
 	function init(array $args = array()) {
@@ -165,6 +165,7 @@ Class HRForms2 {
         $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
 		$this->sessionData = (!$row)?array():array_merge($this->sessionData,$row);
 		$this->isAdmin($this->sessionData['SUNY_ID']);
+		$this->isViewer($this->sessionData['EFFECTIVE_SUNY_ID']);
 		return $this->sessionData;
 	}
 
@@ -249,6 +250,23 @@ Class HRForms2 {
 		$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
 		$this->sessionData['isAdmin'] = ($row['IS_ADMIN'] == '1') ? true : false;
 		return $this->sessionData['isAdmin'];
+	}
+
+	/**
+	* Returns true/false if the SUNY ID is in the local admin table
+	* @param number $id - SUNY ID to check
+	* @return boolean
+	*/
+	protected function isViewer($id) {
+		if (isset($this->sessionData['isViewer'])) return $this->sessionData['isViewer'];
+		$qry = "select count(suny_id) as IS_VIEWER from hrforms2_user_groups where group_id = -11 and suny_id = :sunyid";
+		$stmt = oci_parse($this->db,$qry);
+		oci_bind_by_name($stmt, ":sunyid", $id);
+		$r = oci_execute($stmt);
+		if (!$r) $this->raiseError();
+		$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+		$this->sessionData['isViewer'] = ($row['IS_VIEWER'] == '1') ? true : false;
+		return $this->sessionData['isViewer'];
 	}
 
 	/**

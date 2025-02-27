@@ -81,23 +81,34 @@ class Journal extends HRForms2 {
 
     private function validateUser() {
         // If isAdmin and not impersonating short-circuit return true;
-        //TODO: also need to allow /requests/{id} and /forms/{id}
         if ($this->sessionData['isAdmin'] && $this->sessionData['OVR_SUNY_ID'] == "") return true;
-
-        $qry = "select 1
-            from ".$this->k['journal']."
-            where ".$this->k['id']." = :id
-            and suny_id = :suny_id
-            union 
-            select 1
-            from ".$this->k['journal']." j, hrforms2_user_groups ug
-            where j.".$this->k['id']." = :id
-            and j.group_to != '-99'
-            and ug.group_id = j.group_to
-            and ug.suny_id = :suny_id";
-        $stmt = oci_parse($this->db,$qry);
+        
+        // If isViewer, check dept_code
+        if ($this->sessionData['isViewer']) {
+            $user = (new user(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData[0];
+            $dept_code = $user['REPORTING_DEPARTMENT_CODE'];
+            $qry = "select 1
+                from ".$this->k['journal']."_last
+                where ".$this->k['id']." = :id
+                and dept_code = :dept_code";
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":dept_code",$dept_code);
+        } else {
+            $qry = "select 1
+                from ".$this->k['journal']."
+                where ".$this->k['id']." = :id
+                and suny_id = :suny_id
+                union 
+                select 1
+                from ".$this->k['journal']." j, hrforms2_user_groups ug
+                where j.".$this->k['id']." = :id
+                and j.group_to != '-99'
+                and ug.group_id = j.group_to
+                and ug.suny_id = :suny_id";
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
+        }
         oci_bind_by_name($stmt,":id",$this->req[1]);
-        oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
         $row = oci_fetch_array($stmt,OCI_NUM);
@@ -117,13 +128,14 @@ class Journal extends HRForms2 {
             // Verify the ID is valid/exists
             if (!$this->validateID()) $this->raiseError(E_NOT_FOUND);
             // Verify effective user is permitted to access information
+            // TODO: need to allow viewers to access information
             if (!$this->validateUser()) $this->raiseError(E_NOT_FOUND);
         }
 	}
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-        // if the journal is archived; get the historical group names for the request/form
+        // if the journal is archived; get the group names at time of creation for the request/form
         if ($this->k['archive']) {
             $gh = (new groupshistory($this->req,false))->returnData;
             $group_ids = array_column($gh,'GROUP_ID');

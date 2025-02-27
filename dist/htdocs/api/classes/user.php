@@ -101,7 +101,8 @@ class User extends HRForms2 {
 			$qry = "select u.suny_id, p.*,
 				u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date,
 				to_char(u.refresh_date,'dd-MON-yy hh:mi:ss AM') as refresh_date,
-				d.group_id, g.group_name, u.user_options.notifications
+				d.group_id, g.group_name, nvl(u.user_options.notifications,'N') as notifications, 
+				nvl(u.user_options.viewer,'N') as viewer
 			from hrforms2_users u
 			left join (select distinct ".$this->BASE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.sunyhr_suny_id)
 			left join (select department_code, group_id from hrforms2_group_departments) d on (p.REPORTING_DEPARTMENT_CODE = d.DEPARTMENT_CODE)
