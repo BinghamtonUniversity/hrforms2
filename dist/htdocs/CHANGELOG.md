@@ -1,5 +1,47 @@
 # Changelog
 
+## Version 2.0.0(DEV-20250303)
+  * Fixed missing first name in Final Approval and Rejection lists.
+  * Added "Close" button for Requests and Forms.
+  * Fixed code in archivelist.php to handle older PHP version on server.
+  * Forms: Set Person Demographics Birth Date if Birth Date was used in the lookup on Basic Info.
+  * Increased font size on printing review pages.
+  * Reformatted groups list in popover in hierarchy.
+
+
+## Version 2.0.0(DEV-20250217)
+  * Fixed bug in Settings with no group data, caused error and prevented page from loading.
+  * Fixed popover display issues.
+  * Fixed bug with Campus buildings and departments not populating on the Form Person/Directory tab.
+  
+
+## Version 2.0.0(DEV-20250212)
+  * Updated and improved formatting for small screens and printing on Request and Form Review.
+  * Added Archived List and View for Forms.
+  * Added Archived List and View for Requests.
+  * Bug Fix for Requests Journal using incorrect array for user information.
+  * Added Login History page.
+  * Set counts and list queries to refetch on window focus when data is stale.
+  * Fixes to data fetching and refetching.
+  * Fix to positioning of popover on the Users and Groups tables in admin.
+  * Removed Unused/Unecessary Groups: Testing, Training, and SUBMITTER.  The SUBMITTER group does not control permissions.
+  * Initial build out for "Viewer" functionality.  User management provides ability to set "Viewer", but departments cannot be assigned.
+
+
+## Version 2.0.0(DEV-20250107)
+  * Fixed bug on Forms Volunteer tab that resulted in the Sub-Role field constantly being focused.
+  * Fixed bug on Forms Basic Information that caused focus to switch after entering a one number in the Effective Date field.
+  * Fixed Forms Basic Information for "PR Required" checkbox being checked by default.
+  * Added Template menu item to insert replacement variables into text.
+  * Disabled Group deletion for "special" groups (i.e. groups with IDs zero or below).
+  * Fixed user data refresh issue for missing/bad cached data.
+  * Prevent application from starting if user data is missing/incomplete.
+  * Prevent creation of Form/Request when user SUNY ID is missing.
+  * Require at least one tab be selected when creating/editing Form Payroll Transactions.
+  * Updated several npm packages to latest versions.
+  * Fixed bugs with new user creation; groups not displayed, SQL errors post insert.
+
+
 ## Version 2.0.0(DEV-20241216)
   * Required fields in Forms
   * Lock tabs when editing blocks (e.g. directory, education, etc).
