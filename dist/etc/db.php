@@ -13,9 +13,9 @@ $DBS = array(
 	),
 	(1)=>array(
 		"INSTANCE" => "LOCAL",
-		"DB" => "BDEV",
-		"DBUSER" => "buhr",
-		"DBPASS" => "qwasi00",
+		"DB" => "",
+		"DBUSER" => "",
+		"DBPASS" => "",
 		"NLS_LANG" => "AL32UTF8"
 	),
 	(2)=>array(
