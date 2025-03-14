@@ -289,8 +289,15 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             setLockTabs(false);
             return;
         }
-        if (isDraft) {
+        if (isDraft) {            
             if (isNew || action=='submit') {
+                // check for duplicate form first
+                console.log(data);
+                // POST to check
+                // data to check: person_id, payroll, form codes
+                // also consider effdate?
+                return;
+
                 // submit draft form
                 toast.promise(new Promise((resolve,reject) => {
                     createForm.mutateAsync(data).then(d=>resolve(d)).catch(e=>reject(e));
@@ -670,7 +677,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
 
                                                 {(canEdit&&!(isNew&&lockTabs))&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
                                                 
-                                                {(!isNew&&!isDraft) && <AppButton format="close" id="close" onClick={()=>handleRedirect()} disabled={isSaving||lockTabs}>Close</AppButton>}
+                                                <AppButton format="close" variant="danger" id="close" onClick={()=>handleRedirect()} disabled={isSaving||lockTabs}>Close</AppButton>
 
                                                 {activeTab!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
                                                 
