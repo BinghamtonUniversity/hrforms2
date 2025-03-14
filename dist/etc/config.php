@@ -1,6 +1,6 @@
 <?php
 /**
- * Configuration for Campus Directory
+ * Configuration for HR Forms 2
  *
 **/
 include('db.php');
@@ -8,7 +8,7 @@ include('email.php');
 
 define('VERSION','2.0.0');
 define('REVISION','LOCAL-20250303');
-define('BUILD_TIME',1741017523);
+define('BUILD_TIME',1741969157);
 define('TITLE','HR Forms 2');
 define('API_PATH','/api/api.php/'); //trailing slash required
 
@@ -23,7 +23,6 @@ $CONFIG = array(
 		"CAS_HOST" => null,		// hostname of CAS server to authenticate against
 		"DATE_FMT" => null,		// database string date format converted to moment syntax (see: https://date-fns.org/docs/format)
 		"DEBUG" => false,		// when true will output additional information in the JavaScript console.
-		"MAX_DRAFTS" => 10		// sets the maximum number of open drafts a user may have.  Attempts to create additional will result in error.
 	),
 	(1)=>array(
 		"INSTANCE" => "LOCAL",
@@ -31,7 +30,6 @@ $CONFIG = array(
 		"CAS_HOST" => null,
 		"DATE_FMT" => "DD-MMM-YY",
 		"DEBUG" => true,
-		"MAX_DRAFTS" => 20,
 	),
 	(2)=>array(
 		"INSTANCE" => "DEV",
@@ -39,7 +37,6 @@ $CONFIG = array(
 		"CAS_HOST" => null,
 		"DATE_FMT" => "DD-MMM-YY",
 		"DEBUG" => true,
-		"MAX_DRAFTS" => 3,
 	),
 	(3)=>array(
 		"INSTANCE" => "TEST",
@@ -47,7 +44,6 @@ $CONFIG = array(
 		"CAS_HOST" => null,
 		"DATE_FMT" => "DD-MMM-YY",
 		"DEBUG" => true,
-		"MAX_DRAFTS" => 3,
 	),
 	(4)=>array(
 		"INSTANCE" => "PROD",
@@ -55,7 +51,6 @@ $CONFIG = array(
 		"CAS_HOST" => null,
 		"DATE_FMT" => "DD-MMM-YY",
 		"DEBUG" => false,
-		"MAX_DRAFTS" => 3,
 	)
 );
 
@@ -84,7 +79,6 @@ function appSettingsJS() {
 		"instance" => INSTANCE,
 		"apiPath" => API_PATH,
 		"debug" => DEBUG,
-		"tplCache" => TPL_CACHE,
 		)
 	);
 }
