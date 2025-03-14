@@ -2,6 +2,7 @@ node_modules/
 backup/
 bruno/
 extra/
+scripts/
 vendor/
 db/
 dist/htdocs/css/
@@ -17,3 +18,5 @@ composer.phar
 composer.lock
 src/js/pages/testing.js
 src/js/pages/test/
+dist/etc/db.php
+dist/etc/email.php
