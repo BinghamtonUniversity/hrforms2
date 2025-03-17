@@ -22,6 +22,7 @@ const additionalIcons = [
     'mdi:calendar-blank',
     'mdi:clipboard-account',
     'mdi:newspaper',
+    'mdi:alert',
 ];
 
 // Editor Configuration
