@@ -65,24 +65,23 @@ function loadAppIcons(icons) {
 }
 
 /* App Banners */
-const CenterPage = ({children}) => <div className="center-page">{children}</div>;
 const LoadingApp = React.memo(() => (
-    <CenterPage>
+    <div className="center-page">
         <p className="display-4"><Icon icon="mdi:loading" className="spin iconify-inline"/>Starting HR Forms 2...</p>
-    </CenterPage>
+    </div>
 ));
 const LoadingAppError = ({children}) => (
-    <CenterPage>
+    <div className="center-page">
         <p className="display-4"><Icon icon="mdi:alert" className="iconify-inline"/>Failed To Load</p>
         <p>{children}</p>
-    </CenterPage>
+    </div>
 );
 const LoggedOutApp = React.memo(() => (
-    <CenterPage>
+    <div className="center-page">
         <p className="display-4">Logged Out</p>
         <p>You have been logged out of HR Forms 2.0</p>
         <p><a href="/">Log In Again</a></p>
-    </CenterPage>
+    </div>
 ));
 
 export default function StartApp() {
