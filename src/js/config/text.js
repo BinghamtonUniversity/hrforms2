@@ -57,6 +57,7 @@ const text = {
             'title':'Form Journal',
             'return': 'Return to List'
         },
+        'duplicate': 'There is at least one form in progress for this employee, payroll, and transaction.  Do you wish to continue creating this form?',
         'actions':{
             'save':{
                 'pending': 'Saving Form',

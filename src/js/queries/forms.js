@@ -114,7 +114,9 @@ export default function useFormQueries(FORM_ID) {
         return useQuery(['journal',FORM_ID],q(`journal/form/${FORM_ID}`),options);
     }
 
+    const duplicateCheck = () => useMutation(d=>q(`check/form`,'POST',d)());
 
     return {getEducationInstitutions,getPosition,getSupervisorNames,getArchiveFormList,
-        getJournal,getForm,getArchiveForm,postForm,putForm,patchForm,deleteForm,getFormList}
+        getJournal,getForm,getArchiveForm,postForm,putForm,patchForm,deleteForm,getFormList,
+        duplicateCheck};
 }

@@ -4,7 +4,7 @@ import { useQueryClient } from "react-query";
 import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
-import { Loading, AppButton, DateFormat } from "../blocks/components";
+import { Loading, AppButton, DateFormat, ModalConfirm } from "../blocks/components";
 import { get, set, has, zip, cloneDeep, merge, difference, defaultTo } from "lodash";
 import useFormQueries from "../queries/forms";
 import { flattenObject } from "../utility";
@@ -212,6 +212,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const [showDeleteModal,setShowDeleteModal] = useState(false);
     const [redirect,setRedirect] = useState('');
     const [dataLoadError,setDataLoadError] = useState(undefined);
+    const [showDuplicatesModal,setShowDuplicatesModal] = useState(false);
 
     const defaultVals = merge({},initFormValues,{formId:formId});
     const methods = useForm({
@@ -228,7 +229,8 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const {forms} = useSettingsContext();
 
     const queryclient = useQueryClient();
-    const {postForm,putForm,deleteForm} = useFormQueries(formId);
+    const {postForm,putForm,deleteForm,duplicateCheck} = useFormQueries(formId);
+    const check = duplicateCheck();
     const createForm = postForm();
     const updateForm = putForm(formId);
     const delForm = deleteForm(formId);
@@ -240,6 +242,25 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         effectiveDate:methods.getValues('effDate'),
         payrollCode:methods.getValues('payroll.PAYROLL_CODE')
     });
+
+    const duplicateButtons = {
+        close: {
+            title: 'Cancel',
+            callback: () => {
+                setIsSaving(false);
+                setLockTabs(false);
+                setShowDuplicatesModal(false);
+            }
+        },
+        confirm: {
+            title: 'Continue',
+            callback: () => {
+                setShowDuplicatesModal(false);
+                methods.setValue('action','submit');
+                methods.handleSubmit(handleSubmit,handleError)();
+            }
+        }
+    };
 
     const handleRedirect = () => {
         queryclient.refetchQueries(SUNY_ID).then(() => {
@@ -289,15 +310,8 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             setLockTabs(false);
             return;
         }
-        if (isDraft) {            
+        if (isDraft) {
             if (isNew || action=='submit') {
-                // check for duplicate form first
-                console.log(data);
-                // POST to check
-                // data to check: person_id, payroll, form codes
-                // also consider effdate?
-                return;
-
                 // submit draft form
                 toast.promise(new Promise((resolve,reject) => {
                     createForm.mutateAsync(data).then(d=>resolve(d)).catch(e=>reject(e));
@@ -434,8 +448,26 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         setActiveNav(nextNav);    
     }
     const handleSave = action => {
+        // Duplicate form check before submit.
+        if (isNew || action=='submit') {
+            methods.handleSubmit(handleCheck,handleError)();
+            return;
+        }
         methods.setValue('action',action);
         methods.handleSubmit(handleSubmit,handleError)();
+    }
+
+    const handleCheck = (d,e) => {
+        const data = d.hasOwnProperty('formId')?d:methods.getValues(); // make sure we have data
+        const checkFields = {
+            suny_id: data.person.information.SUNY_ID,
+            bnumber: data.person.information.LOCAL_CAMPUS_ID,
+            payroll: data.payroll.PAYROLL_CODE,
+            form_code: data.formActions.formCode.FORM_CODE,
+            action_code: data.formActions.actionCode.ACTION_CODE,
+            transaction_code: data.formActions.transactionCode.TRANSACTION_CODE
+        }
+        check.mutateAsync(checkFields).then(d=>setShowDuplicatesModal(d?.count > 0)).catch(e=>console.error(e));
     }
 
     const handleTabs = useCallback(tabs => {
@@ -677,11 +709,11 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
 
                                                 {(canEdit&&!(isNew&&lockTabs))&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
                                                 
-                                                <AppButton format="close" variant="danger" id="close" onClick={()=>handleRedirect()} disabled={isSaving||lockTabs}>Close</AppButton>
+                                                <AppButton format="close" variant={isNew?'danger':'secondary'} id="close" onClick={()=>handleRedirect()} disabled={isSaving||lockTabs}>Close</AppButton>
 
                                                 {activeTab!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
                                                 
-                                                {activeTab=='review'&&isDraft&&<AppButton format="submit" id="submit" variant="danger" onClick={()=>handleSave('submit')} disabled={!methods.formState.isValid||hasErrors||isSaving}>Submit</AppButton>}
+                                                {activeTab=='review'&&isDraft&&<AppButton format="submit" id="submit" variant="success" onClick={()=>handleSave('submit')} disabled={!methods.formState.isValid||hasErrors||isSaving}>Submit</AppButton>}
                                                 
                                                 {(activeTab=='review'&&!isDraft&&canEdit&&get(data,'lastJournal.STATUS')!='R') && 
                                                     <>
@@ -712,6 +744,9 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                         </Tabs>
                     </Form>
                     {showDeleteModal && <DeleteFormModal setShowDeleteModal={setShowDeleteModal} handleDelete={handleDelete}/>}
+                    <ModalConfirm show={showDuplicatesModal} icon="mdi:alert" title="Duplicate Form Found" buttons={duplicateButtons}>
+                        <p>{t('form.duplicate')}</p>
+                    </ModalConfirm>
                 </HRFormContext.Provider>
             </FormProvider>
         </>
