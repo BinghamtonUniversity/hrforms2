@@ -205,13 +205,16 @@ class EmploymentInfo extends HRForms2 {
 
 				// SUNY Account Information
 				$accounts = (new listdata(array('accounts'),false))->returnData;
-				$qry = "select acc_nbr, acc_pct
-					from BUHR.BUHR_PAYROLL_DIST_MV@banner.cc.binghamton.edu
-					where lin_itm_nbr = :line_number
-					and data_sts = 'C'
-					and osc_ern_cd in ('RGS','RGH','FEE')
-					and end_chk_dt >= :effective_date
-					order by eff_chk_dt desc";
+				$qry = "with payroll_dist as (
+						select acc_nbr, acc_pct,
+						rank() over (partition by acc_nbr order by eff_chk_dt desc) rnk
+						from BUHR.BUHR_PAYROLL_DIST_MV@banner.cc.binghamton.edu 
+						where lin_itm_nbr = :line_number
+						and data_sts in ('C','F')
+						and osc_ern_cd in ('RGS','RGH','FEE')
+						and eff_chk_dt <= :effective_date
+						order by eff_chk_dt desc)
+					select * from payroll_dist where rnk = 1";
 				$stmt = oci_parse($this->db,$qry);
 				oci_bind_by_name($stmt,":line_number", $row['LINE_ITEM_NUMBER']);
 				oci_bind_by_name($stmt,":effective_date", $row['EFFECTIVE_DATE']);
@@ -228,6 +231,7 @@ class EmploymentInfo extends HRForms2 {
 						"pct"=>$a['ACC_PCT']
 					);
 				};
+				if (count($acct) == 0) $acct = array(array("account"=>array(array("id"=>"","label"=>"")),"pct"=>"100"));
 				$row['SUNY_ACCOUNTS'] = $acct;
 
 				// Existing Additional Salary Data:
