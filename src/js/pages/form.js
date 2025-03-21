@@ -213,6 +213,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const [redirect,setRedirect] = useState('');
     const [dataLoadError,setDataLoadError] = useState(undefined);
     const [showDuplicatesModal,setShowDuplicatesModal] = useState(false);
+    const [showCloseModal,setShowCloseModal] = useState(false);
 
     const defaultVals = merge({},initFormValues,{formId:formId});
     const methods = useForm({
@@ -275,6 +276,23 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             setLockTabs(false);
             console.error(e);
         });
+    }
+
+    const closeButtons = {
+        close: {
+            title: 'Cancel',
+            callback: () => {
+                setShowCloseModal(false);
+            }
+        },
+        confirm: {
+            title: 'Discard',
+            format: 'delete',
+            callback: () => {
+                setShowCloseModal(false);
+                handleRedirect();
+            }
+        }
     }
 
     const navigate = tab => {
@@ -398,6 +416,14 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         } else {
             setHasErrors(true);
             console.error('Form Errors:',errors);
+        }
+    }
+    const handleClose = () => {
+        console.debug('Closing Form');
+        if (isNew || methods.formState.isDirty) {
+            setShowCloseModal(true);
+        } else {
+            handleRedirect();
         }
     }
     const handleReset = () => {
@@ -709,7 +735,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
 
                                                 {(canEdit&&!(isNew&&lockTabs))&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
                                                 
-                                                <AppButton format="close" variant={isNew?'danger':'secondary'} id="close" onClick={()=>handleRedirect()} disabled={isSaving||lockTabs}>Close</AppButton>
+                                                <AppButton format="close" variant={isNew?'danger':'secondary'} id="close" onClick={()=>handleClose()} disabled={isSaving||lockTabs}>Close</AppButton>
 
                                                 {activeTab!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
                                                 
@@ -746,6 +772,9 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                     {showDeleteModal && <DeleteFormModal setShowDeleteModal={setShowDeleteModal} handleDelete={handleDelete}/>}
                     <ModalConfirm show={showDuplicatesModal} icon="mdi:alert" title="Duplicate Form Found" buttons={duplicateButtons}>
                         <p>{t('form.duplicate')}</p>
+                    </ModalConfirm>
+                    <ModalConfirm show={showCloseModal} title="Close?" buttons={closeButtons}>
+                        <p>Are you sure you want to close this form? {(isNew)?'Your form will not be saved':'Your changes will not be saved'}.</p>
                     </ModalConfirm>
                 </HRFormContext.Provider>
             </FormProvider>

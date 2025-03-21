@@ -6,7 +6,7 @@ import { NotFound, useSettingsContext, useUserContext } from "../app";
 import useRequestQueries from "../queries/requests";
 import useListsQueries from "../queries/lists";
 import { useQueryClient } from "react-query";
-import { Loading, AppButton } from "../blocks/components";
+import { Loading, AppButton, ModalConfirm } from "../blocks/components";
 import format from "date-fns/format";
 import get from "lodash/get";
 import { Icon } from '@iconify/react';
@@ -166,6 +166,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     const [hasErrors,setHasErrors] = useState(false);
     const [showDeleteModal,setShowDeleteModal] = useState(false);
     const [redirect,setRedirect] = useState('');
+    const [showCloseModal,setShowCloseModal] = useState(false);
 
     const methods = useForm({
         mode:'onBlur',
@@ -199,6 +200,23 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         });
     }
 
+    const closeButtons = {
+        close: {
+            title: 'Cancel',
+            callback: () => {
+                setShowCloseModal(false);
+            }
+        },
+        confirm: {
+            title: 'Discard',
+            format: 'delete',
+            callback: () => {
+                setShowCloseModal(false);
+                handleRedirect();
+            }
+        }
+    }
+
     const navigate = tab => {
         methods.setValue('action','');
         if (tab == 'review') handleValidation();
@@ -224,6 +242,14 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         methods.handleSubmit(handleSubmit,handleError)();
     }
     const history = useHistory();
+    const handleClose = () => {
+        console.debug('Closing Request');
+        if (isNew || methods.formState.isDirty) {
+            setShowCloseModal(true);
+        } else {
+            handleRedirect();
+        }
+    }
     const handleReset = () => {
         methods.clearErrors();
         methods.reset(Object.assign({"reqId":reqId},defaultVals,data));
@@ -440,7 +466,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
 
                                             {(!(isNew&&lockTabs)&&canEdit)&&<AppButton format="save-move" id="save" variant="warning" onClick={()=>handleSave('save')} disabled={isSaving||lockTabs||!methods.formState.isDirty}>Save &amp; Exit</AppButton>}
 
-                                            <AppButton format="close" variant={isNew?'danger':'secondary'} id="close" onClick={()=>handleRedirect()} disabled={isSaving||lockTabs}>Close</AppButton>
+                                            <AppButton format="close" variant={isNew?'danger':'secondary'} id="close" onClick={()=>handleClose()} disabled={isSaving||lockTabs}>Close</AppButton>
 
                                             {t.id!='review'&&<AppButton format="next" onClick={handleNext} disabled={lockTabs}>Next</AppButton>}
                                             
@@ -466,6 +492,9 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                     </Tabs>
                 </Form>
                 {showDeleteModal && <DeleteRequestModal setShowDeleteModal={setShowDeleteModal} handleDelete={handleDelete}/>}
+                <ModalConfirm show={showCloseModal} title="Close?" buttons={closeButtons}>
+                    <p>Are you sure you want to close this request? {(isNew)?'Your request will not be saved':'Your changes will not be saved'}.</p>
+                </ModalConfirm>
             </RequestContext.Provider>
         </FormProvider>
     );
