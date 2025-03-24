@@ -30,8 +30,8 @@ class Counts extends HRForms2 {
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
 		$counts = array();
-		if ($this->req[0]) {
-			/* Get Deptarment Code for Effective SUNY ID */
+		if (count($this->req) > 0) {
+			/* Get Department Code for Effective SUNY ID */
 			$user = (new user(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData[0];
 
 			/* Requests */
@@ -67,6 +67,9 @@ class Counts extends HRForms2 {
 			$counts['forms'] = json_decode($row['JSON']);
 			
 		} else {
+			$usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
+			$groups = array_column($usergroups, 'GROUP_ID');
+			#var_dump($groups);
 			/* Requests */
 			$qry = "with counts as (select 'drafts' as menu, count(suny_id) as count, 0 as age
 				from hrforms2_requests_drafts
@@ -78,26 +81,30 @@ class Counts extends HRForms2 {
 				where last_status in ('PA','PF')
 				and r.created_by.SUNY_ID = :suny_id
 				union
-				select 'approvals', count(j.request_id), trunc(sysdate) - trunc(min(j.last_journal_date))
-				from hrforms2_requests_journal_last j
-				join (select * from hrforms2_requests) r on (j.request_id = r.request_id)
-				where last_status = 'PA'
-				and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
-				and r.created_by.SUNY_ID != :suny_id
-				union
 				select 'rejections', count(j.request_id), trunc(sysdate) - trunc(min(j.last_journal_date))
 				from hrforms2_requests_journal_last j
 				join (select * from hrforms2_requests) r on (j.request_id = r.request_id)
 				where last_status = 'R'
-				and r.created_by.SUNY_ID = :suny_id
-				union
-				select 'final', count(j.request_id), trunc(sysdate) - trunc(min(j.last_journal_date))
-				from hrforms2_requests_journal_last j
-				join (select * from hrforms2_requests) r on (j.request_id = r.request_id)
-				where last_status = 'PF'
-				and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
-				and r.created_by.SUNY_ID != :suny_id)
-			select json_objectagg(key menu value json_object(
+				and r.created_by.SUNY_ID = :suny_id";
+			if (count($groups) > 0) {
+				$qry .= " union
+					select 'approvals', count(j.request_id), trunc(sysdate) - trunc(min(j.last_journal_date))
+					from hrforms2_requests_journal_last j
+					join (select * from hrforms2_requests) r on (j.request_id = r.request_id)
+					where last_status = 'PA'
+					and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
+					and r.created_by.SUNY_ID != :suny_id";
+			}
+			if (in_array('-1',$groups)||in_array('-',$groups)) {
+				$qry .= " union
+					select 'final', count(j.request_id), trunc(sysdate) - trunc(min(j.last_journal_date))
+					from hrforms2_requests_journal_last j
+					join (select * from hrforms2_requests) r on (j.request_id = r.request_id)
+					where last_status = 'PF'
+					and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
+					and r.created_by.SUNY_ID != :suny_id";
+			}
+			$qry .= ") select json_objectagg(key menu value json_object(
 				key 'count' is counts.count,
 				key 'age' is nvl(counts.age,0))) as json
 			from counts";
@@ -112,20 +119,6 @@ class Counts extends HRForms2 {
 				from hrforms2_forms_drafts
 				where suny_id = :suny_id
 				union
-				select 'approvals', count(j.form_id), trunc(sysdate) - trunc(min(j.last_journal_date))
-				from hrforms2_forms_journal_last j
-				join (select * from hrforms2_forms) f on (j.form_id = f.form_id)
-				where last_status = 'PA'
-				and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
-				and f.created_by.SUNY_ID != :suny_id
-				union
-				select 'final', count(j.form_id), trunc(sysdate) - trunc(min(j.last_journal_date))
-				from hrforms2_forms_journal_last j
-				join (select * from hrforms2_forms) f on (j.form_id = f.form_id)
-				where last_status = 'PF'
-				and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
-				and f.created_by.SUNY_ID != :suny_id
-				union
 				select 'pending', count(j.form_id), trunc(sysdate) - trunc(min(j.last_journal_date))
 				from hrforms2_forms_journal_last j
 				join (select * from hrforms2_forms) f on (j.form_id = f.form_id)
@@ -136,8 +129,26 @@ class Counts extends HRForms2 {
 				from hrforms2_forms_journal_last j
 				join (select * from hrforms2_forms) f on (j.form_id = f.form_id)
 				where last_status = 'R'
-				and f.created_by.SUNY_ID = :suny_id)
-			select json_objectagg(key menu value json_object(
+				and f.created_by.SUNY_ID = :suny_id";
+			if (count($groups) > 0) {
+				$qry .= " union
+				select 'approvals', count(j.form_id), trunc(sysdate) - trunc(min(j.last_journal_date))
+				from hrforms2_forms_journal_last j
+				join (select * from hrforms2_forms) f on (j.form_id = f.form_id)
+				where last_status = 'PA'
+				and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
+				and f.created_by.SUNY_ID != :suny_id";
+			}
+			if (in_array('-1',$groups)||in_array('-',$groups)) {
+				$qry .= " union
+				select 'final', count(j.form_id), trunc(sysdate) - trunc(min(j.last_journal_date))
+				from hrforms2_forms_journal_last j
+				join (select * from hrforms2_forms) f on (j.form_id = f.form_id)
+				where last_status = 'PF'
+				and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
+				and f.created_by.SUNY_ID != :suny_id";
+			}
+			$qry .= ") select json_objectagg(key menu value json_object(
 				key 'count' is counts.count,
 				key 'age' is nvl(counts.age,0))) as json
 			from counts";
