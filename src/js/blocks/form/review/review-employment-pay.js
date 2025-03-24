@@ -36,8 +36,8 @@ function ReviewEmploymentPayExisting() {
                     </tr>
                 </thead>
                 <tbody>
-                    {info.map(r=>(
-                        <React.Fragment key={r.HR_COMMITMENT_ID}>
+                    {info.map((r,i)=>(
+                        <React.Fragment key={`${r.HR_COMMITMENT_ID}-${i}`}>
                             <tr>
                                 <td><DateFormat>{r.commitmentEffDate}</DateFormat></td>
                                 <td><DateFormat>{r.commitmentEndDate}</DateFormat></td>
