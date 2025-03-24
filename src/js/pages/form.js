@@ -475,7 +475,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     }
     const handleSave = action => {
         // Duplicate form check before submit.
-        if (isNew || action=='submit') {
+        if (action=='submit') {
             methods.handleSubmit(handleCheck,handleError)();
             return;
         }
