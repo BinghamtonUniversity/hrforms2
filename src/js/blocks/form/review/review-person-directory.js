@@ -4,6 +4,8 @@ import { useFormContext } from "react-hook-form";
 import { DateFormat } from "../../components";
 import { includes } from "lodash";
 import useListsQueries from "../../../queries/lists";
+import { Icon } from "@iconify/react/dist/iconify.js";
+import { t } from "../../../config/text";
 
 export default function ReviewPersonDirectory() {
     const { getValues } = useFormContext();
@@ -40,8 +42,8 @@ function ReviewPersonDirectoryAddress({data}) {
                                 <address>
                                     {includes(addrType?.fields,'line1')&&<p className="mb-0">{a.ADDRESS_1}</p>}
                                     {includes(addrType?.fields,'line2')&&<p className="mb-0">{a.ADDRESS_2}</p>}
-                                    {includes(addrType?.fields,'department')&&<p className="mb-0">{a.department.label}</p>}
-                                    {includes(addrType?.fields,'building')&&<p className="mb-0">{a.building.label}</p>}
+                                    {includes(addrType?.fields,'department')&&<p className="mb-0">{(!!a.department.label)?a.department.label:<em>{a.ADDRESS_1} <span className="text-warning"><Icon icon="mdi:alert" className="iconify-inline"/>{t('form.review.person.directory.missing_department')}</span></em>}</p>}
+                                    {includes(addrType?.fields,'building')&&<p className="mb-0">{(!!a.building.label)?a.building.label:<em>{a.ADDRESS_2} <span className="text-warning"><Icon icon="mdi:alert" className="iconify-inline"/>{t('form.review.person.directory.missing_building')}</span></em>}</p>}
                                     {includes(addrType?.fields,'room')&&<p className="mb-0">{a.ADDRESS_3}</p>}
                                     {includes(addrType?.fields,'line3')&&<p className="mb-0">{a.ADDRESS_3}</p>}
                                     {includes(addrType?.fields,'city')&&<p className="mb-0">{a.ADDRESS_CITY}, {a.STATE_CODE} {a.ADDRESS_POSTAL_CODE}</p>}

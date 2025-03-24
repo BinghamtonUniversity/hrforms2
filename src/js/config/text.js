@@ -79,6 +79,14 @@ const text = {
                 'success': 'Form Rejected Successfully',
                 'error': 'Error Rejecting Form'
             }
+        },
+        'review':{
+            person:{
+                directory:{
+                    missing_department:'No matching Department in List',
+                    missing_building:'No matching Building in List'
+                }
+            }
         }
     },
     'request':{
@@ -158,7 +166,8 @@ const text = {
                 }
             },
         },
-    }
+    },
+    'test': 'This is a test message'
 };
 
 /* do not edit below this line */
