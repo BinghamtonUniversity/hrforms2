@@ -202,7 +202,6 @@ class Forms extends HRForms2 {
 
                 //get hierarchy for group
                 $h = (new hierarchy(array('form','group',$group['GROUP_ID']),false))->returnData;
-                //$paytransId = $this->POSTvars['formActions']['PAYTRANS_ID'];
                 $idx = array_search($this->POSTvars['formActions']['PAYTRANS_ID'],array_column($h,'PAYTRANS_ID'));
                 $message = "";
                 if ($idx===false) {
@@ -242,17 +241,6 @@ class Forms extends HRForms2 {
                     $hierarchy = $h[$idx];
                 }
                 
-                /*$j = array_filter($h,function($v) use($group,$paytransId) {
-                    //$hgroups = explode(',',$v['HIERARCHY_GROUPS']);
-                    return ($v['PAYTRANS_ID']==$paytransId&&in_array($group['GROUP_ID'],$hgroups));
-                });
-                if (count($j)<1) {
-                    //TODO: default route?
-                    $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"No hierarchy defined for Form Type")); // no hierarchy
-                }*/
-
-                //$hierarchy = array_shift($j); //get the first record
-
                 $groups = $hierarchy['WORKFLOW_GROUPS'];
                 $groups_array = explode(",",$groups);
 
@@ -260,7 +248,8 @@ class Forms extends HRForms2 {
                 if ($hierarchy['SENDTOGROUP'] == "Y") {
                     $groups_array = array_merge(array_values($group),$groups_array);
                 }
-                // Add empty value to the beginning of the groups for the "S" record.
+                
+                // Add submitter group to the beginning of the groups array
                 array_unshift($groups_array,"-99");
 
                 //extract comments from JSON
@@ -603,6 +592,7 @@ class Forms extends HRForms2 {
             if ($this->retJSON) $this->done();
         } else {
             //raise error; cannot delete non-drafts.
+            //TODO: delete rejected? (see requests.php for example code)
             $this->raiseError(E_METHOD_NOT_ALLOWED);
         }
     }
