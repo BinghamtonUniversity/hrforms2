@@ -82,8 +82,14 @@ const advancedFields = {
     "person.demographics.NON_CITIZEN_TYPE.id":(frmData,v)=>get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Non-US Citizen Type is required"),
     "person.demographics.CITIZENSHIP_COUNTRY_CODE.id":(frmData,v) => get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Country of Citizenship is required"),
     "person.demographics.VISA_CODE.id":(frmData,v) => get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Visa Type is required"),
-    "person.directory.phone":(frmData,v) => get(frmData,'person.directory.phone',[]).some(p=>['HOME','CELL'].includes(p?.PHONE_TYPE)) ? true : 'Home or Cell phone number is required',
-    "person.directory.email":(frmData,v) => get(frmData,'person.directory.email',[]).some(e=>e?.EMAIL_TYPE=='HOME') ? true : 'Home email is required',
+    "person.directory.phone":(frmData,v) => {
+        if (get(frmData,'payroll.PAYROLL_CODE','X')!='28020') return true;
+        return get(frmData,'person.directory.phone',[]).some(p=>['HOME','CELL'].includes(p?.PHONE_TYPE)) ? true : 'Home or Cell phone number is required'
+    },
+    "person.directory.email":(frmData,v) => {
+        if (get(frmData,'payroll.PAYROLL_CODE','X')!='28020') return true;
+        return get(frmData,'person.directory.email',[]).some(e=>e?.EMAIL_TYPE=='HOME') ? true : 'Home email is required'
+    },
     "person.education.institutions":(frmData,v) => (['AS','BA','MA','DO','PR','GR'].includes(get(frmData,'person.demographics.HIGHEST_EDUCATION_LEVEL.id','')) && !v.length)?'Education is required':true,
     "employment.appointment.TENURE_STATUS.id":(frmData,v)=>get(frmData,'employment.appointment.DERIVED_FAC_TYPE','N') == 'N' ? true : (!!v||'Tenure Status is required'),
     //TODO: facultyDetails could be consolidated to one function
