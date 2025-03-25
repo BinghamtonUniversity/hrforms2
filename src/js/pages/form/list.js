@@ -70,6 +70,7 @@ function ListAgeWarning({enabled,maxage,countAge}) {
 }
 
 function ListData({list}) {
+    const queryclient = useQueryClient();
     const {getGroups} = useGroupQueries();
     const {getFormList} = useFormQueries();
     const groups = getGroups();
@@ -79,6 +80,10 @@ function ListData({list}) {
             return l;
         });
     }});
+
+    // Remove the formlist query cache when leaving the page.
+    useEffect(() => ()=>queryclient.removeQueries('formlist'),[]);
+
     if (listdata.isError) return <Loading type="alert" isError>Error Loading List Data</Loading>;
     if (listdata.isIdle||listdata.isLoading) return <Loading type="alert">Loading List Data</Loading>;
     return (

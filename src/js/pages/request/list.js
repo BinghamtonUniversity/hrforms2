@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, lazy } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {useParams} from "react-router-dom";
 import { useQueryClient } from "react-query";
 import useRequestQueries from "../../queries/requests";
@@ -16,8 +16,6 @@ import { flattenObject } from "../../utility";
 import { Helmet } from "react-helmet";
 import useUserQueries from "../../queries/users";
 import { Icon } from "@iconify/react/dist/iconify.js";
-
-const ListArchiveTable = lazy(()=>import("./archive"));
 
 export default function RequestList() {
     const {part} = useParams();
@@ -51,7 +49,7 @@ export default function RequestList() {
                     </header>
                     <section>
                         <ListAgeWarning enabled={requests.agewarn.enabled} maxage={requests.agewarn.age} countAge={countAge}/>
-                        {(part=='archived')?<ListArchiveTable/>:<ListData list={(part)?part:'all'}/>}
+                        <ListData list={(part)?part:'all'}/>
                     </section>
                 </>
             )}}
@@ -70,6 +68,7 @@ function ListAgeWarning({enabled,maxage,countAge}) {
 }
 
 function ListData({list}) {
+    const queryclient = useQueryClient();
     const {getGroups} = useGroupQueries();
     const {getRequestList} = useRequestQueries();
     const groups = getGroups();
@@ -81,6 +80,10 @@ function ListData({list}) {
             return l;
         });
     }});
+
+    // Remove the requestlist query cache when leaving the page.
+    useEffect(() => ()=>queryclient.removeQueries('requestlist'),[]);
+
     if (listdata.isError) return <Loading type="alert" isError>Error Loading List Data</Loading>;
     if (listdata.isIdle||listdata.isLoading) return <Loading type="alert">Loading List Data</Loading>;
     return (
