@@ -186,9 +186,15 @@ class Journal extends HRForms2 {
         if ($this->retJSON) $this->toJSON($this->returnData);
 	}
     function POST() {
-        $qry = "insert into ".$this->k['journal']." 
-        values(:id, systimestamp, :suny_id, :status, :hierarchy_id, :workflow_id, :seq, :group_from, :group_to, EMPTY_CLOB())
-        returning COMMENTS into :comments";
+        if (INSTANCE=="LOCAL") {
+            $qry = "insert into ".$this->k['journal']." 
+            values(:id, systimestamp, :suny_id, :status, :hierarchy_id, :workflow_id, :seq, :group_from, :group_to,'{}')
+            returning COMMENTS into :comments";
+        } else {
+            $qry = "insert into ".$this->k['journal']." 
+            values(:id, systimestamp, :suny_id, :status, :hierarchy_id, :workflow_id, :seq, :group_from, :group_to, EMPTY_CLOB())
+            returning COMMENTS into :comments";
+        }
         $stmt = oci_parse($this->db,$qry);
         $comments = oci_new_descriptor($this->db, OCI_D_LOB);
         oci_bind_by_name($stmt,":id", $this->req[1]);

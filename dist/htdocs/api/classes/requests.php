@@ -238,9 +238,15 @@ class Requests extends HRForms2 {
 
                 if ($this->req[0] == "submit") {
                     // insert into hrforms2_request (get request id);
-                    $qry = "insert into HRFORMS2_REQUESTS 
-                    values(HRFORMS2_REQUEST_ID_SEQ.nextval,EMPTY_CLOB(),sysdate,EMPTY_CLOB()) 
-                    returning REQUEST_ID, CREATED_BY, REQUEST_DATA into :request_id, :created_by, :request_data";
+                    if (INSTANCE=="LOCAL") {
+                        $qry = "insert into HRFORMS2_REQUESTS 
+                        values(HRFORMS2_REQUEST_ID_SEQ.nextval,'{}',sysdate,'{}') 
+                        returning REQUEST_ID, CREATED_BY, REQUEST_DATA into :request_id, :created_by, :request_data";                            
+                    } else {
+                        $qry = "insert into HRFORMS2_REQUESTS 
+                        values(HRFORMS2_REQUEST_ID_SEQ.nextval,EMPTY_CLOB(),sysdate,EMPTY_CLOB()) 
+                        returning REQUEST_ID, CREATED_BY, REQUEST_DATA into :request_id, :created_by, :request_data";
+                    }
                     $stmt = oci_parse($this->db,$qry);
                     $created_by = oci_new_descriptor($this->db, OCI_D_LOB);
                     $request_data = oci_new_descriptor($this->db, OCI_D_LOB);
