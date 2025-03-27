@@ -259,7 +259,7 @@ Class HRForms2 {
 	*/
 	protected function isViewer($id) {
 		if (isset($this->sessionData['isViewer'])) return $this->sessionData['isViewer'];
-		$qry = "select count(suny_id) as IS_VIEWER from hrforms2_user_groups where group_id = -11 and suny_id = :sunyid";
+		$qry = "select decode(u.user_options.viewer,'Y',1,0) as IS_VIEWER from hrforms2_users u where suny_id = :sunyid";
 		$stmt = oci_parse($this->db,$qry);
 		oci_bind_by_name($stmt, ":sunyid", $id);
 		$r = oci_execute($stmt);

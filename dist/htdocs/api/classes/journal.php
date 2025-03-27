@@ -85,14 +85,12 @@ class Journal extends HRForms2 {
         
         // If isViewer, check dept_code
         if ($this->sessionData['isViewer']) {
-            $user = (new user(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData[0];
-            $dept_code = $user['REPORTING_DEPARTMENT_CODE'];
             $qry = "select 1
                 from ".$this->k['journal']."_last
                 where ".$this->k['id']." = :id
-                and dept_code = :dept_code";
+                and dept_code in (select department_code from hrforms2_user_departments where suny_id = :suny_id)";
             $stmt = oci_parse($this->db,$qry);
-            oci_bind_by_name($stmt,":dept_code",$dept_code);
+            oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
         } else {
             $qry = "select 1
                 from ".$this->k['journal']."
@@ -128,7 +126,6 @@ class Journal extends HRForms2 {
             // Verify the ID is valid/exists
             if (!$this->validateID()) $this->raiseError(E_NOT_FOUND);
             // Verify effective user is permitted to access information
-            // TODO: need to allow viewers to access information
             if (!$this->validateUser()) $this->raiseError(E_NOT_FOUND);
         }
 	}

@@ -18,7 +18,7 @@ export default function useUserQueries(SUNY_ID) {
                 u.fullname = fName + ' ' + u.LEGAL_LAST_NAME;
                 u.sortname = u.LEGAL_LAST_NAME + ', ' + fName;
                 u.userGroups = !!u.USER_GROUPS ? u.USER_GROUPS.split(',') : [];
-                u.isViewer = u.userGroups.includes('-11');
+                u.isViewer = u.USER_OPTIONS?.viewer == 'Y';
             });
         }});
     }    
