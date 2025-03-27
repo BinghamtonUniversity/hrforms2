@@ -65,14 +65,13 @@ class Hierarchy extends HRForms2 {
 						w.GROUPS as workflow_groups,w.CONDITIONS
 						from hrforms2_requests_hierarchy h
 						left join (select hierarchy_id, listagg(group_id,',') as hierarchy_groups from hrforms2_requests_hierarchy_groups group by hierarchy_id) g on (h.hierarchy_id = g.hierarchy_id)
-						left join (select * from hrforms2_requests_workflow) w on (h.workflow_id = w.workflow_id)";	
-				//TODO: is this used?
+						left join (select * from hrforms2_requests_workflow) w on (h.workflow_id = w.workflow_id)";							
 				if (isset($this->req[1])&&$this->req[1]!='group') {
 					$qry .= " where h.hierarchy_id = :id";
 					$id = $this->req[1];
 				}
 				$stmt = oci_parse($this->db,$qry);
-				if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $id);
+				if (isset($this->req[1])&&$this->req[1]!='group') oci_bind_by_name($stmt,":id", $id);
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_LOBS)) {
