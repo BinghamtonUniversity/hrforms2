@@ -412,12 +412,13 @@ function AddEditUserForm(props) {
     const [firstName,lastName] = methods.watch(['firstName','lastName']);
 
     const queryclient = useQueryClient();
-    const {getUserGroups,postUser,putUser} = useUserQueries(props.SUNY_ID);
+    const {getUserGroups,getUserDepts,postUser,putUser} = useUserQueries(props.SUNY_ID);
     const {getGroups} = useGroupQueries();
     const {getListData} = useListsQueries();
     const groups = getGroups({enabled:false,select:data=>sortBy(data.filter(g=>g.active),['GROUP_NAME'])});
     const depts = getListData('deptOrgs',{enabled:false});
     const usergroups = getUserGroups({enabled:false,select:data=>sortBy(data,['GROUP_NAME'])});
+    const userdepts = getUserDepts({enabled:false});
     const updateuser = putUser();
     const createuser = postUser();
 
@@ -437,17 +438,26 @@ function AddEditUserForm(props) {
         const newIds = data.assignedGroups.map(g=>g.GROUP_ID);
         const addGroups = difference(newIds,origIds);
         const delGroups = difference(origIds,newIds);
-        if (!Object.keys(methods.formState.dirtyFields).length && !props.newUser && !addGroups && !delGroups) {
+
+        const origDepts = (userdepts.data)?userdepts.data.map(d=>d.DEPARTMENT_CODE):[];
+        const newDepts = data.assignedDepts.map(d=>d.DEPARTMENT_CODE);
+        const addDepts = difference(newDepts,origDepts);
+        const delDepts = difference(origDepts,newDepts);
+
+        if (!Object.keys(methods.formState.dirtyFields).length && !props.newUser && !addGroups && !delGroups && !addDepts && !delDepts) {
             toast.info('No changes to user data');
             closeModal();
             return true;
         }
+
         const reqData = {
             SUNY_ID:data.SUNYID,
             START_DATE:format(data.startDate,'dd-MMM-yyyy'),
             END_DATE:(data.endDate)?format(data.endDate,'dd-MMM-yyyy'):'',
             ADD_GROUPS:addGroups,
             DEL_GROUPS:delGroups,
+            ADD_DEPTS:addDepts,
+            DEL_DEPTS:delDepts,
             OPTIONS:{
                 notifications:data.notifications,
                 viewer:data.viewer
@@ -499,9 +509,15 @@ function AddEditUserForm(props) {
                     availableDepts:deptsData
                 }));
             } else {
-                usergroups.refetch().then(({data:usergroupData}) => {
+                Promise.all([
+                    usergroups.refetch(),
+                    userdepts.refetch()
+                ]).then((r) => {
+                    const [{data:usergroupData},{data:userdeptData}] = r;
                     const assignedIds = usergroupData.map(g=>g.GROUP_ID);
                     const filtered = groupsData.filter(g=>!assignedIds.includes(g.GROUP_ID));
+                    const assignedDepts = userdeptData.map(d=>d.DEPARTMENT_CODE);
+                    const filteredDepts = deptsData.filter(d=>!assignedDepts.includes(d.DEPARTMENT_CODE));
                     methods.reset({
                         SUNYID:props.SUNY_ID,
                         bNumber:props.B_NUMBER||'',
@@ -516,10 +532,10 @@ function AddEditUserForm(props) {
                         startDate: props.startDate,
                         endDate: props.endDate,
                         refreshDate: props.refreshDateFmt||'never',
-                        assignedGroups:usergroupData,
-                        availableGroups:filtered,
-                        availableDepts:deptsData,
-                        assignedDepts:[]
+                        assignedGroups: usergroupData,
+                        availableGroups: filtered,
+                        assignedDepts: userdeptData,
+                        availableDepts: filteredDepts
                     });
                     setStatus({state:'clear',save:true});
                 });
@@ -802,7 +818,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
                             return <Form.Check {...field} className="ml-2" type="checkbox" inline onChange={e=>handleCheck(e,field)} value="Y" checked={field.value=="Y"} aria-describedby="viewerHelp"/>;
                         }}
                     />
-                    <Form.Text id="viewerHelp" muted>Viewers cannot submit requests or forms.  They may only view submitted requests and forms for the departments they are assigned to. </Form.Text>
+                    <Form.Text id="viewerHelp" muted>{t('admin.users.viewer.help')}</Form.Text>
                 </Form.Group>
             </Form.Row>
             <Form.Row>
@@ -981,17 +997,17 @@ function UserDepts() {
     }
     const handleOnChange = e => setFilterText(e.target.value);
     useEffect(() => {
-        /*const filtered = getValues('availableGroups').filter(row =>{
+        const filtered = getValues('availableDepts').filter(row =>{
             return Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
-        }).map(f=>f.GROUP_ID);
-        setFilteredGroups(filtered);*/
+        }).map(f=>f.DEPARTMENT_CODE);
+        setFilteredDepts(filtered);
     },[filterText]);
     useEffect(()=>ref.current.focus(),[]);
     return (
         <>
             <Row>
                 <Col>
-                    <Alert variant="warning">Viewers cannot submit requests or forms.  They may only view submitted requests and forms for the departments they are assigned to.</Alert>
+                    <Alert variant="warning">{t('admin.users.viewer.help')}</Alert>
                 </Col>
             </Row>
             <Form.Row>
@@ -1003,7 +1019,7 @@ function UserDepts() {
             <div className="drag-col-2">
                 <div className="dlh1">Unassigned Departments</div>
                 <div className="dlh2">Assigned Departments</div>
-                <UserDeptsList filteredGroups={filteredDepts} filterText={filterText}/>
+                <UserDeptsList filteredDepts={filteredDepts} filterText={filterText}/>
             </div>
         </>
     );

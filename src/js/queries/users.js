@@ -125,5 +125,10 @@ export default function useUserQueries(SUNY_ID) {
         return useQuery(['usergroups',SUNY_ID],q(`usergroups/${SUNY_ID}`),options);
     }
 
-    return {getUser,getCounts,lookupUser,getUsers,postUser,putUser,patchUser,deleteUser,getUserGroups};
+    const getUserDepts = (...args) => {
+        const options = args[0]?.options||args[0]||{};
+        return useQuery(['userdepts',SUNY_ID],q(`userdepts/${SUNY_ID}`),options);
+    }
+
+    return {getUser,getCounts,lookupUser,getUsers,postUser,putUser,patchUser,deleteUser,getUserGroups,getUserDepts};
 }

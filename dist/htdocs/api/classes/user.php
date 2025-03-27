@@ -242,7 +242,7 @@ class User extends HRForms2 {
 			set start_date = :start_date, 
 			end_date = :end_date,
 			refresh_date = NULL,
-			user_options = EMPTY_CLOB()
+			user_options = " . ((INSTANCE=='LOCAL')?"'{}'":'EMPTY_CLOB()') . "
 			where suny_id = :suny_id
 			returning user_options into :user_options";
 		$stmt = oci_parse($this->db,$qry);
@@ -257,6 +257,7 @@ class User extends HRForms2 {
 		oci_commit($this->db);
 		oci_free_statement($stmt);
 		new usergroups(array($this->POSTvars['SUNY_ID']));
+		new userdepts(array($this->POSTvars['SUNY_ID']));
 		$this->done();
 	}
 

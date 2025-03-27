@@ -50,6 +50,9 @@ const text = {
         },
         'users': {
             'title': 'Admin: Users',
+            'viewer': {
+                'help': 'Viewers cannot submit Requests or Forms.  They may only view submitted Requests and Forms for the departments they are assigned to.'
+            }
         },
     },
     'form':{
