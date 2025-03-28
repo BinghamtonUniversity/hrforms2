@@ -4,7 +4,7 @@ import { useIsFetching } from 'react-query';
 import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import sub from "date-fns/sub";
-import { assign, keyBy, orderBy } from "lodash";
+import { assign, keyBy, orderBy, get } from "lodash";
 import { AppButton, Loading } from "../components";
 import usePersonQueries from "../../queries/person";
 import useCodesQueries from "../../queries/codes";
@@ -14,6 +14,7 @@ import { useQueryClient } from "react-query";
 import { Icon } from "@iconify/react";
 import { defaultFormActions, useHRFormContext } from "../../config/form";
 import { Modal } from "react-bootstrap";
+import { toast } from "react-toastify";
 
 export default function FormBasicInfo() {
     const { getValues } = useFormContext();
@@ -470,10 +471,10 @@ function PayrollDate({selectedId,selectedPayroll}) {
 
 function FormActionsWrapper({payroll}) {
     const [filter,setFilter] = useState('000');
-    const [PRRequired,setPRRequired] = useState(false);
+    //const [PRRequired,setPRRequired] = useState(false);
     const [showPRRequired,setShowPRRequired] = useState(false);
     
-    const { getValues, setValue } = useFormContext();
+    const { getValues, setValue, setError } = useFormContext();
     const { handleTabs } = useHRFormContext();
     const [watchFormCode,watchActionCode,watchTransactionCode] = useWatch({name:['formActions.formCode','formActions.actionCode','formActions.transactionCode']});
     const watchRoleType = useWatch({name:'selectedRow.EMPLOYMENT_ROLE_TYPE'});
@@ -568,6 +569,11 @@ function FormActionsWrapper({payroll}) {
         }
         if (!getValues('formActions.PAYTRANS_ID')) { //Do not reload if PAYTRANS_ID already set
             if (pt) {
+                if (pt.TABS.length == 0) {
+                    setError('formActions.transactionCode.TRANSACTION_CODE',{type:'manual',message:'No Tabs have been set for this Form Action'});
+                    toast.error('No Tabs have been set for this Form Action');
+                    return;
+                }
                 if (pt.PR_REQUIRED == '1') setShowPRRequired(true);
                 setValue('formActions.PAYTRANS_ID',pt.PAYTRANS_ID);
                 setValue('formActions.ROUTE_BY',pt.ROUTE_BY);
@@ -635,7 +641,7 @@ function FormActionsFormCode({formCodes,description}) {
 
     useEffect(()=>{
         if (ref.current) {
-            //TODO: To use KB nav will need more work to disable auto-tab data load and auto-next
+            //TODO: To use keyboard navigation, will need more work to disable auto-tab data load and auto-next
             //ref.current.focus();
             ref.current.scrollIntoView();
         }
@@ -703,7 +709,7 @@ function FormActionsActionCode({actionCodes,description,formCode,actionSize}) {
     );    
 }
 function FormActionsTransactionCode({transactionCodes,description,formCode,actionCode,actionSize,transactionSize}) {
-    const { control, setValue } = useFormContext();
+    const { control, setValue, formState: { errors } } = useFormContext();
     const { journalStatus } = useHRFormContext();
 
     const handleSelectChange = (e,field) => {
@@ -721,18 +727,21 @@ function FormActionsTransactionCode({transactionCodes,description,formCode,actio
                 {(!formCode)?<p>Select a Form Code</p>:
                 (actionSize==0)?<p>N/A</p>:
                 (!actionCode)?<p>Select an Action Code</p>:
-                (transactionSize==0)?<p>N/A</p>:
-                    <Controller
-                        name="formActions.transactionCode.TRANSACTION_CODE"
-                        control={control}
-                        render={({field}) => (
-                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} aria-describedby="transactionCodeDescription" disabled={journalStatus!=""}>
-                                <option></option>
-                                {Array.from(transactionCodes.values()).map(t=><option key={t.TRANSACTION_CODE} value={t.TRANSACTION_CODE}>{t.TRANSACTION_TITLE}</option>)}
-                            </Form.Control>
-                        )}
-                    />
-                }
+                (transactionSize==0)?<p>N/A</p>:(
+                    <>
+                        <Controller
+                            name="formActions.transactionCode.TRANSACTION_CODE"
+                            control={control}
+                            render={({field}) => (
+                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} aria-describedby="transactionCodeDescription" disabled={journalStatus!=""} isInvalid={!!get(errors,field.name,false)}>
+                                    <option></option>
+                                    {Array.from(transactionCodes.values()).map(t=><option key={t.TRANSACTION_CODE} value={t.TRANSACTION_CODE}>{t.TRANSACTION_TITLE}</option>)}
+                                </Form.Control>
+                            )}
+                        />
+                        <Form.Control.Feedback type="invalid">{get(errors,'formActions.transactionCode.TRANSACTION_CODE.message','')}</Form.Control.Feedback>
+                    </>
+                )}
             </Col>
             <Col xs="auto">
                 <Form.Text id="transactionCodeDescription" className="mt-2" muted>{description}</Form.Text>
