@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { Navbar, Nav, NavDropdown } from "react-bootstrap";
 import { useAuthContext, useUserContext } from "../app";
@@ -7,12 +7,8 @@ import { MenuCounts } from "./components";
 
 export default function AppNav() {
     const { isAdmin, OVR_SUNY_ID, INSTANCE } = useAuthContext();
-    const { userGroups, isViewer } = useUserContext();
+    const { isViewer } = useUserContext();
 
-    const logout = e => {
-        e.preventDefault();
-        //TODO: handle logout
-    }
     return (
         <header>
             <Navbar bg="main" variant="dark" expand="lg" className="mb-4 shadow" fixed="top" collapseOnSelect={true}>
