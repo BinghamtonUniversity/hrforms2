@@ -190,7 +190,7 @@ const MenuCounts = React.memo(({menu,showOn,showNew=false,isViewer=false}) => {
                     {(counts.isLoading&&showOn=='home') && <ListGroup.Item className="d-flex justify-content-center"><Loading>Loading...</Loading></ListGroup.Item>}
                     {(counts.isLoading&&showOn=='menu') && <NavDropdown.Item><Loading>Loading...</Loading></NavDropdown.Item>}
                     {counts.data && menuItems.map(l=>{
-                        if (!has(counts.data,`${menu}.${l}`)) return null;
+                        if (!has(counts.data,`${menu}.${l}`)&&l!='archived') return null;
                         const key = `${menu}.menu.${l}`;
                         if (!get(settings,`${key}.enabled`,true)) return null;
                         const title = get(settings,`${key}.title`,l);

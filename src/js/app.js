@@ -22,6 +22,7 @@ import { icons } from "../js/config/app";
 const Home = lazy(()=>import("./pages/home"));
 const Request = lazy(()=>import("./pages/request"));
 const RequestArchiveView = lazy(()=>import("./pages/request/view"));
+const RequestArchiveList = lazy(()=>import("./pages/request/archive"));
 const RequestList = lazy(()=>import("./pages/request/list"));
 const RequestJournal = lazy(()=>import("./pages/request/journal"));
 const HRForm = lazy(()=>import("./pages/form"));
@@ -162,6 +163,7 @@ function AppContent({OVR_SUNY_ID}) {
                             <Route exact path="/request/journal" component={RequestJournal}/>
                             <Route path="/request/journal/:id" component={RequestJournal}/>
                             <Route exact path="/request/list" component={RequestList}/>
+                            <Route exact path="/request/list/archived" component={RequestArchiveList}/>
                             <Route path="/request/list/:part" component={RequestList}/>
                             <Route path="/request/archive/:id" component={RequestArchiveView}/>
                             <Route path="/request/:id/:sunyid/:ts" component={Request}/>
