@@ -474,12 +474,12 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         setActiveNav(nextNav);    
     }
     const handleSave = action => {
+        methods.setValue('action',action);
         // Duplicate form check before submit.
         if (action=='submit') {
             methods.handleSubmit(handleCheck,handleError)();
             return;
         }
-        methods.setValue('action',action);
         methods.handleSubmit(handleSubmit,handleError)();
     }
 
@@ -493,7 +493,10 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             action_code: data.formActions.actionCode.ACTION_CODE,
             transaction_code: data.formActions.transactionCode.TRANSACTION_CODE
         }
-        check.mutateAsync(checkFields).then(d=>setShowDuplicatesModal(d?.count > 0)).catch(e=>console.error(e));
+        check.mutateAsync(checkFields).then(d=>{
+            (d?.count>0)?setShowDuplicatesModal(true):methods.handleSubmit(handleSubmit,handleError)();
+        }).catch(e=>console.error(e));
+
     }
 
     const handleTabs = useCallback(tabs => {
