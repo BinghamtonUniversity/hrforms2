@@ -26,6 +26,7 @@ export default function EmploymentAppointment() {
     ],control:control,defaultValue:[0,1,100]});
     const watchPayBasis = useWatch({name:'employment.position.positionDetails.PAY_BASIS',control:control});
     const watchEffectiveDate = useWatch({name:'employment.position.apptEffDate',control:control,defaultValue:new Date(0)});
+    const watchTransactionCode = useWatch({name:'formActions.transactionCode.TRANSACTION_CODE',control:control,defaultValue:''});
     const rateAmountLabel = useMemo(() => {
         switch(watchPayBasis) {
             case "BIW":
@@ -129,44 +130,48 @@ export default function EmploymentAppointment() {
                         </Col>
                     </Form.Group>
                 }
-                {(['BIW','FEE'].includes(watchPayBasis)||showInTest) && 
-                    <Form.Group as={Row} className={testHighlight(['BIW','FEE'].includes(watchPayBasis))}>
-                        <Form.Label column md={2}># Payments*:</Form.Label>
-                        <Col xs="auto">
+                {(!['EXS','SUM','WIN'].includes(watchTransactionCode)||showInTest) &&
+                    <>
+                        {(['BIW','FEE'].includes(watchPayBasis)||showInTest) && 
+                            <Form.Group as={Row} className={testHighlight(['BIW','FEE'].includes(watchPayBasis))}>
+                                <Form.Label column md={2}># Payments*:</Form.Label>
+                                <Col xs="auto">
+                                    <Controller
+                                        name={`${name}.NUMBER_OF_PAYMENTS`}
+                                        defaultValue={defaultValues[`${name}.NUMBER_OF_PAYMENTS`]}
+                                        control={control}
+                                        render={({field}) => <Form.Control {...field} type="number" min={1} onBlur={e=>handleNumPmtsField(e,field)} onChange={e=>handleNumPmtsField(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.NUMBER_OF_PAYMENTS.message`,'')}</Form.Control.Feedback>
+                                </Col>
+                            </Form.Group>
+                        }
+                        <Form.Group as={Row}>
+                            <Form.Label column md={2}>{rateAmountLabel} Rate*:</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.RATE_AMOUNT`}
+                                    defaultValue={defaultValues[`${name}.RATE_AMOUNT`]}
+                                    control={control}
+                                    render={({field}) => <Form.Control {...field} type="text" isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
+                                />
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.RATE_AMOUNT.message`,'')}</Form.Control.Feedback>
+                            </Col>
+                        </Form.Group>
+                        <Form.Group as={Row}>
+                            <Form.Label column md={2}>Total Salary:</Form.Label>
+                            <Col xs="auto" className="pt-2">
                             <Controller
-                                name={`${name}.NUMBER_OF_PAYMENTS`}
-                                defaultValue={defaultValues[`${name}.NUMBER_OF_PAYMENTS`]}
-                                control={control}
-                                render={({field}) => <Form.Control {...field} type="number" min={1} onBlur={e=>handleNumPmtsField(e,field)} onChange={e=>handleNumPmtsField(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
-                            />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}.NUMBER_OF_PAYMENTS.message`,'')}</Form.Control.Feedback>
-                        </Col>
-                    </Form.Group>
+                                    name={`${name}.totalSalary`}
+                                    defaultValue={defaultValues[`${name}.totalSalary`]}
+                                    control={control}
+                                    render={({field}) => <p className="mb-0"><CurrencyFormat>{field.value}</CurrencyFormat></p>}
+                                />
+                            </Col>
+                        </Form.Group>
+                        <SUNYAccount label="SUNY Account*:" name={`${name}.SUNY_ACCOUNTS`} isInvalid={!!get(errors,`${name}.SUNY_ACCOUNTS`,false)} disabled={!canEdit||['a','s'].includes(editing)}/>
+                    </>
                 }
-                <Form.Group as={Row}>
-                    <Form.Label column md={2}>{rateAmountLabel} Rate*:</Form.Label>
-                    <Col xs="auto">
-                        <Controller
-                            name={`${name}.RATE_AMOUNT`}
-                            defaultValue={defaultValues[`${name}.RATE_AMOUNT`]}
-                            control={control}
-                            render={({field}) => <Form.Control {...field} type="text" isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
-                        />
-                        <Form.Control.Feedback type="invalid">{get(errors,`${name}.RATE_AMOUNT.message`,'')}</Form.Control.Feedback>
-                    </Col>
-                </Form.Group>
-                <Form.Group as={Row}>
-                    <Form.Label column md={2}>Total Salary:</Form.Label>
-                    <Col xs="auto" className="pt-2">
-                    <Controller
-                            name={`${name}.totalSalary`}
-                            defaultValue={defaultValues[`${name}.totalSalary`]}
-                            control={control}
-                            render={({field}) => <p className="mb-0"><CurrencyFormat>{field.value}</CurrencyFormat></p>}
-                        />
-                    </Col>
-                </Form.Group>
-                <SUNYAccount label="SUNY Account*:" name={`${name}.SUNY_ACCOUNTS`} isInvalid={!!get(errors,`${name}.SUNY_ACCOUNTS`,false)} disabled={!canEdit||['a','s'].includes(editing)}/>
             </section>
             
             <AdditionalSalary editing={editing} setEditing={setEditing}/>
