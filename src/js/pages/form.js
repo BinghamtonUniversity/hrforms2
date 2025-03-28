@@ -856,7 +856,7 @@ function FormInfoBox () {
                 <Col as="dt" sm={3} md={2} className="mb-0">Effective Date:</Col>
                 <Col as="dd" sm={9} md={4} className="mb-0"><DateFormat>{getValues('effDate')}</DateFormat></Col>
                 <Col as="dt" sm={3} md={2} className="mb-0">Name:</Col>
-                <Col as="dd" sm={9} md={4} className="mb-0">{getValues('person.information.FIRST_NAME')} {getValues('person.information.LEGAL_LAST_NAME')} {getValues('person.information.SUFFIX_CODE')}</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0">{getValues('person.information.LEGAL_FIRST_NAME')} {getValues('person.information.ALIAS_FIRST_NAME')&&<span>({getValues('person.information.ALIAS_FIRST_NAME')})</span>} {getValues('person.information.LEGAL_LAST_NAME')} {getValues('person.information.SUFFIX_CODE')}</Col>
             </Row>
         </Alert>
     );
