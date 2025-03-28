@@ -243,12 +243,15 @@ function EmploymentAppointmentInformation() {
 
             <BenefitsFlag/>
             
+            {/* REMOVED: 3/27/2025 per discussion with HR
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Appointment Effective Date:</Form.Label>
                 <Col xs="auto" className="pt-2">
                     <DateFormat nvl="Effective Date Not Set">{watchEffectiveDate}</DateFormat>
                 </Col>
             </Form.Group>
+            */}
+            
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Appointment End Date:</Form.Label>
                 <Col xs="auto">
