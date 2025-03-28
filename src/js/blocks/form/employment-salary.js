@@ -53,15 +53,6 @@ export default function EmploymentAppointment() {
         }
     }
 
-    const handleEffectiveDateBlur = (e,field) => {
-        if (!e.target.value) {
-            // check for RATE_EFFECTIVE_DATE first, then use watchEffectiveDate
-            const rateEffDate = getValues(`${name}.RATE_EFFECTIVE_DATE`);
-            if (rateEffDate) setValue(field.name, new Date(rateEffDate));
-            else setValue(field.name, watchEffectiveDate);
-        }
-    }
-
     useEffect(() => {
         if (['BIW', 'FEE', 'HRY'].includes(watchPayBasis)) {
             setValue(`${name}.totalSalary`,(+watchAmounts[0]*+watchAmounts[1]).toFixed(2));
@@ -74,11 +65,6 @@ export default function EmploymentAppointment() {
         const field = document.querySelector(`#${activeNav} input:not([disabled])`);
         (canEdit&&field)&&field.focus({focusVisible:true});
     },[activeNav]);
-
-    useEffect(() => {
-        console.log(watchEffectiveDate);
-        console.log(getValues(`${name}.effDate`));
-    },[watchEffectiveDate,getValues]);
 
     return (
         <article>
@@ -96,10 +82,9 @@ export default function EmploymentAppointment() {
                                 render={({field}) => <Form.Control
                                     as={DatePicker}
                                     name={field.name}
-                                    selected={field.value||watchEffectiveDate}
+                                    selected={getValues('effDate')}
                                     closeOnScroll={true}
                                     onChange={field.onChange}
-                                    onBlur={e=>handleEffectiveDateBlur(e,field)}
                                     autoComplete="off"
                                     disabled={!canEdit}
                                     isInvalid={!!get(errors,field.name,false)}
