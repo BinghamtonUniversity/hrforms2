@@ -1,10 +1,10 @@
 import React, { useState, useReducer, useEffect, useMemo, lazy, useRef } from "react";
 import useRequestQueries from "../../queries/requests";
-import { Row, Col, Form, Button, ButtonGroup, Modal, Accordion, Card } from "react-bootstrap";
+import { Row, Col, Form, Button, ButtonGroup, Accordion, Card } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { format, endOfToday, subDays } from "date-fns";
 import DataTable from 'react-data-table-component';
-import { AppButton, Loading, DescriptionPopover, WorkflowExpandedComponent } from "../../blocks/components";
+import { AppButton, Loading, WorkflowExpandedComponent } from "../../blocks/components";
 import useListsQueries from "../../queries/lists";
 import { useQueryClient } from "react-query";
 import { useSettingsContext, useAuthContext } from "../../app";
