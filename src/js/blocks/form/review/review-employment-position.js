@@ -23,8 +23,10 @@ export default function ReviewEmploymentPosition() {
                         <Col as="dd" sm={9} md={4} className="mb-0">{position.BENEFIT_FLAG.label}</Col>
                     </>
                 }
+                {/* REMOVED: 3/27/2025 per discussion with HR
                 <Col as="dt" sm={3} md={2} className="mb-0">Effective Date:</Col>
                 <Col as="dd" sm={9} md={4} className="mb-0"><DateFormat>{position.apptEffDate}</DateFormat></Col>
+                */}
                 <Col as="dt" sm={3} md={2} className="mb-0">End Date:</Col>
                 <Col as="dd" sm={9} md={4} className="mb-0"><DateFormat>{position.apptEndDate}</DateFormat></Col>
                 <Col as="dt" sm={3} md={2} className="mb-0">Vol Reduction:</Col>

@@ -13,7 +13,7 @@ const ReviewPersonDemographics = lazy(()=>import("./review/review-person-demogra
 const ReviewPersonDirectory = lazy(()=>import("./review/review-person-directory"));
 const ReviewPersonEducation = lazy(()=>import("./review/review-person-education"));
 const ReviewPersonContacts = lazy(()=>import("./review/review-person-contacts"));
-const ReviewEmploymentPosition = lazy(()=>import("./review/review-employment-position"));
+//const ReviewEmploymentPosition = lazy(()=>import("./review/review-employment-position"));
 const ReviewEmploymentAppointment = lazy(()=>import("./review/review-employment-appointment"));
 const ReviewEmploymentSalary = lazy(()=>import("./review/review-employment-salary"));
 const ReviewEmploymentSeparation = lazy(()=>import("./review/review-employment-separation"));
@@ -81,24 +81,6 @@ function ReviewFormData() {
     );
 }
 
-function ReviewSectionRouter({tab}) {
-    switch(tab) {
-        case "person-information": return <ReviewPersonInformation/>; break;
-        case "person-demographics": return <ReviewPersonDemographics/>; break;
-        case "person-directory": return <ReviewPersonDirectory/>; break;
-        case "person-education": return <ReviewPersonEducation/>; break;
-        case "person-contacts": return <ReviewPersonContacts/>; break;
-        case "employment-position": return <ReviewEmploymentPosition/>; break;
-        case "employment-appointment": return <ReviewEmploymentAppointment/>; break;
-        case "employment-salary": return <ReviewEmploymentSalary/>; break;
-        case "employment-separation": return <ReviewEmploymentSeparation/>; break;
-        case "employment-leave": return <ReviewEmploymentLeave/>; break;
-        case "employment-pay": return <ReviewEmploymentPay/>; break;
-        case "employment-volunteer": return <ReviewEmploymentVolunteer/>; break;
-        default: return null;
-    }
-}
-
 function ReviewSections() {
     const tabGroups = ['person','employment'];
     const { tabs } = useHRFormContext();
@@ -107,6 +89,7 @@ function ReviewSections() {
             {tabGroups.map(tg => {
                 const t = get(find(tabs,['value',tg]),'children',[]);
                 if (t.length == 0) return null;
+                //if tg == 'employment'
                 return (
                     <section key={tg} className="mb-4">
                         <Row as="header">
@@ -116,6 +99,9 @@ function ReviewSections() {
                         </Row>
                         {(tg == 'employment') && 
                             <article className="border rounded p-1 mb-2">
+                                <Row as="header">
+                                    <Col as="h5">Position</Col>
+                                </Row>
                                 <EmploymentPositionInfoBox/>
                             </article>
                         }
@@ -126,3 +112,22 @@ function ReviewSections() {
         </>
     )
 }
+
+function ReviewSectionRouter({tab}) {
+    switch(tab) {
+        case "person-information": return <ReviewPersonInformation/>; break;
+        case "person-demographics": return <ReviewPersonDemographics/>; break;
+        case "person-directory": return <ReviewPersonDirectory/>; break;
+        case "person-education": return <ReviewPersonEducation/>; break;
+        case "person-contacts": return <ReviewPersonContacts/>; break;
+        //case "employment-position": //position info is displayed by default
+        case "employment-appointment": return <ReviewEmploymentAppointment/>; break;
+        case "employment-salary": return <ReviewEmploymentSalary/>; break;
+        case "employment-separation": return <ReviewEmploymentSeparation/>; break;
+        case "employment-leave": return <ReviewEmploymentLeave/>; break;
+        case "employment-pay": return <ReviewEmploymentPay/>; break;
+        case "employment-volunteer": return <ReviewEmploymentVolunteer/>; break;
+        default: return null;
+    }
+}
+

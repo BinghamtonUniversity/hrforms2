@@ -4,17 +4,43 @@ import { useFormContext } from "react-hook-form";
 import { CurrencyFormat, DateFormat } from "../../components";
 import { NewLine } from "../review";
 
-export default function ReviewEmploymentAppointment() {
+export default function ReviewEmploymentPositionAppointment() {
     const { getValues } = useFormContext();
-    const [payroll,selectedRowPayRoll] = getValues(['payroll.PAYROLL_CODE','selectedRow.PAYROLL_AGENCY_CODE']);
-    const [appointment] = getValues(['employment.appointment']);
+    const [selectedRowPayRoll] = getValues(['selectedRow.PAYROLL_AGENCY_CODE']);
+    const [appointment,position,payroll] = getValues(['employment.appointment','employment.position','payroll']);
     return (
         <article className="border rounded p-1 mb-2">
             <Row as="header">
                 <Col as="h5">Appointment</Col>
             </Row>
+
+            <Row as="dl">
+                <Col as="dt" sm={3} md={2} className="mb-0">Type:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0">{position.APPOINTMENT_TYPE.label}</Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Percent:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0">{position.APPOINTMENT_PERCENT}</Col>
+                {payroll?.ADDITIONAL_INFO?.hasBenefits &&
+                    <>
+                        <Col as="dt" sm={3} md={2} className="mb-0">Benefits:</Col>
+                        <Col as="dd" sm={9} md={4} className="mb-0">{position.BENEFIT_FLAG.label}</Col>
+                    </>
+                }
+                {/* REMOVED: 3/27/2025 per discussion with HR
+                <Col as="dt" sm={3} md={2} className="mb-0">Effective Date:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0"><DateFormat>{position.apptEffDate}</DateFormat></Col>
+                */}
+                <Col as="dt" sm={3} md={2} className="mb-0">End Date:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0"><DateFormat>{position.apptEndDate}</DateFormat></Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Vol Reduction:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0">{(position.VOLUNTARY_REDUCTION=="Y")?"Yes":"No"}</Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Check Sort Code:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0">{position.PAYROLL_MAIL_DROP_ID.label}</Col>
+                <NewLine/>
+                <Col as="dt" sm={3} md={2} className="mb-0">Justification:</Col>
+                <Col as="dd" sm={9} md={10} className="mb-0">{position.justification.label}</Col>
+            </Row>
             <Row as="dl" className="mb-0">
-            {(payroll == "28020" && selectedRowPayRoll == "") && 
+            {(payroll.PAYROLL_CODE == "28020" && selectedRowPayRoll == "") && 
                 <>
                     <Col as="dt" sm={3} md={2} className="mb-0">Faculty:</Col>
                     <Col as="dd" sm={9} md={4} className="mb-0">{(appointment.DERIVED_FAC_TYPE=="Y")?"Yes":"No"}</Col>
@@ -46,7 +72,7 @@ export default function ReviewEmploymentAppointment() {
                 <Col as="dd" sm={9} md={4} className="mb-0">{appointment.REPORTING_DEPARTMENT_CODE?.label}</Col>
             </Row>
             {appointment.DERIVED_FAC_TYPE == "Y" && <ReviewEmploymentAppointmentFacultyDetails details={appointment.facultyDetails}/>}
-            {payroll == '28029' && <ReviewEmploymentAppointmentStudentDetails details={appointment.studentDetails}/>}
+            {payroll.PAYROLL_CODE == '28029' && <ReviewEmploymentAppointmentStudentDetails details={appointment.studentDetails}/>}
         </article>
     );
 }
