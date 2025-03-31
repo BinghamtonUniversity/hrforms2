@@ -150,7 +150,11 @@ class Forms extends HRForms2 {
                 $formId = 'draft-'.$this->sessionData['EFFECTIVE_SUNY_ID'].'-'.$unix_ts;
                 $this->POSTvars['formId'] = $formId;
                 //TODO: need to modify POSTvars to use new assigned draft ID; don't use the assigned code... assigned could just be "draft"?
-                $qry = "insert into HRFORMS2_FORMS_DRAFTS values(:suny_id, :unix_ts, EMPTY_CLOB()) returning DATA into :data";
+                if (INSTANCE=="LOCAL") {
+                    $qry = "insert into HRFORMS2_FORMS_DRAFTS values(:suny_id, :unix_ts, '{}') returning DATA into :data";
+                } else {
+                    $qry = "insert into HRFORMS2_FORMS_DRAFTS values(:suny_id, :unix_ts, EMPTY_CLOB()) returning DATA into :data";
+                }
                 $stmt = oci_parse($this->db,$qry);
                 $clob = oci_new_descriptor($this->db, OCI_D_LOB);
                 oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
