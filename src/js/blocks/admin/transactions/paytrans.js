@@ -297,8 +297,8 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
             return;
         }
         const d = {...data}
-        d.ACTIVE = (data.ACTIVE)?1:0;
-        d.PR_REQUIRED = (data.PR_REQUIRED)?1:0;
+        d.ACTIVE = (!!data.ACTIVE)?1:0;
+        d.PR_REQUIRED = (!!data.PR_REQUIRED)?1:0;
         d.AVAILABLE_FOR = Object.values(data.for).map(a=>(a==1)?'1':(a==0)?'0':(!!a)?'1':'0').join('');
         delete d['for'];
         delete d['tabs'];
@@ -317,6 +317,7 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
         } else {
             //check to see if changes, if none then just exit
             if ((selectedRow.ACTIVE==1)!=data.ACTIVE||selectedRow.AVAILABLE_FOR!=data.AVAILABLE_FOR||selectedRow.PR_REQUIRED!=data.PR_REQUIRED) {
+
                 updatePayTrans.mutateAsync(d).then(()=>{
                     queryclient.refetchQueries('paytrans').then(()=>{
                         setStatus({state:'clear'});
