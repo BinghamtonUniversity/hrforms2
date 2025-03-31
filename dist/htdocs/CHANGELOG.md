@@ -1,5 +1,31 @@
 # Changelog
 
+## Verison 2.0.0(DEV-20250331)
+  * Viewer permission added.  Allows for a view only capability.
+  * Fixed user's groups showing up as all "inactive".
+  * Fixed error when submitting Requests; error in hierarchy.php code logic.
+  * Fixed missing First and Preferred Name in the Form Information (gray box) at the top of the Form.
+  * Fixed missing Archived menu item for Forms and Requests.
+  * Hide Payment, Rate, and SUNY Account on Forms Salary tab when Transaction is Extra Service, Appoint Summer, or Appoint Winter.
+  * Added error notification on Form Basic Info when a transaction has no tabs defined.
+  * Fixed error where forms were not submitting after duplicate check.
+  * Default Form Salary Effective Date to Form Effective Date.
+  * Home email only required for 28020 EF-HIR-* and 28020 EF-PAY-Appoint* forms.
+  * Changed layout of Form Review tab for Position and Appointment blocks.
+
+
+## Verison 2.0.0(DEV-20250326)
+  * Added "Close" button in Requests and Forms to Drafts.
+  * Changed color of Close and Submit buttons.
+  * Added duplicate form check and confirmation dialog.
+  * Added confirmation dialog for Close button when Form/Request is new or has changes.
+  * Fixed error with SUNY Account information on Salary tab in Forms.
+  * Error handling for unmatched Departments and Buildings on Forms Directory Review tab.
+  * Only display Approvals and Final Approvals when appropriate.
+  * Fixed submission issue with Requests; workflow was not being applied correctly.
+  * Optimization for Form and Request List data caching.
+
+
 ## Version 2.0.0(DEV-20250303)
   * Fixed missing first name in Final Approval and Rejection lists.
   * Added "Close" button for Requests and Forms.
