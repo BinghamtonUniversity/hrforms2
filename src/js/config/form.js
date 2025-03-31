@@ -87,7 +87,10 @@ const advancedFields = {
         return get(frmData,'person.directory.phone',[]).some(p=>['HOME','CELL'].includes(p?.PHONE_TYPE)) ? true : 'Home or Cell phone number is required'
     },
     "person.directory.email":(frmData,v) => {
-        if (get(frmData,'payroll.PAYROLL_CODE','X')!='28020') return true;
+        if (get(frmData,'payroll.PAYROLL_CODE','X')!='28020') return true; // only 28020 requires home email
+        if (get(frmData,'formActions.formCode.FORM_CODE','') != 'EF') return true; // only new hire forms require home email
+        if (!['HIR','PAY'].includes(get(frmData,'formActions.actionCode.ACTION_CODE',''))) return true;
+        if (get(frmData,'formActions.actionCode.ACTION_CODE','') != 'PAY' && !get(frmData,'formActions.transactionCode.TRANSACTION_CODE','').startsWith('Appoint') ) return true;
         return get(frmData,'person.directory.email',[]).some(e=>e?.EMAIL_TYPE=='HOME') ? true : 'Home email is required'
     },
     "person.education.institutions":(frmData,v) => (['AS','BA','MA','DO','PR','GR'].includes(get(frmData,'person.demographics.HIGHEST_EDUCATION_LEVEL.id','')) && !v.length)?'Education is required':true,
