@@ -33,8 +33,12 @@ export default function ReviewPersonDemographics() {
                         }
                         <Col as="dt" sm={3} md={2} className="mb-0">Country of Citizenship:</Col>
                         <Col as="dd" sm={9} md={4} className="mb-0">{demo.CITIZENSHIP_COUNTRY_CODE.label}</Col>
-                        <Col as="dt" sm={3} md={2} className="mb-0">Visa Type:</Col>
-                        <Col as="dd" sm={9} md={4} className="mb-0">{demo.VISA_CODE.label}</Col>
+                        {(demo.NON_CITIZEN_TYPE?.id=='NC')&&
+                            <>
+                                <Col as="dt" sm={3} md={2} className="mb-0">Visa Type:</Col>
+                                <Col as="dd" sm={9} md={4} className="mb-0">{demo.VISA_CODE.label}</Col>
+                            </>
+                        }
                     </>
                 }
                 <NewLine gap={3}/>

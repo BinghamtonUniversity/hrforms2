@@ -81,7 +81,11 @@ const advancedFields = {
     "person.information.RETIRED_FROM":(frmData,v)=>get(frmData,'person.information.REHIRE_RETIREE','0') != 1 ? true : (!!v||'Retired From is required'),
     "person.demographics.NON_CITIZEN_TYPE.id":(frmData,v)=>get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Non-US Citizen Type is required"),
     "person.demographics.CITIZENSHIP_COUNTRY_CODE.id":(frmData,v) => get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Country of Citizenship is required"),
-    "person.demographics.VISA_CODE.id":(frmData,v) => get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y' ? true : (!!v||"Visa Type is required"),
+    "person.demographics.VISA_CODE.id":(frmData,v) => {
+        if (get(frmData,'person.demographics.US_CITIZEN_INDICATOR','N') == 'Y') return true;
+        if (get(frmData,'person.demographics.NON_CITIZEN_TYPE.id','X') != 'NC') return true;
+        return !!v || 'Visa Type is required';
+    },
     "person.directory.phone":(frmData,v) => {
         if (get(frmData,'payroll.PAYROLL_CODE','X')!='28020') return true;
         return get(frmData,'person.directory.phone',[]).some(p=>['HOME','CELL'].includes(p?.PHONE_TYPE)) ? true : 'Home or Cell phone number is required'

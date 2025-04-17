@@ -280,28 +280,30 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                             <Form.Control.Feedback type="invalid">{get(errors,`${name}.CITIZENSHIP_COUNTRY_CODE.id.message`,'')}</Form.Control.Feedback>
                         </Col>
                     </Form.Group>
-                    <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
-                        <Form.Label column md={2}>Visa Type*:</Form.Label>
-                        <Col xs="auto">
-                            <Controller
-                                name={`${name}.VISA_CODE.id`}
-                                control={control}
-                                defaultValue={defaultValues[`${name}.VISA_CODE`]}
-                                render={({field})=>(
-                                <>
-                                    {visatype.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
-                                    {visatype.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
-                                    {visatype.data &&
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}>
-                                            <option></option>
-                                            {visatype.data.map(k=><option key={k[0]} value={k[0]}>{k[0]} - {k[1]}</option>)}
-                                        </Form.Control>
-                                    }
-                                </>)}
-                            />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}.VISA_CODE.id.message`,'')}</Form.Control.Feedback>
-                        </Col>
-                    </Form.Group>
+                    {(watchCitizenType?.id=='NC'||showInTest) && 
+                        <Form.Group as={Row} className={testHighlight(watchCitizen!='Y'&&watchCitizenType?.id=='NC')}>
+                            <Form.Label column md={2}>Visa Type*:</Form.Label>
+                            <Col xs="auto">
+                                <Controller
+                                    name={`${name}.VISA_CODE.id`}
+                                    control={control}
+                                    defaultValue={defaultValues[`${name}.VISA_CODE`]}
+                                    render={({field})=>(
+                                    <>
+                                        {visatype.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
+                                        {visatype.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
+                                        {visatype.data &&
+                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}>
+                                                <option></option>
+                                                {visatype.data.map(k=><option key={k[0]} value={k[0]}>{k[0]} - {k[1]}</option>)}
+                                            </Form.Control>
+                                        }
+                                    </>)}
+                                />
+                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.VISA_CODE.id.message`,'')}</Form.Control.Feedback>
+                            </Col>
+                        </Form.Group>
+                    }
                 </>
             )}
         </HRFormContext.Consumer>
