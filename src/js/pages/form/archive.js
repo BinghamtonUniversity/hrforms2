@@ -416,7 +416,6 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                         onChange={handleDateChange}
                         isClearable={true}
                         placeholderText="Select Custom Date Range"
-                        maxDate={new Date()}
                         disabled={days!='btn-days-custom'||filter.formId!=''}
                     />
                 </Form.Group>
