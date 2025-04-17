@@ -137,8 +137,8 @@ class Journal extends HRForms2 {
             $gh = (new groupshistory($this->req,false))->returnData;
             $group_ids = array_column($gh,'GROUP_ID');
         }
-        $qry = "select j.".$this->k['id'].", b.created_by_suny_id,
-        to_char(journal_date,'DD-MON-YYYY HH24:MI:SS') as journal_date,
+        $qry = "select j.".$this->k['id'].", b.created_by_suny_id, j.suny_id,
+        to_char(j.journal_date,'DD-MON-YYYY HH24:MI:SS') as journal_date,
         j.suny_id, status, hierarchy_id, workflow_id, sequence, 
         group_from, gf.group_name as GROUP_FROM_NAME, gf.group_description as GROUP_FROM_DESCRIPTION,
         group_to, gt.group_name as GROUP_TO_NAME, gt.group_description as GROUP_TO_DESCRIPTION,
@@ -174,10 +174,10 @@ class Journal extends HRForms2 {
             $id = array('SUNY_ID' => $id);
             $this->getUser($id);
         });
-    
+        
         $keys = array_column($ids, 'SUNY_ID');
         array_walk($this->_arr,function(&$row) use($keys,$ids) {
-            $key = array_search($row['SUNY_ID'],$ids);
+            $key = array_search($row['SUNY_ID'],$keys);
             $row = array_merge($row,$ids[$key]);
         });
 
@@ -185,6 +185,7 @@ class Journal extends HRForms2 {
         $this->returnData = $this->_arr;
         if ($this->retJSON) $this->toJSON($this->returnData);
 	}
+
     function POST() {
         if (INSTANCE=="LOCAL") {
             $qry = "insert into ".$this->k['journal']." 
