@@ -343,18 +343,28 @@ function AppointmentType() {
     );
 }
 function BenefitsFlag() {
-    const { control, setValue, formState: { defaultValues } } = useFormContext();
+    const { control, getValues, setValue, formState: { defaultValues } } = useFormContext();
     const { canEdit } = useHRFormContext();
     const watchHasBenefits = useWatch({name:'payroll.ADDITIONAL_INFO.hasBenefits',control:control});
+    //const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
     
     const { getListData } = useListsQueries();
-    const benefitcodes = getListData('benefitCodes');
+    const benefitcodes = getListData('benefitCodes',{
+        // Only show benefit code 'T' for payrol 28029
+        select:d=>(getValues('payroll.PAYROLL_CODE')!='28029')?d:d.filter(b=>(b[0]=='T'))
+    });
 
     const handleSelectChange = (e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
     }
+
+    /*useEffect(() => {
+        // Set Benefit Flag to 'T' if payroll = 28029 **TODO: this should probably be done somewhere else
+        if (watchPayroll!='28029'&&!benefitcodes.data) return;
+        setValue(`${name}.BENEFIT_FLAG.id`,'T');
+    },[watchPayroll,benefitcodes]);*/
 
     return (
         <Form.Group as={Row}>
