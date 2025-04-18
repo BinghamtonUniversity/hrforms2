@@ -67,6 +67,7 @@ class ArchiveList extends HRForms2 {
 					if ($_GET['reqType'] != "") $filter .= " and r.request_data.reqType.id = :reqType";
 					if ($_GET['candidateName'] != "") $filter .= " and lower(r.request_data.candidateName) like lower('%'||:candidateName||'%')";
 					if ($_GET['lineNumber'] != "") $filter .= " and r.request_data.lineNumber = :lineNumber";
+					if ($_GET['multiLines'] == "Y") $filter .= " and r.request_data.multiLines = 'Y'";
 				}
 				$sort = "";
 				switch($_GET['sortField']) {

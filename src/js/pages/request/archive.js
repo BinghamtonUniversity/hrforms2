@@ -24,6 +24,7 @@ const defaultValues = {
     reqType:'',
     candidateName:'',
     lineNumber:'',
+    multiLines:'N',
     createdBy:'',
     page:1,
     results:10,
@@ -270,6 +271,7 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
         const obj = {};
         obj[e.target.id] = e.target.value;
         if (e.target.id == 'reqId') setCreatedBySearch([{id:'',label:''}]);
+        if (e.target.id == 'multiLines') obj[e.target.id] = (e.target.checked)?'Y':'N';
         setFilter(obj);
         handleReset(false);
     }
@@ -314,11 +316,15 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                 </Form.Group>
                 <Form.Group as={Col} sm={3} md={2} controlId="candidateName">
                     <Form.Label>Name</Form.Label>
-                    <Form.Control type="search" size="sm" value={filter.candidateName} onChange={handleFilterChange} placeholder="Enter Name"  disabled={filter.reqId!=""}/>
+                    <Form.Control type="search" size="sm" value={filter.candidateName} onChange={handleFilterChange} placeholder="Enter Name" disabled={filter.reqId!=""}/>
                 </Form.Group>
                 <Form.Group as={Col} sm={2} lg={1} controlId="lineNumber">
                     <Form.Label>Line #</Form.Label>
-                    <Form.Control type="search" size="sm" value={filter.lineNumber} onChange={handleFilterChange} placeholder="Line #"  disabled={filter.reqId!=""}/>
+                    <Form.Control type="search" size="sm" value={filter.lineNumber} onChange={handleFilterChange} placeholder="Line #" disabled={filter.reqId!=""}/>
+                </Form.Group>
+                <Form.Group as={Col} sm={1} lg={1} controlId="multiLines" className="text-center">
+                    <Form.Label>Multi-Line?</Form.Label>
+                    <Form.Check type="checkbox" value="Y" className="mt-1" checked={(filter.multiLines=='Y')} onChange={handleFilterChange} disabled={filter.reqId!=""}/>
                 </Form.Group>
                 <Form.Group as={Col} sm={3} md={2} controlId="createdBy">
                     <Form.Label>Created By</Form.Label>
@@ -340,6 +346,7 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                 </Form.Group>
             </Form.Row>
             <Form.Row className="justify-content-end">
+                <div className="form-group col-lg-2 col-sm-3 text-right pt-1">Effective Date:</div>
                 <div>
                     <ButtonGroup size="sm" toggle>
                         {daysButtons.map(btn => <Button key={btn.id} id={btn.id} variant={(days==btn.id&&filter.reqId=='')?'primary':'secondary'} active={days==btn.id} onClick={handleDaysChange} disabled={filter.reqId!=''}>{btn.label}</Button>)}
@@ -357,7 +364,6 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                         onChange={handleDateChange}
                         isClearable={true}
                         placeholderText="Select Custom Date Range"
-                        maxDate={new Date()}
                         disabled={days!='btn-days-custom'||filter.reqId!=''}
                     />
                 </Form.Group>
