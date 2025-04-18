@@ -90,6 +90,26 @@ class Forms extends HRForms2 {
             if (!$r) $this->raiseError();
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
             $formData->formActions->TABS = json_decode($row['TABS']);
+        } elseif ($this->req[0] == 'archive') {
+            $qry = "select CREATED_BY, FORM_DATA from HRFORMS2_FORMS_ARCHIVE where FORM_ID = :form_id";
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":form_id",$this->req[1]);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
+            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+            $formData = json_decode($row['FORM_DATA']);
+            $createdByData = json_decode($row['CREATED_BY']);
+            $formData->createdBy = $createdByData;
+            oci_free_statement($stmt);
+            $qry = "select pt.paytrans_id,pt.tabs 
+                FROM HRFORMS2_PAYROLL_TRANSACTIONS pt 
+                WHERE pt.paytrans_id = :paytrans_id";
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":paytrans_id", $formData->formActions->PAYTRANS_ID);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
+            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+            $formData->formActions->TABS = json_decode($row['TABS']);
         } else {
             $journal = (new journal(array('form',$this->req[0]),false))->returnData;
             $submitter = array_shift($journal);
