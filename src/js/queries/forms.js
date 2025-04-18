@@ -102,6 +102,7 @@ export default function useFormQueries(FORM_ID) {
         options.select = data => {
             if (!data) return;
             data.map(d => {
+                if (!d) return;
                 const fName = (d?.ALIAS_FIRST_NAME)?d.ALIAS_FIRST_NAME:(d?.LEGAL_FIRST_NAME)?d.LEGAL_FIRST_NAME:'';
                 d.fullName = (fName)?`${fName} ${d.LEGAL_LAST_NAME}`:'';
                 d.sortName = (fName)?`${d.LEGAL_LAST_NAME}, ${fName}`:'';
