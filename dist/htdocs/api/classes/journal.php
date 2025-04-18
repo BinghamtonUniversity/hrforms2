@@ -169,12 +169,12 @@ class Journal extends HRForms2 {
             $this->_arr[] = $row;
         }
         
-        $ids = array_unique(array_column($this->_arr,'SUNY_ID'));
+        $ids = array_values(array_unique(array_column($this->_arr,'SUNY_ID')));
         array_walk($ids,function(&$id) {
             $id = array('SUNY_ID' => $id);
             $this->getUser($id);
         });
-        
+
         $keys = array_column($ids, 'SUNY_ID');
         array_walk($this->_arr,function(&$row) use($keys,$ids) {
             $key = array_search($row['SUNY_ID'],$keys);
