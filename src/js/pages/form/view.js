@@ -36,7 +36,6 @@ function HRFormViewData({data}) {
             }
         });
         tlist.push(...allTabs.filter(t=>['comments','review'].includes(t.value)));
-        console.log(tlist);
         return tlist;
     },[allTabs,data]);
     return (
