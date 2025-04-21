@@ -1,6 +1,17 @@
 # Changelog
 
-## Verison 2.0.0(DEV-20250331)
+## Version 2.0.0(DEV-20250421)
+  * Visa only displayed and required when Non-Citizen with Visa type selected.
+  * Fixed issue with Journal showing wrong last updated by.
+  * Only show Benefit Code 'T' for payroll 28029.
+  * Removed maxDate limiter on Archive search for Effective Date; dates can be in the future.
+  * Added "Multi Line" search option to Position Request Archive.
+  * Fixed error in journal.php with array indexing.
+  * Fixed missing code block for Archive forms in form.php code.
+  * Added function to remove unicode characters from POST data.
+
+
+## Version 2.0.0(DEV-20250331)
   * Viewer permission added.  Allows for a view only capability.
   * Fixed user's groups showing up as all "inactive".
   * Fixed error when submitting Requests; error in hierarchy.php code logic.
@@ -14,7 +25,7 @@
   * Changed layout of Form Review tab for Position and Appointment blocks.
 
 
-## Verison 2.0.0(DEV-20250326)
+## Version 2.0.0(DEV-20250326)
   * Added "Close" button in Requests and Forms to Drafts.
   * Changed color of Close and Submit buttons.
   * Added duplicate form check and confirmation dialog.
