@@ -34,6 +34,8 @@ Class HRForms2 {
 		header('Allow:'.$this->allowedMethods);
 		$this->method = $_SERVER['REQUEST_METHOD'];
 		$this->POSTvars = file_get_contents("php://input");
+		//Remove unicode characters from POST data
+		$this->POSTvars = mb_convert_encoding($this->POSTvars, 'ASCII', mb_detect_encoding($this->POSTvars));
 		$this->POSTvars = json_decode($this->POSTvars,true);
 		if (!$this->db) $this->connect();
 		if ($this->reqAuth) $this->checkAuth();
