@@ -69,7 +69,6 @@ class Counts extends HRForms2 {
 		} else {
 			$usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
 			$groups = array_column($usergroups, 'GROUP_ID');
-			#var_dump($groups);
 			/* Requests */
 			$qry = "with counts as (select 'drafts' as menu, count(suny_id) as count, 0 as age
 				from hrforms2_requests_drafts
@@ -95,7 +94,7 @@ class Counts extends HRForms2 {
 					and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
 					and r.created_by.SUNY_ID != :suny_id";
 			}
-			if (in_array('-1',$groups)||in_array('-',$groups)) {
+			if (in_array('-1',$groups)||in_array('0',$groups)) {
 				$qry .= " union
 					select 'final', count(j.request_id), trunc(sysdate) - trunc(min(j.last_journal_date))
 					from hrforms2_requests_journal_last j
@@ -139,7 +138,7 @@ class Counts extends HRForms2 {
 				and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
 				and f.created_by.SUNY_ID != :suny_id";
 			}
-			if (in_array('-1',$groups)||in_array('-',$groups)) {
+			if (in_array('-1',$groups)||in_array('0',$groups)) {
 				$qry .= " union
 				select 'final', count(j.form_id), trunc(sysdate) - trunc(min(j.last_journal_date))
 				from hrforms2_forms_journal_last j
