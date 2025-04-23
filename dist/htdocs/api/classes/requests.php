@@ -406,8 +406,8 @@ class Requests extends HRForms2 {
                     );
                     $return_data['journal'][] = $data;
                     $this->POSTvars['journal_data'] = $data;
-                    $journal = (new journal(array('request',$this->POSTvars['reqId'],$j,$data),false))->returnData;
-
+                    $journal = (new journal(array('request',$request_id,$j,$data),false))->returnData;
+                    
                     // Email Notification
                     $return_data['email_response'][$j] = $this->sendEmail($data);
 
