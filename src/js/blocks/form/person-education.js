@@ -37,6 +37,7 @@ const defaultValues = {
     "awardDate": null,
     "institutionName":[{id:"",label:""}],
     "institutionCity":[],
+    "specialization": "",
     "createDate":new Date()
 }
 
@@ -261,6 +262,18 @@ export default function PersonEducation() {
                     </Form.Group>
 
                     <DegreeProgramComponent index={index} editIndex={editIndex}/>
+
+                    <Form.Group as={Row} className="mb-1">
+                        <Form.Label column md={3}>Degree Specialization:</Form.Label>
+                        <Col md={8}>
+                            <Controller
+                                name={`${name}.${index}.specialization`}
+                                defaultValue={defaultValues.specialization}
+                                control={control}
+                                render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
+                            />
+                        </Col>
+                    </Form.Group>
 
                     <Form.Group as={Row} className="mb-1">
                         <Form.Label column md={3}>University/College Country*:</Form.Label>

@@ -24,6 +24,8 @@ export default function ReviewPersonEducation() {
                             <Col as="dd" sm={9} className="mb-0">{Object.values(e.DEGREE_TYPE[0]).join(' - ')}</Col>
                             <Col as="dt" sm={3} className="mb-0">Degree Program/Major:</Col>
                             <Col as="dd" sm={9} className="mb-0">{e?.DEGREE_PROGRAM?.at(0)?.label}</Col>
+                            <Col as="dt" sm={3} className="mb-0">Degree Specialization:</Col>
+                            <Col as="dd" sm={9} className="mb-0">{e?.specialization}</Col>
                             <Col as="dt" sm={3} className="mb-0">Institution Country:</Col>
                             <Col as="dd" sm={9} className="mb-0">{e.COUNTRY_CODE.label}</Col>
                             {(e.COUNTRY_CODE.id=='USA') && 
