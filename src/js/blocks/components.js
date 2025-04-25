@@ -343,7 +343,7 @@ const WorkflowExpandedComponent = ({data}) => {
     const { general } = useSettingsContext();
     const { isAdmin } = useAuthContext();
     useEffect(() => {
-        setShowSkipped((isAdmin && general.showSkipped == 'a' || general.showSkipped == 'y'));
+        setShowSkipped((isAdmin && general.showSkipped == 'A' || general.showSkipped == 'Y'));
     },[general]);
     return (
         <div className="p-3" style={{backgroundColor:'#ddd'}}>
