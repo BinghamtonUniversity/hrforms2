@@ -25,7 +25,6 @@ export default function EmploymentAppointment() {
         'employment.position.APPOINTMENT_PERCENT'
     ],control:control,defaultValue:[0,1,100]});
     const watchPayBasis = useWatch({name:'employment.position.positionDetails.PAY_BASIS',control:control});
-    const watchEffectiveDate = useWatch({name:'employment.position.apptEffDate',control:control,defaultValue:new Date(0)});
     const watchTransactionCode = useWatch({name:'formActions.transactionCode.TRANSACTION_CODE',control:control,defaultValue:''});
     const rateAmountLabel = useMemo(() => {
         switch(watchPayBasis) {
