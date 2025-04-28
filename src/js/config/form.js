@@ -125,6 +125,7 @@ const advancedFields = {
         return (v.length>0)?true:'Spring Courses List cannot be empty';
     },
     "employment.salary.SUNY_ACCOUNTS":(frmData,v) => {
+        if (['EXS','SUM','WIN'].includes(get(frmData,'formActions.transactionCode.TRANSACTION_CODE',''))) return true;
         if (!v.every(a => a?.account?.at(0)?.id)) return 'SUNY Account is required';
         if (v.reduce((a,c)=>a+parseInt(c?.pct,10)||0,0)!=100) return 'SUNY Account percentage must equal 100';
         return true;
