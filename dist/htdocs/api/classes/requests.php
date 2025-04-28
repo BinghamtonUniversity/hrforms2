@@ -28,7 +28,7 @@ class Requests extends HRForms2 {
         $wf = (new workflow(array('request',$wf_id),false))->returnData[0];
         if ($wf['CONDITIONS'] == null) return; // if no conditions return; no need to parse
         $this->conditions = array_filter($wf['CONDITIONS'],function($c) use($seq){
-            return strval($c->seq) == strval($seq);
+            return strval($c->seq+1) == strval($seq); //add 1 to seq to account for submitter group at index 0
         });
         if ($this->conditions) {
             $accounts = array_map(function($account) {return $account['account'][0]['id'];},$this->POSTvars['SUNYAccounts']);
@@ -334,6 +334,9 @@ class Requests extends HRForms2 {
                 $groups_array = explode(",",$workflow['GROUPS']);
                 $next_seq = intval($last_journal['SEQUENCE'])+1;
 
+                // Add submitter group to the beginning of the groups array
+                array_unshift($groups_array,"-99");
+
                 //extract comments from JSON
                 array_push($comments_array,$this->POSTvars['comment']);
                 unset($this->POSTvars['comment']);
@@ -351,9 +354,9 @@ class Requests extends HRForms2 {
                         $this->raiseError(E_BAD_REQUEST);
                         return;
                 }
-
+                               
                 // Check for skip conditions
-                $this->checkSkip($last_journal['WORKFLOW_ID'],0);
+                $this->checkSkip($last_journal['WORKFLOW_ID'],$next_seq);
                 if (!$this->match && $this->conditions) {
                     array_push($journal_array,"X");
                     array_push($comments_array,"Skipped by hierarchy rule");
@@ -397,12 +400,12 @@ class Requests extends HRForms2 {
                         'hierarchy_id'=>$last_journal['HIERARCHY_ID'],
                         'workflow_id'=>$last_journal['WORKFLOW_ID'],
                         'seq'=>$seq,
-                        'groups'=>$this->POSTvars['GROUPS'], 
+                        'groups'=>implode(',',$groups_array), 
                         'group_from'=>$groups_array[$seq-1],
                         'group_to'=>$groups_array[$seq],
                         'status'=>$j,
                         'submitted_by'=>$last_journal['CREATED_BY_SUNY_ID'],
-                        'comment'=>$comments_array[$seq-1]
+                        'comment'=>$comments_array[$i]
                     );
                     $return_data['journal'][] = $data;
                     $this->POSTvars['journal_data'] = $data;
