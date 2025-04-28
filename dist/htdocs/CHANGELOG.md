@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 2.0.0(DEV-20250428)
+  * Fixed issue with HR Final Approvals not showing for members of the HR Group
+  * Fixed issue with Archive search not displaying Requests/Forms when user was in the approval hierarchy.
+  * Fixed issue with archiving/final approving Requests.
+  * Added Degree Specialization to the Form Education block.
+  * Fixed issue where skipped workflow badges were not being displayed when they should.
+  * Fixed issue with workflow conditional skip not working.
+  * Fixed issue where SUNY Account was required for transactions that do not have that field.
+
+
 ## Version 2.0.0(DEV-20250421)
   * Visa only displayed and required when Non-Citizen with Visa type selected.
   * Fixed issue with Journal showing wrong last updated by.
