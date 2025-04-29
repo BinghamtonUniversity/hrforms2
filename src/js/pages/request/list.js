@@ -16,6 +16,7 @@ import { flattenObject } from "../../utility";
 import { Helmet } from "react-helmet";
 import useUserQueries from "../../queries/users";
 import { Icon } from "@iconify/react/dist/iconify.js";
+import { hide } from "@popperjs/core";
 
 export default function RequestList() {
     const {part} = useParams();
@@ -244,19 +245,17 @@ function ListTable({data,list}) {
                 );
             },ignoreRowClick:true,maxWidth:'100px'},
             {name:'ID',selector:row=>row.REQUEST_ID,sortable:true},
-            {name:'Status',selector:row=>row.STATUS,format:row=>(row.STATUS == 'draft')?"Draft":get(general.status,`${row.STATUS}.list`,row.STATUS),sortable:true,sortField:'STATUS'},
-            {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortField:'UNIX_TS',grow:2},
-            {name:'Submitted By',selector:row=>row.SUNY_ID,sortable:true,omit:(list=='drafts'||list=='pending'),format:row=>`${row.fullName} (${row.CREATED_BY_SUNY_ID})`,wrap:true},
+            //{name:'Status',selector:row=>row.STATUS,format:row=>(row.STATUS == 'draft')?"Draft":get(general.status,`${row.STATUS}.list`,row.STATUS),sortable:true,sortField:'STATUS'},
             {name:'Position Type',selector:row=>row.POSTYPE.id,format:row=>`${row.POSTYPE.id} - ${row.POSTYPE.title}`,sortable:true},
             {name:'Request Type',selector:row=>row.REQTYPE.id,format:row=>`${row.REQTYPE.id} - ${row.REQTYPE.title}`,sortable:true},
-            {name:'Candidate Name',selector:row=>row.CANDIDATENAME,sortable:true,wrap:true},
             {name:'Effective Date',selector:row=>row.EFFDATE,format:row=>format(new Date(row.EFFDATE),'P'),sortable:true},
+            {name:'Candidate Name',selector:row=>row.CANDIDATENAME,sortable:true,wrap:true},
             {name:'Line #',selector:row=>row.LINENUMBER,sortable:true},
-            {name:'Title',selector:row=>row.REQBUDGETTITLE,sortable:true,wrap:true}
+            {name:'Title',selector:row=>row.REQBUDGETTITLE,sortable:true,wrap:true},
+            {name:(list=='archived')?'Archive Date':'Last Updated',selector:row=>row.MAX_JOURNAL_DATE,format:row=>format(new Date(row.MAX_JOURNAL_DATE),'Pp'),sortable:true,grow:2,omit:(list=='drafts')},
+            {name:'Submitted By',selector:row=>row.SUNY_ID,sortable:true,omit:(list=='drafts'||list=='pending'),format:row=>`${row.fullName} (${row.CREATED_BY_SUNY_ID})`,wrap:true},
+            {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortField:'UNIX_TS',grow:2},
         ];
-        if (list != 'drafts') {
-            cols.push({name:(list=='archived')?'Archive Date':'Last Updated',selector:row=>row.MAX_JOURNAL_DATE,format:row=>format(new Date(row.MAX_JOURNAL_DATE),'Pp'),sortable:true,grow:2});
-        }
         return cols;
     },[data,list]);
     useEffect(()=>{
