@@ -398,7 +398,7 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                 </Form.Group>
             </Form.Row>
             <Form.Row className="justify-content-end">
-                <div className="form-group col-lg-2 col-sm-3 text-right pt-1">Effective Date:</div>
+                <div className="form-group col-lg-2 col-sm-3 text-right pt-1">Transaction Effective Date:</div>
                 <div>
                     <ButtonGroup size="sm" toggle>
                         {daysButtons.map(btn => <Button key={btn.id} id={btn.id} variant={(days==btn.id&&filter.formId=='')?'primary':'secondary'} active={days==btn.id} onClick={handleDaysChange} disabled={filter.formId!=''}>{btn.label}</Button>)}
