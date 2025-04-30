@@ -99,6 +99,11 @@ pre {
 /* cursor in badges */
 .badge>* {cursor: default}
 
+/* make accordion header clickable */
+.accordion>.card>.card-header.clickable {
+  cursor: pointer;
+}
+
 /* highlight hidden field; shown in test mode */
 .test-highlight {
   background: repeating-linear-gradient(-45deg,#d4d4d4,#d4d4d4 5px,#efefef 5px,#efefef 10px);

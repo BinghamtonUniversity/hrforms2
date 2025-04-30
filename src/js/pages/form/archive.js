@@ -184,7 +184,7 @@ export default function ListArchiveTable() {
     return (
         <Accordion defaultActiveKey="0">
             <Card style={{overflow:'visible'}}>
-                <Accordion.Toggle as={Card.Header} className="d-print-none" eventKey="0">
+                <Accordion.Toggle as={Card.Header} className="d-print-none clickable" eventKey="0">
                     <h3 className="m-0">Archive Search</h3>
                 </Accordion.Toggle>
                 <Accordion.Collapse eventKey="0">
@@ -220,7 +220,7 @@ export default function ListArchiveTable() {
                 </Accordion.Collapse>
             </Card>
             <Card>
-                <Accordion.Toggle ref={accordionViewRef} as={Card.Header} className="d-print-none" eventKey="1">
+                <Accordion.Toggle ref={accordionViewRef} as={Card.Header} className="d-print-none clickable" eventKey="1">
                     <h3 className="m-0">Archive View</h3>
                 </Accordion.Toggle>
                 <Accordion.Collapse eventKey="1">
