@@ -522,117 +522,114 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             });
             tlist.push(...allTabs.filter(t=>['comments','review'].includes(t.value)));
             setTabList(tlist);
-            if (isNew) {
-                if (!!watchIds[0]) { 
-                    // Fetch Data:
-                    const promiseList = [];
-                    // include position data if any employment tab exists; position data is needed for the position info box and other tabs.
-                    if (tabs.some(t=>t.startsWith('employment-')) && !tabs.includes('employment-position')) tabs.push('employment-position');
-                    tabs.forEach(tab => {
-                        switch(tab) {
-                            case "person-information": promiseList.push({tab:tab,func:fetchData.personinfo.refetch}); break;
-                            case "person-demographics": promiseList.push({tab:tab,func:fetchData.persondemographics.refetch}); break;
-                            case "person-directory": promiseList.push({tab:tab,func:fetchData.persondirectory.refetch}); break;
-                            case "person-education": promiseList.push({tab:tab,func:fetchData.personeducation.refetch}); break;
-                            case "person-contacts": promiseList.push({tab:tab,func:fetchData.personcontacts.refetch}); break;
-                            case "employment-appointment": promiseList.push({tab:tab,func:fetchData.employmentappointment.refetch}); break;
-                            case "employment-position": 
-                                promiseList.push({tab:tab,func:fetchData.employmentposition.refetch,then:() =>{
-                                    //if payroll == 28029 get student data
-                                    methods.getValues('payroll.PAYROLL_CODE')=='28029' && fetchData.studentinformation.refetch().then(r=>{
-                                        methods.setValue('employment.appointment.studentDetails',Object.assign({},defaultVals.employment.appointment.studentDetails,r.data));
-                                    });
-                                }}); 
-                                break;
-                            case "employment-salary": 
-                                promiseList.push({tab:tab,func:fetchData.employmentsalary.refetch,then:d=>{
-                                    //Remove Employment-Leave tab if Pay Basis is BIW,FEE,HRY
-                                    if (['BIW','FEE','HRY'].includes(d.data?.PAY_BASIS)) {
-                                        tlist.filter(t=>{
-                                            if(t.hasOwnProperty('children')) {
-                                                return t.children = t.children.filter(c=>c.value!='employment-leave');
-                                            } else {
-                                                return t;
-                                            }
-                                        });
-                                        console.debug(`Employment-Leave Tab Removed.  Pay Basis ${d.data?.PAY_BASIS} not allowed.`);
-                                        setTabList(tlist);
+            if (!isNew||!watchIds[0]) return;
+            // Fetch Data:
+            const promiseList = [];
+            // include position data if any employment tab exists; position data is needed for the position info box and other tabs.
+            if (tabs.some(t=>t.startsWith('employment-')) && !tabs.includes('employment-position')) tabs.push('employment-position');
+            tabs.forEach(tab => {
+                switch(tab) {
+                    case "person-information": promiseList.push({tab:tab,func:fetchData.personinfo.refetch}); break;
+                    case "person-demographics": promiseList.push({tab:tab,func:fetchData.persondemographics.refetch}); break;
+                    case "person-directory": promiseList.push({tab:tab,func:fetchData.persondirectory.refetch}); break;
+                    case "person-education": promiseList.push({tab:tab,func:fetchData.personeducation.refetch}); break;
+                    case "person-contacts": promiseList.push({tab:tab,func:fetchData.personcontacts.refetch}); break;
+                    case "employment-appointment": promiseList.push({tab:tab,func:fetchData.employmentappointment.refetch}); break;
+                    case "employment-position": 
+                        promiseList.push({tab:tab,func:fetchData.employmentposition.refetch,then:() =>{
+                            //if payroll == 28029 get student data
+                            methods.getValues('payroll.PAYROLL_CODE')=='28029' && fetchData.studentinformation.refetch().then(r=>{
+                                methods.setValue('employment.appointment.studentDetails',Object.assign({},defaultVals.employment.appointment.studentDetails,r.data));
+                            });
+                        }}); 
+                        break;
+                    case "employment-salary": 
+                        promiseList.push({tab:tab,func:fetchData.employmentsalary.refetch,then:d=>{
+                            //Remove Employment-Leave tab if Pay Basis is BIW,FEE,HRY
+                            if (['BIW','FEE','HRY'].includes(d.data?.PAY_BASIS)) {
+                                tlist.filter(t=>{
+                                    if(t.hasOwnProperty('children')) {
+                                        return t.children = t.children.filter(c=>c.value!='employment-leave');
+                                    } else {
+                                        return t;
                                     }
-                                }});
-                                break;
-                            case "employment-leave": promiseList.push({tab:tab,func:fetchData.employmentleave.refetch}); break;
-                            case "employment-pay": promiseList.push({tab:tab,func:fetchData.employmentpay.refetch}); break;
-                            case "employment-volunteer":
-                                // no data needed
-                                promiseList.push({tab:tab,func:()=>new Promise(resolve=>resolve({}))})
-                                break;
-                            case "basic-info":
-                            case "employment-separation":
-                            case "comments":
-                            case "review":
-                                console.debug('Tab Skipped - No Data: ',tab);
-                                break;
-                            default:
-                                console.warn('Tab Not Configured:',tab);
+                                });
+                                console.debug(`Employment-Leave Tab Removed.  Pay Basis ${d.data?.PAY_BASIS} not allowed.`);
+                                setTabList(tlist);
+                            }
+                        }});
+                        break;
+                    case "employment-leave": promiseList.push({tab:tab,func:fetchData.employmentleave.refetch}); break;
+                    case "employment-pay": promiseList.push({tab:tab,func:fetchData.employmentpay.refetch}); break;
+                    case "employment-volunteer":
+                        // no data needed
+                        promiseList.push({tab:tab,func:()=>new Promise(resolve=>resolve({}))})
+                        break;
+                    case "basic-info":
+                    case "employment-separation":
+                    case "comments":
+                    case "review":
+                        console.debug('Tab Skipped - No Data: ',tab);
+                        break;
+                    default:
+                        console.warn('Tab Not Configured:',tab);
+                }
+            });
+            Promise.all(promiseList.map(p=>p.func().then(r=>{
+                p.then&&p.then(r);
+                return r;
+            }).then(r=>{
+                const objPath = p.tab.replace('-','.');
+                const role_type = methods.getValues('selectedRow.EMPLOYMENT_ROLE_TYPE');
+                const effDate = methods.getValues('effDate');
+                switch(p.tab) {
+                    case "person-education":
+                        methods.setValue('person.education.institutions',r.data);
+                        break;
+                    case "person-contacts":
+                        methods.setValue('person.contact.contacts',r.data);
+                        break;
+                    case "employment-position":
+                        if (role_type == 'New Role') {
+                            // Reset all values to default
+                            Object.keys(initFormValues.employment.position).forEach(f => {
+                                methods.setValue(`employment.position.${f}`,initFormValues.employment.position[f]);
+                                methods.setValue(`employment.position.apptEffDate`,effDate); // use Basic Info Effective Date for Appt Effective Date.
+                            });
+                        } else {
+                            methods.setValue(objPath,Object.assign({},get(defaultVals,objPath),r.data));
                         }
-                    });
-                    Promise.all(promiseList.map(p=>p.func().then(r=>{
-                        p.then&&p.then(r);
-                        return r;
-                    }).then(r=>{
-                        const objPath = p.tab.replace('-','.');
-                        const role_type = methods.getValues('selectedRow.EMPLOYMENT_ROLE_TYPE');
-                        const effDate = methods.getValues('effDate');
-                        switch(p.tab) {
-                            case "person-education":
-                                methods.setValue('person.education.institutions',r.data);
-                                break;
-                            case "person-contacts":
-                                methods.setValue('person.contact.contacts',r.data);
-                                break;
-                            case "employment-position":
-                                if (role_type == 'New Role') {
-                                    // Reset all values to default
-                                    Object.keys(initFormValues.employment.position).forEach(f => {
-                                        methods.setValue(`employment.position.${f}`,initFormValues.employment.position[f]);
-                                        methods.setValue(`employment.position.apptEffDate`,effDate); // use Basic Info Effective Date for Appt Effective Date.
-                                    });
-                                } else {
-                                    methods.setValue(objPath,Object.assign({},get(defaultVals,objPath),r.data));
-                                }
-                                break;
-                            case "employment-appointment":
-                                if (role_type == 'New Role') {
-                                    // Reset all values to default except facultyDetails and studentDetails
-                                    difference(Object.keys(initFormValues.employment.appointment),['facultyDetails','studentDetails']).forEach(f=>{
-                                        methods.setValue(`employment.appointment.${f}`,initFormValues.employment.appointment[f]);
-                                    });
-                                } else {
-                                    methods.setValue(objPath,Object.assign({},get(defaultVals,objPath),r.data));
-                                }
-                                break;
-                            case "employment-salary":
-                                if (role_type == 'New Role') {
-                                    // Reset all values to default
-                                    Object.keys(initFormValues.employment.salary).forEach(f => methods.setValue(`employment.salary.${f}`,initFormValues.employment.salary[f]));
-                                } else {
-                                    methods.setValue(objPath,Object.assign({},get(defaultVals,objPath),r.data));
-                                }
-                                break;    
-                            case "employment-pay":
-                                methods.setValue('employment.pay.existingPay',r.data);
-                                break;
-                            default:
-                                methods.setValue(objPath,Object.assign({},get(defaultVals,objPath),r.data));
+                        break;
+                    case "employment-appointment":
+                        if (role_type == 'New Role') {
+                            // Reset all values to default except facultyDetails and studentDetails
+                            difference(Object.keys(initFormValues.employment.appointment),['facultyDetails','studentDetails']).forEach(f=>{
+                                methods.setValue(`employment.appointment.${f}`,initFormValues.employment.appointment[f]);
+                            });
+                        } else {
+                            methods.setValue(objPath,Object.assign({},get(defaultVals,objPath),r.data));
                         }
-                        return r;
-                    }))).then(res=>{
-                        const errors = res.find(q=>q.isError);
-                        if (errors) throw new Error(errors?.error);
-                    }).catch(e=>setDataLoadError({message:e.message}));
-                } 
-            }
-        }
+                        break;
+                    case "employment-salary":
+                        if (role_type == 'New Role') {
+                            // Reset all values to default
+                            Object.keys(initFormValues.employment.salary).forEach(f => methods.setValue(`employment.salary.${f}`,initFormValues.employment.salary[f]));
+                        } else {
+                            methods.setValue(objPath,Object.assign({},get(defaultVals,objPath),r.data));
+                        }
+                        break;    
+                    case "employment-pay":
+                        methods.setValue('employment.pay.existingPay',r.data);
+                        break;
+                    default:
+                        methods.setValue(objPath,Object.assign({},get(defaultVals,objPath),r.data));
+                }
+                return r;
+            }))).then(res=>{
+                const errors = res.find(q=>q.isError);
+                if (errors) throw new Error(errors?.error);
+            }).catch(e=>setDataLoadError({message:e.message}));
+        } 
     },[tabList,watchIds]);
 
     const testHighlight = useCallback(testCondition=>(testCondition)?'':'test-highlight',[]);

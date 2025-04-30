@@ -187,7 +187,7 @@ const defaultFormActions = {
     transactionCode:{TRANSACTION_CODE:"",TRANSACTION_TITLE:"",TRANSACTION_DESCRIPTION:""},
     TABS:[],
     ROUTE_BY:"",
-    PR_REQUIRED:"0"
+    PR_REQUIRED:false
 };
 export {defaultFormActions}; //used on basic_info
 

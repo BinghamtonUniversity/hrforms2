@@ -4,7 +4,7 @@ import { useIsFetching } from 'react-query';
 import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import sub from "date-fns/sub";
-import { assign, keyBy, orderBy, get } from "lodash";
+import { assign, keyBy, orderBy, get, set } from "lodash";
 import { AppButton, Loading } from "../components";
 import usePersonQueries from "../../queries/person";
 import useCodesQueries from "../../queries/codes";
@@ -471,7 +471,6 @@ function PayrollDate({selectedId,selectedPayroll}) {
 
 function FormActionsWrapper({payroll}) {
     const [filter,setFilter] = useState('000');
-    //const [PRRequired,setPRRequired] = useState(false);
     const [showPRRequired,setShowPRRequired] = useState(false);
     
     const { getValues, setValue, setError } = useFormContext();
@@ -547,7 +546,7 @@ function FormActionsWrapper({payroll}) {
     },[codes,watchFormCode,watchActionCode,watchTransactionCode]);
 
     useEffect(() => {
-        if (!paytrans.data) return;
+        if (!paytrans.data || filter == '000') return;
         const formCode = watchFormCode.FORM_CODE;
         const actionCode = watchActionCode.ACTION_CODE;
         const transactionCode = watchTransactionCode.TRANSACTION_CODE;
@@ -574,7 +573,49 @@ function FormActionsWrapper({payroll}) {
                     toast.error('No Tabs have been set for this Form Action');
                     return;
                 }
-                if (pt.PR_REQUIRED == '1') setShowPRRequired(true);
+                if (pt.PR_REQUIRED == '1') {
+                    setShowPRRequired(true);
+                    if (!!watchPRRequired) { // checkbox checked
+                        setValue('formActions.PAYTRANS_ID',pt.PAYTRANS_ID);
+                        setValue('formActions.ROUTE_BY',pt.ROUTE_BY); 
+                        handleTabs(pt.TABS);
+                    } else {
+                        setValue('formActions.PAYTRANS_ID',"");
+                        setValue('formActions.ROUTE_BY',"");
+                        handleTabs();        
+                    }
+                } else {
+                    setShowPRRequired(false);
+                    setValue('formActions.PAYTRANS_ID',pt.PAYTRANS_ID);
+                    setValue('formActions.ROUTE_BY',pt.ROUTE_BY); 
+                    handleTabs(pt.TABS);   
+                }
+            } else {
+                setShowPRRequired(false);
+                setValue('formActions.PAYTRANS_ID',"");
+                setValue('formActions.ROUTE_BY',"");
+                handleTabs();                
+            }
+        } else {
+            if (pt?.PR_REQUIRED=='1') {
+                setShowPRRequired(true);
+                if (!watchPRRequired) {
+                    setValue('formActions.PAYTRANS_ID',"");
+                    setValue('formActions.ROUTE_BY',"");
+                    handleTabs();
+                }
+            }
+        }
+        /*
+        if (!getValues('formActions.PAYTRANS_ID')) { //Do not reload if PAYTRANS_ID already set
+            console.log(pt);
+            if (pt) {
+                if (pt.TABS.length == 0) {
+                    setError('formActions.transactionCode.TRANSACTION_CODE',{type:'manual',message:'No Tabs have been set for this Form Action'});
+                    toast.error('No Tabs have been set for this Form Action');
+                    return;
+                }
+                if (pt.PR_REQUIRED == '1') setValue('formActions.PR_REQUIRED',1);
                 setValue('formActions.PAYTRANS_ID',pt.PAYTRANS_ID);
                 setValue('formActions.ROUTE_BY',pt.ROUTE_BY);
                 if (pt.PR_REQUIRED==watchPRRequired) {
@@ -583,21 +624,21 @@ function FormActionsWrapper({payroll}) {
                     handleTabs();
                 }
             } else {
-                setShowPRRequired(false);
+                setValue('formActions.PR_REQUIRED',0);
                 setValue('formActions.PAYTRANS_ID',"");
                 setValue('formActions.ROUTE_BY',"");
                 handleTabs();
             }
         } else {
             if (pt?.PR_REQUIRED=='1') {
-                setShowPRRequired(true);
+                setValue('formActions.PR_REQUIRED',1);
                 if (watchPRRequired) {
-                    handleTabs(pt.TABS);
+                    //handleTabs(pt.TABS);
                 } else {
-                    handleTabs();
+                    //handleTabs();
                 }
             }
-        }
+        }*/
     },[paytrans.data,filter,watchFormCode,watchActionCode,watchTransactionCode,watchPRRequired]);
 
     useEffect(()=>setFilter((watchRoleType=="New Employee")?"100":(watchRoleType=="New Role")?"010":"001"),[watchRoleType]);
