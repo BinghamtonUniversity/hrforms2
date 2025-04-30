@@ -148,6 +148,7 @@ export default function ListArchiveTable() {
 
     useEffect(() => {
         if (!submitted) return;
+        setSubmitted(false);
         listdata.refetch().then(d => {
             for (const r of d.data.results) {
                 if (r.CREATED_BY_SUNY_ID) r.createdByFullName = [r.CREATED_BY_FIRST_NAME,r.CREATED_BY_LEGAL_LAST_NAME].join(' ');
@@ -157,7 +158,6 @@ export default function ListArchiveTable() {
             }
             setData(d.data.results);
             setTotalRows(d.data.info.total_rows);
-            setSubmitted(false);
         });
     },[filter,submitted,groups,listdata]);
 
@@ -165,7 +165,7 @@ export default function ListArchiveTable() {
     return (
         <Accordion defaultActiveKey="0">
             <Card style={{overflow:'visible'}}>
-                <Accordion.Toggle as={Card.Header} className="d-print-none" eventKey="0">
+                <Accordion.Toggle as={Card.Header} className="d-print-none clickable" eventKey="0">
                     <h3 className="m-0">Archive Search</h3>
                 </Accordion.Toggle>
                 <Accordion.Collapse eventKey="0">
@@ -201,7 +201,7 @@ export default function ListArchiveTable() {
                 </Accordion.Collapse>
             </Card>
             <Card>
-                <Accordion.Toggle ref={accordionViewRef} as={Card.Header} className="d-print-none" eventKey="1">
+                <Accordion.Toggle ref={accordionViewRef} as={Card.Header} className="d-print-none clickable" eventKey="1">
                     <h3 className="m-0">Archive View</h3>
                 </Accordion.Toggle>
                 <Accordion.Collapse eventKey="1">
@@ -213,27 +213,6 @@ export default function ListArchiveTable() {
         </Accordion>
     );
 }
-/*
-        <DataTable 
-            keyField="REQUEST_ID"
-            className="compact"
-            columns={columns} 
-            data={data}
-            noDataComponent={<div className="p-3">{submitted?"No Records Found":"Perform A Search"}</div>}
-            persistTableHead
-            progressPending={listdata.isPending}
-            pagination 
-            subHeader
-            subHeaderComponent={<ArchiveTableSubHeader filter={filter} setFilter={setFilter} handleSearch={handleSearch} handleReset={handleReset}/>}
-            onChangeRowsPerPage={handleChangeRowsPerPage}
-            onChangePage={handleChangePage}
-            striped 
-            responsive
-            pointerOnHover
-            highlightOnHover
-            customStyles={customStyles}
-        />
-*/
 
 function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calculateDates,userData}) {
     const daysButtons = [
@@ -290,8 +269,12 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
         handleReset();
     }
 
+    const handleKeyDown = e => {
+        if (e.key === 'Enter') handleSearch();
+    }
+
     return(
-        <Form style={{width:'100%'}}>
+        <Form style={{width:'100%'}} onKeyDown={handleKeyDown}>
             <Row>
                 <Col><h3>Archive Search</h3></Col>
             </Row>

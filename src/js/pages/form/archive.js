@@ -167,6 +167,7 @@ export default function ListArchiveTable() {
 
     useEffect(() => {
         if (!submitted) return;
+        setSubmitted(false);
         listdata.refetch().then(d => {
             for (const r of d.data.results) {
                 if (r.CREATED_BY_SUNY_ID) r.createdByFullName = [r.CREATED_BY_FIRST_NAME,r.CREATED_BY_LEGAL_LAST_NAME].join(' ');
@@ -176,7 +177,6 @@ export default function ListArchiveTable() {
             }
             setData(d.data.results);
             setTotalRows(d.data.info.total_rows);
-            setSubmitted(false);
         });
     },[filter,submitted,groups,listdata]);
 
@@ -307,8 +307,12 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
         handleReset();
     }
 
+    const handleKeyDown = e => {
+        if (e.key === 'Enter') handleSearch();
+    }
+
     return(
-        <Form style={{width:'100%'}}>
+        <Form style={{width:'100%'}} onKeyDown={handleKeyDown}>
             <Form.Row className="justify-content-end">
                 <Form.Group as={Col} sm={2} lg={1} controlId="formId">
                     <Form.Label>ID</Form.Label>
