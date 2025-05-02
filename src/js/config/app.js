@@ -23,6 +23,10 @@ const additionalIcons = [
     'mdi:clipboard-account',
     'mdi:newspaper',
     'mdi:alert',
+    'mdi:playlist-plus',
+    'mdi:printer',
+    'mdi:run',
+    'mdi:undo'
 ];
 
 // Editor Configuration
