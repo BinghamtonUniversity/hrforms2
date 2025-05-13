@@ -260,7 +260,7 @@ function SettingsRequestsDefaultRouting() {
         field.onChange(e.target.value);
     };
 
-    const filteredWorkflows = useMemo(() => workflows.data.filter(w => w.GROUPS_ARRAY.map(g=>{console.log(g); return g.GROUP_NAME.toLowerCase();}).join(' ').includes(searchText.toLocaleLowerCase())),[searchText,workflows]);
+    const filteredWorkflows = useMemo(() => workflows.data.filter(w => w.GROUPS_ARRAY.map(g=>g.GROUP_NAME.toLowerCase()).join(' ').includes(searchText.toLocaleLowerCase())),[searchText,workflows]);
     const selectedWorkflow = useCallback((workflowId) => workflows.data.filter(w=>w.WORKFLOW_ID==workflowId)[0],[workflows]);
     const clearDefault = ()=>setValue('requests.defaultWorkflow','');
     return (
