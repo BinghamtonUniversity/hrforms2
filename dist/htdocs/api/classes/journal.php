@@ -182,20 +182,14 @@ class Journal extends HRForms2 {
         });
 
         oci_free_statement($stmt);
-        $this->returnData = $this->_arr;
+        $this->returnData = $this->null2Empty($this->_arr);
         if ($this->retJSON) $this->toJSON($this->returnData);
 	}
 
     function POST() {
-        if (INSTANCE=="LOCAL") {
-            $qry = "insert into ".$this->k['journal']." 
-            values(:id, systimestamp, :suny_id, :status, :hierarchy_id, :workflow_id, :seq, :group_from, :group_to,'{}')
-            returning COMMENTS into :comments";
-        } else {
-            $qry = "insert into ".$this->k['journal']." 
-            values(:id, systimestamp, :suny_id, :status, :hierarchy_id, :workflow_id, :seq, :group_from, :group_to, EMPTY_CLOB())
-            returning COMMENTS into :comments";
-        }
+        $qry = "insert into ".$this->k['journal']." 
+        values(:id, systimestamp, :suny_id, :status, :hierarchy_id, :workflow_id, :seq, :group_from, :group_to,".((INSTANCE=="LOCAL")?"' '":"EMPTY_CLOB()").")
+        returning COMMENTS into :comments";
         $stmt = oci_parse($this->db,$qry);
         $comments = oci_new_descriptor($this->db, OCI_D_LOB);
         oci_bind_by_name($stmt,":id", $this->req[1]);
@@ -220,7 +214,7 @@ class Journal extends HRForms2 {
             set STATUS = :new_status, 
             JOURNAL_DATE = systimestamp,
             SUNY_ID = :suny_id,
-            COMMENTS = EMPTY_CLOB()
+            COMMENTS = ".((INSTANCE=="LOCAL")?"' '":"EMPTY_CLOB()")."
             where ".$this->k['id']." = :id
             and sequence = :seq
             and STATUS = :old_status
