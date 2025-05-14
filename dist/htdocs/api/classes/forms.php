@@ -123,7 +123,7 @@ class Forms extends HRForms2 {
                         $this->raiseError(403);
                 }
             }
-            $last_journal['SUBMITTER_SUNY_ID'] = $submitter['SUNY_ID'];
+            $last_journal['SUBMITTER_SUNY_ID'] = $submitter['SUNY_ID'];            
             if ($last_journal['STATUS'] != 'Z') {
                 $qry = "select CREATED_BY,FORM_DATA from HRFORMS2_FORMS where FORM_ID = :form_id";
                 $stmt = oci_parse($this->db,$qry);
@@ -146,6 +146,7 @@ class Forms extends HRForms2 {
                 $formData->formActions->TABS = json_decode($row['TABS']);
             }
             $formData->lastJournal = $last_journal;
+            $formData->comment = ""; // clear formData comment field
         }
         $this->returnData = $formData;
         if ($this->retJSON) $this->toJSON($this->returnData);
@@ -376,9 +377,9 @@ class Forms extends HRForms2 {
                 $groups_array = explode(',',$this->POSTvars['GROUPS']);
                 $next_seq = intval($last_journal['SEQUENCE'])+1;
 
-                // Add submitter group to the beginning of the groups array
-                array_unshift($groups_array,"-99");
-
+                // Add submitter group to the beginning of the groups array if not already there
+                if ($groups_array[0] != "-99") array_unshift($groups_array,"-99");
+                
                 //extract comments from JSON
                 array_push($comments_array,$this->POSTvars['comment']);
                 unset($this->POSTvars['comment']);
@@ -419,6 +420,7 @@ class Forms extends HRForms2 {
                 } else {
                     array_push($journal_array,"PA");
                 }
+                array_push($comments_array,"");
 
                 // Update current journal entry from PA/PF to A/F
                 $_SERVER['REQUEST_METHOD'] = 'PATCH';
@@ -431,12 +433,15 @@ class Forms extends HRForms2 {
                     $comments_array[0]
                 ),false))->returnData;
 
+                //shift journal_array and comments_array?
+                array_shift($journal_array);
+                array_shift($comments_array);
+
                 // Post to Journal
                 $_SERVER['REQUEST_METHOD'] = 'POST';
                 $return_data = array("journal"=>[],"email_response"=>[]);
                 foreach ($journal_array as $i=>$j) {
-                    if ($i == 0) continue; //skip first elements
-                    $seq = $next_seq+$i-1;
+                    $seq = $next_seq+$i;
                     $data = array(
                         'form_id'=>$form_id,
                         'hierarchy_id'=>$last_journal['HIERARCHY_ID'],
@@ -447,7 +452,7 @@ class Forms extends HRForms2 {
                         'group_to'=>$groups_array[$seq],
                         'status'=>$j,
                         'submitted_by'=>$last_journal['CREATED_BY_SUNY_ID'],
-                        'comment'=>$comments_array[$seq-1]
+                        'comment'=>$comments_array[$i]
                     );
                     $return_data['journal'][] = $data;
                     $this->POSTvars['journal_data'] = $data;
@@ -456,7 +461,6 @@ class Forms extends HRForms2 {
                     // Email Notification
                     $return_data['email_response'][$j] = $this->sendEmail($data);
                 }
-
                 $this->toJSON($return_data);
                 break;
 
@@ -511,6 +515,7 @@ class Forms extends HRForms2 {
 
             case "final":
                 $_SERVER['REQUEST_METHOD'] = 'GET';
+                $form_id = $this->POSTvars['formId'];
                 $journal = (new journal(array('form',$this->POSTvars['formId']),false))->returnData;
                 $last_journal = array_pop($journal);
 
@@ -526,7 +531,7 @@ class Forms extends HRForms2 {
                 $_SERVER['REQUEST_METHOD'] = 'PATCH';
                 $jrnl_update = (new journal(array(
                     'form',
-                    $this->POSTvars['formId'],
+                    $form_id,
                     $seq,
                     $last_journal['STATUS'],
                     'Z',
@@ -540,7 +545,7 @@ class Forms extends HRForms2 {
                 $return_data = array(
                     "journal"=>array(
                         'status'=>'Z',
-                        'form_id'=>$this->POSTvars['formId'],
+                        'form_id'=>$form_id,
                         'hierarchy_id'=>$last_journal['HIERARCHY_ID'],
                         'workflow_id'=>$last_journal['WORKFLOW_ID'],
                         'seq'=>$seq,
