@@ -367,11 +367,6 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                         setLockTabs(false);
                         return data?.description||t(`request.actions.${action}.error`)
                     }}
-                })
-                createReq.mutateAsync(data).then(() =>{
-                    handleRedirect();
-                }).catch(e => {
-                        console.error(e);
                 });
             }
         }
