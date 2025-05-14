@@ -28,7 +28,7 @@ class Requests extends HRForms2 {
         $wf = (new workflow(array('request',$wf_id),false))->returnData[0];
         if ($wf['CONDITIONS'] == null) return; // if no conditions return; no need to parse
         $this->conditions = array_filter($wf['CONDITIONS'],function($c) use($seq){
-            return strval($c->seq+1) == strval($seq); //add 1 to seq to account for submitter group at index 0
+            return strval($c->seq) == strval($seq-1); // subtract 1 for zero index.
         });
         if ($this->conditions) {
             $accounts = array_map(function($account) {return $account['account'][0]['id'];},$this->POSTvars['SUNYAccounts']);
@@ -322,7 +322,7 @@ class Requests extends HRForms2 {
                 $this->toJSON($return_data);
                 break;
 
-            case "approve":
+            case "approve":               
                 $journal_array = array();
                 $comments_array = array();
 
@@ -377,6 +377,7 @@ class Requests extends HRForms2 {
                 } else {
                     array_push($journal_array,"PA");
                 }
+                array_push($comments_array,"");
 
                 // Update current journal entry from PA/PF to A/F
                 $_SERVER['REQUEST_METHOD'] = 'PATCH';
@@ -389,12 +390,15 @@ class Requests extends HRForms2 {
                     $comments_array[0]
                 ),false))->returnData;
 
+                //shift journal_array and comments_array
+                array_shift($journal_array);
+                array_shift($comments_array);
+
                 // Post to Journal
                 $_SERVER['REQUEST_METHOD'] = 'POST';
                 $return_data = array("journal"=>[],"email_response"=>[]);
                 foreach ($journal_array as $i=>$j) {
-                    if ($i == 0) continue; //skip first elements
-                    $seq = $next_seq+$i-1;
+                    $seq = $next_seq+$i;
                     $data = array(
                         'request_id'=>$request_id,
                         'hierarchy_id'=>$last_journal['HIERARCHY_ID'],
@@ -470,22 +474,23 @@ class Requests extends HRForms2 {
 
             case "final":
                 $_SERVER['REQUEST_METHOD'] = 'GET';
+                $request_id = $this->POSTvars['reqId'];
                 $journal = (new journal(array('request',$this->POSTvars['reqId']),false))->returnData;
                 $last_journal = array_pop($journal);
 
                 $groups_array = explode(',',$this->POSTvars['GROUPS']);
 
-                $seq = intval($last_journal['SEQUENCE'])-1;
+                $seq = intval($last_journal['SEQUENCE']);
 
                 //extract comments from JSON
                 $comment = $this->POSTvars['comment'];
                 unset($this->POSTvars['comment']);
-                
+                                
                 // Update current to 'Z'
                 $_SERVER['REQUEST_METHOD'] = 'PATCH';
                 $jrnl_update = (new journal(array(
                     'request',
-                    $this->POSTvars['reqId'],
+                    $request_id,
                     $seq,
                     $last_journal['STATUS'],
                     'Z',
@@ -499,7 +504,7 @@ class Requests extends HRForms2 {
                 $return_data = array(
                     "journal"=>array(
                         'status'=>'Z',
-                        'request_id'=>$this->POSTvars['reqId'],
+                        'request_id'=>$request_id,
                         'hierarchy_id'=>$last_journal['HIERARCHY_ID'],
                         'workflow_id'=>$last_journal['WORKFLOW_ID'],
                         'seq'=>$seq,
