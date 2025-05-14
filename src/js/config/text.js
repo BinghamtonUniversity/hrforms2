@@ -81,6 +81,11 @@ const text = {
                 'pending': 'Rejecting Form',
                 'success': 'Form Rejected Successfully',
                 'error': 'Error Rejecting Form'
+            },
+            'final': {
+                'pending': 'Final Approving Form',
+                'success': 'Form Final Approved and Archived Successfully',
+                'error': 'Error Final Approving Form'
             }
         },
         'review':{
@@ -122,6 +127,11 @@ const text = {
                 'pending': 'Rejecting Request',
                 'success': 'Request Rejected Successfully',
                 'error': 'Error Rejecting Request'
+            },
+            'final': {
+                'pending': 'Final Approving Request',
+                'success': 'Request Final Approved and Archived Successfully',
+                'error': 'Error Final Approving Request'
             }
         }
     },
