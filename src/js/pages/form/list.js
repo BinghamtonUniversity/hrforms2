@@ -227,12 +227,13 @@ function ListTable({data,list}) {
                 <div className="button-group">
                     {(list=='drafts')&&<AppButton format="delete" size="sm" title="Delete Draft" onClick={()=>handleAction('delete',row)}></AppButton>}
                     {(list!='drafts')&&<AppButton format="info" size="sm" title="Show Journal" onClick={()=>handleAction('journal',row)}></AppButton>}
-                    {!(['drafts','pending','rejections'].includes(list))&&
+                    {/*TODO: more work needed to allow for quick approve/reject
+                    !(['drafts','pending','rejections'].includes(list))&&
                         <>
                             <AppButton format="approve" size="sm" title="Approve" onClick={()=>handleAction('approve',row)}></AppButton>
                             <AppButton format="reject" size="sm" title="Reject" onClick={()=>handleAction('reject',row)}></AppButton>
                         </>
-                    }
+                    */}
                 </div>
             );
         },ignoreRowClick:true,maxWidth:'100px'},
