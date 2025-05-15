@@ -1,5 +1,23 @@
 # Changelog
 
+## Version 2.0.0(DEV-20250515)
+  * Changed columns in Requests lists
+  * Changed label in Archive search component from "Effective Date" to "Transaction Effective Date".
+  * Fixes to tab display and data loading logic in Forms to address infinite loop issue.
+  * Change the cursor to a "pointer" for the accordion header on the Archive List pages.
+  * Fixed duplicate results being returned for Requests/Forms that have rejections on the Archive List pages. 
+  * Fixed duplicate fetch execution on Archive List when search submitted.
+  * Added "Enter" key handling to trigger search on Archive list pages.
+  * Improvement to Comment History in Requests and Forms:
+    * Fixed issue with incorrect groups displaying.
+    * Fixed issue with comments carrying forward from previous comments.
+    * Added conditional display and striping style for skipped groups.
+    * Added popover group description for Forms; this was already in Requests.
+    * Added ordering by sequence number to Requests; this was already in Forms.
+  * Fixed issues and bugs with approval and final approval code for Requests and Forms.
+  * Removed quick approve/reject from lists. Requests and Forms should be reviewed in full.
+
+
 ## Version 2.0.0(DEV-20250428)
   * Fixed issue with HR Final Approvals not showing for members of the HR Group
   * Fixed issue with Archive search not displaying Requests/Forms when user was in the approval hierarchy.
