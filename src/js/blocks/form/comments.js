@@ -2,9 +2,11 @@ import React, { useMemo, useRef, useEffect } from "react";
 import { Row, Col, Form } from "react-bootstrap";
 import { Controller, useFormContext } from "react-hook-form";
 import { useHRFormContext } from "../../config/form";
+import { useSettingsContext, useAuthContext } from "../../app";
 import useFormQueries from "../../queries/forms";
+import { DescriptionPopover } from "../components";
 import DataTable from 'react-data-table-component';
-import { get } from "lodash";
+import { get, orderBy } from "lodash";
 
 export default function Comments() {
     const ref = useRef();
@@ -50,17 +52,52 @@ function CommentHistory({formId}) {
 }
 
 export function CommentsTable({formId}) {
+    const { general } = useSettingsContext();
+    const { isAdmin } = useAuthContext();
     const {getJournal} = useFormQueries(formId);
-    const journal = getJournal({select:d=>d.filter(c=>{
-        c.id = `${c.FORM_ID}_${c.SEQUENCE}`;
-        return !['PA','PF','X'].includes(c.STATUS);
-    })});
+    
+    const journal = getJournal({select:d=>{
+        const skip = ['PA','PF'];
+        if (general.showSkipped == 'N'||(!isAdmin && general.showSkipped=='A')) skip.push('X');
+        return orderBy(d.filter(c=>{
+            c.id = `${c.FORM_ID}_${c.SEQUENCE}`;
+            return !skip.includes(c.STATUS);
+        }),j=>parseInt(j.SEQUENCE),['desc']);
+    }});
+
     const columns = useMemo(() => [
         {name:'Date',selector:row=>row.JOURNAL_DATE},
-        {name:'Group',selector:row=>row.GROUP_FROM_NAME},
+        {name:'Group',cell:row=>{
+            let description = row.GROUP_TO_DESCRIPTION||<span className="font-italic">No Group Description</span>;
+            let title = row.GROUP_TO_NAME;
+            if (row.STATUS == 'S') {
+                description = row.GROUP_FROM_DESCRIPTION;
+                title = row.GROUP_FROM_NAME;
+            }
+            return (
+                <span>
+                    <DescriptionPopover
+                        id={`${row.REQUEST_ID}_${row.SEQUENCE}`}
+                        title={title}
+                        placement="top"
+                        flip
+                        content={<p>{description}</p>}
+                    >
+                        <p className="my-1 text-pointer">{title}</p>
+                    </DescriptionPopover>
+                </span>
+            );
+        }},
         {name:'By',selector:row=>row.SUNY_ID,format:row=><>{row.fullName} ({row.SUNY_ID})</>},
         {name:'Comment',grow:3,selector:row=>row.COMMENTS,format:row=><pre className="m-0">{row.COMMENTS}</pre>}
     ],[journal.data]);
+
+    const conditionalRowStyles = [
+        {
+            when: row => row.STATUS === 'X',
+            classNames: ['badge-white-striped']
+        }
+    ];
     return (
         <Row>
             <Col>
@@ -71,6 +108,7 @@ export function CommentsTable({formId}) {
                     striped 
                     responsive
                     progressPending={journal.isLoading}
+                    conditionalRowStyles={conditionalRowStyles}
                 />
             </Col>
         </Row>

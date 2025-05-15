@@ -373,6 +373,6 @@ datalist.marker {
 }
 
 /* Make BS table rows "clickable" */
-table.table.table-row-clickable tbody tr {
+table.table.table-row-clickable tbody tr, .text-pointer {
   cursor: pointer;
 }
