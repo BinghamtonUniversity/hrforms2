@@ -159,7 +159,7 @@ Class HRForms2 {
                 from hrforms2_session_override where end_override is null) ovr on (ovr.session_id = s.session_id and ovr.cas_session_id = s.cas_session_id)
             left join (select spriden_pidm, spriden_id from spriden@banner.cc.binghamton.edu where spriden_change_ind is null) sp on (sp.spriden_id = s.bnumber)
             left join (select goremal_pidm, goremal_email_address as email from goremal@banner.cc.binghamton.edu where goremal_emal_code = 'EMPL' and goremal_status_ind = 'A') em on (em.goremal_pidm = sp.spriden_pidm)
-            where s.session_id = :sid and s.cas_session_id = :cas_sid";
+			where s.session_id = :sid and s.cas_session_id = :cas_sid";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt, ":cas_sid", $this->sessionData['CAS_SID']);
         oci_bind_by_name($stmt, ":sid", $this->sessionData['SESSION_ID']);
