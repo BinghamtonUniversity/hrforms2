@@ -13,7 +13,8 @@ export function useHRFormContext() { return useContext(HRFormContext); }
 /** CONDITIONAL FIELDS */
 export const conditionalFields = {
     partialLeave:['EF-LOA-PPEL','EF-LOA-PPS'],
-    splitAssignment:['EF-PAY-ASCA']
+    splitAssignment:['EF-PAY-ASCA'],
+    noRateTransactions: ['EXS','SUM','WIN']
 };
 
 /** TABS */
@@ -56,8 +57,6 @@ const requiredFields = {
     "employment.position.PAYROLL_MAIL_DROP_ID.id":v=>!!v||'Check Sort Code is required',
     "employment.appointment.supervisor":v=>!!get(v,'0.label','')||'Supervisor is required', 
     "employment.appointment.REPORTING_DEPARTMENT_CODE.id":v=>!!v||'Appointment Department is required',
-    "employment.salary.NUMBER_OF_PAYMENTS":v=>parseInt(v,10)>0||'Number of payments must be greater than zero', 
-    "employment.salary.RATE_AMOUNT":v=>parseInt(v,10)>0||'Rate must be greater than zero', 
     "employment.separation.lastDateWorked":v=>!!v||'Last Date Worked is required',
     "employment.leave.leaveEndDate":v=>!!v||'Leave End Date is required',
     "employment.leave.justification.id":v=>!!v||'Justification is required',
@@ -124,8 +123,18 @@ const advancedFields = {
         if (parseInt(get(frmData,'employment.appointment.facultyDetails.springCourses.count',0),10)==0) return true;
         return (v.length>0)?true:'Spring Courses List cannot be empty';
     },
+    "employment.salary.NUMBER_OF_PAYMENTS":(frmData,v) => {
+        if (conditionalFields.noRateTransactions.includes(get(frmData,'formActions.transactionCode.TRANSACTION_CODE',''))) return true;
+        if (parseInt(v,10)>0) return 'Number of payments must be greater than zero';
+        return true;
+    },
+    "employment.salary.RATE_AMOUNT":(frmData,v) => {
+        if (conditionalFields.noRateTransactions.includes(get(frmData,'formActions.transactionCode.TRANSACTION_CODE',''))) return true;
+        if (parseInt(v,10)>0) return 'Salary Rate must be greater than zero';
+        return true;
+    },
     "employment.salary.SUNY_ACCOUNTS":(frmData,v) => {
-        if (['EXS','SUM','WIN'].includes(get(frmData,'formActions.transactionCode.TRANSACTION_CODE',''))) return true;
+        if (conditionalFields.noRateTransactions.includes(get(frmData,'formActions.transactionCode.TRANSACTION_CODE',''))) return true;
         if (!v.every(a => a?.account?.at(0)?.id)) return 'SUNY Account is required';
         if (v.reduce((a,c)=>a+parseInt(c?.pct,10)||0,0)!=100) return 'SUNY Account percentage must equal 100';
         return true;
