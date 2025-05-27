@@ -433,7 +433,7 @@ class Requests extends HRForms2 {
                 $last_journal = array_pop($journal);
                 $groups_array = explode(',',$this->POSTvars['GROUPS']);
 
-                $seq = intval($last_journal['SEQUENCE'])-1;
+                $seq = intval($last_journal['SEQUENCE']);
 
                 //extract comments from JSON
                 $comment = $this->POSTvars['comment'];
