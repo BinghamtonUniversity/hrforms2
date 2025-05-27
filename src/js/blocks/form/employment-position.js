@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Row, Col, Form, Alert, InputGroup, OverlayTrigger, Popover, Table } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
-import { AppButton, DateFormat, Loading } from "../components";
+import { AppButton, Loading } from "../components";
 import useFormQueries from "../../queries/forms";
 import DatePicker from "react-datepicker";
 import { addDays } from "date-fns";
@@ -33,7 +33,7 @@ export default function EmploymentPosition() {
 function EmploymentPositionSearch({setShowResults}) {
     const ref = useRef();
 
-    const { control, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
     const { canEdit, activeNav } = useHRFormContext();
 
     const handleSearch = () => setShowResults(true);
@@ -58,6 +58,7 @@ function EmploymentPositionSearch({setShowResults}) {
         if (e.target.nodeName != 'TD') return;
         const lineNum = e.target.parentElement.children[0].textContent;
         setValue(`${name}.LINE_ITEM_NUMBER`,lineNum);
+        handleSearch();
     }
 
     useEffect(() => (canEdit&&ref.current)&&ref.current.focus(),[activeNav]);
@@ -149,6 +150,7 @@ function EmploymentPositionSearch({setShowResults}) {
 }
 
 function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
+    const [positionId,setPositionId] = useState('');
     const { setValue, getValues } = useFormContext();
 
     const { getPosition } = useFormQueries();
@@ -161,6 +163,7 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
             onSuccess:d=>{
                 setValue(`${name}.positionDetails`,d);
                 setValue(`${name}.APPOINTMENT_PERCENT`,d.POSITION_PERCENT);
+                setPositionId(d.POSITION_ID);
             },
             onError:e=>console.warn(e)
         }
@@ -176,7 +179,7 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
                     </Col>
                 </Row>
             }
-            {getValues(`${name}.positionDetails.POSITION_ID`) && 
+            {positionId && 
                 <>
                     <EmploymentPositionInfoBox as="alert"/>
                     <EmploymentAppointmentInformation/>
