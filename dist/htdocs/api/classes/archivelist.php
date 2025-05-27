@@ -85,10 +85,17 @@ class ArchiveList extends HRForms2 {
 						rank() over (partition by jr1.request_id order by jr1.journal_date desc) as rnk
 						from hrforms2_requests_journal_archive jr1
 					) jr2
-					where jr2.sequence >= 0 and jr2.rnk = 1
-					and jr2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
+					where jr2.sequence >= 0 and jr2.rnk = 1) j
 					left join (select request_id, max(journal_date) as max_journal_date, listagg(group_to,',') as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
 					where r.request_id = j.request_id
+					and exists (select 1
+						from hrforms2_requests_journal_archive
+						where (
+							suny_id = :suny_id or
+							group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
+						)
+                        and request_id = j.request_id
+                    )
 					". $filter;
 				$stmt = oci_parse($this->db,$qry);
 				oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
@@ -121,10 +128,17 @@ class ArchiveList extends HRForms2 {
 						rank() over (partition by jr1.request_id order by jr1.journal_date desc) as rnk
 						from hrforms2_requests_journal_archive jr1
 					) jr2
-					where jr2.sequence >= 0 and jr2.rnk = 1
-					and jr2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
+					where jr2.sequence >= 0 and jr2.rnk = 1) j
 					left join (select request_id, max(journal_date) as max_journal_date, listagg(group_to,',') as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
 					where r.request_id = j.request_id
+					and exists (select 1
+                        from hrforms2_requests_journal_archive
+                        where (
+                            suny_id = :suny_id or
+                            group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
+                        )   
+                        and request_id = j.request_id
+					)
 					". $filter. "
 					" . $sort . "
 					offset :offset rows
@@ -190,10 +204,17 @@ class ArchiveList extends HRForms2 {
 						rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
 						from hrforms2_forms_journal_archive jf1
 					) jf2
-					where jf2.sequence >= 0 and jf2.rnk = 1
-					and jf2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
+					where jf2.sequence >= 0 and jf2.rnk = 1) j
 					left join (select form_id, max(journal_date) as max_journal_date, listagg(group_to,',') as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal_archive where sequence >= 0 group by form_id) js on (js.form_id = j.form_id)
 					where f.form_id = j.form_id
+					and exists (select 1
+                        from hrforms2_forms_journal_archive
+                        where (
+                            suny_id = :suny_id or
+                            group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
+                        )   
+                        and form_id = f.form_id
+					)
 					". $filter;
 				$stmt = oci_parse($this->db,$qry);
 				oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
@@ -245,10 +266,17 @@ class ArchiveList extends HRForms2 {
 						rank() over (partition by jf1.form_id order by jf1.journal_date desc) as rnk
 						from hrforms2_forms_journal_archive jf1
 					) jf2
-					where jf2.sequence >= 0 and jf2.rnk = 1
-					and jf2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
+					where jf2.sequence >= 0 and jf2.rnk = 1) j
 					left join (select form_id, max(journal_date) as max_journal_date, listagg(group_to,',') as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal_archive where sequence >= 0 group by form_id) js on (js.form_id = j.form_id)
 					where f.form_id = j.form_id
+					and exists (select 1
+                        from hrforms2_forms_journal_archive
+                        where (
+                            suny_id = :suny_id or
+                            group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
+                        )   
+                        and form_id = f.form_id
+					)
 					". $filter. "
 					" . $sort . "
 					offset :offset rows
