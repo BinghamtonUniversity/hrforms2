@@ -209,12 +209,13 @@ class Journal extends HRForms2 {
     }
 
     function PATCH() {
+        $comment_in = ($this->req[5] != "") ? $this->req[5] : "No comment provided";
         // update journal status 
         $qry = "update ".$this->k['journal']."
             set STATUS = :new_status, 
             JOURNAL_DATE = systimestamp,
             SUNY_ID = :suny_id,
-            COMMENTS = ".((INSTANCE=="LOCAL")?"' '":"EMPTY_CLOB()")."
+            COMMENTS = 'No comment provided'
             where ".$this->k['id']." = :id
             and sequence = :seq
             and STATUS = :old_status
@@ -229,7 +230,11 @@ class Journal extends HRForms2 {
         oci_bind_by_name($stmt,":comments", $comments, -1, OCI_B_CLOB);
         $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
         if (!$r) $this->raiseError();
-        $comments->save($this->req[5]);
+        if (oci_num_rows($stmt) == 0) {
+            oci_free_statement($stmt);
+            $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"No journal entry found for this request/form with the specified sequence and status."));
+        }
+        $comments->save($comment_in);
         oci_commit($this->db);
         if ($this->retJSON) $this->done();
     }
