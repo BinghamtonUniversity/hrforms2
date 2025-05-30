@@ -110,11 +110,13 @@ class FormList extends HRForms2 {
 				j.status, j.sequence, f.form_data.GROUPS, js.journal_status,
 				to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
                 from hrforms2_forms f,
-				(select jf2.* from (select jf1.*,
-					rank() over (partition by jf1.form_id order by jf1.sequence desc) as rnk
-					from hrforms2_forms_journal jf1
-					where jf1.form_id in (select form_id from hrforms2_forms_journal where suny_id = :suny_id and status = 'S')) jf2
-				where jf2.rnk = 1 and jf2.status in ('PA','PF')) j
+				(select jf2.* from (
+    				select jf1.*, rank() over (partition by jf1.form_id order by jf1.sequence desc) as rnk
+    				from hrforms2_forms_journal jf1
+    				where jf1.form_id in (select form_id from hrforms2_forms_journal 
+        				where (suny_id = :suny_id and status = 'S') or (group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id))
+			    	)) jf2
+				where jf2.rnk = 1) j
 				left join (select form_id, max(journal_date) as max_journal_date, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal where sequence >= 0 group by form_id) js on (js.form_id = j.form_id)
 				where f.form_id = j.form_id";
 				break;
