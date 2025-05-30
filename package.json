@@ -17,7 +17,9 @@
     "clean-dist": "find dist/htdocs -type f -not -path \"*/api/*\" -delete",
     "list": "find dist/htdocs -type f -not -path \"*/api/*\" -not -name \"*.LICENSE.txt\" -printf \"%Tb %Td %TH:%TM\\t%k\\t%p\\n\"",
     "update-changelog": "cp CHANGELOG.md dist/htdocs",
-    "update-buildtime": "bt=$(date +%s); sed -i \"s/\\(BUILD_TIME',\\)[0-9]\\+\\(.*\\)/\\1$bt\\2/\" dist/etc/config.php"
+    "update-buildtime": "bt=$(date +%s); sed -i \"s/\\(BUILD_TIME',\\)[0-9]\\+\\(.*\\)/\\1$bt\\2/\" dist/etc/config.php",
+    "deploy-local": "scripts/deploy-local.py",
+    "deploy-dev": "scripts/deploy-dev.py"
   },
   "devDependencies": {
     "@babel/cli": "^7.17.0",
