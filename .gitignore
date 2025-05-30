@@ -20,3 +20,4 @@ src/js/pages/testing.js
 src/js/pages/test/
 dist/etc/db.php
 dist/etc/email.php
+*.old
