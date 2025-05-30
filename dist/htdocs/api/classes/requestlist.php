@@ -86,11 +86,13 @@ class RequestList extends HRForms2 {
 				j.status, j.sequence, r.request_data.GROUPS, js.journal_status, 
 				to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
 				from hrforms2_requests r,
-				(select jr2.* from (select jr1.*,
-					rank() over (partition by jr1.request_id order by jr1.sequence desc) as rnk
-					from hrforms2_requests_journal jr1
-					where jr1.request_id in (select request_id from hrforms2_requests_journal where suny_id = :suny_id and status = 'S')) jr2
-				where jr2.rnk = 1 and jr2.status in ('PA','PF')) j
+				(select jr2.* from (
+    				select jr1.*, rank() over (partition by jr1.request_id order by jr1.sequence desc) as rnk
+    				from hrforms2_requests_journal jr1
+    				where jr1.request_id in (select request_id from hrforms2_requests_journal 
+        				where (suny_id = :suny_id and status = 'S') or (group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id))
+			    	)) jr2
+				where jr2.rnk = 1) j
 				left join (select request_id, max(journal_date) as max_journal_date, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
 				where r.request_id = j.request_id";
 				break;

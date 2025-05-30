@@ -74,11 +74,10 @@ class Counts extends HRForms2 {
 				from hrforms2_requests_drafts
 				where suny_id = :suny_id
 				union
-				select 'pending', count(j.request_id), trunc(sysdate) - trunc(min(j.last_journal_date))
-				from hrforms2_requests_journal_last j
-				join (select * from hrforms2_requests) r on (j.request_id = r.request_id)
-				where last_status in ('PA','PF')
-				and r.created_by.SUNY_ID = :suny_id
+                select 'pending', count(distinct j.request_id), trunc(sysdate) - trunc(min(jl.last_journal_date))
+                from hrforms2_requests_journal j
+                join (select * from hrforms2_requests_journal_last) jl on (j.request_id = jl.request_id)
+                where (j.suny_id = :suny_id) or (j.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id))
 				union
 				select 'rejections', count(j.request_id), trunc(sysdate) - trunc(min(j.last_journal_date))
 				from hrforms2_requests_journal_last j
