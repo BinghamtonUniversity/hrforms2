@@ -1,5 +1,17 @@
 # Changelog
 
+## Version 2.0.0(DEV-20250530)
+  * Changed Form Type display on Form Review to include both code and title/description
+  * Added User Information section to the Form Review to show the actual user, not just the "effective" user.
+  * Change the accordion headers in the Archive List pages to include Forms or Requests as appropriate.
+  * Fixed issue with Request rejection throwing an error.
+  * Added error handling in Journal PATCH call to indicate if no update was performed.
+  * Fixed Archive Search queries not including submitters and approvers.
+  * Fixed Salary Rate required field error when field is not displayed.
+  * Fixed Line Number search caching issue when entering a line number that had previously been queried.
+  * Changed the "Pending" list to show Requests/Forms that are part of approval groups in addition to submitted by.
+
+
 ## Version 2.0.0(DEV-20250515)
   * Changed columns in Requests lists
   * Changed label in Archive search component from "Effective Date" to "Transaction Effective Date".
