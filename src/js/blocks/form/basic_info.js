@@ -395,7 +395,7 @@ function PayrollDate({selectedId,selectedPayroll}) {
         // set field focus
         if (watchPayrollDate.every(v=>!!v)) return; // do not focus if fields are already set
         if (!payrollRef.current || !effDateRef.current) return; //do not focus if the refs are undefined
-        if (payrollRef.current.disabled) {
+        if (!!selectedPayroll && payrollRef.current.disabled) {
             effDateRef.current.setFocus(); //Datepicker method; cannot scrollIntoView because of popover conflict
         } else {
             payrollRef.current.scrollIntoView();
