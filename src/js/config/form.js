@@ -125,12 +125,12 @@ const advancedFields = {
     },
     "employment.salary.NUMBER_OF_PAYMENTS":(frmData,v) => {
         if (conditionalFields.noRateTransactions.includes(get(frmData,'formActions.transactionCode.TRANSACTION_CODE',''))) return true;
-        if (parseInt(v,10)>0) return 'Number of payments must be greater than zero';
+        if (parseInt(v,10)<=0) return 'Number of payments must be greater than zero';
         return true;
     },
     "employment.salary.RATE_AMOUNT":(frmData,v) => {
         if (conditionalFields.noRateTransactions.includes(get(frmData,'formActions.transactionCode.TRANSACTION_CODE',''))) return true;
-        if (parseInt(v,10)>0) return 'Salary Rate must be greater than zero';
+        if (parseInt(v,10)<=0) return 'Salary Rate must be greater than zero';
         return true;
     },
     "employment.salary.SUNY_ACCOUNTS":(frmData,v) => {
