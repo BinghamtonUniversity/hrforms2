@@ -33,7 +33,7 @@ export default function EmploymentPosition() {
 function EmploymentPositionSearch({setShowResults}) {
     const ref = useRef();
 
-    const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { control, setValue, formState: { defaultValues, errors } } = useFormContext();
     const { canEdit, activeNav } = useHRFormContext();
 
     const handleSearch = () => setShowResults(true);
@@ -44,7 +44,8 @@ function EmploymentPositionSearch({setShowResults}) {
     }
     const handleKeyDown = e => {
         if (e.key=='Enter') {
-            handleSearch(e);
+            e.preventDefault();
+            handleSearch();
         } else {
             setShowResults(false);
         }
@@ -150,8 +151,10 @@ function EmploymentPositionSearch({setShowResults}) {
 }
 
 function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
-    const [positionId,setPositionId] = useState('');
-    const { setValue, getValues } = useFormContext();
+    //const [positionId,setPositionId] = useState('');
+    const { control, setValue, getValues } = useFormContext();
+
+    const watchPositionID = useWatch({name:`${name}.positionDetails.POSITION_ID`,control:control});
 
     const { getPosition } = useFormQueries();
     const position = getPosition({
@@ -163,7 +166,7 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
             onSuccess:d=>{
                 setValue(`${name}.positionDetails`,d);
                 setValue(`${name}.APPOINTMENT_PERCENT`,d.POSITION_PERCENT);
-                setPositionId(d.POSITION_ID);
+                //setPositionId(d.POSITION_ID);
             },
             onError:e=>console.warn(e)
         }
@@ -179,7 +182,7 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
                     </Col>
                 </Row>
             }
-            {positionId && 
+            {watchPositionID && 
                 <>
                     <EmploymentPositionInfoBox as="alert"/>
                     <EmploymentAppointmentInformation/>
