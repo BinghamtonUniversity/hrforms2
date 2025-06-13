@@ -68,6 +68,7 @@ class ArchiveList extends HRForms2 {
 					if ($_GET['candidateName'] != "") $filter .= " and lower(r.request_data.candidateName) like lower('%'||:candidateName||'%')";
 					if ($_GET['lineNumber'] != "") $filter .= " and r.request_data.lineNumber = :lineNumber";
 					if ($_GET['multiLines'] == "Y") $filter .= " and r.request_data.multiLines = 'Y'";
+					if ($_GET['createdBy'] != "") $filter .= " and r.created_by.SUNY_ID = :created_by";
 				}
 				$sort = "";
 				switch($_GET['sortField']) {
@@ -106,7 +107,8 @@ class ArchiveList extends HRForms2 {
 					if ($_GET['posType'] != "") oci_bind_by_name($stmt,":posType",$_GET['posType']);
 					if ($_GET['reqType'] != "") oci_bind_by_name($stmt,":reqType",$_GET['reqType']);
 					if ($_GET['candidateName'] != "") oci_bind_by_name($stmt,":candidateName",$_GET['candidateName']);
-					if ($_GET['lineNumber'] != "") oci_bind_by_name($stmt,":lineNumber",$_GET['lineNumber']);	
+					if ($_GET['lineNumber'] != "") oci_bind_by_name($stmt,":lineNumber",$_GET['lineNumber']);
+					if ($_GET['createdBy'] != "") oci_bind_by_name($stmt,":created_by",$_GET['createdBy']);
 				}
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
@@ -119,8 +121,10 @@ class ArchiveList extends HRForms2 {
 				// get data using offset and fetch/limit
 				$qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id,
 					r.request_data.posType, r.request_data.reqType, r.request_data.effDate, 
-					r.request_data.candidateName, r.request_data.lineNumber, r.request_data.reqBudgetTitle.title,
-					nvl(r.created_by.ALIAS_FIRST_NAME,r.created_by.LEGAL_FIRST_NAME) as FIRST_NAME, r.created_by.LEGAL_LAST_NAME, 
+					r.request_data.candidateName, r.request_data.multiLines, r.request_data.lineNumber, 
+					r.request_data.reqBudgetTitle.title, 
+					nvl(r.created_by.ALIAS_FIRST_NAME,r.created_by.LEGAL_FIRST_NAME) as FIRST_NAME, 
+					r.created_by.LEGAL_LAST_NAME, 
 					j.status, j.sequence, js.journal_groups as groups, js.journal_status,
 					to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
 					from hrforms2_requests_archive r,
@@ -154,6 +158,7 @@ class ArchiveList extends HRForms2 {
 					if ($_GET['reqType'] != "") oci_bind_by_name($stmt,":reqType",$_GET['reqType']);
 					if ($_GET['candidateName'] != "") oci_bind_by_name($stmt,":candidateName",$_GET['candidateName']);
 					if ($_GET['lineNumber'] != "") oci_bind_by_name($stmt,":lineNumber",$_GET['lineNumber']);
+					if ($_GET['createdBy'] != "") oci_bind_by_name($stmt,":created_by",$_GET['createdBy']);
 				}
 				oci_bind_by_name($stmt,":offset",$offset);
 				oci_bind_by_name($stmt,":results",$results);
