@@ -11,7 +11,7 @@ import useCodesQueries from "../../queries/codes";
 import { useQueryClient } from "react-query";
 import { useSettingsContext, useAuthContext } from "../../app";
 import useGroupQueries from "../../queries/groups";
-import { find, orderBy, pick, set } from "lodash";
+import { find, orderBy, pick } from "lodash";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import useUserQueries from "../../queries/users";
 
@@ -327,11 +327,9 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
 
     const resetDays = () => {
         setDays(defaultDays);
-
         const dv = daysButtons.find(v=>v.id === defaultDays)?.value||0;
         const daysObj = calculateDates({days:dv});
         setDateRange([daysObj.startDate,daysObj.endDate]);
-
         setCreatedBySearch([{id:'',label:''}]);
         handleReset();
     }
