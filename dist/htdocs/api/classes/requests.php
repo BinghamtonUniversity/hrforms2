@@ -322,7 +322,7 @@ class Requests extends HRForms2 {
                 $this->toJSON($return_data);
                 break;
 
-            case "approve":               
+            case "approve":                
                 $journal_array = array();
                 $comments_array = array();
 
