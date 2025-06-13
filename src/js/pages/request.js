@@ -282,8 +282,10 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         //TODO: switch? save, submit, appove, reject?
         if (['resubmit','approve','reject'].includes(action)) {
             toast.promise(new Promise((resolve,reject) => {
-                createReq.mutateAsync(data).then(()=>{
-                    queryclient.refetchQueries(SUNY_ID).then(()=>resolve()).catch(e=>reject(e));
+                updateReq.mutateAsync(data).then(()=>{
+                    createReq.mutateAsync(data).then(()=>{
+                        queryclient.refetchQueries(SUNY_ID).then(()=>resolve()).catch(e=>reject(e));
+                    }).catch(e=>reject(e));
                 }).catch(e=>reject(e));
             }),{
                 pending:t(`request.actions.${action}.pending`),
@@ -355,7 +357,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
             } else {
                 // submit saved form, approve, or reject
                 toast.promise(new Promise((resolve,reject) => {
-                        createReq.mutateAsync(data).then(d=>resolve(d)).catch(e=>reject(e));
+                    createReq.mutateAsync(data).then(d=>resolve(d)).catch(e=>reject(e));
                 }),{
                     pending: t(`request.actions.${action}.pending`),
                     success: {render(){
