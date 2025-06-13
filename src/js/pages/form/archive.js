@@ -2,7 +2,7 @@ import React, { useState, useReducer, useEffect, useMemo, lazy, useRef } from "r
 import useFormQueries from "../../queries/forms";
 import { Row, Col, Form, Button, ButtonGroup, Modal, Accordion, Card } from "react-bootstrap";
 import DatePicker from "react-datepicker";
-import { format, endOfToday, subDays } from "date-fns";
+import { format, startOfToday, endOfToday, subDays, addDays } from "date-fns";
 import DataTable from 'react-data-table-component';
 import { AppButton, Loading, DescriptionPopover, WorkflowExpandedComponent } from "../../blocks/components";
 import { displayFormCode } from "../form";
@@ -11,14 +11,15 @@ import useCodesQueries from "../../queries/codes";
 import { useQueryClient } from "react-query";
 import { useSettingsContext, useAuthContext } from "../../app";
 import useGroupQueries from "../../queries/groups";
-import { find, orderBy, pick } from "lodash";
+import { find, orderBy, pick, set } from "lodash";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import useUserQueries from "../../queries/users";
 
 const ArchiveView = lazy(()=>import("./view"));
 
 const defaultValues = {
-    days:30,
+    days:60,
+    pastFuture:'past',
     startDate:subDays(endOfToday(),31),
     endDate:endOfToday(),
     formId:'',
@@ -60,8 +61,14 @@ export default function ListArchiveTable() {
     const calculateDates = args => {
         const obj = {...args};
         if (args.days>0) {
-            obj.endDate = endOfToday();
-            obj.startDate = subDays(obj.endDate, parseInt(args.days)+1);
+            // check past/future
+            if (args.pastFuture == 'future') {
+                obj.startDate = startOfToday()
+                obj.endDate = addDays(obj.startDate, parseInt(args.days)+1);
+            } else {
+                obj.endDate = endOfToday();
+                obj.startDate = subDays(obj.endDate, parseInt(args.days)+1);
+            }
         }
         return obj;
     }
@@ -235,13 +242,15 @@ export default function ListArchiveTable() {
 
 function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calculateDates,userData}) {
     const daysButtons = [
-        {id: 'btn-days-14', label: '14 Days', value: '14' },
         { id: 'btn-days-30', label: '30 Days', value: '30' },
         { id: 'btn-days-60', label: '60 Days', value: '60' },
         { id: 'btn-days-90', label: '90 Days', value: '90' },
+        { id: 'btn-days-180', label: '180 Days', value: '180' },
         { id: 'btn-days-custom', label: 'Custom', value: '-1' }
     ];
-    const [days,setDays] = useState('btn-days-30');
+    const defaultDays = 'btn-days-60';
+    const [days,setDays] = useState(daysButtons.find(d=>d.value==filter.days)?.id || defaultDays);
+    const [pastFuture,setPastFuture] = useState(filter.pastFuture || 'past');
     const [showFormCodeModal,setShowFormCodeModal] = useState(false);
     const [filteredUsers,setFilteredUsers] = useState(userData);
     const [createdBySearch,setCreatedBySearch] = useState([{id:'',label:''}]);
@@ -264,10 +273,25 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
     const transactionCodes = getTransactionCodes();
 
     const handleDaysChange = e => {
-        setDays(e.target.id);
-        const daysObj = calculateDates({days:daysButtons.find(d=>d.id === e.target.id)?.value||0});
+        let pf = pastFuture;
+        let d = days;
+        switch(e.target.name) {
+            case 'days':
+                setDays(e.target.id);
+                d = e.target.id;
+                break;
+            case 'pastFuture':
+                setPastFuture(e.target.id);
+                pf = e.target.id;
+                break;
+            default:
+                console.error('Invalid name for handleDaysChange',e.target.name);
+                return false;
+        }
+        const dv = daysButtons.find(v=>v.id === d)?.value||0;
+        const daysObj = calculateDates({pastFuture:pf,days:dv});
         setDateRange([daysObj.startDate,daysObj.endDate]);
-        setFilter({days:daysObj.days});
+        setFilter({days:daysObj.days,pastFuture:pf});
         handleReset(false);
     }
 
@@ -302,7 +326,12 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
     },[filter]);
 
     const resetDays = () => {
-        setDays('btn-days-30');
+        setDays(defaultDays);
+
+        const dv = daysButtons.find(v=>v.id === defaultDays)?.value||0;
+        const daysObj = calculateDates({days:dv});
+        setDateRange([daysObj.startDate,daysObj.endDate]);
+
         setCreatedBySearch([{id:'',label:''}]);
         handleReset();
     }
@@ -402,10 +431,14 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                 </Form.Group>
             </Form.Row>
             <Form.Row className="justify-content-end">
-                <div className="form-group col-lg-2 col-sm-3 text-right pt-1">Transaction Effective Date:</div>
+                <div className="form-group col-lg-2 col-sm-3 text-right pt-1 pr-3">Transaction Effective Date:</div>
+                <div className="pt-1">
+                    <Form.Check inline label="Past" name="pastFuture" type="radio" id="past" checked={filter.pastFuture=='past'} onChange={handleDaysChange} disabled={filter.formId!=''}/>
+                    <Form.Check inline label="Future" name="pastFuture" type="radio" id="future" checked={filter.pastFuture=='future'} onChange={handleDaysChange} disabled={filter.formId!=''}/>
+                </div>
                 <div>
                     <ButtonGroup size="sm" toggle>
-                        {daysButtons.map(btn => <Button key={btn.id} id={btn.id} variant={(days==btn.id&&filter.formId=='')?'primary':'secondary'} active={days==btn.id} onClick={handleDaysChange} disabled={filter.formId!=''}>{btn.label}</Button>)}
+                        {daysButtons.map(btn => <Button key={btn.id} id={btn.id} name="days" variant={(days==btn.id&&filter.formId=='')?'primary':'secondary'} active={days==btn.id} onClick={handleDaysChange} disabled={filter.formId!=''}>{btn.label}</Button>)}
                     </ButtonGroup>
                 </div>
                 <Form.Group as={Col} sm={3} lg={2} controlId="customDateRange">
