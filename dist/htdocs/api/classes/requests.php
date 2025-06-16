@@ -546,6 +546,8 @@ class Requests extends HRForms2 {
             if ($this->retJSON) $this->done();
         } else {
             //TODO: do validation
+            //Clear comment unless saving
+            if ($this->req[0] != 'save') $this->POSTvars['comment'] = "";
             $qry = "update HRFORMS2_REQUESTS set request_data = EMPTY_CLOB() 
                 where REQUEST_ID = :request_id
                 returning REQUEST_DATA into :data";
