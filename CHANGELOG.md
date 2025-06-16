@@ -1,5 +1,18 @@
 # Changelog
 
+## Version 2.0.0(DEV-20250616)
+  * Fixed Forms Employment Position Details not saving.
+  * Fixed unexpected Save and Exit when "Enter" key pressed in Forms Employment Position Line Number search.
+  * Fixed incorrect logic on Number of Payments and Rate fields on Forms Salary tab that indicated an error when correctly entered.
+  * Fixed Form Basic Info field focus problem with Payroll and Effective Date.  Payroll not being focused correctly in all cases.
+  * Added missing server code for "Created By" filter in Request Archive List.
+  * Added "Multi-Line" column in Request Archive List; was only in search filter.
+  * Added Past/Future toggle for both Forms and Request Archive Lists.
+  * Fixed Request changed data not being saved on Approval, Reject, and Resubmit.
+  * Fixed issue with comments carrying forward and being overwritten in Requests.
+  * Changed layout of submitter and user information on Form Review to two columns.
+
+
 ## Version 2.0.0(DEV-20250530)
   * Changed Form Type display on Form Review to include both code and title/description
   * Added User Information section to the Form Review to show the actual user, not just the "effective" user.
