@@ -10,7 +10,7 @@ import { orderBy } from "lodash";
 
 export default function Comments() {
     const { control, getValues, formState:{ errors }} = useFormContext();
-    const { reqId, canEdit, isDraft } = useRequestContext();
+    const { canEdit, isDraft } = useRequestContext();
     return (
         <>
             <Form.Group as={Row}>
