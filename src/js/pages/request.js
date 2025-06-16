@@ -281,8 +281,8 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         setLockTabs(true);
         //TODO: switch? save, submit, appove, reject?
         if (['resubmit','approve','reject'].includes(action)) {
-            toast.promise(new Promise((resolve,reject) => {
-                updateReq.mutateAsync(data).then(()=>{
+            toast.promise(new Promise((resolve,reject) => {                
+                updateReq.mutateAsync(data).then(()=>{ // save the request
                     createReq.mutateAsync(data).then(()=>{
                         queryclient.refetchQueries(SUNY_ID).then(()=>resolve()).catch(e=>reject(e));
                     }).catch(e=>reject(e));
