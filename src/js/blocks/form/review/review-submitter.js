@@ -6,7 +6,7 @@ export default function ReviewSubmitterInfo() {
     const { isDraft, createdBy } = useHRFormContext();
     if (isDraft) return null;
     return (
-        <section className="mb-4">
+        <section className="mb-4 col-sm-6">
             <Row as="header">
                 <Col>
                     <h4 className="border-bottom border-main">Submitter Information</h4>

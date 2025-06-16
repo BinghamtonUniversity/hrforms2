@@ -48,8 +48,10 @@ export default function Review() {
             <ReviewFormData/>
             <ReviewSections/>
             <ReviewComments/>
-            <ReviewSubmitterInfo/>
-            <ReviewUserInfo/>
+            <Row>
+                <ReviewSubmitterInfo/>
+                <ReviewUserInfo/>
+            </Row>
         </article>
     );
 }
@@ -155,7 +157,7 @@ function ReviewUserInfo() {
         }
     }});
     return (
-        <section className="mb-4">
+        <section className="mb-4 col-sm-6">
             <Row as="header">
                 <Col>
                     <h4 className="border-bottom border-main">User Information</h4>
