@@ -39,7 +39,7 @@ class News extends HRForms2 {
 		if ($this->retJSON) $this->toJSON($this->returnData);
 	}
 	function PATCH() {
-		$qry = "update hrforms2_news set news_text = EMPTY_CLOB(), modified_date = sysdate returning news_text into :news";
+		$qry = "update hrforms2_news set news_text = ".((INSTANCE=="LOCAL")?"' '":"EMPTY_CLOB()").", modified_date = sysdate returning news_text into :news";
 		$stmt = oci_parse($this->db,$qry);
 		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
 		oci_bind_by_name($stmt, ":news", $clob, -1, OCI_B_CLOB);
@@ -50,22 +50,4 @@ class News extends HRForms2 {
 		$this->GET();
 		exit();
 	}
-    function PUT() {
-		$this->done();
-		/*$qry = "update hrforms2_news set news_title = :title, news_start_date = :start_date, news_end_date = :end_date, 
-			news_text = '{}', modified_date = sysdate
-			where news_id = :id returning news_text into :json";
-		$stmt = oci_parse($this->db,$qry);
-		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
-		oci_bind_by_name($stmt, ":title", $this->POSTvars['newsTitle']);
-		oci_bind_by_name($stmt, ":start_date", $this->POSTvars['newsStartDate']);
-		oci_bind_by_name($stmt, ":end_date", $this->POSTvars['newsEndDate']);
-		oci_bind_by_name($stmt, ":id", $this->req[0]);
-		oci_bind_by_name($stmt, ":json", $clob, -1, OCI_B_CLOB);
-		oci_execute($stmt,OCI_DEFAULT);
-		$clob->save($this->POSTvars['newsText']);
-		oci_commit($this->db);
-		oci_free_statement($stmt);
-        $this->done();*/
-    }
 }
