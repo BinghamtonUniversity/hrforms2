@@ -1,4 +1,4 @@
-import React,{useRef} from "react";
+import React,{ useRef } from "react";
 import { useQueryClient } from "react-query";
 import { Row, Col, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
@@ -11,13 +11,17 @@ import useNewsQueries from "../../queries/news";
 import { Helmet } from "react-helmet";
 
 export default function AdminNews() {
+    const config = editorConfig();
+
+    const editor = useRef();
+
     const queryclient = useQueryClient();
     const { getNews, patchNews } = useNewsQueries();
     const news = getNews();
     const updateNews = patchNews();
-    const config = editorConfig();
-    const editor = useRef();
-    const {handleSubmit,control} = useForm();
+
+    const { handleSubmit, control } = useForm();
+
     const onSubmit = data => {
         toast.promise(new Promise((resolve,reject) => {
             updateNews.mutateAsync({NEWS_TEXT:data.newsText}).then(()=>{
@@ -27,7 +31,7 @@ export default function AdminNews() {
             pending:'Updating news...',
             success:'News updated successfully',
             error:errorToast('Failed to update news')
-        })
+        });
     }
     return (
         <section>
@@ -45,8 +49,8 @@ export default function AdminNews() {
                 <Form onSubmit={handleSubmit(onSubmit)}>
                     <Form.Group as={Row} controlId="newsText">
                         <Col xs="auto">
-                            <Controller name="newsText" control={control} render={({field:{onBlur,onChange}}) => (
-                                <JoditEditor ref={editor} config={config} onBlur={onBlur} value={news.data?.NEWS_TEXT} onChange={onChange}/>
+                            <Controller name="newsText" control={control} render={({field}) => (
+                                <JoditEditor ref={editor} config={config} onBlur={d=>field.onBlur(d)} value={news.data?.NEWS_TEXT} onChange={d=>field.onChange(d)}/>
                             )}/>
                         </Col>
                     </Form.Group>

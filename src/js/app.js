@@ -211,6 +211,7 @@ function AppErrorFallback({error}) {
     );
 }
 
+// This is the error that hits when cache needs to be cleared.  Could we use this to notify?
 export function ErrorFallback({error,componentStack,resetErrorBoundary}) {
     const history = useHistory();
     const location = useLocation();
