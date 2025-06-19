@@ -84,7 +84,7 @@ function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
     const expandToggleComponent = useMemo(() => {
         const expandText = ((expandAll)?'Collapse':'Expand') + ' All';
         const showRejectedWFText = ((showRejectedWF)?'Hide':'Show') + ' Rejected Workflows';
-        const r = (lastStatus == 'Z') ? `/request/archive/${reqId}` : `/request/${reqId}`;
+        const r = (lastStatus == 'Z') ? `/form/archive/${formId}` : `/form/${formId}`;
         return(
             <>
                 <Col className="pl-0">
