@@ -10,7 +10,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import 'react-checkbox-tree/lib/react-checkbox-tree.css';
 import 'react-slidedown/lib/slidedown.css';
 import '../scss/binghamton-bs4.scss';
-import '../css/styles.css';
+//import '../css/styles.css';
 import '../css/print.css';
 
 import StartApp from "./app";
