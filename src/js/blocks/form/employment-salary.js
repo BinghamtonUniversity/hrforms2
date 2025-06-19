@@ -614,11 +614,7 @@ function SplitAssignments({className,editing,setEditing}) {
     }
 
     useEffect(() => searchFilter&&supervisors.refetch(),[searchFilter]);
-    /*useEffect(() => {
-        if (editIndex == undefined) return;
-        //TODO: focus field?
-        //document.querySelector(`[name="${blockName}.${editIndex}.type.id"]`).focus();
-    },[editIndex]);*/
+
     useEffect(()=>{
         if (watchFieldArray.length==0) return;
         const pct = watchFieldArray.map(s=>s.WORK_PERCENT).reduce((a,b)=>parseFloat(a)+parseFloat(b));

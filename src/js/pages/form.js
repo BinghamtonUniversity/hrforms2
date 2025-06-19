@@ -199,7 +199,6 @@ function BlockNav({formId,when,isDraft}) {
 }
 
 function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInfoComplete,reset,historyFrom}) {
-    //TODO: probably need to change to useReducer?
     const [tabList,setTabList] = useState(allTabs.filter(t=>t.value=='basic-info'));
     const [tabsVisited,setTabsVisited] = useState(['basic-info']);
 
@@ -428,11 +427,6 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     }
     const handleReset = () => {
         console.debug('Resetting Form');
-        /* TODO: maybe?
-        // all queries used in the form need to be reset?
-        queryclient.resetQueries('personLookup');
-        queryclient.resetQueries('paytrans');
-        */
         methods.clearErrors();
         methods.reset(defaultVals);
         setTabList(allTabs.filter(t=>t.value=='basic-info'));

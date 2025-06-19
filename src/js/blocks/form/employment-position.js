@@ -366,12 +366,6 @@ function BenefitsFlag() {
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
     }
 
-    /*useEffect(() => {
-        // Set Benefit Flag to 'T' if payroll = 28029 **TODO: this should probably be done somewhere else
-        if (watchPayroll!='28029'&&!benefitcodes.data) return;
-        setValue(`${name}.BENEFIT_FLAG.id`,'T');
-    },[watchPayroll,benefitcodes]);*/
-
     return (
         <Form.Group as={Row}>
             <Form.Label column md={2}>Benefits Flag*:</Form.Label>

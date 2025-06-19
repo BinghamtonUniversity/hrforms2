@@ -21,7 +21,7 @@ export default function useRequestQueries(REQUEST_ID) {
         }
         return useQuery(['requests',REQUEST_ID],q(`requests/${reqIdAsPath}`),options);
     }
-    /* TODO: used in view.js - check */
+    /* Used in view.js */
     const getArchiveRequest = (...args) => {
         const options = args[0]?.options||args[0]||{};
         if(options.select) options.select2 = options.select;

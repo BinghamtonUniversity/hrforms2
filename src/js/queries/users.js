@@ -10,7 +10,6 @@ export default function useUserQueries(SUNY_ID) {
     const isViewer = userData?.isViewer||false;
 
     /* always gets current user */
-    /* TODO: change name of this function? */
     const getUser = () => {
         return useQuery('user',q(`user/${CURRENT_SUNY_ID}`),{staleTime:Infinity,cacheTime:Infinity,onSuccess:d => {
             return d.map(u => {

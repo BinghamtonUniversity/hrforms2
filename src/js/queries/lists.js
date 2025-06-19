@@ -14,7 +14,7 @@ export default function useListsQueries() {
         // set default options
         return useQuery(['listdata',LIST_ID],q(`listdata/${LIST_ID}`),{
             staleTime:900000,
-            refetchOnMount:false, //TODO: why?
+            refetchOnMount:false,
             ...options
         });
     }
