@@ -32,7 +32,6 @@
 
         <!-- CSS -->
 		<link rel="stylesheet" href="/css/reset.min.css">
-        <link rel="stylesheet" href="/css/styles.min.css">
     </head>
     <body>
         <div id="root"></div>
