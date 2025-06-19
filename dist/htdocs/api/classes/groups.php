@@ -13,7 +13,7 @@ class Groups extends HRForms2 {
 	private $_arr = array();
 
 	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+		$this->allowedMethods = "GET,POST,PUT,PATCH,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
 		$this->reqAuth = true; //default: true - NB: See note above
 		$this->retJSON = $rjson;
 		$this->req = $req;
