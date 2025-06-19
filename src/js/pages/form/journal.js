@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useParams, useHistory, Link, Redirect } from "react-router-dom";
 import useFormQueries from "../../queries/forms";
-import { Row, Col, Form, Button, Popover, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Row, Col, Form, Popover, OverlayTrigger, Tooltip } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
 import { get, sortBy } from "lodash";
 import useGroupQueries from "../../queries/groups";
@@ -69,23 +69,27 @@ export default function FormJournal() {
 }
 
 function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
-    const [lastStatus,setLastStatus] = useState("");
+    const [lastStatus,setLastStatus] = useState('');
+    const [showRejectedWF,setShowRejectedWF] = useState(false);
+    const [hasRejected,setHasRejected] = useState(false);
+    const [rows,setRows] = useState([]);
     const { general } = useSettingsContext();
     const { getJournal } = useFormQueries(formId);
-    const journal = getJournal({onSuccess:data=>setLastStatus(data[data.length-1].STATUS)});
+    const journal = getJournal({onSuccess:data=>{
+        setLastStatus(data[data.length-1].STATUS);
+        setHasRejected(data.some(r=>r.STATUS == 'R'));
+        setRows(data);
+    }});
 
     const expandToggleComponent = useMemo(() => {
         const expandText = ((expandAll)?'Collapse':'Expand') + ' All';
-        let r = '';
-        if (lastStatus == 'Z') {
-            r = `/form/archive/${formId}`;
-        } else {
-            r = `/form/${formId}`;
-        }
+        const showRejectedWFText = ((showRejectedWF)?'Hide':'Show') + ' Rejected Workflows';
+        const r = (lastStatus == 'Z') ? `/request/archive/${reqId}` : `/request/${reqId}`;
         return(
             <>
                 <Col className="pl-0">
-                    <Form.Check type="switch" id="toggle-expand" label={expandText} onChange={()=>setExpandAll(!expandAll)} checked={expandAll}/>
+                    <Form.Check inline type="switch" id="toggle-expand" label={expandText} onChange={()=>setExpandAll(!expandAll)} checked={expandAll}/>
+                    {hasRejected && <Form.Check inline type="switch" id="toggle-show-prior" label={showRejectedWFText} onChange={()=>setShowRejectedWF(!showRejectedWF)} checked={showRejectedWF}/>}
                 </Col>
                 {r && 
                     <Col className="d-flex justify-content-end pr-0">
@@ -94,7 +98,7 @@ function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
                 }
             </>
         );
-    },[expandAll,lastStatus,formId]);
+    },[expandAll,showRejectedWF,lastStatus,formId]);
 
     const columns = useMemo(() => [
         {name:'Sequence',selector:row=>row.SEQUENCE,sortable:true,width:'120px'},
@@ -107,6 +111,19 @@ function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
         {name:'Comment',selector:row=>row.shortComment,sortable:false,wrap:true}
     ],[general]);
 
+    const filteredRows = useMemo(()=>rows.filter(r=>showRejectedWF?true:r.SEQUENCE>=-1),[rows,showRejectedWF]);
+
+    const conditionalRowStyles = [
+        {
+            when: row => showRejectedWF && row.SEQUENCE < -1,
+            style: {
+                color: '#777',
+                filter:'brightness(0.9)',
+                fontStyle: 'italic',
+            }
+        }
+    ];
+    
     if (journal.isError) return <Loading type="alert" isError>{journal.error.description}</Loading>
     return (
         <DataTable 
@@ -115,7 +132,7 @@ function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
             subHeader
             subHeaderComponent={expandToggleComponent}
             columns={columns} 
-            data={journal.data}
+            data={filteredRows}
             progressPending={journal.isLoading}
             striped 
             responsive
@@ -126,6 +143,7 @@ function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
             expandableRowsComponent={ExpandedComponent}
             expandableRowsComponentProps={{lastStatus:lastStatus}}
             expandableRowExpanded={()=>expandAll}
+            conditionalRowStyles={conditionalRowStyles}
             noDataComponent={<p className="m-3">No Form Journal Found Matching Your Criteria</p>}
         />
     );
