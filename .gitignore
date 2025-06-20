@@ -15,7 +15,6 @@ package-lock.json
 *.code-workspace
 install.sh
 composer.phar
-composer.lock
 src/js/pages/testing.js
 src/js/pages/test/
 dist/etc/db.php
