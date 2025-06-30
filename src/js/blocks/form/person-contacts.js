@@ -83,7 +83,7 @@ export default function PersonContacts() {
 
         /* Required fields */
         if (!arrayData?.EMR_CTC_FIRST_NAME) setError(`${name}.${index}.EMR_CTC_FIRST_NAME`,{type:'manual',message:'First Name is required'});
-        if (!arrayData?.EMR_CTC_FIRST_NAME) setError(`${name}.${index}.EMR_CTC_LAST_NAME`,{type:'manual',message:'Last Name is required'});
+        if (!arrayData?.EMR_CTC_LAST_NAME) setError(`${name}.${index}.EMR_CTC_LAST_NAME`,{type:'manual',message:'Last Name is required'});
         if (!arrayData?.EMR_CTC_RELATIONSHIP?.id) setError(`${name}.${index}.EMR_CTC_RELATIONSHIP.id`,{type:'manual',message:'Relationship is required'});
         if (!arrayData?.EMR_CTC_DAY_PHONE&&!arrayData?.EMR_CTC_CELL_PHONE&&!arrayData?.EMR_CTC_NIGHT_PHONE&&!arrayData?.EMR_CTC_INTERNATIONAL_PHONE) setError(`${name}.${index}.EMR_CTC_PHONE`,{type:'manual',message:'A phone number is required'});
 
@@ -171,6 +171,7 @@ export default function PersonContacts() {
                     <Form.Group as={Row} className="mb-1">
                         <Form.Label column md={2}>Name*:</Form.Label>
                         <Col xs={6} md={4}>
+                            <Form.Text id="EMR_CTC_FIRST_NAME_HELP" muted className="font-italic">First Name</Form.Text>
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_FIRST_NAME`}
                                 defaultValue={defaultValues.EMR_CTC_FIRST_NAME}
@@ -180,6 +181,7 @@ export default function PersonContacts() {
                             <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].EMR_CTC_FIRST_NAME.message`,'')}</Form.Control.Feedback>
                         </Col>
                         <Col xs={6} md={4}>
+                            <Form.Text id="EMR_CTC_LAST_NAME_HELP" muted className="font-italic">Last Name</Form.Text>
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_LAST_NAME`}
                                 defaultValue={defaultValues.EMR_CTC_LAST_NAME}
