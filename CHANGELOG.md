@@ -1,5 +1,13 @@
 # Changelog
 
+## Version 2.0.0(DEV-20250703)
+  * Fixed Admin News update that caused it to remove the news text and throw errors.
+  * Added show/hide toggle for previous rejected workflows in Requests and Forms journal.
+  * Added First Name/Last Name help text for Forms Contacts block.
+  * Fixed bug in Forms Contacts blocks that resulted in Last Name not being required when it should be.
+  * Changed Requests to be routed based on Org Name selection rather than Submitter's department.
+
+
 ## Version 2.0.0(DEV-20250616)
   * Fixed Forms Employment Position Details not saving.
   * Fixed unexpected Save and Exit when "Enter" key pressed in Forms Employment Position Line Number search.
