@@ -68,7 +68,10 @@ export const defaultVals = {
     "apptPeriod": "y",
     "tentativeEndDate": "",
     "expType": "",
-    "orgName": "",
+    "orgName": {
+        "id": "",
+        "title": ""
+    },
     "SUNYAccountsSplit":false,
     "SUNYAccounts": [
         {

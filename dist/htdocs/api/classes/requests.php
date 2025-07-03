@@ -182,7 +182,9 @@ class Requests extends HRForms2 {
                 // get user's group
                 $_SERVER['REQUEST_METHOD'] = 'GET';
                 $user = (new user(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData[0];
-                $group = $this->getGroupIds($user['REPORTING_DEPARTMENT_CODE']);
+                // Group Should be from ORG
+                $dept_code = $this->POSTvars['orgName']['id'];
+                $group = $this->getGroupIds($dept_code);
     
                 //get hierarchy for group
                 $h = (new hierarchy(array('request','group',$group['GROUP_ID']),false))->returnData;

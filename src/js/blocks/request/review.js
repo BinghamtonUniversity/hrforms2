@@ -103,7 +103,7 @@ export default function Review() {
                         </>
                     }
                     <Col as="dt" sm={3} md={2} className="mb-0">Org Name:</Col>
-                    <Col as="dd" sm={9} md={(formValues.posType.id == 'F')?4:10} className="mb-0">{formValues.orgName}</Col>
+                    <Col as="dd" sm={9} md={(formValues.posType.id == 'F')?4:10} className="mb-0">{formValues.orgName?.title}</Col>
                     <Col as="dt" sm={3} md={2} className="mb-0">SUNY Account:</Col>
                     <Col as="dd" sm={9} md={10} className="mb-0">
                         {formValues.SUNYAccounts.map((a,i)=><p className="m-0" key={i}>{a.account[0]?.label} ({a.pct}%)</p>)}

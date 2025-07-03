@@ -7,12 +7,19 @@ import { useRequestContext } from "../../config/request";
 import useListsQueries from "../../queries/lists";
 
 export default function Account() {
-    const {control,formState:{errors}} = useFormContext();
+    const { control, setValue, formState: { errors }} = useFormContext();
     const { canEdit } = useRequestContext();
     const posType = useWatch({name:'posType',control:control});
 
     const {getListData} = useListsQueries();
     const orgs = getListData('deptOrgs');
+
+    const handleOrgNameChange = (field,e) => {
+        field.onChange(e);
+        const orgDesc = orgs.data.find(a=>a.DEPARTMENT_CODE==e.target.value)?.DEPARTMENT_DESC;
+        setValue('orgName.title',(orgDesc)?orgDesc:'');
+    }
+
     return (
         <>
             {(posType?.id=='F') && 
@@ -40,19 +47,19 @@ export default function Account() {
                     {orgs.isError && <Loading isError>Error Loading Department Orgs</Loading>}
                     {orgs.data &&
                         <Controller
-                            name="orgName"
+                            name="orgName.id"
                             defaultValue=""
                             control={control}
                             rules={{required:{value:true,message:'Org Name is required'}}}
                             render={({field}) => (
-                                <Form.Control {...field} as="select" isInvalid={errors.orgName} disabled={!canEdit}>
+                                <Form.Control {...field} as="select" onChange={e=>handleOrgNameChange(field,e)} isInvalid={errors.orgName?.id} disabled={!canEdit}>
                                     <option></option>
-                                    {orgs.data.map(o=><option key={o.DEPARTMENT_CODE}>{o.DEPARTMENT_DESC}</option>)}
+                                    {orgs.data.map(o=><option key={o.DEPARTMENT_CODE} value={o.DEPARTMENT_CODE}>{o.DEPARTMENT_DESC}</option>)}
                                 </Form.Control>
                             )}
                         />
                     }
-                    <Form.Control.Feedback type="invalid">{errors.orgName?.message}</Form.Control.Feedback>
+                    {errors.orgName?.id && <Form.Control.Feedback type="invalid">{errors.orgName.id.message}</Form.Control.Feedback>}
                 </Col>
             </Form.Group>
             <SUNYAccount disabled={!canEdit}/>
