@@ -105,9 +105,12 @@ export default function StartApp() {
     });
 
     useEffect(() => {
-        if (session.data) console.debug('Session Data:',session.data);
-        setAuthData(session.data);
+        if (session.data) {
+            console.debug('Session Data:',session.data);
+            setAuthData(session.data);
+        }
     },[session.data]);
+
     if (session.isError || settings.isError) return <LoadingAppError>{session.error?.message||settings.error?.message}</LoadingAppError>;
     if (session.isSuccess && settings.isSuccess) {
         return (
