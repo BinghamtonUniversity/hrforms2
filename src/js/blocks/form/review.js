@@ -89,7 +89,9 @@ function ReviewFormData() {
 
 function ReviewSections() {
     const tabGroups = ['person','employment'];
+    const { getValues } = useFormContext();
     const { tabs } = useHRFormContext();
+    const payroll_code = getValues('payroll.PAYROLL_CODE');
     return (
         <>
             {tabGroups.map(tg => {
@@ -103,7 +105,7 @@ function ReviewSections() {
                                 <h4 className="border-bottom border-main">{startCase(tg)} Data</h4>
                             </Col>
                         </Row>
-                        {(tg == 'employment') && 
+                        {(tg == 'employment' && ['28020','28029'].includes(payroll_code)) && 
                             <article className="border rounded p-1 mb-2">
                                 <Row as="header">
                                     <Col as="h5">Position</Col>
