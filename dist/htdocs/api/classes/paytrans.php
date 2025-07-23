@@ -91,7 +91,7 @@ class PayTrans extends HRForms2 {
 			pr_required = :pr_required,
 			route_by = :route_by,
 			available_for = :available_for,
-			tabs = EMPTY_CLOB()
+			tabs = ".((INSTANCE=="LOCAL")?"'{}'":"EMPTY_CLOB()")."
 			WHERE paytrans_id = :paytrans_id
 			RETURNING TABS into :tabs";
 		$stmt = oci_parse($this->db,$qry);
