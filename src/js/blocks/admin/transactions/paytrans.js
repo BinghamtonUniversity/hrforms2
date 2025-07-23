@@ -13,8 +13,12 @@ import { useHotkeys } from "react-hotkeys-hook";
 import config from "../../../config/paytrans";
 import { datatablesConfig } from "../../../config/app";
 import { pickBy } from "lodash";
+import { useLocation, useHistory } from "react-router-dom";
 
 export default function PayrollTransactionsTab() {
+    const location = useLocation();
+    const history = useHistory();
+
     const [isNew,setIsNew] = useState(false);
     const [selectedRow,setSelectedRow] = useState({});
     const [changeRow,setChangeRow] = useState({});
@@ -79,18 +83,22 @@ export default function PayrollTransactionsTab() {
                 setResetPaginationToggle(true);
                 setFilterText('');
             }
+            history.replace({
+                pathname: location.pathname,
+                search: (e.target.value && `?search=${e.target.value}`)
+            });
         }
         return(
             <Form onSubmit={e=>e.preventDefault()}>
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
                     <Col xs="auto">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown} value={filterText}/>
                     </Col>
                 </Form.Group>
             </Form>
         );
-    },[filterText]);
+    },[filterText,history,location]);
 
     const filteredRows = useMemo(()=>rows.filter(row => {
         if (!filterText) return true;
@@ -185,6 +193,11 @@ export default function PayrollTransactionsTab() {
             error: errorToast('Failed to Update Payroll Transaction')
         });
     },[changeRow]);
+
+    useEffect(() => {
+        const qs = new URLSearchParams(location.search);
+        qs.get('search') && setFilterText(qs.get('search'));
+    },[location]);
 
     return (
         <>
@@ -297,8 +310,6 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
             return;
         }
         const d = {...data}
-        d.ACTIVE = (!!data.ACTIVE)?1:0;
-        d.PR_REQUIRED = (!!data.PR_REQUIRED)?1:0;
         d.AVAILABLE_FOR = Object.values(data.for).map(a=>(a==1)?'1':(a==0)?'0':(!!a)?'1':'0').join('');
         delete d['for'];
         delete d['tabs'];
@@ -385,7 +396,12 @@ function AddEditPayTrans({selectedRow,setSelectedRow,paytransdata,payrollcodes,f
 }
 
 function PayTransInfoTab({selectedRow,payrollcodes,formcodes,actioncodes,transactioncodes,isEditable}) {
-    const { control, formState: { errors }} = useFormContext();
+    const { control, setValue, formState: { errors }} = useFormContext();
+    const handleCheckboxChange = useCallback((e) => {
+        const { name, checked } = e.target;
+        const value = checked ? 1 : 0;
+        setValue(name, value);
+    }, [control]);
     return (
         <>
             <Form.Group as={Row} controlId="PAYROLL_CODE">
@@ -495,7 +511,7 @@ function PayTransInfoTab({selectedRow,payrollcodes,formcodes,actioncodes,transac
                         name="PR_REQUIRED"
                         control={control}
                         defaultValue={selectedRow.PR_REQUIRED}
-                        render={({field}) => <Form.Check {...field} type="checkbox" checked={field.value==1}/>}
+                        render={({field}) => <Form.Check {...field} type="checkbox" onChange={handleCheckboxChange} checked={field.value==1}/>}
                     />
                 </Col>
             </Form.Group>
@@ -506,7 +522,7 @@ function PayTransInfoTab({selectedRow,payrollcodes,formcodes,actioncodes,transac
                         name="ACTIVE"
                         control={control}
                         defaultValue={selectedRow.ACTIVE}
-                        render={({field}) => <Form.Check {...field} type="checkbox" checked={field.value==1}/>}
+                        render={({field}) => <Form.Check {...field} type="checkbox" onChange={handleCheckboxChange} checked={field.value==1}/>}
                     />
                 </Col>
             </Form.Group>
