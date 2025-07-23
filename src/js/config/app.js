@@ -19,10 +19,12 @@ const mustacheVarsList = {
 
 // Icons not used by the AppButton component formats
 const additionalIcons = [
+    'mdi:alert',
+    'mdi:arrow-right',
     'mdi:calendar-blank',
     'mdi:clipboard-account',
+    'mdi:information-variant',
     'mdi:newspaper',
-    'mdi:alert',
     'mdi:playlist-plus',
     'mdi:printer',
     'mdi:run',
