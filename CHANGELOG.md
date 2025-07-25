@@ -4,7 +4,7 @@
   * Added version checking and cache clearing when the version changes.
   * Only display the Form Employment Data Position box on the review tab when the payroll code is 28020 or 28029.
   * Added search text to URL on some pages; additional pages will be added in future versions.
-  * Saved search on Request Hierarchy when switching tabs between Hierarchy and Worflow; Forms Hierarchy to be added in a future version.
+  * Saved search on Request Hierarchy when switching tabs between Hierarchy and Workflow; Forms Hierarchy to be added in a future version.
 
 
 ## Version 2.0.0(DEV-20250703)
