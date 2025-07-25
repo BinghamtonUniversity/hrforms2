@@ -18,6 +18,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { t } from "../../../../config/text";
 import { NotFound } from "../../../../app";
 import { datatablesConfig } from "../../../../config/app";
+import { useLocation, useHistory } from "react-router-dom";
 
 const HierarchyContext = React.createContext();
 HierarchyContext.displayName = 'HierarchyContext';
@@ -112,6 +113,9 @@ function PagedHierarchyTab(payrolls) {
 }
 
 function HierarchyTable({isPaged}) {
+    const location = useLocation();
+    const history = useHistory();
+
     const [filterText,setFilterText] = useState('');
     const [rows,setRows] = useState([]);
     const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
@@ -165,18 +169,22 @@ function HierarchyTable({isPaged}) {
                 setResetPaginationToggle(true);
                 setFilterText('');
             }
+            history.replace({
+                pathname: location.pathname,
+                search: (e.target.value && `?search=${e.target.value}`)
+            });
         }
         return(
             <Form onSubmit={e=>e.preventDefault()}>
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
                     <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown} value={filterText}/>
                     </Col>
                 </Form.Group>
             </Form>
         );
-    },[filterText]);
+    },[filterText,history,location]);
 
     const filteredRows = useMemo(() => {
         return rows.filter(row => {
@@ -236,6 +244,12 @@ function HierarchyTable({isPaged}) {
         setRows(hierarchy);
         searchRef.current.focus();
     },[hierarchy,activeTab]);
+
+    useEffect(() => {
+        const qs = new URLSearchParams(location.search);
+        setFilterText(qs.get('search')||'');
+        searchRef.current.focus();
+    },[location]);
 
     const tableParams = useMemo(() => {
         if (isPaged) {

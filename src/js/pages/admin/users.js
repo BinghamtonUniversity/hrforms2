@@ -7,7 +7,7 @@ import useListsQueries from "../../queries/lists";
 import { Loading, ModalConfirm, AppButton, errorToast, DescriptionPopover } from "../../blocks/components";
 import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, Button } from "react-bootstrap";
 import { Icon } from "@iconify/react";
-import { orderBy, sortBy, difference, capitalize, startsWith } from "lodash";
+import { orderBy, sortBy, difference, capitalize, startsWith, replace } from "lodash";
 import DataTable from 'react-data-table-component';
 import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
 import DatePicker from "react-datepicker";
@@ -72,7 +72,7 @@ function UsersTable({users,newUser,setNewUser}) {
     const { subpage } = useParams();
     const { SUNY_ID } = useAuthContext();
     const history = useHistory();
-    const { search } = useLocation();
+    const { pathname, search } = useLocation();
     const [filterText,setFilterText] = useState((!!subpage)?`id:${subpage}`:'');
     const [statusFilter,setStatusFilter] = useState('all');
     const [sortField,setsortField] = useState('sortName');
@@ -105,8 +105,15 @@ function UsersTable({users,newUser,setNewUser}) {
     },[]);
 
     const filterComponent = useMemo(() => {
+        const qs = new URLSearchParams(history.location.search);
+
         const statusChange = e => {
             setStatusFilter(e.target.value);
+            (e.target.value=='all')?qs.delete('status'):qs.set('status',e.target.value);
+            history.replace({
+                pathname: pathname,
+                search: qs.toString()
+            });
         }
         const handleKeyDown = e => {
             if(e.key=="Escape"&&!filterText) searchRef.current.blur();
@@ -119,8 +126,13 @@ function UsersTable({users,newUser,setNewUser}) {
             } else {
                 setResetPaginationToggle(true);
                 setFilterText('');
-                history.push('/admin/users');
+                //history.push('/admin/users');
             }
+            (!e.target.value)?qs.delete('search'):qs.set('search',e.target.value);
+            history.replace({
+                pathname: pathname,
+                search: qs.toString()
+            });
         }
         return(
             <Col sm={6} md={5} lg={4} xl={3} className="pr-0">
@@ -142,7 +154,7 @@ function UsersTable({users,newUser,setNewUser}) {
                 </Form>
             </Col>
         );
-    },[filterText,statusFilter,useHotkeys]);
+    },[filterText,statusFilter,useHotkeys,pathname,history]);
 
     const filteredRows = useMemo(() => {
         return rows.filter(row => {

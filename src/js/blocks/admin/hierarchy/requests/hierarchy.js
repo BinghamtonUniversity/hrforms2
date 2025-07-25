@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, useReducer } from "react";
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/request";
 import { useHierarchyQueries } from "../../../../queries/hierarchy";
-import { find, truncate, orderBy, difference, intersection } from 'lodash';
+import { find, truncate, orderBy, difference, intersection, set } from 'lodash';
 import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Badge, Button, ListGroup } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { AppButton, DescriptionPopover, Loading, errorToast } from "../../../../blocks/components";
@@ -15,6 +15,7 @@ import { t } from "../../../../config/text";
 import useListsQueries from "../../../../queries/lists";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { datatablesConfig } from "../../../../config/app";
+import { useLocation, useHistory } from "react-router-dom";
 
 const HierarchyContext = React.createContext();
 HierarchyContext.displayName = 'HierarchyContext';
@@ -52,13 +53,16 @@ export default function HierarchyTab() {
 }
 
 function HierarchyTable() {
+    const location = useLocation();
+    const history = useHistory();
+
     const [filterText,setFilterText] = useState('');
     const [rows,setRows] = useState([]);
     const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
     const [selectedRow,setSelectedRow] = useState({});
     const [deleteHierarchy,setDeleteHierarchy] = useState({});
 
-    const {isNew,activeTab} = useContext(WorkflowContext);
+    const {isNew,activeTab,hierarchyFilterText,setHierarchyFilterText} = useContext(WorkflowContext);
     const {hierarchy,position} = useContext(HierarchyContext);
     const searchRef = useRef();
 
@@ -90,22 +94,28 @@ function HierarchyTable() {
             if (e.target.value) {
                 setResetPaginationToggle(false);
                 setFilterText(e.target.value);
+                setHierarchyFilterText(e.target.value);
             } else {
                 setResetPaginationToggle(true);
                 setFilterText('');
+                setHierarchyFilterText('');
             }
+            history.replace({
+                pathname: location.pathname,
+                search: (e.target.value && `?search=${e.target.value}`)
+            });
         }
         return(
             <Form onSubmit={e=>e.preventDefault()}>
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
                     <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown} value={filterText}/>
                     </Col>
                 </Form.Group>
             </Form>
         );
-    },[filterText]);
+    },[filterText,history,location]);
 
     const filteredRows = useMemo(() => {
         return rows.filter(row => Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
@@ -142,6 +152,18 @@ function HierarchyTable() {
         searchRef.current.focus();
     },[hierarchy,activeTab]);
 
+    useEffect(() => {
+        const qs = new URLSearchParams(location.search);
+        setFilterText(qs.get('search')||hierarchyFilterText||'');
+        if (!qs.get('search') && !!hierarchyFilterText && location.pathname == '/admin/hierarchy/request/hierarchy') {
+            history.replace({
+                pathname: location.pathname,
+                search: (hierarchyFilterText && `?search=${hierarchyFilterText}`)
+            });
+        }
+        searchRef.current.focus();
+    },[location]);
+    
     return (
         <>
             <DataTable 

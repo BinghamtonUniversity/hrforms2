@@ -11,6 +11,7 @@ import { flattenObject } from "../../../utility";
 import { useHotkeys } from "react-hotkeys-hook";
 import config from "../../../config/paytrans";
 import { datatablesConfig } from "../../../config/app";
+import { useLocation, useHistory } from "react-router-dom";
 
 export default function CodesTab({tab,tabName}) {
     const vals = {code:`${tab}_code`,title:`${tab}_title`,description:`${tab}_description`};
@@ -19,8 +20,11 @@ export default function CodesTab({tab,tabName}) {
         title:{start:startCase(vals.title),upper:toUpper(vals.title)},
         description:{start:startCase(vals.description),upper:toUpper(vals.description)}
     };
-    const defaultChangedRow = {update:false,code:null,field:null,value:null}
+    const defaultChangedRow = {update:false,code:null,field:null,value:null};
 
+    const location = useLocation();
+    const history = useHistory();
+    
     const [isNew,setIsNew] = useState(false);
     const [selectedRow,setSelectedRow] = useState({});
     const [changedRow,setChangedRow] = useState({...defaultChangedRow});
@@ -85,18 +89,22 @@ export default function CodesTab({tab,tabName}) {
                 setResetPaginationToggle(true);
                 setFilterText('');
             }
+            history.replace({
+                pathname: location.pathname,
+                search: (e.target.value && `?search=${e.target.value}`)
+            });
         }
         return(
             <Form onSubmit={e=>e.preventDefault()}>
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
                     <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown} value={filterText}/>
                     </Col>
                 </Form.Group>
             </Form>
         );
-    },[filterText]);
+    },[filterText,history,location]);
 
     const filteredRows = useMemo(()=>rows.filter(row => Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase())),[rows,filterText]);
 
@@ -173,6 +181,11 @@ export default function CodesTab({tab,tabName}) {
         }
     },[changedRow]);
 
+    useEffect(() => {
+        const qs = new URLSearchParams(location.search);
+        setFilterText(qs.get('search')||'');
+    },[location]);
+    
     return (
         <>
             <Row as="header">

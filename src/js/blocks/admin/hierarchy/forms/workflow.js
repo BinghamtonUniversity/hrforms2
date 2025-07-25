@@ -15,8 +15,12 @@ import { t } from "../../../../config/text";
 import { Icon } from "@iconify/react";
 import { NotFound } from "../../../../app";
 import { datatablesConfig } from "../../../../config/app";
+import { useLocation, useHistory } from "react-router-dom";
 
 export default function WorkflowTab() {
+    const location = useLocation();
+    const history = useHistory();
+
     const {workflows,activeTab} = useContext(WorkflowContext);
     const [filterText,setFilterText] = useState('');
     const [rows,setRows] = useState([]);
@@ -55,18 +59,22 @@ export default function WorkflowTab() {
                 setResetPaginationToggle(true);
                 setFilterText('');
             }
+            history.replace({
+                pathname: location.pathname,
+                search: (e.target.value && `?search=${e.target.value}`)
+            });
         }
         return(
             <Form onSubmit={e=>e.preventDefault()}>
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
                     <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown} value={filterText}/>
                     </Col>
                 </Form.Group>
             </Form>
         );
-    },[filterText]);
+    },[filterText,history,location]);
 
     const filteredRows = useMemo(() => {
         return rows.filter(row=>Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
@@ -88,6 +96,12 @@ export default function WorkflowTab() {
         setRows(workflows);
         searchRef.current.focus();
     },[workflows,activeTab]);
+
+    useEffect(() => {
+        const qs = new URLSearchParams(location.search);
+        setFilterText(qs.get('search')||'');
+        searchRef.current.focus();
+    },[location]);
 
     return (
         <>

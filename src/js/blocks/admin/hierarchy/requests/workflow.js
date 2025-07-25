@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, useReducer } from "react";
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/request";
 import { useWorkflowQueries } from "../../../../queries/hierarchy";
-import { find } from 'lodash';
+import { find, set } from 'lodash';
 import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Table } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
 import { toast } from "react-toastify";
@@ -14,10 +14,13 @@ import { flattenObject } from "../../../../utility";
 import { t } from "../../../../config/text";
 import { NotFound } from "../../../../app";
 import { datatablesConfig } from "../../../../config/app";
-
+import { useLocation, useHistory } from "react-router-dom";
 
 export default function WorkflowTab() {
-    const {workflows} = useContext(WorkflowContext);
+    const location = useLocation();
+    const history = useHistory();
+
+    const {workflows,workflowFilterText,setWorkflowFilterText } = useContext(WorkflowContext);
     const [filterText,setFilterText] = useState('');
     const [rows,setRows] = useState([]);
     const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
@@ -51,22 +54,28 @@ export default function WorkflowTab() {
             if (e.target.value) {
                 setResetPaginationToggle(false);
                 setFilterText(e.target.value);
+                setWorkflowFilterText(e.target.value);
             } else {
                 setResetPaginationToggle(true);
                 setFilterText('');
+                setWorkflowFilterText('');
             }
+            history.replace({
+                pathname: location.pathname,
+                search: (e.target.value && `?search=${e.target.value}`)
+            });
         }
         return(
             <Form onSubmit={e=>e.preventDefault()}>
                 <Form.Group as={Row} controlId="filter">
                     <Form.Label column sm="2">Search: </Form.Label>
                     <Col sm="10">
-                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown}/>
+                        <Form.Control ref={searchRef} className="ml-2" type="search" placeholder="search..." onChange={handleFilterChange} onKeyDown={handleKeyDown} value={filterText}/>
                     </Col>
                 </Form.Group>
             </Form>
         );
-    },[filterText]);
+    },[filterText,history,location]);
 
     const filteredRows = useMemo(()=>rows.filter(row=>Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase())),[rows,filterText]);
 
@@ -86,6 +95,18 @@ export default function WorkflowTab() {
         setRows(workflows);
         searchRef.current.focus();
     },[workflows,activeTab]);
+
+    useEffect(() => {
+        const qs = new URLSearchParams(location.search);
+        setFilterText(qs.get('search')||workflowFilterText||'');
+                if (!qs.get('search') && !!workflowFilterText && location.pathname == '/admin/hierarchy/request/workflow') {
+            history.replace({
+                pathname: location.pathname,
+                search: (workflowFilterText && `?search=${workflowFilterText}`)
+            });
+        }
+        searchRef.current.focus();
+    },[location]);
 
     return (
         <>

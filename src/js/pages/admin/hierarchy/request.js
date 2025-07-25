@@ -26,6 +26,8 @@ export default function AdminRequestHierarchy() {
     const history = useHistory();
     const [activeTab,setActiveTab] = useState('hierarchy');
     const [isNew,setIsNew] = useState('');
+    const [hierarchyFilterText,setHierarchyFilterText] = useState('');
+    const [workflowFilterText,setWorkflowFilterText] = useState('');
 
     useHotkeys('ctrl+alt+n',()=>{
         setIsNew(activeTab);
@@ -60,7 +62,17 @@ export default function AdminRequestHierarchy() {
     if (groups.isError||workflows.isError) return <Loading isError>Error Loading Data</Loading>;
     if (groups.isLoading||workflows.isIdle||workflows.isLoading) return <Loading type="alert">Loading Data</Loading>;
     return (
-        <WorkflowContext.Provider value={{groups:groups.data,workflows:workflows.data,isNew:isNew,setIsNew:setIsNew,activeTab:activeTab}}>
+        <WorkflowContext.Provider value={{
+            groups:groups.data,
+            workflows:workflows.data,
+            isNew:isNew,
+            setIsNew:setIsNew,
+            activeTab:activeTab,
+            hierarchyFilterText:hierarchyFilterText,
+            setHierarchyFilterText:setHierarchyFilterText,
+            workflowFilterText:workflowFilterText,
+            setWorkflowFilterText:setWorkflowFilterText
+        }}>
             <section>
                 <header>
                     <Helmet>
