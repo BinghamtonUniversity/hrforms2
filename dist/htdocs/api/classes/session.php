@@ -11,6 +11,8 @@ NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 
 class Session extends HRForms2 {
 	private $_arr = array();
+    private $gcProb = 10; // chance of cleaning the session_override table in percentage (use integer).
+    private $gcStart = 366; // Cleanup records older than this value in days.
 
 	function __construct($req,$rjson=true) {
 		$this->allowedMethods = "GET,PATCH,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
@@ -18,9 +20,6 @@ class Session extends HRForms2 {
 		$this->retJSON = $rjson;
 		$this->req = $req;
 		$this->init();
-
-        $this->gcProb = 10; // chance of cleaning the session_override table in percentage (use integer).
-        $this->gcStart = 366; // Cleanup records older than this value in days.
 	}
 
 	function validate() {
