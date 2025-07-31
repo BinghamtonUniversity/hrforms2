@@ -489,7 +489,6 @@ export function fetchFormData({watchIds,effectiveDate,payrollCode}) {
                 a.createDate = isValid(createDate)?createDate:"";
             });
             d.totalSalary = ((+d.RATE_AMOUNT*+d.NUMBER_OF_PAYMENTS) * (+d.APPOINTMENT_PERCENT/100)).toFixed(2);
-            console.log('***',d);
         }
     });
     const employmentleave = getEmploymentInfo([watchIds[1],'leave',effectiveDate],{
