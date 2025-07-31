@@ -151,7 +151,7 @@ class EmploymentInfo extends HRForms2 {
 					$row['BENEFIT_FLAG'] = array("id"=>$row['BENEFIT_FLAG'],"label"=>($key!==false)?$benefitCodes[$key][1]:"");
 				} else {
 					$row['hasBenefits'] = false;
-					$row['BENEFIT_FLAG'] = array("id"=>$benefitcodes[0][0],"label"=>$benefitCodes[0][1]);
+					$row['BENEFIT_FLAG'] = array("id"=>$benefitCodes[0][0],"label"=>$benefitCodes[0][1]);
 				}
 
 				// Mail Drop ID (aka Check Sort Code):
