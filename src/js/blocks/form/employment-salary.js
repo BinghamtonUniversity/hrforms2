@@ -81,7 +81,7 @@ export default function EmploymentAppointment() {
                                 render={({field}) => <Form.Control
                                     as={DatePicker}
                                     name={field.name}
-                                    selected={getValues('effDate')}
+                                    selected={field.value}
                                     closeOnScroll={true}
                                     onChange={field.onChange}
                                     autoComplete="off"

@@ -477,7 +477,8 @@ export function fetchFormData({watchIds,effectiveDate,payrollCode}) {
         enabled:false,
         onSuccess:d=>{
             const effDate = new Date(d?.RATE_EFFECTIVE_DATE);
-            d.effDate = isValid(effDate)?effDate:effectiveDate;
+            d.effDate = effectiveDate;
+            d.rateEffDate = isValid(effDate)?effDate:'';
             d.SUNY_ACCOUNTSSplit = d.SUNY_ACCOUNTS.length > 1;
             d.SPLIT_ASSIGNMENTS && d.SPLIT_ASSIGNMENTS.map(a => {
                 const commitmentEffDate = new Date(a?.COMMITMENT_EFFECTIVE_DATE);
@@ -488,6 +489,7 @@ export function fetchFormData({watchIds,effectiveDate,payrollCode}) {
                 a.createDate = isValid(createDate)?createDate:"";
             });
             d.totalSalary = ((+d.RATE_AMOUNT*+d.NUMBER_OF_PAYMENTS) * (+d.APPOINTMENT_PERCENT/100)).toFixed(2);
+            console.log('***',d);
         }
     });
     const employmentleave = getEmploymentInfo([watchIds[1],'leave',effectiveDate],{
