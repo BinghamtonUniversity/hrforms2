@@ -48,7 +48,7 @@ class FormList extends HRForms2 {
                     drafts.data.payroll.PAYROLL_DESCRIPTION as PAYROLL_DESCRIPTION,
                     drafts.data.employment.position.positionDetails.LINE_NUMBER as LINE_NUMBER,
                     drafts.data.employment.position.positionDetails.TITLE as TITLE,
-                    '0' as sequence, ' ' as groups, ' ' as journal_status
+                    '0' as sequence, ' ' as groups, ' ' as journal_status, ' ' as max_journal_date
 				from hrforms2_forms_drafts drafts 
                 where suny_id = :suny_id";
 				break;
@@ -236,8 +236,8 @@ class FormList extends HRForms2 {
 		oci_execute($stmt);
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
 			$row['STATUS_ARRAY'] = explode(",",$row['JOURNAL_STATUS']);
-			if ($this->req[0] == 'drafts') {
-				$row['MAX_JOURNAL_DATE'] = date('Y-m-d H:i:s',$row['MAX_JOURNAL_DATE']);
+            if ($this->req[0] == 'drafts') {
+				$row['MAX_JOURNAL_DATE'] = date('Y-m-d H:i:s');
 			}
 			$this->_arr[] = $row;
 		}
