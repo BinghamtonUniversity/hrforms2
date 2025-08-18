@@ -46,11 +46,11 @@ class Journal extends HRForms2 {
         switch($this->req[0]) {
             case "request":
             case "requests":
-                $this->k = array("id"=>"request_id","master"=>"hrforms2_requests","journal"=>"hrforms2_requests_journal","archive"=>false);
+                $this->k = array("id"=>"request_id","master"=>"hrforms2_requests","journal"=>"hrforms2_requests_journal","workflow"=>"hrforms2_requests_workflow","archive"=>false);
                 break;
             case "form":
             case "forms":
-                $this->k = array("id"=>"form_id","master"=>"hrforms2_forms","journal"=>"hrforms2_forms_journal","archive"=>false);
+                $this->k = array("id"=>"form_id","master"=>"hrforms2_forms","journal"=>"hrforms2_forms_journal","workflow"=>"hrforms2_forms_workflow","archive"=>false);
                 break;
         }
     }
@@ -97,12 +97,15 @@ class Journal extends HRForms2 {
                 where ".$this->k['id']." = :id
                 and suny_id = :suny_id
                 union 
-                select 1
-                from ".$this->k['journal']." j, hrforms2_user_groups ug
+                select 1 
+                from hrforms2_user_groups ug
+                where group_id in (select regexp_substr(w.groups,'[^,]+',1,rn) group_id
+                from ".$this->k['workflow']." w, ".$this->k['journal']." j
+                cross join lateral (select level rn from dual connect by level <= length(w.groups) - length(replace(w.groups,','))+1)
                 where j.".$this->k['id']." = :id
-                and j.group_to != '-99'
-                and ug.group_id = j.group_to
-                and ug.suny_id = :suny_id";
+                and w.workflow_id = j.workflow_id)
+                and ug.suny_id = :suny_id
+            ";
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
         }

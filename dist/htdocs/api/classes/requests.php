@@ -101,10 +101,12 @@ class Requests extends HRForms2 {
             $submitter = array_shift($journal);
             $last_journal = (count($journal) == 0)?$submitter:array_pop($journal);
             unset($last_journal['COMMENTS']); // We don't need commments
-            if (!(in_array($last_journal['GROUP_TO'],array_column($usergroups,'GROUP_ID'))) && 
-                !($submitter['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID'])
-            ) {
-                if (!($this->sessionData['isAdmin'] && $this->sessionData['OVR_SUNY_ID'] == "")) $this->raiseError(E_NOT_FOUND);
+            // Validation: only submitter and groups in workflow can view
+            $usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
+            $workflow = (new workflow(array('request',$last_journal['WORKFLOW_ID']),false))->returnData[0];
+            if (!array_intersect(explode(",",$workflow['GROUPS']),array_column($usergroups,'GROUP_ID')) && 
+                !($submitter['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID'])) {
+                    $this->raiseError(403);
             }
             if ($last_journal['STATUS'] != 'Z') {
                 $qry = "select CREATED_BY, REQUEST_DATA from HRFORMS2_REQUESTS where REQUEST_ID = :request_id";
