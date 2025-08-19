@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 2.0.0(DEV-20250819)
+  * Users in groups anywhere in the workflow hierarchy can now view the Form or Request; previously only the submitter and current group could view.
+  * Fixed Salary Effective Date to correctly use the entered Effective Date.
+  * Fixed Form Review to show correct Salary Effective Date.
+  * Fixed missing MAX_JOURNAL_DATE array key in formlist.php for "drafts".
+  * Fixed incorrect case for variable in employmentinfo.php that could cause errors; $benefitCodes instead of $benefitecodes.
+  * Fixed declaration of subclass variables in session.php.
+
+
 ## Version 2.0.0(DEV-20250725)
   * Added version checking and cache clearing when the version changes.
   * Only display the Form Employment Data Position box on the review tab when the payroll code is 28020 or 28029.
@@ -195,7 +204,7 @@
   * Fixed Forms Employment Position data not being populated for current roles.
   * Added "markers" for range slider on Position Request Position tab.
   * Fixed incorrect salary calculation on Form Salary tab for BIW, Fee, and HRY appointments.
-  * Set Form Position Effective Date and Salary Effecive Date to use the Basic Information Effective Date for new role.
+  * Set Form Position Effective Date and Salary Effective Date to use the Basic Information Effective Date for new role.
   * Fixed error in updateUserInfo in user.php; code was setting user_info to EMPTY_CLOB(), but it needed to be a valid JSON string.  Resulted in segmentation error.
   * Added drag and drop functionality to reorder menu items for Request and Form list menus items in settings.
 
