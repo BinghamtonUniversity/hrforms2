@@ -158,7 +158,7 @@ function SettingsFormsDefaultRouting() {
 
     const { getGroups } = useGroupQueries();
     const { getWorkflow } = useWorkflowQueries('form');
-    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME']),initialData:[]});
+    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME']),placeholderData:[]});
     const workflows = getWorkflow({
         enabled:!!groups.data.length,
         select:d=>{
@@ -301,7 +301,7 @@ function SettingsFormsEmail() {
                             render={({field}) => (
                                 <Form.Control as="select" {...field} aria-describedby="emailErrorsGroupHelp" disabled={!enabled} >
                                     <option></option>
-                                    {groups.data.map(g=><option value={g.GROUP_ID} key={g.GROUP_ID}>{g.GROUP_NAME}</option>)}
+                                    {groups.data && groups.data.map(g=><option value={g.GROUP_ID} key={g.GROUP_ID}>{g.GROUP_NAME}</option>)}
                                 </Form.Control>
                             )}
                         />

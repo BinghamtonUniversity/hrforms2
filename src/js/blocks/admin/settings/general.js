@@ -8,7 +8,7 @@ export default function SettingsGeneral() {
     const { control, formState:{ errors }} = useFormContext();
 
     const { getGroups } = useGroupQueries();
-    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME']),initialData:[]});
+    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME']),placeholderData:[]});
 
     const enabled = useWatch({name:'general.email.enabled',control:control});
     const watchHideNews = useWatch({name:'general.hideNews'});
@@ -145,7 +145,7 @@ export default function SettingsGeneral() {
                             render={({field}) => (
                                 <Form.Control as="select" {...field} aria-describedby="emailErrorsGroupHelp" disabled={!enabled}>
                                     <option></option>
-                                    {groups.data.map(g=><option value={g.GROUP_ID} key={g.GROUP_ID}>{g.GROUP_NAME}</option>)}
+                                    {groups.data && groups.data.map(g=><option value={g.GROUP_ID} key={g.GROUP_ID}>{g.GROUP_NAME}</option>)}
                                 </Form.Control>
                             )}
                         />
