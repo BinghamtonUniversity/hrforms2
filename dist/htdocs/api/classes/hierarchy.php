@@ -41,18 +41,20 @@ class Hierarchy extends HRForms2 {
 	 * validate called from init()
 	 */
 	function validate() {
-		if (in_array($this->method,array('PUT','PATCH','DELETE')) && !isset($this->req[1])) $this->raiseError(400);
-		switch($this->req[0]) {
-			case "request": /** Request Hierarchy */
-				$this->table = "hrforms2_requests_hierarchy";
-				$this->key2 = $this->POSTvars['posType'];
-				break;
-			case "form": /** Form Hierarchy */
-				$this->table = "hrforms2_forms_hierarchy";
-				$this->key2 = $this->POSTvars['formCode'];
-				break;
-			default:
-				$this->raiseError(400);
+		if (in_array($this->method,array('POST','PATCH','DELETE')) && !isset($this->req[1])) $this->raiseError(400);
+		if (in_array($this->method,array('POST','PATCH','DELETE'))) {
+			switch($this->req[0]) {
+				case "request": /** Request Hierarchy */
+					$this->table = "hrforms2_requests_hierarchy";
+					$this->key2 = $this->POSTvars['posType'];
+					break;
+				case "form": /** Form Hierarchy */
+					$this->table = "hrforms2_forms_hierarchy";
+					$this->key2 = $this->POSTvars['formCode'];
+					break;
+				default:
+					$this->raiseError(400);
+			}
 		}
 	}
 
@@ -66,7 +68,7 @@ class Hierarchy extends HRForms2 {
 						from hrforms2_requests_hierarchy h
 						left join (select hierarchy_id, listagg(group_id,',') as hierarchy_groups from hrforms2_requests_hierarchy_groups group by hierarchy_id) g on (h.hierarchy_id = g.hierarchy_id)
 						left join (select * from hrforms2_requests_workflow) w on (h.workflow_id = w.workflow_id)";							
-				if (isset($this->req[1])&&$this->req[1]!='group') {
+				if (isset($this->req[1]) && $this->req[1]!='group') {
 					$qry .= " where h.hierarchy_id = :id";
 					$id = $this->req[1];
 				}
@@ -75,7 +77,7 @@ class Hierarchy extends HRForms2 {
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_LOBS)) {
-					if ($this->req[1] == 'group') {
+					if (isset($this->req[1]) && $this->req[1] == 'group') {
 						$hgroups = explode(',',$row['HIERARCHY_GROUPS']);
 						if (!in_array($this->req[2],$hgroups)) continue;
 					}
@@ -85,7 +87,7 @@ class Hierarchy extends HRForms2 {
 				oci_free_statement($stmt);
 				
 				// get default when selecting for group:
-				if ($this->req[1] == 'group') {
+				if (isset($this->req[1]) && $this->req[1] == 'group') {
 					$qry = "select 0 as HIERARCHY_ID,null as POSITION_TYPE,
 						w.workflow_id, w.groups as workflow_groups, w.conditions
 						from hrforms2_requests_workflow w
@@ -126,7 +128,7 @@ class Hierarchy extends HRForms2 {
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
-					if ($this->req[1] == 'group') {
+					if (isset($this->req[1]) && $this->req[1] == 'group') {
 						$hgroups = explode(',',$row['HIERARCHY_GROUPS']);
 						if (!in_array($this->req[2],$hgroups)) continue;
 					}
@@ -136,7 +138,7 @@ class Hierarchy extends HRForms2 {
 				oci_free_statement($stmt);
 
 				// get default when selecting for group:
-				if ($this->req[1] == 'group') {
+				if (isset($this->req[1]) && $this->req[1] == 'group') {
 					$qry = "select 0 as HIERARCHY_ID,w.workflow_id, w.groups as WORKFLOW_GROUPS, 
 						'N' as SENDTOGROUP, w.conditions
 						from hrforms2_forms_workflow w
