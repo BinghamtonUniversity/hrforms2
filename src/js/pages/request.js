@@ -264,11 +264,18 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     }
     const handleDelete = () => {
         //setIsBlocking(false);
-        deleteReq.mutateAsync().then(() => {
-            handleRedirect();
-        }).catch(e => {
-            setShowDeleteModal(false);
-            console.error(e);
+        toast.promise(new Promise((resolve,reject) => {
+            deleteReq.mutateAsync().then(()=>resolve()).catch(e=>reject(e));
+        }),{
+            pending: t('request.actions.delete.pending'),
+            success: {render(){
+                handleRedirect();
+                return t('request.actions.delete.success')
+            }},
+            error:{render({data}){
+                setShowDeleteModal(false);
+                return data?.description||t('request.actions.delete.error')
+            }}
         });
     }
     const handleSubmit = data => {

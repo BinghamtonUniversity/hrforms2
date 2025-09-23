@@ -439,11 +439,18 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const handleDelete = () => {
         if (isNew&&!isDraft) return;
         //setIsBlocking(false);
-        delForm.mutateAsync().then(() => {
-            handleRedirect();
-        }).catch(e => {
-            setShowDeleteModal(false);
-            console.error(e);
+        toast.promise(new Promise((resolve,reject) => {
+            delForm.mutateAsync().then(()=>resolve()).catch(e=>reject(e));
+        }),{
+            pending: t('form.actions.delete.pending'),
+            success: {render(){
+                handleRedirect();
+                return t('form.actions.delete.success')
+            }},
+            error:{render({data}){
+                setShowDeleteModal(false);
+                return data?.description||t('form.actions.delete.error')
+            }}
         });
     }
     const handleNext = tablist => {

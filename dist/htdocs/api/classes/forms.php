@@ -67,7 +67,8 @@ class Forms extends HRForms2 {
 	 */
 	function validate() {
         //if ($this->method == 'GET' && sizeof($this->req) != 2) $this->raiseError(E_BAD_REQUEST);
-		if ($this->method == 'DELETE' && $this->req[1] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN);
+		//if ($this->method == 'DELETE' && $this->req[1] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN);
+        if ($this->method == 'DELETE' && $this->req[0] == 'draft' && $this->req[1] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN);
 	}
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -157,14 +158,16 @@ class Forms extends HRForms2 {
         switch($this->POSTvars['action']) {
             case "save":
                 //Limit number of drafts a user may have; to prevent "SPAMMING"
+                $_SERVER['REQUEST_METHOD'] = 'GET';
+                $settings = (new settings(array(),false))->returnData;
                 $qry = "select count(*) from HRFORMS2_FORMS_DRAFTS where SUNY_ID = :suny_id";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
                 $r = oci_execute($stmt);
                 if (!$r) $this->raiseError();
-                $row = oci_fetch_array($stmt,OCI_ARRAY+OCI_RETURN_NULLS);
+                $row = oci_fetch_array($stmt,OCI_NUM+OCI_RETURN_NULLS);
                 oci_free_statement($stmt);
-                if ($row[0] > MAX_DRAFTS) {
+                if ($row[0] > $settings['general']['draftLimit']) {
                     $this->raiseError(E_TOO_MANY_DRAFTS);
                     return;
                 }
@@ -624,9 +627,24 @@ class Forms extends HRForms2 {
             oci_commit($this->db);
             if ($this->retJSON) $this->done();
         } else {
-            //raise error; cannot delete non-drafts.
-            //TODO: delete rejected? (see requests.php for example code)
-            $this->raiseError(E_METHOD_NOT_ALLOWED);
+            // allow delete of rejected
+            // get journal data
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+            $journal = (new journal(array('form',$this->req[0]),false))->returnData;
+            $last_journal = array_pop($journal);
+            if ($last_journal['STATUS'] != 'R') $this->raiseError(E_FORBIDDEN);
+            $first_journal = array_shift($journal);
+            if ($first_journal['SUNY_ID'] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN,array('errMsg'=>'Only the submitter may delete a rejected form.'));
+
+            $qry = "delete from HRFORMS2_FORMS f where f.FORM_ID = :form_id and f.CREATED_BY.SUNY_ID = :suny_id";
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt, ":form_id", $this->req[0]);
+            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
+            oci_commit($this->db);
+            
+            if ($this->retJSON) $this->done();
         }
     }
 }
