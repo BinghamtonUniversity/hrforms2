@@ -185,6 +185,13 @@ pre {
   margin: 0;
  }
 
+/* nowrap */
+.nowrap {
+  overflow: hidden;
+  white-space: nowrap; /* Don't forget this one */
+  text-overflow: clip;
+}
+
 /* active sub tab */
 .tab-pane.active .nav .nav-item p.active { color: #495057 }
 
