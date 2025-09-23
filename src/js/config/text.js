@@ -86,6 +86,11 @@ const text = {
                 'pending': 'Final Approving Form',
                 'success': 'Form Final Approved and Archived Successfully',
                 'error': 'Error Final Approving Form'
+            },
+            'delete': {
+                'pending': 'Deleting Form',
+                'success': 'Form Deleted Successfully',
+                'error': 'Error Deleting Form'
             }
         },
         'review':{
@@ -132,6 +137,11 @@ const text = {
                 'pending': 'Final Approving Request',
                 'success': 'Request Final Approved and Archived Successfully',
                 'error': 'Error Final Approving Request'
+            },
+            'delete': {
+                'pending': 'Deleting Request',
+                'success': 'Request Deleted Successfully',
+                'error': 'Error Deleting Request'
             }
         }
     },
