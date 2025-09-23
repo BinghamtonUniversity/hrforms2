@@ -26,6 +26,7 @@ const defaultValues = {
     candidateName:'',
     lineNumber:'',
     multiLines:'N',
+    title:'',
     createdBy:'',
     page:1,
     results:10,
@@ -311,7 +312,7 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                     <Form.Label>ID</Form.Label>
                     <Form.Control type="search" size="sm" value={filter.reqId} onChange={handleFilterChange}/>
                 </Form.Group>
-                <Form.Group as={Col} sm={3} lg={2} controlId="posType">
+                <Form.Group as={Col} sm={3} lg={1} controlId="posType" className="nowrap">
                     <Form.Label>Position Type</Form.Label>
                     <Form.Control size="sm" as="select" value={filter.posType} onChange={handleFilterChange} disabled={filter.reqId!=""}>
                         <option></option>
@@ -325,7 +326,7 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                         {(reqTypes.data&&filter.posType!="") && reqTypes.data.filter(r=>posTypes.data[filter.posType]?.reqTypes.includes(r[0])).map(r=>(<option key={r[0]} value={r[0]}>{r[0]} - {r[1]}</option>))}
                     </Form.Control>
                 </Form.Group>
-                <Form.Group as={Col} sm={3} md={2} controlId="candidateName">
+                <Form.Group as={Col} sm={3} lg={2} controlId="candidateName">
                     <Form.Label>Name</Form.Label>
                     <Form.Control type="search" size="sm" value={filter.candidateName} onChange={handleFilterChange} placeholder="Enter Name" disabled={filter.reqId!=""}/>
                 </Form.Group>
@@ -337,7 +338,11 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                     <Form.Label>Multi-Line?</Form.Label>
                     <Form.Check type="checkbox" value="Y" className="mt-1" checked={(filter.multiLines=='Y')} onChange={handleFilterChange} disabled={filter.reqId!=""}/>
                 </Form.Group>
-                <Form.Group as={Col} sm={3} md={2} controlId="createdBy">
+                <Form.Group as={Col} sm={3} lg={2} controlId="title">
+                    <Form.Label>Title</Form.Label>
+                    <Form.Control type="search" size="sm" value={filter.title} onChange={handleFilterChange} placeholder="Enter Title" disabled={filter.reqId!=""}/>
+                </Form.Group>
+                <Form.Group as={Col} sm={3} lg={2} controlId="createdBy">
                     <Form.Label>Created By</Form.Label>
                     <AsyncTypeahead
                         size="sm"

@@ -58,6 +58,20 @@ class ArchiveList extends HRForms2 {
 		switch($this->k['id']) {
 			/* REQUESTS */
 			case "request_id":
+				$_GET = array_merge(array(
+					"reqId"=>"",
+					"startDate"=>"",
+					"endDate"=>"",
+					"posType"=>"",
+					"reqType"=>"",
+					"candidateName"=>"",
+					"lineNumber"=>"",
+					"multiLines"=>"N",
+					"title"=>"",
+					"createdBy"=>"",
+					"sortField"=>"request_id",
+					"sortDir"=>"desc"
+				),$_GET);
 				$filter = "";
 				if ($_GET['reqId'] != "") $filter .= " and r.request_id = :request_id";
 				if ($_GET['reqId'] == "") {
@@ -68,6 +82,7 @@ class ArchiveList extends HRForms2 {
 					if ($_GET['candidateName'] != "") $filter .= " and lower(r.request_data.candidateName) like lower('%'||:candidateName||'%')";
 					if ($_GET['lineNumber'] != "") $filter .= " and r.request_data.lineNumber = :lineNumber";
 					if ($_GET['multiLines'] == "Y") $filter .= " and r.request_data.multiLines = 'Y'";
+					if ($_GET['title'] != "") $filter .= " and lower(r.request_data.reqBudgetTitle.title) like lower('%'||:title||'%')";
 					if ($_GET['createdBy'] != "") $filter .= " and r.created_by.SUNY_ID = :created_by";
 				}
 				$sort = "";
@@ -108,6 +123,7 @@ class ArchiveList extends HRForms2 {
 					if ($_GET['reqType'] != "") oci_bind_by_name($stmt,":reqType",$_GET['reqType']);
 					if ($_GET['candidateName'] != "") oci_bind_by_name($stmt,":candidateName",$_GET['candidateName']);
 					if ($_GET['lineNumber'] != "") oci_bind_by_name($stmt,":lineNumber",$_GET['lineNumber']);
+					if ($_GET['title'] != "") oci_bind_by_name($stmt,":title",$_GET['title']);
 					if ($_GET['createdBy'] != "") oci_bind_by_name($stmt,":created_by",$_GET['createdBy']);
 				}
 				$r = oci_execute($stmt);
@@ -158,6 +174,7 @@ class ArchiveList extends HRForms2 {
 					if ($_GET['reqType'] != "") oci_bind_by_name($stmt,":reqType",$_GET['reqType']);
 					if ($_GET['candidateName'] != "") oci_bind_by_name($stmt,":candidateName",$_GET['candidateName']);
 					if ($_GET['lineNumber'] != "") oci_bind_by_name($stmt,":lineNumber",$_GET['lineNumber']);
+					if ($_GET['title'] != "") oci_bind_by_name($stmt,":title",$_GET['title']);
 					if ($_GET['createdBy'] != "") oci_bind_by_name($stmt,":created_by",$_GET['createdBy']);
 				}
 				oci_bind_by_name($stmt,":offset",$offset);
@@ -173,6 +190,21 @@ class ArchiveList extends HRForms2 {
 
 			/* FORMS */
 			case "form_id":
+				$_GET = array_merge(array(
+					"formId"=>"",
+					"startDate"=>"",
+					"endDate"=>"",
+					"personName"=>"",
+					"payroll"=>"",
+					"formCode"=>"",
+					"actionCode"=>"",
+					"transactionCode"=>"",
+					"lineNumber"=>"",
+					"benefitFlag"=>"",
+					"createdBy"=>"",
+					"sortField"=>"form_id",
+					"sortDir"=>"desc"
+				),$_GET);
 				$filter = "";
 				if ($_GET['formId'] != "") $filter .= " and f.form_id = :form_id";
 				if ($_GET['formId'] == "") {
