@@ -68,7 +68,7 @@ Class HRForms2 {
 		case E_NO_DATA: 
 			$errStatus = 204;
 			$errTitle = "No Content";
-			$errMsg = "The requested resource returned no content.";
+			$errMsg = "The requested operation returned no content.";
 			break;
 		case E_BAD_REQUEST:
 			$errStatus = 400;
@@ -78,17 +78,17 @@ Class HRForms2 {
 		case E_NOT_AUTHORIZED:
 			$errStatus = 401;
 			$errTitle = "Not Authorized";
-			$errMsg = "Not authorized for requested resource.";
+			$errMsg = "Not authorized for requested operation.";
 			break;
 		case E_FORBIDDEN:
 			$errStatus = 403;
 			$errTitle = "Not Allowed";
-			$errMsg = "The requested resource is not currently allowed.";
+			$errMsg = "The requested operation is not allowed.";
 			break;
 		case E_NOT_FOUND:
 			$errStatus = 404;
 			$errTitle = "Not Found";
-			$errMsg = "No resource matching the request found.";
+			$errMsg = "No operation matching the request found.";
 			break;
 		case E_METHOD_NOT_ALLOWED:
 			$errStatus = 405;
@@ -131,6 +131,8 @@ Class HRForms2 {
 	protected function checkAuth() {
 		include_once 'etc/CASconfig.php';
 		include_once 'vendor/autoload.php';
+		#var_dump(PHP_VERSION_ID);
+
 		if (!CAS_HOST && INSTANCE == 'LOCAL') {
 			$UDC_IDENTIFIER = json_decode($_COOKIE['hrforms2_local'])->bnumber;
 			$this->sessionData = array_merge($this->sessionData,array("SESSION_ID"=>$_COOKIE['session-id'],"CAS_SID"=>"local","UDC_IDENTIFIER"=>$UDC_IDENTIFIER));
@@ -138,6 +140,7 @@ Class HRForms2 {
 			if (!phpCAS::isInitialized()) {
 				session_set_cookie_params($client_lifetime,$client_path,$client_domain,$client_secure,$client_httpOnly);
 				phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context);
+				#phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $client_service_name);
 				phpCAS::setCasServerCACert($cas_server_ca_cert_path);
 				phpCAS::setNoCasServerValidation();//TODO: should this be off?
 				phpCAS::handleLogoutRequests(true, $cas_real_hosts);
@@ -338,7 +341,7 @@ Class HRForms2 {
 
 		$email_list = array(
 			"mailto"=>$this->getGroupEmails($email_settings['errorsGroup']),
-			"mailcc"=>"geigers+hrforms2-errors@binghamton.edu"
+			"mailcc"=>array()
 		);
 		$replyto = $email_settings['from'];
 
@@ -397,7 +400,7 @@ Class HRForms2 {
 				$mail->addCC($email);
 			}
 		} else {
-			$emailTo = empty($this->sessionData['EMAIL'])?$errorEmail:$this->sessionData['EMAIL'];
+			$emailTo = empty($this->sessionData['EMAIL'])?$this->getGroupEmails($email_settings['errorsGroup']):$this->sessionData['EMAIL'];
 			$mail->addAddress($emailTo);
 		}
 		if (!!$replyto) $mail->addReplyTo($replyto);
@@ -461,9 +464,13 @@ Class HRForms2 {
 		$vars = array_merge($vars,array_change_key_case($journal,CASE_UPPER));
 
 		$status = $journal['status'];
-		$options = $settings[$type]['email']['status'][$status];
-		$defaultEmail = $settings[$type]['email']['default'];
-		$errorEmail = $settings[$type]['email']['errors'];
+		$email_settings = (array)$settings[$type]['email'];
+		$options = $email_settings['status'][$status];
+		/*
+		$defaultEmail = $settings[$type]['email']['default']; //not valid; group now
+		*/
+		$defaultEmail = "geigers+hrforms2-dev-default@binghamton.edu";
+		$errorEmail = $this->getGroupEmails($email_settings['errorsGroup']);
 
 		// Check for no "To" options and return
 		if (count(array_filter($options['mailto'],'strlen')) == 0) {
@@ -536,7 +543,7 @@ Class HRForms2 {
 		}
 
 		// set subject
-		$subject = '[HRFORMS2-'.INSTANCE.']: '.($vars['ERROR']?'**ERROR** ':'').$settings[$type]['email']['subject'].' - '.$options['subject'];
+		$subject = '[HRFORMS2-'.INSTANCE.']: '.($vars['ERROR']?'**ERROR** ':'').$email_settings['subject'].' - '.$options['subject'];
 
 		// get templates
 		$partials = [];
@@ -568,7 +575,7 @@ Class HRForms2 {
 
 		// start PHP mailer
 		ob_start();
-		if ($settings[$type]['email']['enabled']) {
+		if ($email_settings['enabled']) {
 			$mail = new PHPMailer();
 			$mail->isSMTP();
 			if (SMTP_DEBUG) {
@@ -582,7 +589,7 @@ Class HRForms2 {
 			$mail->Username = SMTP_USERNAME;
 			$mail->Password = SMTP_PASSWORD;
 
-			$mail->setFrom($settings[$type]['email']['from'],$settings[$type]['email']['name']);
+			$mail->setFrom($email_settings['from'],$email_settings['name']);
 			if (INSTANCE == 'PROD') {
 				foreach($email_list['mailto'] as $email) {
 					$mail->addAddress($email);
