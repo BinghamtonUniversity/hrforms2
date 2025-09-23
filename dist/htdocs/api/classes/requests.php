@@ -130,14 +130,16 @@ class Requests extends HRForms2 {
         switch($this->req[0]) {
             case "save":
                 //Limit number of drafts a user may have; to prevent "SPAMMING"
+                $_SERVER['REQUEST_METHOD'] = 'GET';
+                $settings = (new settings(array(),false))->returnData;
                 $qry = "select count(*) from HRFORMS2_REQUESTS_DRAFTS where SUNY_ID = :suny_id";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
                 $r = oci_execute($stmt);
                 if (!$r) $this->raiseError();
-                $row = oci_fetch_array($stmt,OCI_ARRAY+OCI_RETURN_NULLS);
+                $row = oci_fetch_array($stmt,OCI_NUM+OCI_RETURN_NULLS);
                 oci_free_statement($stmt);
-                if ($row[0] > MAX_DRAFTS) {
+                if ($row[0] > $settings['general']['draftLimit']) {
                     $this->raiseError(E_TOO_MANY_DRAFTS);
                     return;
                 }
