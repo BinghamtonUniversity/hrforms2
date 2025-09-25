@@ -12,6 +12,7 @@ import useGroupQueries from "../../queries/groups";
 import { find, orderBy, pick } from "lodash";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import useUserQueries from "../../queries/users";
+import { Prompt } from "react-router-dom";
 
 const ArchiveView = lazy(()=>import("./view"));
 
@@ -45,6 +46,7 @@ export default function ListArchiveTable() {
     const [totalRows,setTotalRows] = useState(0);
     const [submitted,setSubmitted] = useState(false);
     const [selectedRowId,setSelectedRowId] = useState();
+    const [ActiveAccordionKey,setActiveAccordionKey] = useState('0');
 
     const { getUsers } = useUserQueries();
     const { getGroups } = useGroupQueries();
@@ -121,6 +123,8 @@ export default function ListArchiveTable() {
         setSelectedRowId(row.REQUEST_ID);
     }
 
+    const handleAccordionClick = (eventKey) => setActiveAccordionKey(eventKey);
+
     const expandRow = useMemo(()=>((isAdmin && general.showFormWF == 'A')||general.showFormWF == 'Y'),[general,isAdmin]);
 
     const columns = [
@@ -172,7 +176,8 @@ export default function ListArchiveTable() {
 
     if (listdata.isError) return <Loading type="alert" isError>Error Loading List Data</Loading>;
     return (
-        <Accordion defaultActiveKey="0">
+        <Accordion defaultActiveKey="0" onSelect={handleAccordionClick}>
+            <BlockNav accordionViewRef={accordionViewRef} ActiveAccordionKey={ActiveAccordionKey}/>
             <Card style={{overflow:'visible'}}>
                 <Accordion.Toggle as={Card.Header} className="d-print-none clickable" eventKey="0">
                     <h3 className="m-0">Request Archive Search</h3>
@@ -221,6 +226,18 @@ export default function ListArchiveTable() {
             </Card>
         </Accordion>
     );
+}
+
+function BlockNav({accordionViewRef,ActiveAccordionKey}) {
+    return (
+        <Prompt
+            message={(_,action) => {
+                if (action === 'PUSH' || ActiveAccordionKey != '1') return true;
+                accordionViewRef.current.parentElement.previousSibling.children[0].click();
+                return false;
+            }}
+        />
+    )
 }
 
 function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calculateDates,userData}) {
