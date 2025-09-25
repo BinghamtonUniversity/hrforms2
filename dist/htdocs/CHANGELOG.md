@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 2.0.0(DEV-20250925)
+  * Added Title as a search field for Archived Requests.
+  * Added back button navigation handling in Requests and Forms archive.
+  * Fixed issue with Groups data not being fetched and updated in Settings.
+  * Added ability for submitter to delete rejected forms.
+  * Added toast notifications for deleting of requests and forms.
+  * Fixed invalid variables defined in server code.
+  * Fixed email notification errorEmail to use the group instead of the old static variable.
+  * Fixed hierarchy.php to check if array element is set.  Errors thrown in PHP 8.
+  
+
 ## Version 2.0.0(DEV-20250819)
   * Users in groups anywhere in the workflow hierarchy can now view the Form or Request; previously only the submitter and current group could view.
   * Fixed Salary Effective Date to correctly use the entered Effective Date.
