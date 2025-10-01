@@ -93,7 +93,7 @@ class PersonInfo extends HRForms2 {
 				// Country Code
 				$fields = array_keys($countryCodes[0]);
 				$key = array_search($row['CITIZENSHIP_COUNTRY_CODE'],array_column($countryCodes,$fields[0]));
-				$row['CITIZENSHIP_COUNTRY_CODE'] = array("id"=>$row['CITIZENSHIP_COUNTRY_CODE'],label=>($key!==false)?$countryCodes[$key][$fields[1]]:"");
+				$row['CITIZENSHIP_COUNTRY_CODE'] = array("id"=>$row['CITIZENSHIP_COUNTRY_CODE'],"label"=>($key!==false)?$countryCodes[$key][$fields[1]]:"");
 
 				// Non-US Citizen
 				if ($row['US_CITIZEN_INDICATOR'] != 'Y') {
@@ -101,10 +101,10 @@ class PersonInfo extends HRForms2 {
 					$visaTypes = (new listdata(array('visaTypes'),false))->returnData;
 					// Non-US Citizen Type
 					$key = array_search($row['NON_CITIZEN_TYPE'],array_column($nonUsCitizenType,0));
-					$row['NON_CITIZEN_TYPE'] = array("id"=>$row['NON_CITIZEN_TYPE'],label=>($key!==false)?$nonUsCitizenType[$key][1]:"");
+					$row['NON_CITIZEN_TYPE'] = array("id"=>$row['NON_CITIZEN_TYPE'],"label"=>($key!==false)?$nonUsCitizenType[$key][1]:"");
 					// VISA Type
 					$key = array_search($row['VISA_CODE'],array_column($visaTypes,0));
-					$row['VISA_CODE'] = array("id"=>$row['VISA_CODE'],label=>($key!==false)?$visaTypes[$key][1]:"");
+					$row['VISA_CODE'] = array("id"=>$row['VISA_CODE'],"label"=>($key!==false)?$visaTypes[$key][1]:"");
 				}
 
 				// Military Status Array
