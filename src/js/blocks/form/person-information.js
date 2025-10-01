@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { HRFormContext, useHRFormContext } from "../../config/form";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
@@ -12,12 +12,18 @@ const name = 'person.information';
 
 export default function PersonInfo() {
     const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
-    const { canEdit, activeNav } = useHRFormContext();
+    const { canEdit, activeNav, journalStatus } = useHRFormContext();
 
     const watchRehireRetiree = useWatch({name:`${name}.REHIRE_RETIREE`});
 
     const { getListData } = useListsQueries();
     const salutations = getListData('salutations');
+
+    const fieldDisabled = useCallback((field) => {
+        if (!canEdit) return true;
+        if (['PA','PF'].includes(journalStatus) && field.value) return true;
+        return false;
+    },[journalStatus, canEdit]);
 
     const handleSelectChange = (e,field) => {
         field.onChange(e);
@@ -62,7 +68,7 @@ export default function PersonInfo() {
                                     name={`${name}.LOCAL_CAMPUS_ID`}
                                     control={control}
                                     defaultValue={defaultValues[`${name}.LOCAL_CAMPUS_ID`]}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={fieldDisabled(field)}/>}
                                 />
                             </Col>
                         </Form.Group>
@@ -83,7 +89,7 @@ export default function PersonInfo() {
                                             {salutations.isLoading && <div className="pt-2"><Loading>Loading Data</Loading></div>}
                                             {salutations.isError && <div className="pt-2"><Loading isError>Failed to Load</Loading></div>}
                                             {salutations.data &&
-                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={!canEdit}>
+                                                <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={fieldDisabled(field)}>
                                                     <option></option>
                                                     {salutations.data.map(s=><option key={s[0]} value={s[0]}>{s[1]}</option>)}
                                                 </Form.Control>
@@ -100,7 +106,7 @@ export default function PersonInfo() {
                                     name={`${name}.LEGAL_FIRST_NAME`}
                                     control={control}
                                     defaultValue={defaultValues[`${name}.LEGAL_FIRST_NAME`]}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit} isInvalid={!!get(errors,field.name,false)}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={fieldDisabled(field)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}.LEGAL_FIRST_NAME.message`,'')}</Form.Control.Feedback>
                             </Col>
@@ -112,7 +118,7 @@ export default function PersonInfo() {
                                     name={`${name}.ALIAS_FIRST_NAME`}
                                     control={control}
                                     defaultValue={defaultValues[`${name}.ALIAS_FIRST_NAME`]}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={fieldDisabled(field)}/>}
                                 />
                             </Col>
                         </Form.Group>
@@ -123,7 +129,7 @@ export default function PersonInfo() {
                                     name={`${name}.LEGAL_MIDDLE_NAME`}
                                     control={control}
                                     defaultValue={defaultValues[`${name}.LEGAL_MIDDLE_NAME`]}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={fieldDisabled(field)}/>}
                                 />
                             </Col>
                         </Form.Group>
@@ -134,7 +140,7 @@ export default function PersonInfo() {
                                     name={`${name}.LEGAL_LAST_NAME`}
                                     control={control}
                                     defaultValue={defaultValues[`${name}.LEGAL_LAST_NAME`]}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit} isInvalid={!!get(errors,field.name,false)}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={fieldDisabled(field)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}.LEGAL_LAST_NAME.message`,'')}</Form.Control.Feedback>
                             </Col>
@@ -146,7 +152,7 @@ export default function PersonInfo() {
                                     name={`${name}.SUFFIX_CODE`}
                                     control={control}
                                     defaultValue={defaultValues[`${name}.SUFFIX_CODE`]}
-                                    render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
+                                    render={({field})=><Form.Control {...field} type="text" disabled={fieldDisabled(field)}/>}
                                 />
                             </Col>
                         </Form.Group>
@@ -164,8 +170,8 @@ export default function PersonInfo() {
                                     control={control}
                                     render={({field}) => (
                                         <>
-                                            <Form.Check {...field} inline type="radio" label="Yes" value='1' checked={field.value=='1'} disabled={!canEdit}/>
-                                            <Form.Check {...field} inline type="radio" label="No" value='0' checked={field.value=='0'} disabled={!canEdit}/>
+                                            <Form.Check {...field} inline type="radio" label="Yes" value='1' checked={field.value=='1'} disabled={fieldDisabled(field)}/>
+                                            <Form.Check {...field} inline type="radio" label="No" value='0' checked={field.value=='0'} disabled={fieldDisabled(field)}/>
                                         </>
                                     )}
                                 />
@@ -180,8 +186,8 @@ export default function PersonInfo() {
                                     control={control}
                                     render={({field}) => (
                                         <>
-                                            <Form.Check {...field} inline type="radio" label="Yes" value='1' checked={field.value=='1'} onChange={e=>handleRehireRetireeChange(e,field)} disabled={!canEdit}/>
-                                            <Form.Check {...field} inline type="radio" label="No" value='0' checked={field.value=='0'} onChange={e=>handleRehireRetireeChange(e,field)} disabled={!canEdit}/>
+                                            <Form.Check {...field} inline type="radio" label="Yes" value='1' checked={field.value=='1'} onChange={e=>handleRehireRetireeChange(e,field)} disabled={fieldDisabled(field)}/>
+                                            <Form.Check {...field} inline type="radio" label="No" value='0' checked={field.value=='0'} onChange={e=>handleRehireRetireeChange(e,field)} disabled={fieldDisabled(field)}/>
                                         </>
                                     )}
                                 />
@@ -204,7 +210,7 @@ export default function PersonInfo() {
                                                     selected={field.value}
                                                     onChange={field.onChange}
                                                     autoComplete="off"
-                                                    disabled={!canEdit}
+                                                    disabled={fieldDisabled(field)}
                                                 />}
                                             />
                                             <InputGroup.Append>
@@ -222,7 +228,7 @@ export default function PersonInfo() {
                                             name={`${name}.RETIRED_FROM`}
                                             control={control}
                                             defaultValue={defaultValues[`${name}.RETIRED_FROM`]}
-                                            render={({field})=><Form.Control {...field} type="text" isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
+                                            render={({field})=><Form.Control {...field} type="text" isInvalid={!!get(errors,field.name,false)} disabled={fieldDisabled(field)}/>}
                                         />
                                         <Form.Control.Feedback type="invalid">{get(errors,`${name}.RETIRED_FROM.message`,'')}</Form.Control.Feedback>
                                     </Col>
