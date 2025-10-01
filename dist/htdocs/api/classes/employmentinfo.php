@@ -46,6 +46,18 @@ class EmploymentInfo extends HRForms2 {
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+				if (!$row) $row = array();
+				$row = array_merge(array(
+					"TERM_DURATION"=>"",
+					"NOTICE_DATE"=>"",
+					"CONTINUING_PERMANENCY_DATE"=>"",
+					"TENURE_STATUS"=>"",
+					"CAMPUS_TITLE"=>"",
+					"SUPERVISOR_SUNY_ID"=>"",
+					"SUPERVISOR_NAME"=>"",
+					"REPORTING_DEPARTMENT_CODE"=>"",
+					"DERIVED_FAC_TYPE"=>""
+				),$row);
 
 				// Tenure Status
 				$key = array_search($row['TENURE_STATUS'],array_column($tenureStatus,0));
@@ -82,7 +94,7 @@ class EmploymentInfo extends HRForms2 {
 						) i on (i.shrtckg_pidm = spriden_pidm)
 						left join (select shrtckg_pidm, count(*) as shrtckg_mg_count
 							from shrtckg@banner.cc.binghamton.edu 
-							where shrtckg_grde_code_final = 'MG'
+							where shrtckg_grde_code_finaarray_mergel = 'MG'
 							and shrtckg_seq_no = (select max(i2.shrtckg_seq_no) from SHRTCKG@banner.cc.binghamton.edu i2 where i2.shrtckg_pidm = shrtckg_pidm and i2.shrtckg_term_code = shrtckg_term_code and i2.shrtckg_tckn_seq_no = shrtckg_tckn_seq_no)
 							group by shrtckg_pidm
 						) mg on (mg.shrtckg_pidm = spriden_pidm)
@@ -138,13 +150,26 @@ class EmploymentInfo extends HRForms2 {
 				$r = oci_execute($stmt);
 				if (!$r) $this->raiseError();
 				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+				if (!$row) $row = array();
+				$row = array_merge(array(
+					"LINE_ITEM_NUMBER"=>"",
+					"PAYROLL_AGENCY_CODE"=>"",
+					"APPOINTMENT_TYPE"=>"",
+					"APPOINTMENT_PERCENT"=>"",
+					"BENEFIT_FLAG"=>"",
+					"APPOINTMENT_EFFECTIVE_DATE"=>"",
+					"APPOINTMENT_END_DATE"=>"",
+					"VOLUNTARY_REDUCTION"=>"",
+					"PAYROLL_MAIL_DROP_ID"=>""
+				),$row);
 
 				// Appointment Type:
 				$key = array_search($row['APPOINTMENT_TYPE'],array_column($appointmentTypes,0));
 				$row['APPOINTMENT_TYPE'] = array("id"=>$row['APPOINTMENT_TYPE'],"label"=>($key!==false)?$appointmentTypes[$key][1]:"");
 
 				// hasBenefits:
-				$payroll = (new codes(array('payroll',$row['PAYROLL_AGENCY_CODE']),false))->returnData[0];
+				$payroll = (new codes(array('payroll',$row['PAYROLL_AGENCY_CODE']),false))->returnData;
+				if (!$payroll) $payroll = array("ADDITIONAL_INFO"=>array("hasBenefits"=>false));
 				if ($payroll['ADDITIONAL_INFO']['hasBenefits']) {
 					$row['hasBenefits'] = true;
 					$key = array_search($row['BENEFIT_FLAG'],array_column($benefitCodes,0));
@@ -176,6 +201,14 @@ class EmploymentInfo extends HRForms2 {
 				if (!$r) $this->raiseError();
 				$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
 				if (!$row) $row = array();
+				$row = array_merge(array(
+					"SUNY_ID"=>"",
+					"LINE_ITEM_NUMBER"=>"",
+					"PAYROLL_AGENCY_CODE"=>"",
+					"APPOINTMENT_PERCENT"=>"",
+					"APPOINTMENT_EFFECTIVE_DATE"=>"",
+					"APPOINTMENT_END_DATE"=>""
+				),$row);
 
 				// Line Item Details:
 				$pos = (new position(array($row['PAYROLL_AGENCY_CODE'],$row['LINE_ITEM_NUMBER']),false))->returnData;

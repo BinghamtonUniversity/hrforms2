@@ -47,6 +47,22 @@ class Position extends HRForms2 {
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
 		$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+		if (!$row) $row = array();
+		$row = array_merge(array(
+			"POSITION_ID"=>"",
+			"LINE_NUMBER"=>"",
+			"PAYROLL"=>"",
+			"EFFECTIVE_DATE"=>"",
+			"SEGMENT_CODE"=>"",
+			"TITLE"=>"",
+			"NEGOTIATING_UNIT"=>"",
+			"SALARY_GRADE"=>"",
+			"POSITION_PERCENT"=>"",
+			"PAY_BASIS"=>"",
+			"POSITION_DEPARTMENT_CODE"=>"",
+			"POSITION_DEPARTMENT"=>"",
+			"POSITION_STATUS"=>""
+		),$row);
 		oci_free_statement($stmt);
 		$this->returnData = $row;
 		if ($this->retJSON) $this->toJSON($this->returnData);
