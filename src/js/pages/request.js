@@ -14,6 +14,8 @@ import { RequestContext, tabs, requiredFields, resetFields, defaultVals, useRequ
 import { t } from "../config/text";
 import { toast } from "react-toastify";
 import { Helmet } from "react-helmet";
+import { filter, pickBy } from "lodash";
+import { flattenObject } from "../utility";
 
 /* TABS */
 const Information = lazy(()=>import("../blocks/request/information"));
@@ -445,11 +447,12 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                 canEdit:canEdit
             }}>
                 <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
+                    <RequestErrorsAlert/>
                     <Tabs activeKey={activeTab} onSelect={navigate} className="d-print-none" id="position-request-tabs">
                         {tabs.map(t=>(
                             <Tab key={t.id} eventKey={t.id} title={t.title} disabled={t.id!='information'&&lockTabs}>
                                 <Container as="article" className="mt-3" fluid>
-                                    {hasErrors && <RequestFormErrors/>}
+                                    {/*{hasErrors && <RequestFormErrors/>}*/}
                                     <PendingReviewAlert/>
                                     <Row as="header">
                                         <Col as="h3">{t.title}</Col>
@@ -504,14 +507,17 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     );
 }
 
-
-function RequestFormErrors() {
-    const {formState:{errors}} = useFormContext();
+function RequestErrorsAlert() {
+    const { formState: { errors } } = useFormContext();
+    if (Object.keys(errors).length < 1) return null;
     return (
         <Alert variant="danger">
-            <Alert.Heading><Icon className="iconify-inline" icon="mdi:alert"/>Error!</Alert.Heading>
+            <Alert.Heading>Request Errors:</Alert.Heading>
             <ul>
-                {Object.keys(errors).map(k=><li key={k}>{errors[k].message}</li>)}
+                {Object.entries(flattenObject(errors)).map(error => {
+                    if (error[0].endsWith('.message')) return <li key={error[0]}>{error[1]}</li>;
+                    return null;
+                })}
             </ul>
         </Alert>
     );
