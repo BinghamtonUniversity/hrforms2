@@ -9,6 +9,8 @@ import useUserQueries from "../queries/users";
 import CheckboxTree from 'react-checkbox-tree';
 import { useLocation } from "react-router-dom";
 import useListsQueries from "../queries/lists";
+import usePersonQueries from "../queries/person";
+import { AsyncTypeahead } from "react-bootstrap-typeahead";
 
 /** Table Of Contents * 
  * 
@@ -27,6 +29,7 @@ import useListsQueries from "../queries/lists";
  * DepartmentSelector
  * DescriptionPopover
  * WorkflowExpandedComponent
+ * PersonPickerComponent
  */
 
 /* formats for AppButton */
@@ -404,5 +407,46 @@ const WorkflowExpandedComponent = ({data}) => {
     );
 }
 
+const PersonPickerComponent = (props) => {
+    const {
+        field,
+        id='person_picker',
+        minLength=3,
+        placeholder='Search for person...',
+        onBlur=()=>null,
+        flip=true,
+        allowNew=true,
+        disabled=false,
+        isInvalid=false,
+    } = props;
+
+    const [searchFilter,setSearchFilter] = useState('');
+    const { getPerson } = usePersonQueries();
+    const person = getPerson(searchFilter,{enabled:false});
+    
+    const handleSearch = query => setSearchFilter(query);
+    useEffect(() => searchFilter&&person.refetch(),[searchFilter]);
+
+    return (
+        <AsyncTypeahead
+            {...field}
+            filterBy={()=>true}
+            id={id}
+            isLoading={person.isLoading}
+            minLength={minLength}
+            flip={flip} 
+            allowNew={allowNew}
+            onSearch={handleSearch}
+            onBlur={onBlur}
+            options={person.data}
+            placeholder={placeholder}
+            selected={field.value}
+            disabled={disabled}
+            isInvalid={isInvalid}
+        />
+    );
+}
+
 export {Loading,ModalConfirm,AppButton,MenuCounts,errorToast,CheckboxTreeComponent,
-    StateSelector,CountrySelector,DepartmentSelector,DescriptionPopover,WorkflowExpandedComponent};
+    StateSelector,CountrySelector,DepartmentSelector,DescriptionPopover,WorkflowExpandedComponent,
+    PersonPickerComponent};
