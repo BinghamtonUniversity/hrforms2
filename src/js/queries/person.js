@@ -39,7 +39,7 @@ export default function usePersonQueries() {
             });
             return (options.select2)?options.select2(data):data;
         };
-        return useQuery(['personLookup',path],q(`person/${data.type.toLowerCase()}/${path.join('/')}`),options);
+        return useQuery(['personLookup',path],q(`personlookup/${data.type.toLowerCase()}/${path.join('/')}`),options);
     }
     
     const getPersonInfo = (...args) => {
@@ -50,5 +50,9 @@ export default function usePersonQueries() {
         return useQuery(['personInfo',HR_ID,infoType],q(`personinfo/${HR_ID}/${infoType}`),options);
     }
 
-    return {lookupPerson,getPersonInfo}; 
+    const getPerson = (query,options) => {
+        return useQuery(['person',query],q(`person/${query}`),options);
+    }
+
+    return {lookupPerson,getPersonInfo,getPerson};
 }
