@@ -40,6 +40,12 @@ export const defaultVals = {
         "title": ""
     },
     "effDate": "",
+    "newFunding": {
+        "id": "",
+        "title": ""
+    },
+    "commitmentId": "",
+    "currentEmployee":[{id:"", label:""}],
     "candidateName": "",
     "bNumber": "",
     "jobDesc": "",

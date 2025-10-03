@@ -1,33 +1,43 @@
-import React, { useState } from "react";
-import { Row, Col, Form, InputGroup } from "react-bootstrap";
+import React from "react";
+import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import { useRequestContext } from "../../config/request";
 import useListsQueries from "../../queries/lists";
+import { PersonPickerComponent } from "../components";
 
 export default function Information() {
-    const { control, setValue, formState:{ errors } } = useFormContext();
+    const { control, getValues, setValue, formState:{ errors } } = useFormContext();
     const { posTypes, isDraft, canEdit } = useRequestContext();
-    const watchPosType = useWatch({name:'posType.id',control:control});
-
-    const [showJobDesc,setShowJobDesc] = useState(true);
-    
+    const [watchPosType,watchReqType,WatchNewFunding] = useWatch({name:['posType.id','reqType.id','newFunding.id'],control:control});
+  
     const { getListData } = useListsQueries();
     const reqtypes = getListData('reqTypes',{
         select:d=>d.filter(r=>posTypes[watchPosType]?.reqTypes.includes(r[0]))
     });
+    const newfundingsource = getListData('newFundingSource');
 
     const handlePosTypeChange = (field,e) => {
         field.onChange(e);
         setValue('posType.title',posTypes[e.target.value].title);
-        setShowJobDesc(true);
     }
     const handleReqTypeChange = (field,e) => {
         field.onChange(e);
         const rt = reqtypes.data.find(a=>a[0]==e.target.value);
         setValue('reqType.title',(rt)?rt[1]:'');
-        setShowJobDesc((e.target.value!='EX'&&e.target.value!='FS'));
+    }
+    const handleNewFundingChange = (field,e) => {
+        field.onChange(e);
+        const nfs = newfundingsource.data.find(a=>a[0]==e.target.value);
+        setValue('newFunding.title',(nfs)?nfs[1]:'');
+    }
+    const handleBlur = (field,e) => {
+        console.log('blur',field,e);
+        field.onBlur(e);
+        if (e.target.value != getValues(`${field.name}[0].label`)) {
+            setValue(`${field.name}.0`,{id:'new-id-0',label:e.target.value});
+        }
     }
     return (
         <>
@@ -78,6 +88,64 @@ export default function Information() {
                     <Form.Control.Feedback type="invalid">{errors.effDate?.message}</Form.Control.Feedback>
                 </Col>
             </Form.Group>
+
+            {watchReqType == 'N' &&
+                <>
+                    <Form.Group as={Row}>
+                        <Form.Label column md={2}>New Position Funding*:</Form.Label>
+                        <Col sm={9} md={6} lg={5} xl={4}>
+                            <Controller
+                                name="newFunding.id"
+                                control={control}
+                                rules={{required:{value:true,message:'New Position Funding is required'}}}
+                                render={({field}) => (
+                                    <Form.Control {...field} as="select" onChange={e=>handleNewFundingChange(field,e)} isInvalid={errors.newFunding} disabled={!isDraft}>
+                                        <option></option>
+                                        {newfundingsource.data && newfundingsource.data.map(r=><option key={r[0]} value={r[0]}>{r[1]}</option>)}
+                                    </Form.Control>
+                                )}
+                            />
+                            <Form.Control.Feedback type="invalid">{errors.newFunding?.id?.message}</Form.Control.Feedback>
+                        </Col>
+                    </Form.Group>
+                    {['PC','PROV'].includes(WatchNewFunding) &&
+                        <>
+                            <Alert variant="info">
+                                <Icon icon="mdi:alert" className="iconify-inline"/><strong>Attention!</strong> Be sure to enter the appropriate Department/School account number in this request.  The Budget office will transfer the funds.
+                            </Alert>
+                            <Form.Group as={Row}>
+                                <Form.Label column md={2}>Strata Commitment ID*:</Form.Label>
+                                <Col xs="auto">
+                                    <Controller
+                                        name="commitmentId"
+                                        defaultValue=""
+                                        control={control}
+                                        rules={{required:{value:true,message:'Strata Commitment ID is required'}}}
+                                        render={({field}) => <Form.Control {...field} type="number" placeholder="Enter Commitment ID" isInvalid={errors.commitmentId} disabled={!canEdit}/>}
+                                    />
+                                    <Form.Control.Feedback type="invalid">{errors.commitmentId?.message}</Form.Control.Feedback>
+                                </Col>
+                            </Form.Group>
+                        </>
+                    }
+                </>
+            }
+
+            {watchReqType == 'F' &&
+                <Form.Group as={Row}>
+                    <Form.Label column md={2}>Current Employee:</Form.Label>
+                    <Col md={7} lg={6} xl={5}>
+                        <Controller
+                            name="currentEmployee"
+                            defaultValue=""
+                            control={control}
+                            render={({field}) => <PersonPickerComponent field={field} id="current-employee" placeholder="Search for Current Employee" onBlur={e=>handleBlur(field,e)} disabled={!canEdit}/>}
+                        />
+                    </Col>
+                </Form.Group>
+            }
+
+
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Candidate Name <span className="font-italic">(if known)</span>:</Form.Label>
                 <Col md={7} lg={6} xl={5}>
@@ -100,7 +168,7 @@ export default function Information() {
                     />
                 </Col>
             </Form.Group>
-            {showJobDesc &&
+            {!['EX','FS'].includes(watchReqType) &&
                 <Form.Group as={Row}>
                     <Form.Label column md={2}>Brief Job Description:</Form.Label>
                     <Col md={9}>

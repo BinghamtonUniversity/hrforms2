@@ -6,6 +6,12 @@ import { AppButton, DateFormat } from "../components";
 import { CommentsTable } from "./comments";
 import { useRequestContext } from "../../config/request"
 
+function NewLine({gap}) { 
+    let c = 'w-100';
+    if (gap != undefined) c += ` mt-${gap}`;
+    return (<div className={c}></div>); 
+}
+
 export default function Review() {
     const { getValues } = useFormContext();
     const formValues = getValues();
@@ -36,6 +42,25 @@ export default function Review() {
                     <Col as="dd" sm={9} md={4} className="mb-0">{formValues.posType.id} - {formValues.posType.title}</Col>
                     <Col as="dt" sm={3} md={2} className="mb-0">Request Type:</Col>
                     <Col as="dd" sm={9} md={4} className="mb-0">{formValues.reqType.id} - {formValues.reqType.title} </Col>
+                    {formValues.reqType.id == 'N' &&
+                        <>
+                            <Col as="dt" sm={3} md={2} className="mb-0">New Position Funding:</Col>
+                            <Col as="dd" sm={9} md={4} className="mb-0">{formValues.newFunding.title}</Col>
+                            {['PC','PROV'].includes(formValues.newFunding.id) &&
+                                <>
+                                    <Col as="dt" sm={3} md={2} className="mb-0">Strata Committment ID:</Col>
+                                    <Col as="dd" sm={9} md={4} className="mb-0">{formValues.commitmentId}</Col>
+                                </>
+                            }
+                        </>
+                    }
+                    {formValues.reqType.id == 'F' &&
+                        <>
+                            <Col as="dt" sm={3} md={2} className="mb-0">Current Employee:</Col>
+                            <Col as="dd" sm={9} md={4} className="mb-0">{formValues.currentEmployee[0]?.label}</Col>
+                        </>
+                    }
+                    <NewLine/>
                     <Col as="dt" sm={3} md={2} className="mb-0">Candidate Name:</Col>
                     <Col as="dd" sm={9} md={4} className="mb-0">{formValues.candidateName}</Col>
                     <Col as="dt" sm={3} md={2} className="mb-0">B-Number:</Col>
