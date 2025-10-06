@@ -139,7 +139,13 @@ export default function Information() {
                             name="currentEmployee"
                             defaultValue=""
                             control={control}
-                            render={({field}) => <PersonPickerComponent field={field} id="current-employee" placeholder="Search for Current Employee" onBlur={e=>handleBlur(field,e)} disabled={!canEdit}/>}
+                            render={({field}) => <PersonPickerComponent 
+                                field={field} 
+                                id="current-employee" 
+                                placeholder="Search for Current Employee" 
+                                onBlur={e=>handleBlur(field,e)} 
+                                disabled={!canEdit}/>
+                            }
                         />
                     </Col>
                 </Form.Group>
