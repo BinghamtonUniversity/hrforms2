@@ -95,8 +95,6 @@ class Requests extends HRForms2 {
             oci_free_statement($stmt);
             $this->returnData = $requestData;
         } else {
-            // TODO?? Validation: Only submitter and group assigned to should view request
-            $usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
             $journal = (new journal(array('request',$this->req[0]),false))->returnData;
             $submitter = array_shift($journal);
             $last_journal = (count($journal) == 0)?$submitter:array_pop($journal);
