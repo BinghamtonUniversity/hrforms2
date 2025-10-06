@@ -37,7 +37,7 @@ export default function ReviewEmploymentVolunteer() {
                         <Col as="dd" sm={9} md={4} className="mb-0">{info.univOfficial[0]?.label}</Col>
                     </>
                 }
-                {(info.subRole.id&&info.subRole.id.startsWith('CP')) && 
+                {(info.subRole.id&&!info.subRole.id.startsWith('CP')) && 
                     <>
                         <Col as="dt" sm={3} md={2} className="mb-0">Supervisor:</Col>
                         <Col as="dd" sm={9} md={4} className="mb-0">{info.supervisor[0]?.label}</Col>
