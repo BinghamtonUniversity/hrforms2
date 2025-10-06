@@ -405,7 +405,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         if (!isDraft && SUNY_ID == data.lastJournal.CREATED_BY_SUNY_ID && data.lastJournal.STATUS == 'R') return true;
         if (!isDraft && SUNY_ID == data.lastJournal.CREATED_BY_SUNY_ID) return false;
         const userGroups = USER_GROUPS.split(',');
-        if (userGroups.includes(get(data,'lastJournal.GROUP_TO'))) return true;
+        if (userGroups.includes(get(data,'lastJournal.GROUP_TO')) && data.lastJournal.STATUS != 'R') return true;
         return false;
     },[SUNY_ID,USER_GROUPS,data,isDraft]);
 

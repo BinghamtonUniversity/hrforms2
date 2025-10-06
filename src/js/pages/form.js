@@ -640,7 +640,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         if (!isDraft && SUNY_ID == data.lastJournal.CREATED_BY_SUNY_ID && data.lastJournal.STATUS == 'R') return true;
         if (!isDraft && SUNY_ID == data.lastJournal.CREATED_BY_SUNY_ID) return false;
         const userGroups = (!USER_GROUPS)?[]:USER_GROUPS.split(',');
-        if (userGroups.includes(get(data,'lastJournal.GROUP_TO'))) return true;
+        if (userGroups.includes(get(data,'lastJournal.GROUP_TO')) && data.lastJournal.STATUS != 'R') return true;
         return false;
     },[SUNY_ID,USER_GROUPS,data,isDraft]);
     const formType = useMemo(()=>[watchFormActions?.formCode?.FORM_CODE,watchFormActions?.actionCode?.ACTION_CODE,watchFormActions?.transactionCode?.TRANSACTION_CODE].join('-'),[watchFormActions]);
