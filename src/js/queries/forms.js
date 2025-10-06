@@ -17,9 +17,6 @@ export default function useFormQueries(FORM_ID) {
         const ed = (effDate instanceof Date)?format(effDate,'dd-MMM-yyyy'):effDate;
         return useQuery(['position',payroll,lineNumber,ed],q(`position/${payroll}/${lineNumber}/${ed}`),options);
     }
-    const getSupervisorNames = (query,options) => {
-        return useQuery(['supervisor',query],q(`supervisor/${query}`),options);
-    }
 
     const getForm = (...args) => {
         const options = args[0]?.options||args[0]||{};
@@ -117,7 +114,6 @@ export default function useFormQueries(FORM_ID) {
 
     const duplicateCheck = () => useMutation(d=>q(`check/form`,'POST',d)());
 
-    return {getEducationInstitutions,getPosition,getSupervisorNames,getArchiveFormList,
-        getJournal,getForm,getArchiveForm,postForm,putForm,patchForm,deleteForm,getFormList,
-        duplicateCheck};
+    return {getEducationInstitutions,getPosition,getArchiveFormList,getJournal,getForm,
+        getArchiveForm,postForm,putForm,patchForm,deleteForm,getFormList,duplicateCheck};
 }
