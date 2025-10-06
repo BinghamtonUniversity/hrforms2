@@ -16,7 +16,6 @@ import { flattenObject } from "../../utility";
 import { Helmet } from "react-helmet";
 import useUserQueries from "../../queries/users";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { hide } from "@popperjs/core";
 
 export default function RequestList() {
     const {part} = useParams();
@@ -49,6 +48,11 @@ export default function RequestList() {
                         </Row>
                     </header>
                     <section>
+                        {part=='pending' &&
+                            <Alert variant="info">
+                                <Icon icon="mdi:information" className="iconify-inline"/> This list includes Requests that you have submitted as well as Requests that are currently in an approval group you belong to.  You may not have any action required on some of these Requests.
+                            </Alert>
+                        }
                         <ListAgeWarning enabled={requests.agewarn.enabled} maxage={requests.agewarn.age} countAge={countAge}/>
                         <ListData list={(part)?part:'all'}/>
                     </section>

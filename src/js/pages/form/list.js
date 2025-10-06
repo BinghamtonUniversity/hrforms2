@@ -50,6 +50,11 @@ export default function FormList() {
                         }
                     </header>
                     <section>
+                        {part=='pending' &&
+                            <Alert variant="info">
+                                <Icon icon="mdi:information" className="iconify-inline"/> This list includes Forms that you have submitted as well as Forms that are currently in an approval group you belong to.  You may not have any action required on some of these Forms.
+                            </Alert>
+                        }
                         <ListAgeWarning enabled={forms.agewarn.enabled} maxage={forms.agewarn.age} countAge={countAge}/>
                         <ListData list={(part)?part:''}/>
                     </section>
