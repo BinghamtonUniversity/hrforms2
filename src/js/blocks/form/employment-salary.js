@@ -4,11 +4,9 @@ import { useFormContext, Controller, useWatch, useFieldArray } from "react-hook-
 import { HRFormContext, conditionalFields, useHRFormContext } from "../../config/form";
 import DatePicker from "react-datepicker";
 import SUNYAccount, { SingleSUNYAccount } from "../sunyaccount";
-import { AppButton, CurrencyFormat, DateFormat, DepartmentSelector } from "../components";
+import { AppButton, CurrencyFormat, DateFormat, DepartmentSelector, PersonPickerComponent } from "../components";
 import { Icon } from "@iconify/react";
 import { cloneDeep, get } from "lodash";
-import useFormQueries from "../../queries/forms";
-import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import useListsQueries from "../../queries/lists";
 
 const name = 'employment.salary';
@@ -489,14 +487,11 @@ function SplitAssignments({className,editing,setEditing}) {
     const [isNew,setIsNew] = useState(false);
     const [editIndex,setEditIndex] = useState();
     const [editValues,setEditValues] = useState();
-    const [searchFilter,setSearchFilter] = useState('');
     const [changePrimary,setChangePrimary] = useState(false);
     const [totalPct,setTotalPct] = useState(0);
 
     const {getListData} = useListsQueries();
     const workAllocation = getListData('workAllocation');
-    const { getSupervisorNames } = useFormQueries();
-    const supervisors = getSupervisorNames(searchFilter,{enabled:false});
 
     const defaultValues = {
         "HR_COMMITMENT_ID": "",
@@ -582,7 +577,6 @@ function SplitAssignments({className,editing,setEditing}) {
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
     }
 
-    const handleSearch = query => setSearchFilter(query);
     const handleBlur = (field,e) => {
         field.onBlur(e);
         const baseName = field.name.split('.').slice(0,-1).join('.');
@@ -612,8 +606,6 @@ function SplitAssignments({className,editing,setEditing}) {
                 if (!e.target.value) setValue(field.name,0);
         }
     }
-
-    useEffect(() => searchFilter&&supervisors.refetch(),[searchFilter]);
 
     useEffect(()=>{
         if (watchFieldArray.length==0) return;
@@ -740,21 +732,13 @@ function SplitAssignments({className,editing,setEditing}) {
                                         name={`${blockName}.${index}.supervisor`}
                                         defaultValue={defaultValues.supervisor}
                                         control={control}
-                                        render={({field}) => <AsyncTypeahead
-                                            {...field}
-                                            filterBy={()=>true}
+                                        render={({field}) => <PersonPickerComponent
+                                            field={field}
                                             id="supervisor-search"
-                                            isLoading={supervisors.isLoading}
-                                            minLength={2}
-                                            flip={true} 
-                                            allowNew={true}
-                                            onSearch={handleSearch}
-                                            onBlur={e=>handleBlur(field,e)}
-                                            options={supervisors.data}
                                             placeholder="Search for supervisor..."
-                                            selected={field.value}
-                                            disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""}
-                                        />}
+                                            onBlur={e=>handleBlur(field,e)}
+                                            disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""}/>
+                                        }                                        
                                     />
                                 </Col>
                                 <Col xs="auto" className="mb-2">

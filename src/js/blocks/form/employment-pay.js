@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller } from "react-hook-form";
 import { get, cloneDeep } from "lodash";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
-import { AppButton, CurrencyFormat, DateFormat, DepartmentSelector } from "../components";
+import { AppButton, CurrencyFormat, DateFormat, DepartmentSelector, PersonPickerComponent } from "../components";
 import { SingleSUNYAccount } from "../sunyaccount";
-import useFormQueries from "../../queries/forms";
-import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import { addDays, subDays } from "date-fns";
 import DataTable from "react-data-table-component";
 import { useHRFormContext } from "../../config/form";
@@ -347,24 +345,12 @@ function NewEmploymentPay() {
 function PaySupervisor({index,editIndex}) {
     const blockName = `${name}.newPay`;
     const { control, getValues, setValue, formState: { errors } } = useFormContext();
-    const [searchFilter,setSearchFilter] = useState('');
-    const { getSupervisorNames } = useFormQueries();
-    const supervisors = getSupervisorNames(searchFilter,{enabled:false});
-
-    const handleSearch = query => {
-        setSearchFilter(query);
-    }
     const handleBlur = (field,e) => {
         field.onBlur(e);
         if (e.target.value != getValues(`${blockName}.${index}.supervisor[0].label`)) {
             setValue(`${blockName}.${index}.supervisor.0`,{id:`new-id-${index}`,label:e.target.value});
         }
     }
-
-    useEffect(() => {
-        if (!searchFilter) return;
-        supervisors.refetch();
-    },[searchFilter]);
     return (
         <Form.Group as={Row}>
             <Form.Label column xs={4} sm={3} md={2} xl={1}>Supervisor*:</Form.Label>
@@ -373,22 +359,15 @@ function PaySupervisor({index,editIndex}) {
                     name={`${blockName}.${index}.supervisor`}
                     defaultValue={[{id:'',label:''}]}
                     control={control}
-                    render={({field}) => <AsyncTypeahead
-                        {...field}
-                        filterBy={()=>true}
-                        id="supervisor-search"
-                        isLoading={supervisors.isLoading}
-                        minLength={2}
-                        flip={true} 
-                        allowNew={true}
-                        onSearch={handleSearch}
+                    render={({field}) => <PersonPickerComponent
+                        field={field}
+                        id={`supervisor-search-${index}`}
+                        placeholder="Search for Supervisor"
                         onBlur={e=>handleBlur(field,e)}
-                        options={supervisors.data}
-                        selected={field.value}
-                        placeholder="Search for supervisor..."
                         disabled={editIndex!=index}
                         isInvalid={!!get(errors,field.name,false)}
-                    />}
+                        />
+                    }
                 />
                 <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.supervisor.message`,'')}</Form.Control.Feedback>
             </Col>

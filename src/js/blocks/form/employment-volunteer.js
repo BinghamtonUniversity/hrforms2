@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
-import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { get } from "lodash";
-import { Loading, DepartmentSelector } from "../components";
+import { Loading, DepartmentSelector, PersonPickerComponent } from "../components";
 import DatePicker from "react-datepicker";
 import { useHRFormContext } from "../../config/form";
-import useFormQueries from "../../queries/forms";
 import useListsQueries from "../../queries/lists";
 
 const name = 'employment.volunteer';
@@ -213,18 +211,12 @@ export default function EmploymentSeparation() {
 function VolunteerSupervisor({fieldName,fieldLabel,testHighlight}) {
     const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
     const { canEdit } = useHRFormContext();
-    const [searchFilter,setSearchFilter] = useState('');
-    const { getSupervisorNames } = useFormQueries();
-    const supervisors = getSupervisorNames(searchFilter,{enabled:false});
-
-    const handleSearch = query => setSearchFilter(query);
     const handleBlur = (field,e) => {
         field.onBlur(e);
         if (e.target.value != getValues(`${fieldName}[0].label`)) {
             setValue(`${fieldName}.0`,{id:'new-id-0',label:e.target.value});
         }
     }
-    useEffect(() => searchFilter&&supervisors.refetch(),[searchFilter]);
     return (
         <Form.Group as={Row} className={testHighlight}>
             <Form.Label column md={2}>{fieldLabel}:</Form.Label>
@@ -233,22 +225,14 @@ function VolunteerSupervisor({fieldName,fieldLabel,testHighlight}) {
                     name={fieldName}
                     control={control}
                     defaultValue={defaultValues[fieldName]}
-                    render={({field}) => <AsyncTypeahead
-                        {...field}
-                        filterBy={()=>true}
+                    render={({field}) => <PersonPickerComponent
+                        field={field}
                         id={`${fieldName.replaceAll('.','-')}-search`}
-                        isLoading={supervisors.isLoading}
-                        minLength={2}
-                        flip={true} 
-                        allowNew={true}
-                        onSearch={handleSearch}
-                        onBlur={e=>handleBlur(field,e)}
-                        options={supervisors.data}
                         placeholder="Search for people..."
-                        selected={field.value}
+                        onBlur={e=>handleBlur(field,e)}
                         disabled={!canEdit}
-                        isInvalid={!!get(errors,fieldName,false)}
-                    />}
+                        isInvalid={!!get(errors,fieldName,false)}/>
+                    }
                 />
                 <Form.Control.Feedback type="invalid">{get(errors,`${fieldName}.message`,'')}</Form.Control.Feedback>
             </Col>
