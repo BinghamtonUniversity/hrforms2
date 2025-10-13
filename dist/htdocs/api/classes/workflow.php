@@ -53,17 +53,30 @@ class Workflow extends HRForms2 {
 
 	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
 	function GET() {
-		$qry = "select * from $this->table";
-		if (isset($this->req[1])) $qry .= " where workflow_id = :id";
-		$qry .= " order by workflow_id";
+		$qry = "with workflow as (
+			select workflow_id, groups, CONDITIONS, sendtogroup, sysdate as history_date
+			from $this->table
+			union all
+			select workflow_id, groups, CONDITIONS, sendtogroup, history_date
+			from {$this->table}_history
+		) select * from workflow";
+		if (isset($this->req[1])) {
+			 $qry .= " where workflow_id = :id";
+		} else {
+			 $qry .= " where history_date >= sysdate";
+		}
+		if (isset($this->req[2])) $qry .= " and history_date >= to_date(:hist_date)";
+		$qry .= " order by workflow_id, history_date";
+		if (isset($this->req[1])) $qry .= " fetch first 1 row only"; //only one when looking for specific id)
 		$stmt = oci_parse($this->db,$qry);
 		if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $this->req[1]);
+		if (isset($this->req[2])) oci_bind_by_name($stmt,":hist_date", $this->req[2]);
 		$r = oci_execute($stmt);
 		if (!$r) $this->raiseError();
 		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
 			$row['CONDITIONS'] = json_decode($row['CONDITIONS']);
 			$this->_arr[] = $row;
-		}		
+		}
 		oci_free_statement($stmt);
 		$this->returnData = $this->null2Empty($this->_arr);
 		if ($this->retJSON) $this->toJSON($this->returnData);
