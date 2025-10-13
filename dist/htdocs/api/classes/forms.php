@@ -92,7 +92,7 @@ class Forms extends HRForms2 {
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
             $formData->formActions->TABS = json_decode($row['TABS']);
         } elseif ($this->req[0] == 'archive') {
-            $qry = "select CREATED_BY, FORM_DATA from HRFORMS2_FORMS_ARCHIVE where FORM_ID = :form_id";
+            $qry = "select CREATED_BY, to_char(CREATED_DATE,'DD-MON-YYYY HH:MI:SS AM') as created_date, FORM_DATA from HRFORMS2_FORMS_ARCHIVE where FORM_ID = :form_id";
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":form_id",$this->req[1]);
             $r = oci_execute($stmt);
@@ -101,6 +101,7 @@ class Forms extends HRForms2 {
             $formData = json_decode($row['FORM_DATA']);
             $createdByData = json_decode($row['CREATED_BY']);
             $formData->createdBy = $createdByData;
+            $formData->createdDate = $row['CREATED_DATE'];
             oci_free_statement($stmt);
             $qry = "select pt.paytrans_id,pt.tabs 
                 FROM HRFORMS2_PAYROLL_TRANSACTIONS pt 
@@ -127,7 +128,7 @@ class Forms extends HRForms2 {
             }
             $last_journal['SUBMITTER_SUNY_ID'] = $submitter['SUNY_ID'];            
             if ($last_journal['STATUS'] != 'Z') {
-                $qry = "select CREATED_BY,FORM_DATA from HRFORMS2_FORMS where FORM_ID = :form_id";
+                $qry = "select CREATED_BY, to_char(CREATED_DATE,'DD-MON-YYYY HH:MI:SS AM') as created_date, FORM_DATA from HRFORMS2_FORMS where FORM_ID = :form_id";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":form_id",$this->req[0]);
                 $r = oci_execute($stmt);
@@ -136,6 +137,7 @@ class Forms extends HRForms2 {
                 $formData = json_decode($row['FORM_DATA']);
                 $createdByData = json_decode($row['CREATED_BY']);
                 $formData->createdBy = $createdByData;
+                $formData->createdDate = $row['CREATED_DATE'];
                 oci_free_statement($stmt);
                 $qry = "select pt.paytrans_id,pt.tabs 
                     FROM HRFORMS2_PAYROLL_TRANSACTIONS pt 

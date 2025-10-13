@@ -84,7 +84,7 @@ class Requests extends HRForms2 {
             oci_free_statement($stmt);
             $this->returnData = json_decode($this->_arr['DATA']);
         } elseif ($this->req[0] == 'archive') {
-            $qry = "select CREATED_BY, REQUEST_DATA from HRFORMS2_REQUESTS_ARCHIVE where REQUEST_ID = :request_id";
+            $qry = "select CREATED_BY, to_char(CREATED_DATE,'DD-MON-YYYY HH:MI:SS AM') as created_date, REQUEST_DATA from HRFORMS2_REQUESTS_ARCHIVE where REQUEST_ID = :request_id";
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":request_id",$this->req[1]);
             $r = oci_execute($stmt);
@@ -92,6 +92,7 @@ class Requests extends HRForms2 {
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
             $requestData = json_decode($row['REQUEST_DATA']);
             $requestData->createdBy = json_decode($row['CREATED_BY']);
+            $requestData->createdDate = $row['CREATED_DATE'];
             oci_free_statement($stmt);
             $this->returnData = $requestData;
         } else {
@@ -107,7 +108,7 @@ class Requests extends HRForms2 {
                     $this->raiseError(403);
             }
             if ($last_journal['STATUS'] != 'Z') {
-                $qry = "select CREATED_BY, REQUEST_DATA from HRFORMS2_REQUESTS where REQUEST_ID = :request_id";
+                $qry = "select CREATED_BY, to_char(CREATED_DATE,'DD-MON-YYYY HH:MI:SS AM') as created_date, REQUEST_DATA from HRFORMS2_REQUESTS where REQUEST_ID = :request_id";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":request_id",$this->req[0]);
                 $r = oci_execute($stmt);
@@ -115,6 +116,7 @@ class Requests extends HRForms2 {
                 $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
                 $requestData = json_decode($row['REQUEST_DATA']);
                 $requestData->createdBy = json_decode($row['CREATED_BY']);
+                $requestData->createdDate = $row['CREATED_DATE'];
                 oci_free_statement($stmt);
                 $this->returnData = $requestData;
             }
