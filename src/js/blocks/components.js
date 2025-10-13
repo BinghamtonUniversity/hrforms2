@@ -10,6 +10,7 @@ import CheckboxTree from 'react-checkbox-tree';
 import { useLocation } from "react-router-dom";
 import useListsQueries from "../queries/lists";
 import usePersonQueries from "../queries/person";
+import { useWorkflowQueries } from "../queries/hierarchy";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 
 /** Table Of Contents * 
@@ -345,9 +346,28 @@ const WorkflowExpandedComponent = ({data}) => {
     const [showSkipped,setShowSkipped] = useState(false);
     const { general } = useSettingsContext();
     const { isAdmin } = useAuthContext();
+    const key = data.hasOwnProperty('REQUEST_ID')?'request':data.hasOwnProperty('FORM_ID')?'form':'';
+    if (!key) return (
+         <div className="p-3" style={{backgroundColor:'#ddd'}}>
+            <Alert variant="danger" className="m-0">Workflow data not available</Alert>
+         </div>
+    );
+    const cdate = format(data.createdDate,'dd-MMM-yyyy');
+    const { getWorkflow } = useWorkflowQueries(key,data.WORKFLOW_ID,cdate);
+    const wf = getWorkflow();
     useEffect(() => {
         setShowSkipped((isAdmin && general.showSkipped == 'A' || general.showSkipped == 'Y'));
     },[general]);
+    if (wf.isLoading) return (
+        <div className="p-3" style={{backgroundColor:'#ddd'}}>
+            <p className="m-0"><Loading>Loading Workflow...</Loading></p>
+        </div>
+    );
+    if (wf.isError) return (
+        <div className="p-3" style={{backgroundColor:'#ddd'}}>
+            <Alert variant="danger" className="m-0">Error loading workflow: {wf.error?.message}</Alert>
+        </div>
+    );
     return (
         <div className="p-3" style={{backgroundColor:'#ddd'}}>
             {data.GROUPS_ARRAY.map((g,i)=>{
@@ -357,6 +377,12 @@ const WorkflowExpandedComponent = ({data}) => {
                 let variant = 'white';
                 let classname = 'p-2 m-0 d-inline-flex flex-column badge-outline border';
                 let title = general.awaitLabel;
+                for (const c of wf.data[0]?.CONDITIONS) {
+                    if (c.seq == i-1 && i > sequence) {
+                        classname += ' badge-white-striped';
+                        title = 'Conditional Awaiting';
+                    }
+                }
                 if (i <= sequence) { 
                     switch(data.STATUS_ARRAY[i]) {
                         case "S":
