@@ -46,7 +46,7 @@ class RequestList extends HRForms2 {
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.request_data.lineNumber, r.request_data.reqBudgetTitle.title,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
-				j.status, j.sequence, r.request_data.GROUPS, js.journal_status, 
+				j.status, j.sequence, r.request_data.WORKFLOW_ID, r.request_data.GROUPS, js.journal_status, 
 				to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
 				from hrforms2_requests r,
 				(select jr2.* from (select jr1.*,
@@ -65,7 +65,7 @@ class RequestList extends HRForms2 {
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.request_data.lineNumber, r.request_data.reqBudgetTitle.title,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
-				j.status, j.sequence, r.request_data.GROUPS, js.journal_status, 
+				j.status, j.sequence, r.request_data.WORKFLOW_ID, r.request_data.GROUPS, js.journal_status, 
 				to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
 				from hrforms2_requests r,
 				(select jr2.* from (select jr1.*,
@@ -83,7 +83,7 @@ class RequestList extends HRForms2 {
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.request_data.lineNumber, r.request_data.reqBudgetTitle.title,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
-				j.status, j.sequence, r.request_data.GROUPS, js.journal_status, 
+				j.status, j.sequence, r.request_data.WORKFLOW_ID, r.request_data.GROUPS, js.journal_status, 
 				to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
 				from hrforms2_requests r,
 				(select jr2.* from (
@@ -102,7 +102,7 @@ class RequestList extends HRForms2 {
 				r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
 				r.request_data.lineNumber, r.request_data.reqBudgetTitle.title,
 				r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
-				j.status, j.sequence, r.request_data.GROUPS, js.journal_status, 
+				j.status, j.sequence, r.request_data.WORKFLOW_ID, r.request_data.GROUPS, js.journal_status, 
 				to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
 				from hrforms2_requests r,
 				(select jr2.* from (select jr1.*,
