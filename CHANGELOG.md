@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 2.0.0(DEV-20251013)
+  * Added "Conditional Awaiting" status to expander row workflow.
+  * Disabled Form fields on Person->Information when a value exists and the form is in an Approval status.
+  * Fixed Request Error required fields alert display to match implementation in Forms; corrected missing error messages.
+  * PHP code fixes and handling when no data returned by queries.
+  * Refactored APIs to better reflect use case: person -> personlookup, supervisor -> person.
+  * Created PersonPicker component and replaced single instances of code.
+  * Added new Request Information fields per Budget Office: New Funding Source, Strata Commitment ID, and Current Employee.  Fields will be displayed conditionally.
+  * Removed Rejected Forms/Requests appearing in "Pending" lists.
+  * Added info banner to "Pending" list page to indicate that the Form/Request shown includes your own submissions as well as submissions for approval groups you belong to.
+  * Fixed edit permission for Rejected Forms/Requests.
+  * Fixed Form Volunteer Supervisor not showing on Review.
+
+
 ## Version 2.0.0(DEV-20250925)
   * Added Title as a search field for Archived Requests.
   * Added back button navigation handling in Requests and Forms archive.
