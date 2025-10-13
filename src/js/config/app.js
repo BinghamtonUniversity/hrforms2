@@ -23,6 +23,7 @@ const additionalIcons = [
     'mdi:arrow-right',
     'mdi:calendar-blank',
     'mdi:clipboard-account',
+    'mdi:information',
     'mdi:information-variant',
     'mdi:newspaper',
     'mdi:playlist-plus',
