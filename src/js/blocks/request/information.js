@@ -133,7 +133,7 @@ export default function Information() {
 
             {watchReqType == 'F' &&
                 <Form.Group as={Row}>
-                    <Form.Label column md={2}>Current Employee:</Form.Label>
+                    <Form.Label column md={2}>Current/Previous Employee:</Form.Label>
                     <Col md={7} lg={6} xl={5}>
                         <Controller
                             name="currentEmployee"
