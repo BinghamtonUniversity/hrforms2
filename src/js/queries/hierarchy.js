@@ -1,10 +1,11 @@
 import q from '../queries';
 import {useQuery,useMutation} from "react-query";
 
-export function useWorkflowQueries(WORKFLOW_KEY,WORKFLOW_ID) {
+export function useWorkflowQueries(WORKFLOW_KEY,WORKFLOW_ID,HISTORY_DATE) {
     const getWorkflow = (...args) => {
         const options = args[0]?.options||args[0]||{};
-        return useQuery(['workflow',WORKFLOW_KEY],q(`workflow/${WORKFLOW_KEY}`),options);
+        const params = [WORKFLOW_KEY,WORKFLOW_ID,HISTORY_DATE].filter(f=>f);
+        return useQuery(['workflow',...params],q(`workflow/${params.join('/')}`),options);
     }
     const postWorkflow = () => useMutation(d=>q(`workflow/${WORKFLOW_KEY}`,'POST',d)());
     const putWorkflow = () => useMutation(d=>q(`workflow/${WORKFLOW_KEY}/${WORKFLOW_ID}`,'PUT',d)());
