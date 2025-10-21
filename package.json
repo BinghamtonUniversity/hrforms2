@@ -8,7 +8,7 @@
   "license": "ISC",
   "scripts": {
     "build": "npm-run-all -s clean-dist -p build-html webpack -s update-changelog list",
-    "build-dev": "npm-run-all -s clean-js webpack-dev update-changelog update-buildtime list",
+    "build-dev": "npm-run-all -s webpack-dev update-changelog update-buildtime list",
     "webpack": "webpack --config ./webpack.config.js",
     "webpack-dev": "webpack --mode development --config ./webpack.config.js",
     "build-css": "sass --no-source-map src/scss/binghamton-bs4.scss | cleancss -o dist/htdocs/css/styles.min.css",

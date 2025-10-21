@@ -13,13 +13,14 @@ module.exports = (env, argv) => {
   return {
     entry: './src/js/main.js',
     output: {
-      path: path.resolve(__dirname, dist, 'js'),
-      publicPath: '/js/',
-      filename: 'hrforms2.min.js',
-      chunkFilename: '[chunkhash].min.js'
+        path: path.resolve(__dirname, dist, 'js'),
+        publicPath: '/js/',
+        filename: 'hrforms2.min.js',
+        chunkFilename: '[contenthash:8].min.js',
+        clean: true
     },
     resolve: {
-      extensions: [".js", ".jsx"],
+        extensions: [".js", ".jsx"],
     },
     module: {
       rules: [
@@ -51,7 +52,7 @@ module.exports = (env, argv) => {
             {
               loader: 'file-loader',
               options: {
-                name: 'images/[hash].[ext]',
+                name: 'images/[contenthash:8].[ext]',
                 outputPath:'../',
                 publicPath:'/'
               }
@@ -63,7 +64,7 @@ module.exports = (env, argv) => {
     plugins: [
       new MiniCssExtractPlugin({
         filename: '../css/styles.min.css',
-        chunkFilename: '../css/[chunkhash].min.css'
+        chunkFilename: '../css/[contenthash:8].min.css'
       }),
       new LodashModuleReplacementPlugin({
         'collections': true,
@@ -89,8 +90,9 @@ module.exports = (env, argv) => {
             warnings: false,
             parse: {},
             compress: {},
-            mangle: true
-          }
+            mangle: true,
+          },
+          extractComments: false // Do not create LICENSE.txt files
         }),
         new CssMinimizerPlugin()
       ]
