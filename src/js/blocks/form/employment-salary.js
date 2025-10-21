@@ -14,7 +14,7 @@ const name = 'employment.salary';
 export default function EmploymentAppointment() {
     const [editing,setEditing] = useState(undefined);
 
-    const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { control, setValue, formState: { defaultValues, errors } } = useFormContext();
     const { canEdit, activeNav, showInTest, testHighlight, formType } = useHRFormContext();
 
     const watchAmounts = useWatch({name:[
@@ -135,7 +135,7 @@ export default function EmploymentAppointment() {
                                     name={`${name}.RATE_AMOUNT`}
                                     defaultValue={defaultValues[`${name}.RATE_AMOUNT`]}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="text" isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
+                                    render={({field}) => <Form.Control {...field} type="number" isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                                 />
                                 <Form.Control.Feedback type="invalid">{get(errors,`${name}.RATE_AMOUNT.message`,'')}</Form.Control.Feedback>
                             </Col>
