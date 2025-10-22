@@ -5,6 +5,8 @@ import { Loading } from "../components";
 import SUNYAccount from "../sunyaccount";
 import { useRequestContext } from "../../config/request";
 import useListsQueries from "../../queries/lists";
+import { get } from "lodash";
+import { RequestFieldErrorMessage } from "../../pages/request";
 
 export default function Account() {
     const { control, setValue, formState: { errors }} = useFormContext();
@@ -41,7 +43,7 @@ export default function Account() {
                 </Form.Group>
             }
             <Form.Group as={Row}>
-                <Form.Label column md={2}>Org Name:</Form.Label>
+                <Form.Label column md={2}>Org Name*:</Form.Label>
                 <Col xs="auto">
                     {orgs.isLoading && <Loading>Loading Department Orgs</Loading>}
                     {orgs.isError && <Loading isError>Error Loading Department Orgs</Loading>}
@@ -52,17 +54,17 @@ export default function Account() {
                             control={control}
                             rules={{required:{value:true,message:'Org Name is required'}}}
                             render={({field}) => (
-                                <Form.Control {...field} as="select" onChange={e=>handleOrgNameChange(field,e)} isInvalid={errors.orgName?.id} disabled={!canEdit}>
+                                <Form.Control {...field} as="select" onChange={e=>handleOrgNameChange(field,e)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}>
                                     <option></option>
                                     {orgs.data.map(o=><option key={o.DEPARTMENT_CODE} value={o.DEPARTMENT_CODE}>{o.DEPARTMENT_DESC}</option>)}
                                 </Form.Control>
                             )}
                         />
                     }
-                    {errors.orgName?.id && <Form.Control.Feedback type="invalid">{errors.orgName.id.message}</Form.Control.Feedback>}
+                    <RequestFieldErrorMessage fieldName="orgName.id"/>
                 </Col>
             </Form.Group>
-            <SUNYAccount disabled={!canEdit}/>
+            <SUNYAccount label="SUNY Account" isInvalid={!!get(errors,'SUNYAccounts',false)} disabled={!canEdit} required/>
         </>
     );
 }

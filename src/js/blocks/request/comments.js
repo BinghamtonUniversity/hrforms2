@@ -7,6 +7,9 @@ import { useSettingsContext, useAuthContext } from "../../app";
 import { useRequestContext } from "../../config/request";
 import { DescriptionPopover } from "../components";
 import { orderBy } from "lodash";
+import { get } from "lodash";
+import { RequestFieldErrorMessage } from "../../pages/request";
+
 
 export default function Comments() {
     const { control, getValues, formState:{ errors }} = useFormContext();
@@ -14,16 +17,16 @@ export default function Comments() {
     return (
         <>
             <Form.Group as={Row}>
-                <Form.Label column md={2}>Comment:</Form.Label>
+                <Form.Label column md={2}>Comment*:</Form.Label>
                 <Col md={9}>
                     <Controller
                         name="comment"
                         defaultValue=""
                         rules={{required:{value:canEdit&&getValues('action')!='save',message:'Comment is required'}}}
                         control={control}
-                        render={({field}) => <Form.Control {...field} as="textarea" placeholder="Enter a brief comment" rows={5} isInvalid={errors.comment} disabled={!canEdit}/>}
+                        render={({field}) => <Form.Control {...field} as="textarea" placeholder="Enter a brief comment" rows={5} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
-                    <Form.Control.Feedback type="invalid">{errors.comment?.message}</Form.Control.Feedback>
+                    <RequestFieldErrorMessage fieldName="comment"/>
                 </Col>
             </Form.Group>
             {!isDraft && <CommentsHistory/>}
