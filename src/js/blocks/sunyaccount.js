@@ -8,8 +8,8 @@ import useListsQueries from "../queries/lists";
 
 export default function SUNYAccount(props) {
     const name = props.name||'SUNYAccounts';
-    const label = props.label||'SUNY Account:';
-    const { control, getValues, setValue } = useFormContext();
+    const label = props.label||'SUNY Account';
+    const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const { fields, append, remove } = useFieldArray({control,name:name});
 
     const [showSplit,setShowSplit] = useState(false);
@@ -53,7 +53,7 @@ export default function SUNYAccount(props) {
     return(
         <>
             <Form.Group as={Row}>
-                <Form.Label column md={2}>{label}</Form.Label>
+                <Form.Label column md={2}>{label}{(props.required)?'*':''}:</Form.Label>
                 <Col xl={5} lg={6} md={7}>
                     {accounts.isLoading && <Loading>Loading SUNY Accounts</Loading>}
                     {accounts.isError && <Loading isError>Error Loading SUNY Accounts</Loading>}
@@ -63,6 +63,14 @@ export default function SUNYAccount(props) {
                                 name={`${name}.0.account`}
                                 defaultValue=""
                                 control={control}
+                                rules={{
+                                    validate: v => {
+                                        const hasEmptyId = v.reduce((hasEmpty, currentObject) => {
+                                            return hasEmpty || currentObject.id === "";
+                                        }, false);
+                                        return (props.required && hasEmptyId)?`${label} is required`:'y';
+                                    }
+                                }}
                                 render={({field})=><Typeahead 
                                     {...field} 
                                     id={camelCase(`${name}.0.account`)}
@@ -81,7 +89,7 @@ export default function SUNYAccount(props) {
                                     <AppButton format="none" variant={(showSplit)?'secondary':'primary'} onClick={()=>toggleSplit()} disabled={props.disabled}>Split</AppButton>
                                 </InputGroup.Append>
                             }
-                            <Form.Control.Feedback type="invalid">{props.isInvalid}</Form.Control.Feedback>
+                            <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${name}.0.account.message`,'')}</Form.Control.Feedback>
                         </InputGroup>
                     }
                 </Col>
