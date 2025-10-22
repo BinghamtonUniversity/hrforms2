@@ -445,7 +445,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                 lastJournal:data.lastJournal,
                 canEdit:canEdit
             }}>
-                <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
+                <Form id="positionRequestForm" onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
                     <RequestErrorsAlert/>
                     <Tabs activeKey={activeTab} onSelect={navigate} className="d-print-none" id="position-request-tabs">
                         {tabs.map(t=>(
@@ -503,6 +503,16 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                 </ModalConfirm>
             </RequestContext.Provider>
         </FormProvider>
+    );
+}
+
+export function RequestFieldErrorMessage({fieldName}) {
+    const { formState: { errors } } = useFormContext();
+    if (!get(errors,fieldName,false)) return null;
+    return (
+        <Form.Control.Feedback type="invalid" style={{display:'block'}}>
+            {get(errors,`${fieldName}.message`,'')}
+        </Form.Control.Feedback>
     );
 }
 
