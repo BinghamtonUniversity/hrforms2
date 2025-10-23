@@ -264,7 +264,7 @@ function NewEmploymentPay() {
                         </Col>
                         <Col xs={6} md={4} className="mb-2">
                             <Form.Label>Account*:</Form.Label>
-                            <SingleSUNYAccount name={`${blockName}.${index}.account`} isInvalid={!!get(errors,`${blockName}.${index}.account.message`,false)} disabled={editIndex!=index}/>
+                            <SingleSUNYAccount name={`${blockName}.${index}.account`} isInvalid={!!get(errors,`${blockName}.${index}.account.message`,false)} disabled={editIndex!=index} required/>
                         </Col>
                         <Col xs={6} sm={3} md={2} className="mb-2">
                             <Form.Label>Hourly Rate*:</Form.Label>
