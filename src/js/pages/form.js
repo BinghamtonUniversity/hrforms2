@@ -661,7 +661,6 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         if (activeTab == 'review'||tabsVisited.includes('review')) {
             // Exclude fields from tabs that are not displayed.  Always include comments.
             const tabs = methods.getValues('formActions.TABS');
-            console.log(tabs);
             const fields = checkFields.filter(field => {
                 const t = field.split('.').slice(0,2).join('-');
                 if (t == 'comment' || tabs.includes(t)) return field;
