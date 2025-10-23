@@ -57,6 +57,7 @@ const requiredFields = {
     "employment.position.PAYROLL_MAIL_DROP_ID.id":v=>!!v||'Check Sort Code is required',
     "employment.appointment.supervisor":v=>!!get(v,'0.label','')||'Supervisor is required', 
     "employment.appointment.REPORTING_DEPARTMENT_CODE.id":v=>!!v||'Appointment Department is required',
+    "employment.salary.effDate":v=>!!v||'Salary Effective Date is required',
     "employment.separation.lastDateWorked":v=>!!v||'Last Date Worked is required',
     "employment.leave.leaveEndDate":v=>!!v||'Leave End Date is required',
     "employment.leave.justification.id":v=>!!v||'Justification is required',
