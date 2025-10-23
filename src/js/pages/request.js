@@ -389,7 +389,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
             handleSubmit(data);
         } else {
             setHasErrors(true);
-            console.error('error:',errors);
+            console.debug('%cRequest Errors:%o',"background-color:#A00;font-weight:bold",errors);
         }
     }
 
