@@ -7,6 +7,7 @@ import { Icon } from "@iconify/react";
 import DatePicker from "react-datepicker";
 import useListsQueries from "../../queries/lists";
 import { get } from "lodash";
+import { FormFieldErrorMessage } from "../../pages/form";
 
 const baseName = 'employment.appointment';
 
@@ -126,7 +127,7 @@ export default function EmploymentAppointment() {
                                         )}
                                     />
                                 }
-                                <Form.Control.Feedback type="invalid">{get(errors,`${baseName}.TENURE_STATUS.id.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${baseName}.TENURE_STATUS.id`}/>
                             </Col>
                         </Form.Group>
                         </>
@@ -237,7 +238,7 @@ export default function EmploymentAppointment() {
                                 defaultValue={defaultValues[`${baseName}.REPORTING_DEPARTMENT_CODE`]}
                                 render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${baseName}.REPORTING_DEPARTMENT_CODE.id.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${baseName}.REPORTING_DEPARTMENT_CODE.id`}/>
                         </Col>
                     </Form.Group>
 
@@ -274,7 +275,7 @@ function AppointmentSupervisor() {
                         disabled={!canEdit}/>
                     }
                 />
-                <Form.Control.Feedback type="invalid">{get(errors,`${baseName}.supervisor.message`,'')}</Form.Control.Feedback>
+                <FormFieldErrorMessage fieldName={`${baseName}.supervisor`}/>
             </Col>
         </Form.Group>
     );
@@ -318,7 +319,7 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                                         control={control}
                                         render={({field}) => <Form.Control {...field} type="number" min={0} max={maxCourses} onChange={e=>handleCountChange(e,field)} onBlur={e=>handleCountBlur(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                                     />
-                                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.message`,'')}</Form.Control.Feedback>
+                                    <FormFieldErrorMessage fieldName={`${name}.${c.id}.count`}/>
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
                                     <Form.Control type="range" name={`${c.id}Range`} id={`${c.id}Range`} min={0} max={maxCourses} value={watchCourses[i].count} onChange={e=>handleRangeChange(e,`${name}.${c.id}.count`)} disabled={!canEdit} list={`markers-${c.id}`}/>
@@ -339,7 +340,7 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                                         control={control}
                                         render={({field}) => <Form.Control {...field} type="number" min={0} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit||watchCourses[i].count==0}/>}
                                     />
-                                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.${c.id}.credits.message`,'')}</Form.Control.Feedback>
+                                    <FormFieldErrorMessage fieldName={`${name}.${c.id}.credits`}/>
                                 </Col>
                             </Form.Group>
                             <Form.Group as={Row}>
@@ -351,7 +352,7 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                                         control={control}
                                         render={({field}) => <Form.Control {...field} as="textarea" rows={5} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit||watchCourses[i].count==0}/>}
                                     />
-                                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.${c.id}.list.message`,'')}</Form.Control.Feedback>
+                                    <FormFieldErrorMessage fieldName={`${name}.${c.id}.list`}/>
                                 </Col>
                             </Form.Group>
                         </div>

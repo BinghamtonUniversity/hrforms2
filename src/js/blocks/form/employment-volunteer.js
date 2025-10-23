@@ -7,6 +7,7 @@ import { Loading, DepartmentSelector, PersonPickerComponent } from "../component
 import DatePicker from "react-datepicker";
 import { useHRFormContext } from "../../config/form";
 import useListsQueries from "../../queries/lists";
+import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'employment.volunteer';
 
@@ -60,7 +61,7 @@ export default function EmploymentSeparation() {
                             )}
                         />
                     }
-                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.subRole.id.message`,'')}</Form.Control.Feedback>
+                    <FormFieldErrorMessage fieldName={`${name}.subRole.id`}/>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
@@ -88,7 +89,7 @@ export default function EmploymentSeparation() {
                             </InputGroup.Text>
                         </InputGroup.Append>
                     </InputGroup>
-                    <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}.startDate`,false)?'block':'none'}}>{get(errors,`${name}.startDate.message`,'')}</Form.Control.Feedback>
+                    <FormFieldErrorMessage fieldName={`${name}.startDate`}/>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
@@ -116,7 +117,7 @@ export default function EmploymentSeparation() {
                             </InputGroup.Text>
                         </InputGroup.Append>
                     </InputGroup>
-                    <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}.endDate`,false)?'block':'none'}}>{get(errors,`${name}.endDate.message`,'')}</Form.Control.Feedback>
+                    <FormFieldErrorMessage fieldName={`${name}.endDate`}/>
                 </Col>
             </Form.Group>
             {(subRoleId=='Instructor'||showInTest)&&
@@ -150,7 +151,7 @@ export default function EmploymentSeparation() {
                         control={control}
                         render={({field}) => <Form.Control {...field} type="number" min={1} max={40} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
-                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.hoursPerWeek.message`,'')}</Form.Control.Feedback>
+                    <FormFieldErrorMessage fieldName={`${name}.hoursPerWeek`}/>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
@@ -171,7 +172,7 @@ export default function EmploymentSeparation() {
                             )}
                         />
                     }
-                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.serviceType.id.message`,'')}</Form.Control.Feedback>
+                    <FormFieldErrorMessage fieldName={`${name}.serviceType.id`}/>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
@@ -183,7 +184,7 @@ export default function EmploymentSeparation() {
                         defaultValue={defaultValues[`${name}.department`]}
                         render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
-                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.department.id.message`,'')}</Form.Control.Feedback>
+                    <FormFieldErrorMessage fieldName={`${name}.department.id`}/>
                 </Col>
             </Form.Group>
             {(subRoleId&&subRoleId.startsWith('CP')||showInTest)&& 
@@ -201,7 +202,7 @@ export default function EmploymentSeparation() {
                         control={control}
                         render={({field}) => <Form.Control {...field} as="textarea" rows={4} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
-                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.duties.message`,'')}</Form.Control.Feedback>
+                    <FormFieldErrorMessage fieldName={`${name}.duties`}/>
                 </Col>
             </Form.Group>
         </article>
@@ -234,7 +235,7 @@ function VolunteerSupervisor({fieldName,fieldLabel,testHighlight}) {
                         isInvalid={!!get(errors,fieldName,false)}/>
                     }
                 />
-                <Form.Control.Feedback type="invalid">{get(errors,`${fieldName}.message`,'')}</Form.Control.Feedback>
+                <FormFieldErrorMessage fieldName={fieldName}/>
             </Col>
         </Form.Group>
     );

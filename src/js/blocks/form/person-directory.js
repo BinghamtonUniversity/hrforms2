@@ -9,6 +9,7 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css'
 import { useHRFormContext } from "../../config/form";
 import useListsQueries from "../../queries/lists";
+import { FormFieldErrorMessage } from "../../pages/form";
 
 //TODO: make address form a component and pass stuff?
 //TODO: consolidate the save/edit/cancel/remove footer?
@@ -196,7 +197,7 @@ function PersonDirectoryAddresses() {
                                     control={control}
                                     render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_1.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.${index}.ADDRESS_1`}/>
                             </Col>
                         </Form.Group>
                     }
@@ -223,7 +224,7 @@ function PersonDirectoryAddresses() {
                                     control={control}
                                     render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'department')} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.ADDRESS_1.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.${index}.ADDRESS_1`}/>
                             </Col>
                             <Col xs="auto">
                                 <Controller
@@ -250,7 +251,7 @@ function PersonDirectoryAddresses() {
                                     control={control}
                                     render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'building')} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.ADDRESS_2.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.${index}.ADDRESS_2`}/>
                             </Col>
                             <Col xs="auto">
                                 <Controller
@@ -290,7 +291,7 @@ function PersonDirectoryAddresses() {
                                     control={control}
                                     render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_CITY.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage  fieldName={`${name}.${index}.ADDRESS_CITY`}/>
                             </Col>
                             <Col xs="auto">
                                 <Controller
@@ -299,7 +300,7 @@ function PersonDirectoryAddresses() {
                                     control={control}
                                     render={({field}) => <StateSelector field={field} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].STATE_CODE.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.${index}.STATE_CODE`}/>
                             </Col>
                             <Col xs="auto">
                                 <Controller
@@ -308,7 +309,7 @@ function PersonDirectoryAddresses() {
                                     control={control}
                                     render={({field}) => <Form.Control {...field} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].ADDRESS_POSTAL_CODE.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.${index}.ADDRESS_POSTAL_CODE`}/>
                             </Col>
                         </Form.Group>
                     }
@@ -338,7 +339,7 @@ function PersonDirectoryAddresses() {
                                         </InputGroup.Text>
                                     </InputGroup.Append>
                                 </InputGroup>
-                                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].effDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].effDate.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.${index}.effDate`}/>
                             </Col>
                         </Form.Group>
                     }
@@ -520,7 +521,7 @@ function PersonDirectoryPhone() {
                                         isValid={()=>!get(errors,field.name,false)}
                                     />}
                                 />
-                                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].PHONE_NUMBER`,false)?'block':'none'}}>{get(errors,`${name}[${index}].PHONE_NUMBER.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.${index}.PHONE_NUMBER`}/>
                             </Col>
                             <Form.Label column md={2}>Effective Date*:</Form.Label>
                             <Col xs="auto">
@@ -546,7 +547,7 @@ function PersonDirectoryPhone() {
                                         </InputGroup.Text>
                                     </InputGroup.Append>
                                 </InputGroup>
-                                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].effDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].effDate.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.${index}.effDate`}/>
                             </Col>
                         </Form.Group>
                     }
@@ -711,7 +712,7 @@ function PersonDirectoryEmail() {
                                         isInvalid={!!get(errors,field.name,false)}
                                     />}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].EMAIL_ADDRESS.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.${index}.EMAIL_ADDRESS`}/>
                             </Col>
                             <Form.Label column md={2}>Effective Date*:</Form.Label>
                             <Col xs="auto">
@@ -737,7 +738,7 @@ function PersonDirectoryEmail() {
                                         </InputGroup.Text>
                                     </InputGroup.Append>
                                 </InputGroup>
-                                <Form.Control.Feedback type="invalid" style={{display:get(errors,`${name}[${index}].effDate`,false)?'block':'none'}}>{get(errors,`${name}[${index}].effDate.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.${index}.effDate`}/>
                             </Col>
                         </Form.Group>
                     }

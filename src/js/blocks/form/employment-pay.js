@@ -10,6 +10,7 @@ import { SingleSUNYAccount } from "../sunyaccount";
 import { addDays, subDays } from "date-fns";
 import DataTable from "react-data-table-component";
 import { useHRFormContext } from "../../config/form";
+import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'employment.pay';
 
@@ -233,7 +234,7 @@ function NewEmploymentPay() {
                                     </InputGroup.Text>
                                 </InputGroup.Append>
                             </InputGroup>
-                            <Form.Control.Feedback type="invalid" style={{display:get(errors,`${blockName}.${index}.startDate`,false)?'block':'none'}}>{get(errors,`${blockName}.${index}.startDate.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${blockName}.${index}.startDate`}/>
                         </Col>
                         <Col xs="auto" className="mb-2">
                             <Form.Label>End Date*:</Form.Label>
@@ -260,7 +261,7 @@ function NewEmploymentPay() {
                                     </InputGroup.Text>
                                 </InputGroup.Append>
                             </InputGroup>
-                            <Form.Control.Feedback type="invalid" style={{display:get(errors,`${blockName}.${index}.endDate`,false)?'block':'none'}}>{get(errors,`${blockName}.${index}.endDate.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${blockName}.${index}.endDate`}/>
                         </Col>
                         <Col xs={6} md={4} className="mb-2">
                             <Form.Label>Account*:</Form.Label>
@@ -274,7 +275,7 @@ function NewEmploymentPay() {
                                 control={control}
                                 render={({field}) => <Form.Control {...field} type="number" min={0} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.hourlyRate.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${blockName}.${index}.hourlyRate`}/>
                         </Col>
                         <Col xs={6} sm={3} md={2} className="mb-2">
                             <Form.Label>Award Amount:</Form.Label>
@@ -295,7 +296,7 @@ function NewEmploymentPay() {
                                 defaultValue={defaultValues.department}
                                 render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.department.id.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${blockName}.${index}.department.id`}/>
                         </Col>
                     </Form.Group>
 
@@ -310,7 +311,7 @@ function NewEmploymentPay() {
                                 defaultValue={defaultValues.duties}
                                 render={({field}) => <Form.Control {...field} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.duties.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${blockName}.${index}.duties`}/>
                         </Col>
                     </Form.Group>
                     <Row>
@@ -369,7 +370,7 @@ function PaySupervisor({index,editIndex}) {
                         />
                     }
                 />
-                <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.supervisor.message`,'')}</Form.Control.Feedback>
+                <FormFieldErrorMessage fieldName={`${blockName}.${index}.supervisor`}/>
             </Col>
         </Form.Group>
     );

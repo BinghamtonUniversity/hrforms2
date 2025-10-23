@@ -7,6 +7,7 @@ import { Icon } from "@iconify/react";
 import { Loading } from "../components";
 import useListsQueries from "../../queries/lists";
 import get from "lodash/get";
+import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'person.information';
 
@@ -108,7 +109,7 @@ export default function PersonInfo() {
                                     defaultValue={defaultValues[`${name}.LEGAL_FIRST_NAME`]}
                                     render={({field})=><Form.Control {...field} type="text" disabled={fieldDisabled(field)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.LEGAL_FIRST_NAME.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.LEGAL_FIRST_NAME`}/>
                             </Col>
                         </Form.Group>
                         <Form.Group as={Row}>
@@ -142,7 +143,7 @@ export default function PersonInfo() {
                                     defaultValue={defaultValues[`${name}.LEGAL_LAST_NAME`]}
                                     render={({field})=><Form.Control {...field} type="text" disabled={fieldDisabled(field)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.LEGAL_LAST_NAME.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.LEGAL_LAST_NAME`}/>
                             </Col>
                         </Form.Group>
                         <Form.Group as={Row}>
@@ -230,7 +231,7 @@ export default function PersonInfo() {
                                             defaultValue={defaultValues[`${name}.RETIRED_FROM`]}
                                             render={({field})=><Form.Control {...field} type="text" isInvalid={!!get(errors,field.name,false)} disabled={fieldDisabled(field)}/>}
                                         />
-                                        <Form.Control.Feedback type="invalid">{get(errors,`${name}.RETIRED_FROM.message`,'')}</Form.Control.Feedback>
+                                        <FormFieldErrorMessage fieldName={`${name}.RETIRED_FROM`}/>
                                     </Col>
                                 </Form.Group>
                             </>

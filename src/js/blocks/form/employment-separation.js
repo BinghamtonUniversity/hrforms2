@@ -7,6 +7,7 @@ import DatePicker from "react-datepicker";
 import { subDays } from "date-fns";
 import { useHRFormContext } from "../../config/form";
 import { get } from "lodash";
+import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'employment.separation';
 
@@ -58,9 +59,7 @@ export default function EmploymentSeparation() {
                             </InputGroup.Text>
                         </InputGroup.Append>
                     </InputGroup>
-                    {get(errors,`${name}.lastDateWorked.message`,false)&&
-                        <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${name}.lastDateWorked.message`,'')}</Form.Control.Feedback>
-                    }
+                    <FormFieldErrorMessage fieldName={`${name}.lastDateWorked`}/>
                 </Col>
             </Form.Group>
        </article>

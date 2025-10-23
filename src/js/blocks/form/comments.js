@@ -7,6 +7,7 @@ import useFormQueries from "../../queries/forms";
 import { DescriptionPopover } from "../components";
 import DataTable from 'react-data-table-component';
 import { get, orderBy } from "lodash";
+import { FormFieldErrorMessage } from "../../pages/form";
 
 export default function Comments() {
     const ref = useRef();
@@ -30,7 +31,7 @@ export default function Comments() {
                                 control={control}
                                 render={({field}) => <Form.Control {...field} as="textarea" ref={ref} rows={5} isInvalid={get(errors,'comment',false)}/>}
                             />
-                            <Form.Control.Feedback type="invalid">{get(get(errors,'comment',''),'message','')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName="comment"/>
                         </Col>
                     </Form.Group>
                 </section>

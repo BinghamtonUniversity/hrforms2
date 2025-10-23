@@ -8,6 +8,7 @@ import { AppButton, CurrencyFormat, DateFormat, DepartmentSelector, PersonPicker
 import { Icon } from "@iconify/react";
 import { cloneDeep, get } from "lodash";
 import useListsQueries from "../../queries/lists";
+import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'employment.salary';
 
@@ -93,9 +94,7 @@ export default function EmploymentAppointment() {
                                 </InputGroup.Text>
                             </InputGroup.Append>
                         </InputGroup>
-                        {get(errors,`${name}.effDate.message`,false)&&
-                            <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${name}.effDate.message`,'')}</Form.Control.Feedback>
-                        }
+                        <FormFieldErrorMessage fieldName={`${name}.effDate`}/>
                     </Col>
                 </Form.Group>
                 <Form.Group as={Row}>
@@ -124,7 +123,7 @@ export default function EmploymentAppointment() {
                                         control={control}
                                         render={({field}) => <Form.Control {...field} type="number" min={1} onBlur={e=>handleNumPmtsField(e,field)} onChange={e=>handleNumPmtsField(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                                     />
-                                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.NUMBER_OF_PAYMENTS.message`,'')}</Form.Control.Feedback>
+                                    <FormFieldErrorMessage fieldName={`${name}.NUMBER_OF_PAYMENTS`}/>
                                 </Col>
                             </Form.Group>
                         }
@@ -137,7 +136,7 @@ export default function EmploymentAppointment() {
                                     control={control}
                                     render={({field}) => <Form.Control {...field} type="number" isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.RATE_AMOUNT.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.RATE_AMOUNT`}/>
                             </Col>
                         </Form.Group>
                         <Form.Group as={Row}>
@@ -320,7 +319,7 @@ function AdditionalSalary({editing,setEditing}) {
                                             </Form.Control>
                                         )}
                                     />
-                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.type.id.message`,'')}</Form.Control.Feedback>
+                                    <FormFieldErrorMessage fieldName={`${blockName}.${index}.type.id`}/>
                                 </Col>
                                 <Col xs="auto" className="mb-2">
                                     <Form.Label>Start Date*:</Form.Label>
@@ -347,9 +346,7 @@ function AdditionalSalary({editing,setEditing}) {
                                             </InputGroup.Text>
                                         </InputGroup.Append>
                                     </InputGroup>
-                                    {get(errors,`${blockName}.${index}.startDate.message`,false)&&
-                                        <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${blockName}.${index}.startDate.message`,'')}</Form.Control.Feedback>
-                                    }
+                                    <FormFieldErrorMessage fieldName={`${blockName}.${index}.startDate`}/>
                                 </Col>
                                 <Col xs="auto" className="mb-2">
                                     <Form.Label>End Date*:</Form.Label>
@@ -375,9 +372,7 @@ function AdditionalSalary({editing,setEditing}) {
                                             </InputGroup.Text>
                                         </InputGroup.Append>
                                     </InputGroup>
-                                    {get(errors,`${blockName}.${index}.endDate.message`,false)&&
-                                        <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${blockName}.${index}.endDate.message`,'')}</Form.Control.Feedback>
-                                    }
+                                    <FormFieldErrorMessage fieldName={`${blockName}.${index}.endDate`}/>
                                 </Col>
                                 <Col xs={6} md={4} className="mb-2">
                                     <Form.Label>Account:</Form.Label>
@@ -391,7 +386,7 @@ function AdditionalSalary({editing,setEditing}) {
                                         control={control}
                                         render={({field}) => <Form.Control {...field} type="number" min={1} onChange={e=>handlePmtsField(e,field)} onBlur={e=>handlePmtsField(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                                     />
-                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.payments.message`,'')}</Form.Control.Feedback>
+                                    <FormFieldErrorMessage fieldName={`${blockName}.${index}.payments`}/>
                                 </Col>
                                 <Col xs={4} sm={3} md={2} className="mb-2">
                                     <Form.Label>Amount*:</Form.Label>
@@ -401,7 +396,7 @@ function AdditionalSalary({editing,setEditing}) {
                                         control={control}
                                         render={({field}) => <Form.Control {...field} type="number" onBlur={e=>handleAmount(e,field)} onChange={e=>handleAmount(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                                     />
-                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.amount.message`,'')}</Form.Control.Feedback>
+                                    <FormFieldErrorMessage fieldName={`${blockName}.${index}.amount`}/>
                                 </Col>
                                 <Col xs={4} sm={3} md={2} className="mb-2">
                                     <Form.Label>Total:</Form.Label>
@@ -680,7 +675,7 @@ function SplitAssignments({className,editing,setEditing}) {
                                             </InputGroup.Text>
                                         </InputGroup.Append>
                                     </InputGroup>
-                                    <Form.Control.Feedback type="invalid" style={{display:get(errors,`${blockName}.${index}.commitmentEffDate`,false)?'block':'none'}}>{get(errors,`${blockName}.${index}.commitmentEffDate.message`,'')}</Form.Control.Feedback>
+                                    <FormFieldErrorMessage fieldName={`${blockName}.${index}.commitmentEffDate`}/>
                                 </Col>
                                 <Col xs="auto" className="mb-2">
                                     <Form.Label>End Date:</Form.Label>
@@ -714,7 +709,7 @@ function SplitAssignments({className,editing,setEditing}) {
                                         control={control}
                                         render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={!!get(errors,field.name,false)}/>}
                                     />
-                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.CAMPUS_TITLE.message`,'')}</Form.Control.Feedback>
+                                    <FormFieldErrorMessage fieldName={`${blockName}.${index}.CAMPUS_TITLE`}/>
                                 </Col>
                                 <Col xs="auto" className="mb-2">
                                     <Form.Label>Department:</Form.Label>
@@ -724,7 +719,7 @@ function SplitAssignments({className,editing,setEditing}) {
                                         control={control}
                                         render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={!!get(errors,field.name,false)}/>}
                                     />
-                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.REPORTING_DEPARTMENT_CODE.id.message`,'')}</Form.Control.Feedback>
+                                    <FormFieldErrorMessage fieldName={`${blockName}.${index}.REPORTING_DEPARTMENT_CODE.id`}/>
                                 </Col>
                                 <Col xs={12} sm={8} md={6} lg={5} xl={4} className="mb-2">
                                     <Form.Label>Supervisor:</Form.Label>
@@ -754,7 +749,7 @@ function SplitAssignments({className,editing,setEditing}) {
                                             </Form.Control>
                                         )}
                                     />
-                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.WORK_ALLOCATION.id.message`,'')}</Form.Control.Feedback>
+                                    <FormFieldErrorMessage fieldName={`${blockName}.${index}.WORK_ALLOCATION.id`}/>
                                 </Col>
                                 <Col xs="auto" className="mb-2">
                                     <Form.Label>Work %*:</Form.Label>
@@ -764,7 +759,7 @@ function SplitAssignments({className,editing,setEditing}) {
                                         control={control}
                                         render={({field}) => <Form.Control {...field} type="number" min={0} max={100} onChange={e=>handleWorkPct(e,field)} onBlur={e=>handleWorkPct(e,field)} disabled={editIndex!=index} isInvalid={(editIndex==undefined&&totalPct!=100)||!!get(errors,field.name,false)}/>}
                                     />
-                                    <Form.Control.Feedback type="invalid">{get(errors,`${blockName}.${index}.WORK_PERCENT.message`,'')}</Form.Control.Feedback>
+                                    <FormFieldErrorMessage fieldName={`${blockName}.${index}.WORK_PERCENT`}/>
                                 </Col>
                             </Form.Row>
                             <Form.Row>

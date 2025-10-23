@@ -129,9 +129,7 @@ export default function EmploymentLeave() {
                                     </InputGroup.Text>
                                 </InputGroup.Append>
                             </InputGroup>
-                            {get(errors,`${name}.leaveEndDate.message`,false)&&
-                                <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${name}.leaveEndDate.message`,'')}</Form.Control.Feedback>
-                            }
+                            <FormFieldErrorMessage fieldName={`${name}.leaveEndDate`}/>
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row}>
@@ -152,7 +150,7 @@ export default function EmploymentLeave() {
                                     )}
                                 />
                             }
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}.justification.id.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${name}.justification.id`}/>
                         </Col>
                     </Form.Group>
                 </article>

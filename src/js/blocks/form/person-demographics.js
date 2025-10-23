@@ -7,6 +7,7 @@ import { Icon } from "@iconify/react";
 import { Loading, CountrySelector } from "../components";
 import useListsQueries from "../../queries/lists";
 import { get } from "lodash";
+import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'person.demographics';
 
@@ -63,9 +64,7 @@ export default function PersonDemographics() {
                                     </InputGroup.Text>
                                 </InputGroup.Append>
                             </InputGroup>
-                            {get(errors,`${name}.birthDate.message`,false)&&
-                                <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${name}.birthDate.message`,'')}</Form.Control.Feedback>
-                            }
+                            <FormFieldErrorMessage fieldName={`${name}.birthDate`}/>
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row}>
@@ -86,7 +85,7 @@ export default function PersonDemographics() {
                                     )}
                                 />
                             }
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}.GENDER.id.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${name}.GENDER.id`}/>
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row}>
@@ -247,7 +246,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                                     </>
                                 )}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}.NON_CITIZEN_TYPE.id.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${name}.NON_CITIZEN_TYPE.id`}/>
                         </Col>
                     </Form.Group>
                     {(watchCitizenType?.id=='OT'||showInTest) && 
@@ -277,7 +276,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                                 control={control}
                                 render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}.CITIZENSHIP_COUNTRY_CODE.id.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${name}.CITIZENSHIP_COUNTRY_CODE.id`}/>
                         </Col>
                     </Form.Group>
                     {(watchCitizenType?.id=='NC'||showInTest) && 
@@ -300,7 +299,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                                         }
                                     </>)}
                                 />
-                                <Form.Control.Feedback type="invalid">{get(errors,`${name}.VISA_CODE.id.message`,'')}</Form.Control.Feedback>
+                                <FormFieldErrorMessage fieldName={`${name}.VISA_CODE.id`}/>
                             </Col>
                         </Form.Group>
                     }

@@ -5,7 +5,7 @@ import { AppButton, Loading } from "../components";
 import useFormQueries from "../../queries/forms";
 import DatePicker from "react-datepicker";
 import { addDays } from "date-fns";
-import { EmploymentPositionInfoBox } from "../../pages/form";
+import { EmploymentPositionInfoBox, FormFieldErrorMessage } from "../../pages/form";
 import { useHRFormContext } from "../../config/form";
 import { Icon } from "@iconify/react";
 import useListsQueries from "../../queries/lists";
@@ -78,7 +78,7 @@ function EmploymentPositionSearch({setShowResults}) {
                         control={control}
                         render={({field})=><Form.Control {...field} ref={ref} type="search" onKeyDown={handleKeyDown} onChange={e=>handleChange(field,e)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
-                    <Form.Control.Feedback type="invalid">{get(errors,`${name}.LINE_ITEM_NUMBER.message`,'')}</Form.Control.Feedback>
+                    <FormFieldErrorMessage fieldName={`${name}.LINE_ITEM_NUMBER`}/>
                 </Col>
                 <Col xs="auto" className="p-0 align-self-center">
                     <OverlayTrigger
@@ -343,7 +343,7 @@ function AppointmentType() {
                         )}
                     />
                 }
-                <Form.Control.Feedback type="invalid">{get(errors,`${name}.APPOINTMENT_TYPE.id.message`,'')}</Form.Control.Feedback>
+                <FormFieldErrorMessage fieldName={`${name}.APPOINTMENT_TYPE`}/>
             </Col>
         </Form.Group>
     );
@@ -421,7 +421,7 @@ function CheckSortCode() {
                     />
                 }
                 <Form.Text muted>Also known as Mail Drop ID</Form.Text>
-                <Form.Control.Feedback type="invalid">{get(errors,`${name}.PAYROLL_MAIL_DROP_ID.id.message`,'')}</Form.Control.Feedback>
+                <FormFieldErrorMessage fieldName={`${name}.PAYROLL_MAIL_DROP_ID`}/>
             </Col>
         </Form.Group>
     );

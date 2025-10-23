@@ -10,6 +10,7 @@ import { Typeahead } from "react-bootstrap-typeahead";
 import { Icon } from "@iconify/react";
 import useListsQueries from "../../queries/lists";
 import { useHRFormContext } from "../../config/form";
+import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'person.education.institutions';
 
@@ -223,7 +224,7 @@ export default function PersonEducation() {
                                     </InputGroup.Text>
                                 </InputGroup.Append>
                             </InputGroup>
-                            <Form.Control.Feedback type="invalid" style={{display:(!!get(errors,`${name}[${index}].awardDate`))?'block':'none'}}>{get(errors,`${name}[${index}].awardDate.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${name}.${index}.awardDate`}/>
                         </Col>
                         <Col className="pt-2">
                             <Controller
@@ -257,7 +258,7 @@ export default function PersonEducation() {
                                     />}
                                 />
                             }
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].DEGREE_TYPE.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${name}.${index}.DEGREE_TYPE`}/>
                         </Col>
                     </Form.Group>
 
@@ -284,7 +285,7 @@ export default function PersonEducation() {
                                 control={control}
                                 render={({field}) => <CountrySelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].COUNTRY_CODE.id.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${name}.${index}.COUNTRY_CODE.id`}/>
                         </Col>
                     </Form.Group>
                     {watchEducation[index]?.COUNTRY_CODE.id=='USA' &&
@@ -298,7 +299,7 @@ export default function PersonEducation() {
                                         control={control}
                                         render={({field}) => <StateSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
                                     />
-                                    <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].INSTITUTION_STATE.message`,'')}</Form.Control.Feedback>
+                                    <FormFieldErrorMessage fieldName={`${name}.${index}.INSTITUTION_STATE`}/>
                                 </Col>
                             </Form.Group>
                             {watchEducation[index]?.INSTITUTION_STATE && <UniversityCityComponent index={index} editIndex={editIndex}/>}
@@ -396,7 +397,7 @@ function DegreeProgramComponent({editIndex,index}) {
                         />}
                     />
                 }
-                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.DEGREE_PROGRAM.message`,'')}</Form.Control.Feedback>
+                <FormFieldErrorMessage fieldName={`${name}.${index}.DEGREE_PROGRAM`}/>
             </Col>
         </Form.Group>
     );
@@ -445,7 +446,7 @@ function UniversityCityComponent({editIndex,index}) {
                         />}
                     />
                 }
-                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.institutionCity.message`,'')}</Form.Control.Feedback>
+                <FormFieldErrorMessage  fieldName={`${name}.${index}.institutionCity`}/>
             </Col>
         </Form.Group>
     );
@@ -492,7 +493,7 @@ function UniversityNameComponent({editIndex,index}) {
                         />}
                     />
                 }
-                <Form.Control.Feedback type="invalid">{get(errors,`${name}.${index}.institutionName.message`,'')}</Form.Control.Feedback>
+                <FormFieldErrorMessage fieldName={`${name}.${index}.institutionName`}/>
             </Col>
         </Form.Group>
     );

@@ -8,6 +8,7 @@ import useListsQueries from "../../queries/lists";
 import { useHRFormContext } from "../../config/form";
 
 import 'react-phone-input-2/lib/style.css'
+import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'person.contact.contacts';
 
@@ -178,7 +179,7 @@ export default function PersonContacts() {
                                 control={control}
                                 render={({field}) => <Form.Control {...field} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].EMR_CTC_FIRST_NAME.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${name}.${index}.EMR_CTC_FIRST_NAME`}/>
                         </Col>
                         <Col xs={6} md={4}>
                             <Form.Text id="EMR_CTC_LAST_NAME_HELP" muted className="font-italic">Last Name</Form.Text>
@@ -188,7 +189,7 @@ export default function PersonContacts() {
                                 control={control}
                                 render={({field}) => <Form.Control {...field} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
                             />
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].EMR_CTC_LAST_NAME.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${name}.${index}.EMR_CTC_LAST_NAME`}/>
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row} className="mb-1">
@@ -290,7 +291,7 @@ export default function PersonContacts() {
                                     isValid={()=>!get(errors,`${name}.${index}.EMR_CTC_PHONE`,false)}
                                 />}
                             />
-                            <Form.Control.Feedback type="invalid" style={{display:!!get(errors,`${name}.${index}.EMR_CTC_PHONE`,false)?'block':'none'}}>{get(errors,`${name}.${index}.EMR_CTC_PHONE.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${name}.${index}.EMR_CTC_PHONE`}/>
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row} className="mb-1">
@@ -322,7 +323,7 @@ export default function PersonContacts() {
                                     )}
                                 />
                             }
-                            <Form.Control.Feedback type="invalid">{get(errors,`${name}[${index}].EMR_CTC_RELATIONSHIP.id.message`,'')}</Form.Control.Feedback>
+                            <FormFieldErrorMessage fieldName={`${name}.${index}.EMR_CTC_RELATIONSHIP.id`}/>
                         </Col>
                     </Form.Group>
                     {canEdit && 
