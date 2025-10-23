@@ -783,6 +783,16 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     );
 }
 
+export function FormFieldErrorMessage({fieldName}) {
+    const { formState: { errors } } = useFormContext();
+    if (!get(errors,fieldName,false)) return null;
+    return (
+        <Form.Control.Feedback type="invalid" style={{display:'block'}}>
+            {get(errors,`${fieldName}.message`,'')}
+        </Form.Control.Feedback>
+    );
+}
+
 function FormErrorsAlert() {
     const { formState: { errors } } = useFormContext();
     if (Object.keys(errors).length < 1) return null;
