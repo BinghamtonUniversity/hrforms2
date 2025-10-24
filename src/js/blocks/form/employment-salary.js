@@ -25,6 +25,7 @@ export default function EmploymentAppointment() {
     ],control:control,defaultValue:[0,1,100]});
     const watchPayBasis = useWatch({name:'employment.position.positionDetails.PAY_BASIS',control:control});
     const watchTransactionCode = useWatch({name:'formActions.transactionCode.TRANSACTION_CODE',control:control,defaultValue:''});
+    const watchPayrollCode = useWatch({name:'payroll.PAYROLL_CODE',control:control,defaultValue:''});
     const rateAmountLabel = useMemo(() => {
         switch(watchPayBasis) {
             case "BIW":
@@ -150,7 +151,7 @@ export default function EmploymentAppointment() {
                                 />
                             </Col>
                         </Form.Group>
-                        <SUNYAccount label="SUNY Account" name={`${name}.SUNY_ACCOUNTS`} isInvalid={!!get(errors,`${name}.SUNY_ACCOUNTS`,false)} disabled={!canEdit||['a','s'].includes(editing)} required/>
+                        <SUNYAccount label="SUNY Account" name={`${name}.SUNY_ACCOUNTS`} isInvalid={!!get(errors,`${name}.SUNY_ACCOUNTS`,false)} disabled={!canEdit||['a','s'].includes(editing)} required={(watchPayrollCode!='28020')}/>
                     </>
                 }
             </section>
