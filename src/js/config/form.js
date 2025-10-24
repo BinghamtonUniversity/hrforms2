@@ -136,8 +136,10 @@ const advancedFields = {
     },
     "employment.salary.SUNY_ACCOUNTS":(frmData,v) => {
         if (conditionalFields.noRateTransactions.includes(get(frmData,'formActions.transactionCode.TRANSACTION_CODE',''))) return true;
-        if (!v.every(a => a?.account?.at(0)?.id)) return 'SUNY Account is required';
-        if (v.reduce((a,c)=>a+parseInt(c?.pct,10)||0,0)!=100) return 'SUNY Account percentage must equal 100';
+        // if payroll is 28020 and split is false then account is not required
+        if (get(frmData,'payroll.PAYROLL_CODE','')=='28020' && !get(frmData,'employment.salary.SUNY_ACCOUNTSSplit',false) ) return true; //not for 28020
+        if (!v.every(a => a?.account?.at(0)?.id&&a?.account?.at(0)?.label)) return 'SUNY Account is required';
+        if (get(frmData,'employment.salary.SUNY_ACCOUNTSSplit',false) && v.reduce((a,c)=>a+parseInt(c?.pct,10)||0,0)!=100) return 'SUNY Account percentage must equal 100';
         return true;
     },
     "employment.salary.SPLIT_ASSIGNMENTS":(frmData,v) => {
