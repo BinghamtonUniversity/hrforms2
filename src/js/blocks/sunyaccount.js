@@ -40,7 +40,10 @@ export default function SUNYAccount(props) {
         if (action=='add') append({account:[],pct:''});
         if (action=='remove') {
             remove(index);
-            if (fields.length <= 2) setShowSplit(false);
+            if (fields.length <= 2) {
+                setValue(`${name}Split`,false);
+                setShowSplit(false);
+            }
         }
     }
     const handleBlur = (field,index,e) => {
