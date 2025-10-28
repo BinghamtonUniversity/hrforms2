@@ -47,18 +47,24 @@ module.exports = (env, argv) => {
           ]
         },
         {
-          test:/\.(png|jp(e?)g|svg|gif)$/,
+          test:/\.(png|jp(e?)g|svg|gif|ico|md|php)$/,
           use: [
             {
               loader: 'file-loader',
               options: {
-                name: 'images/[contenthash:8].[ext]',
+                name(resourcePath,resourceQuery) {
+                  console.log('Loading files:',resourcePath);
+                  if (/images[\/\\]/.test(resourcePath)) {
+                    return 'images/[contenthash:8].[ext]';
+                  }
+                  return '[name].[ext]';
+                },
                 outputPath:'../',
                 publicPath:'/'
               }
             }
           ]
-        }
+        },
       ]
     },
     plugins: [

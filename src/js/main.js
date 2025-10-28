@@ -10,8 +10,14 @@ import 'react-toastify/dist/ReactToastify.css';
 import 'react-checkbox-tree/lib/react-checkbox-tree.css';
 import 'react-slidedown/lib/slidedown.css';
 import '../scss/binghamton-bs4.scss';
-//import '../css/styles.css';
+//import '../css/styles.css'; // combined into scss
 import '../css/print.css';
+
+// Static assets
+import '../favicon.ico';
+import '../apple-touch-icon.png';
+import '../../CHANGELOG.md';
+import '../index.php';
 
 import StartApp from "./app";
 
