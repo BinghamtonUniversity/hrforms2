@@ -1,5 +1,18 @@
 # Changelog
 
+## Version 2.0.0(DEV-20251028)
+  * Added required fields for Requests.
+  * Changed the "Rate" field on the Forms Salary tab to a number field to prevent non-number characters from being entered.
+  * Added required field validation to SUNYAccount component.
+  * Added re-usable component for Request field validation feedback.
+  * Added re-usable component for Form field validation feedback.
+  * Fixed bug in SUNY Accounts component where removal of a second split was not setting the split flag to false.
+  * Changed Forms->Salary SUNY Account to not be required for 28020 payroll unless split payroll selected; then each split must have an account number.
+  * Fixed Bug in logic for checking split accounts, need to check both "id" and "label".  The id could be populated as custom with no label.
+  * Formatted console form validation error display to be consistent between Requests and Forms.
+  * Fixed error on payroll return data in employmentinfo.php to get the first element of the array.
+
+
 ## Version 2.0.0(DEV-20251013)
   * Added "Conditional Awaiting" status to expander row workflow.
   * Disabled Form fields on Person->Information when a value exists and the form is in an Approval status.
