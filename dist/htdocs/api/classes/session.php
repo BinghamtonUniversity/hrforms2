@@ -10,19 +10,19 @@ NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 */
 
 class Session extends HRForms2 {
-	private $_arr = array();
+    private $_arr = array();
     private $gcProb = 10; // chance of cleaning the session_override table in percentage (use integer).
     private $gcStart = 366; // Cleanup records older than this value in days.
 
-	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET,PATCH,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
-		$this->reqAuth = false; //default: true - NB: See note above
-		$this->retJSON = $rjson;
-		$this->req = $req;
-		$this->init();
-	}
+    function __construct($req,$rjson=true) {
+        $this->allowedMethods = "GET,PATCH,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+        $this->reqAuth = false; //default: true - NB: See note above
+        $this->retJSON = $rjson;
+        $this->req = $req;
+        $this->init();
+    }
 
-	function validate() {
+    function validate() {
         
         if (in_array($this->method,array('PATCH','DELETE'))) {
             if (!$this->checkAuth()) $this->raiseError(401);
@@ -96,10 +96,10 @@ class Session extends HRForms2 {
         $start_time = time() - $this->gcStart*86400; //86400 seconds = 1 day
         $qry = "DELETE FROM hrforms2_session_override where start_override < :start_time and end_override is not null";
         $stmt = oci_parse($this->db,$qry);
-		oci_bind_by_name($stmt, ":start_time", $start_time);
-		oci_execute($stmt,OCI_DEFAULT);
+        oci_bind_by_name($stmt, ":start_time", $start_time);
+        oci_execute($stmt,OCI_DEFAULT);
         $count = oci_num_rows($stmt);
-		oci_commit($this->db);
+        oci_commit($this->db);
         $this->returnData = array("start_time"=>$start_time,"deleted"=>$count);
         if ($this->retJSON) $this->toJSON($this->returnData);
     }

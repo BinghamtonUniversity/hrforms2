@@ -10,32 +10,32 @@ NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 */
 
 class Codes extends HRForms2 {
-	private $_arr = array();
+    private $_arr = array();
     private $codes = array("payroll","form","action","transaction");
 
-	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET,POST,PUT,PATCH,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
-		$this->reqAuth = true; //default: true - NB: See note above
-		$this->retJSON = $rjson;
-		$this->req = $req;
-		$this->init();
-	}
+    function __construct($req,$rjson=true) {
+        $this->allowedMethods = "GET,POST,PUT,PATCH,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+        $this->reqAuth = true; //default: true - NB: See note above
+        $this->retJSON = $rjson;
+        $this->req = $req;
+        $this->init();
+    }
 
-	/**
-	 * validate called from init()
-	 */
-	function validate() {
+    /**
+     * validate called from init()
+     */
+    function validate() {
         if (in_array($this->method,array('PUT','PATCH','DELETE'))) {
             if (!$this->sessionData['isAdmin']) $this->raiseError(403);
             if (!isset($this->req[1])) $this->raiseError(400);
         }
         if ($this->method=="POST" && !$this->sessionData['isAdmin']) $this->raiseError(403);
         if (!in_array(strtolower($this->req[0]),$this->codes)) $this->raiseError(400);
-	}
+    }
 
-	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
-	function GET() {
-		$qry = "SELECT * FROM HRFORMS2_".$this->req[0]."_CODES ";
+    /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
+    function GET() {
+        $qry = "SELECT * FROM HRFORMS2_".$this->req[0]."_CODES ";
         if (isset($this->req[1])) $qry .= "WHERE ".$this->req[0]."_CODE=:code ";
         $qry .= "ORDER BY ORDERBY,".$this->req[0]."_TITLE";
         $stmt = oci_parse($this->db,$qry);
@@ -43,13 +43,13 @@ class Codes extends HRForms2 {
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
         //oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
-		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
+        while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
             $row['ADDITIONAL_INFO'] = json_decode($row['ADDITIONAL_INFO'],true);
-			$this->_arr[] = $row;
-		}
+            $this->_arr[] = $row;
+        }
         $this->returnData = $this->_arr;
-		if ($this->retJSON) $this->toJSON($this->returnData);
-	}
+        if ($this->retJSON) $this->toJSON($this->returnData);
+    }
     function POST() {
         $qry = "INSERT INTO HRFORMS2_".$this->req[0]."_CODES VALUES(:code,:title,:active,:orderby,:description,EMPTY_CLOB()) returning ADDITIONAL_INFO into :addl_info";
         $stmt = oci_parse($this->db,$qry);
@@ -117,22 +117,22 @@ class Codes extends HRForms2 {
         //update active
         if (isset($this->POSTvars['ACTIVE'])) {
             // check to make sure the code is not in use
-			$qry = "select count(*) from HRFORMS2_PAYROLL_TRANSACTIONS WHERE ".$this->req[0]."_code = :code";
-			$stmt = oci_parse($this->db,$qry);
+            $qry = "select count(*) from HRFORMS2_PAYROLL_TRANSACTIONS WHERE ".$this->req[0]."_code = :code";
+            $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":code", $this->req[1]);
-			$r = oci_execute($stmt);
-			if (!$r) $this->raiseError();
-			$row = oci_fetch_array($stmt,OCI_NUM+OCI_RETURN_NULLS);
-			if ($row[0] != "0") $this->raiseError(E_FORBIDDEN,array("errMsg"=>ucfirst($this->req[0])." Code in use"));
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
+            $row = oci_fetch_array($stmt,OCI_NUM+OCI_RETURN_NULLS);
+            if ($row[0] != "0") $this->raiseError(E_FORBIDDEN,array("errMsg"=>ucfirst($this->req[0])." Code in use"));
 
             $qry = "UPDATE HRFORMS2_".$this->req[0]."_CODES SET active = :active WHERE ".$this->req[0]."_code = :code";
-			$stmt = oci_parse($this->db,$qry);
-			oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
-			oci_bind_by_name($stmt,":code", $this->req[1]);
-			$r = oci_execute($stmt);
-			if (!$r) $this->raiseError();
-			oci_commit($this->db);
-			oci_free_statement($stmt);
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":active", $this->POSTvars['ACTIVE']);
+            oci_bind_by_name($stmt,":code", $this->req[1]);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
+            oci_commit($this->db);
+            oci_free_statement($stmt);
             //If there are active paytrans with code and code is being deactivated, deactivate paytrans
             if ($this->POSTvars['ACTIVE'] == 0) {
                 $qry = "UPDATE HRFORMS2_PAYROLL_TRANSACTIONS set active = 0 WHERE ".$this->req[0]."_code = :code";
@@ -147,13 +147,13 @@ class Codes extends HRForms2 {
         //update orderby
         if (isset($this->POSTvars['ORDERBY'])) {
             $qry = "UPDATE HRFORMS2_".$this->req[0]."_CODES SET orderby = :orderby WHERE ".$this->req[0]."_code = :code";
-			$stmt = oci_parse($this->db,$qry);
-			oci_bind_by_name($stmt,":orderby", $this->POSTvars['ORDERBY']);
-			oci_bind_by_name($stmt,":code", $this->req[1]);
-			$r = oci_execute($stmt);
-			if (!$r) $this->raiseError();
-			oci_commit($this->db);
-			oci_free_statement($stmt);
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":orderby", $this->POSTvars['ORDERBY']);
+            oci_bind_by_name($stmt,":code", $this->req[1]);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
+            oci_commit($this->db);
+            oci_free_statement($stmt);
         }
         $this->done();
     }
@@ -168,12 +168,12 @@ class Codes extends HRForms2 {
         if ($row[0] != "0") $this->raiseError(E_FORBIDDEN,array("errMsg"=>ucfirst($this->req[0])." Code in use"));
 
         $qry = "DELETE FROM HRFORMS2_".$this->req[0]."_CODES where ".$this->req[0]."_code = :code";
-		$stmt = oci_parse($this->db,$qry);
-		oci_bind_by_name($stmt,":code", $this->req[1]);
-		$r = oci_execute($stmt);
-		if (!$r) $this->raiseError();
-		oci_commit($this->db);
-		oci_free_statement($stmt);
-		if ($this->retJSON) $this->done();
+        $stmt = oci_parse($this->db,$qry);
+        oci_bind_by_name($stmt,":code", $this->req[1]);
+        $r = oci_execute($stmt);
+        if (!$r) $this->raiseError();
+        oci_commit($this->db);
+        oci_free_statement($stmt);
+        if ($this->retJSON) $this->done();
     }
 }

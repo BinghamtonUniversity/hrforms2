@@ -10,21 +10,21 @@ NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 */
 
 class PersonLookup extends HRForms2 {
-	private $_arr = array();
+    private $_arr = array();
 
-	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
-		$this->reqAuth = true; //default: true - NB: See note above
-		$this->retJSON = $rjson;
-		$this->req = $req;
-		$this->init();
-	}
+    function __construct($req,$rjson=true) {
+        $this->allowedMethods = "GET"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+        $this->reqAuth = true; //default: true - NB: See note above
+        $this->retJSON = $rjson;
+        $this->req = $req;
+        $this->init();
+    }
 
-	/**
-	 * validate called from init()
-	 */
-	function validate() {
-		// Validation...
+    /**
+     * validate called from init()
+     */
+    function validate() {
+        // Validation...
         //when GET and req[0] == bnumber there should be req[1] and match format of B#
         //when GET and req[0] == last_dob there should be req[1] and req[2] and req[2] format of yyyy-mon-dd?
         if ($this->method == "GET") {
@@ -42,10 +42,10 @@ class PersonLookup extends HRForms2 {
                     $this->raiseError(400);
             }
         }
-	}
+    }
 
-	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
-	function GET() {
+    /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
+    function GET() {
         $qry = "SELECT pers.hr_person_id, pemp.line_item_number, pers.suny_id, pers.nys_emplid, 
             nvl(pemp.employment_role_type, pers.role_type) as employment_role_type,
             nvl(pemp.data_status_emp, pers.role_status) as data_status_emp, pemp.status_type,
@@ -64,7 +64,7 @@ class PersonLookup extends HRForms2 {
                 FROM buhr.buhr_person_empl_mv@banner.cc.binghamton.edu) pemp on (pers.hr_person_id = pemp.hr_person_id)
             WHERE pers.role_type <> 'STSCH' ";
             //$qry = $base_qry;
-		switch($this->req[0]) {
+        switch($this->req[0]) {
             case "bnumber":
                 $qry .= "AND upper(pers.local_campus_id) = upper(:bnumber)";
                 $stmt = oci_parse($this->db,$qry);
@@ -93,16 +93,16 @@ class PersonLookup extends HRForms2 {
         }
         // Get results
         $r = oci_execute($stmt);
-		if (!$r) $this->raiseError();
+        if (!$r) $this->raiseError();
         $results = array();
-		while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+        while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
             if ($row['EMPLOYMENT_ROLE_TYPE']=='VOLUN') $row['PAYROLL_AGENCY_CODE'] = "00000";
-			$results[] = $row;
-		}
+            $results[] = $row;
+        }
         $this->nullToEmpty($results);
         if (!$results) $results = array(); // if no results build an empty array
         $this->_arr['results'] = $results;
         $this->returnData = $this->_arr;
         if ($this->retJSON) $this->toJSON($this->returnData);
-	}
+    }
 }

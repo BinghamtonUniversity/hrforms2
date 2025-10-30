@@ -10,44 +10,44 @@ NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 */
 
 class Settings extends HRForms2 {
-	private $_arr = array();
+    private $_arr = array();
 
-	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
-		$this->reqAuth = true; //default: true - NB: See note above
-		$this->retJSON = $rjson;
-		$this->req = $req;
-		$this->init();
-	}
+    function __construct($req,$rjson=true) {
+        $this->allowedMethods = "GET"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+        $this->reqAuth = true; //default: true - NB: See note above
+        $this->retJSON = $rjson;
+        $this->req = $req;
+        $this->init();
+    }
 
-	/**
-	 * validate called from init()
-	 */
-	function validate() {
-		// Validation...
-	}
+    /**
+     * validate called from init()
+     */
+    function validate() {
+        // Validation...
+    }
 
-	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
-	function GET() {
-		$qry = "select settings from hrforms2_settings";
+    /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
+    function GET() {
+        $qry = "select settings from hrforms2_settings";
         $stmt = oci_parse($this->db,$qry);
         oci_execute($stmt);
-		$row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+        $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
         oci_free_statement($stmt);
         $this->_arr = json_decode($row['SETTINGS'],true);
-		$this->returnData = $this->_arr;
-		if ($this->retJSON) $this->toJSON($this->returnData);
-	}
+        $this->returnData = $this->_arr;
+        if ($this->retJSON) $this->toJSON($this->returnData);
+    }
 
     function PUT() {
-		$qry = "update hrforms2_settings set settings = EMPTY_CLOB() returning settings into :json";
-		$stmt = oci_parse($this->db,$qry);
-		$clob = oci_new_descriptor($this->db, OCI_D_LOB);
-		oci_bind_by_name($stmt, ":json", $clob, -1, OCI_B_CLOB);
-		oci_execute($stmt,OCI_NO_AUTO_COMMIT);
-		$clob->save(json_encode($this->POSTvars));
-		oci_commit($this->db);
-		oci_free_statement($stmt);
-		$this->done();
+        $qry = "update hrforms2_settings set settings = EMPTY_CLOB() returning settings into :json";
+        $stmt = oci_parse($this->db,$qry);
+        $clob = oci_new_descriptor($this->db, OCI_D_LOB);
+        oci_bind_by_name($stmt, ":json", $clob, -1, OCI_B_CLOB);
+        oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+        $clob->save(json_encode($this->POSTvars));
+        oci_commit($this->db);
+        oci_free_statement($stmt);
+        $this->done();
     }
 }

@@ -10,25 +10,25 @@ NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 */
 
 class LoginHistory extends HRForms2 {
-	private $_arr = array();
+    private $_arr = array();
 
-	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
-		$this->reqAuth = true; //default: true - NB: See note above
-		$this->retJSON = $rjson;
-		$this->req = $req;
-		$this->init();
-	}
+    function __construct($req,$rjson=true) {
+        $this->allowedMethods = "GET"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+        $this->reqAuth = true; //default: true - NB: See note above
+        $this->retJSON = $rjson;
+        $this->req = $req;
+        $this->init();
+    }
 
-	/**
-	 * validate called from init()
-	 */
-	function validate() {
-		// Validation...
-	}
+    /**
+     * validate called from init()
+     */
+    function validate() {
+        // Validation...
+    }
 
-	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
-	function GET() {
+    /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
+    function GET() {
         $qry = "select user_id, bnumber, suny_id, ip_address, login_date, user_agent 
             from hrforms2_sessions
             where suny_id = :suny_id
@@ -42,5 +42,5 @@ class LoginHistory extends HRForms2 {
         }
         oci_free_statement($stmt);
         $this->toJSON($rows);
-	}
+    }
 }

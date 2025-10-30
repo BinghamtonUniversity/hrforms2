@@ -10,25 +10,25 @@ NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 */
 
 class Education extends HRForms2 {
-	private $_arr = array();
+    private $_arr = array();
 
-	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
-		$this->reqAuth = true; //default: true - NB: See note above
-		$this->retJSON = $rjson;
-		$this->req = $req;
-		$this->init();
-	}
+    function __construct($req,$rjson=true) {
+        $this->allowedMethods = "GET"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+        $this->reqAuth = true; //default: true - NB: See note above
+        $this->retJSON = $rjson;
+        $this->req = $req;
+        $this->init();
+    }
 
-	/**
-	 * validate called from init()
-	 */
-	function validate() {
-		if (!isset($this->req[0])) $this->raiseError(400);
-	}
+    /**
+     * validate called from init()
+     */
+    function validate() {
+        if (!isset($this->req[0])) $this->raiseError(400);
+    }
 
-	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
-	function GET() {
+    /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
+    function GET() {
         // Country Code to "State" translation.
         if ($this->req[0] == 'ASM') $this->req = array('USA','AS');
         if ($this->req[0] == 'FSM') $this->req = array('USA','FM');
@@ -63,8 +63,8 @@ class Education extends HRForms2 {
                 $this->raiseError(400);
         }
         oci_execute($stmt);
-		oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
-		$this->returnData = $this->_arr;
+        oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
+        $this->returnData = $this->_arr;
         if ($this->retJSON) $this->toJSON($this->returnData);
-	}
+    }
 }

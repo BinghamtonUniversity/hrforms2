@@ -10,16 +10,16 @@ NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 */
 
 class Journal extends HRForms2 {
-	private $_arr = array();
+    private $_arr = array();
     private $k = array("id"=>"","master"=>"","journal"=>"");
 
-	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET,POST"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
-		$this->reqAuth = true; //default: true - NB: See note above
-		$this->retJSON = $rjson;
-		$this->req = $req;
-		$this->init();
-	}
+    function __construct($req,$rjson=true) {
+        $this->allowedMethods = "GET,POST"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+        $this->reqAuth = true; //default: true - NB: See note above
+        $this->retJSON = $rjson;
+        $this->req = $req;
+        $this->init();
+    }
 
     /**
      * helper function to get user name information
@@ -117,11 +117,11 @@ class Journal extends HRForms2 {
         return true;
     }
 
-	/**
-	 * validate called from init()
-	 */
-	function validate() {
-		$this->setType();
+    /**
+     * validate called from init()
+     */
+    function validate() {
+        $this->setType();
         if ($this->k['id'] == "") $this->raiseError(E_BAD_REQUEST);
         if ($this->method == 'GET') {
             // GET should receive two parameters; type and id
@@ -131,10 +131,10 @@ class Journal extends HRForms2 {
             // Verify effective user is permitted to access information
             if (!$this->validateUser()) $this->raiseError(E_NOT_FOUND);
         }
-	}
+    }
 
-	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
-	function GET() {
+    /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
+    function GET() {
         // if the journal is archived; get the group names at time of creation for the request/form
         if ($this->k['archive']) {
             $gh = (new groupshistory($this->req,false))->returnData;
@@ -187,7 +187,7 @@ class Journal extends HRForms2 {
         oci_free_statement($stmt);
         $this->returnData = $this->null2Empty($this->_arr);
         if ($this->retJSON) $this->toJSON($this->returnData);
-	}
+    }
 
     function POST() {
         $qry = "insert into ".$this->k['journal']." 

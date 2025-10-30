@@ -10,17 +10,17 @@ NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 */
 
 class Requests extends HRForms2 {
-	private $_arr = array();
+    private $_arr = array();
     private $conditions = array();
     private $match = array();
 
-	function __construct($req,$rjson=true) {
-		$this->allowedMethods = "GET,POST,PUT,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
-		$this->reqAuth = true; //default: true - NB: See note above
-		$this->retJSON = $rjson;
-		$this->req = $req;
-		$this->init();
-	}
+    function __construct($req,$rjson=true) {
+        $this->allowedMethods = "GET,POST,PUT,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+        $this->reqAuth = true; //default: true - NB: See note above
+        $this->retJSON = $rjson;
+        $this->req = $req;
+        $this->init();
+    }
 
     private function checkSkip($wf_id,$seq) {
         if ($wf_id == null || $seq == null) return; // if parameters are missing return
@@ -62,15 +62,15 @@ class Requests extends HRForms2 {
         return false;
     }    
 
-	/**
-	 * validate called from init()
-	 */
-	function validate() {
-		if ($this->method == 'DELETE' && $this->req[0] == 'draft' && $this->req[1] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN);
-	}
+    /**
+     * validate called from init()
+     */
+    function validate() {
+        if ($this->method == 'DELETE' && $this->req[0] == 'draft' && $this->req[1] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN);
+    }
 
-	/* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
-	function GET() {
+    /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
+    function GET() {
         $requestData = new stdClass(); // initialize default empty object to prevent assignment errors
         if ($this->req[0] == 'draft') {
             $qry = "select DATA from HRFORMS2_REQUESTS_DRAFTS where SUNY_ID = :suny_id and UNIX_TS = :unix_ts";
@@ -78,7 +78,7 @@ class Requests extends HRForms2 {
             oci_bind_by_name($stmt,":suny_id",$this->req[1]);
             oci_bind_by_name($stmt,":unix_ts",$this->req[2]);
             $r = oci_execute($stmt);
-			if (!$r) $this->raiseError();
+            if (!$r) $this->raiseError();
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
             $this->_arr['DATA'] = $row['DATA'];
             oci_free_statement($stmt);
@@ -88,7 +88,7 @@ class Requests extends HRForms2 {
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":request_id",$this->req[1]);
             $r = oci_execute($stmt);
-			if (!$r) $this->raiseError();
+            if (!$r) $this->raiseError();
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
             $requestData = json_decode($row['REQUEST_DATA']);
             $requestData->createdBy = json_decode($row['CREATED_BY']);
@@ -124,7 +124,7 @@ class Requests extends HRForms2 {
             $this->returnData->lastJournal = $last_journal;
         }
         if ($this->retJSON) $this->toJSON($this->returnData);
-	}
+    }
 
     function POST() {
         switch($this->req[0]) {
