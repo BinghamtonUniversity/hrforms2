@@ -39,14 +39,40 @@ class News extends HRForms2 {
         if ($this->retJSON) $this->toJSON($this->returnData);
     }
     function PATCH() {
-        $qry = "update hrforms2_news set news_text = ".((INSTANCE=="LOCAL")?"' '":"EMPTY_CLOB()").", modified_date = sysdate returning news_text into :news";
+        $qry = "select count(*) as CNT from hrforms2_news";
         $stmt = oci_parse($this->db,$qry);
-        $clob = oci_new_descriptor($this->db, OCI_D_LOB);
-        oci_bind_by_name($stmt, ":news", $clob, -1, OCI_B_CLOB);
-        oci_execute($stmt,OCI_NO_AUTO_COMMIT);
-        $clob->save($this->POSTvars['NEWS_TEXT']);
-        oci_commit($this->db);
+        oci_execute($stmt);
+        $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
         oci_free_statement($stmt);
+        if ($row['CNT'] == 0) {
+            $qry = "insert into hrforms2_news (news_text, modified_date, modified_by) values (".((INSTANCE=="LOCAL")?"' '":"EMPTY_CLOB()").", sysdate, :suny_id) returning news_text into :news";
+            $stmt = oci_parse($this->db,$qry);
+            $clob = oci_new_descriptor($this->db, OCI_D_LOB);
+            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
+            oci_bind_by_name($stmt, ":news", $clob, -1, OCI_B_CLOB);
+            $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+            if (!$r) {
+                $e = oci_error($stmt);
+                $this->raiseError(500,"Database error: ".$e['message']);
+            }
+            $clob->save($this->POSTvars['NEWS_TEXT']);
+            oci_commit($this->db);
+            oci_free_statement($stmt);
+        } else {
+            $qry = "update hrforms2_news set news_text = ".((INSTANCE=="LOCAL")?"' '":"EMPTY_CLOB()").", modified_date = sysdate, modified_by = :suny_id returning news_text into :news";
+            $stmt = oci_parse($this->db,$qry);
+            $clob = oci_new_descriptor($this->db, OCI_D_LOB);
+            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
+            oci_bind_by_name($stmt, ":news", $clob, -1, OCI_B_CLOB);
+            $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+            if (!$r) {
+                $e = oci_error($stmt);
+                $this->raiseError(500,"Database error: ".$e['message']);
+            }
+            $clob->save($this->POSTvars['NEWS_TEXT']);
+            oci_commit($this->db);
+            oci_free_statement($stmt);
+        }
         $this->GET();
         exit();
     }
