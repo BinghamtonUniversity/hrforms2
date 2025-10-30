@@ -192,6 +192,12 @@ pre {
   text-overflow: clip;
 }
 
+/* news date */
+.news-date {
+  text-align: right;
+  font-style: italic;
+}
+
 /* active sub tab */
 .tab-pane.active .nav .nav-item p.active { color: #495057 }
 

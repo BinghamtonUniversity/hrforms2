@@ -6,6 +6,7 @@ import { useSettingsContext } from "../app";
 import { t } from "../config/text";
 import useNewsQueries from "../queries/news";
 import { Icon } from "@iconify/react/dist/iconify.js";
+import { format } from "date-fns";
 
 export function News() {
     const {general} = useSettingsContext();
@@ -41,6 +42,7 @@ export function News() {
             <Alert variant="light" onClose={dismissNews} dismissible={general.hideNews}>
                 <Alert.Heading> <Icon icon="mdi:newspaper" className="iconify-inline"/>{t('home.news.heading')}</Alert.Heading>
                 {htmr(news.data.NEWS_TEXT)}
+                <p className="mb-0 news-date"><small>-- Updated: {format(news.data.MODIFIED_DATE,"PPP' at 'p")}</small></p>
             </Alert>        
         );
     }
