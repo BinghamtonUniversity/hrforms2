@@ -33,7 +33,7 @@ class News extends HRForms2 {
         $stmt = oci_parse($this->db,$qry);
         oci_execute($stmt);
         $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
-		$row['NEWS_TEXT'] = $row['NEWS_TEXT'];
+		if (!$row) $row['NEWS_TEXT'] = "";
 		oci_free_statement($stmt);
 		$this->returnData = $this->null2Empty($row);
 		if ($this->retJSON) $this->toJSON($this->returnData);
