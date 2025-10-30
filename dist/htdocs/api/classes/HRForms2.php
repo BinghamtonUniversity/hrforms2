@@ -168,6 +168,7 @@ Class HRForms2 {
         oci_bind_by_name($stmt, ":sid", $this->sessionData['SESSION_ID']);
         oci_execute($stmt);
         $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+        if (!$row) $this->raiseError(401);
         $this->sessionData = (!$row)?array():array_merge($this->sessionData,$row);
         $this->isAdmin($this->sessionData['SUNY_ID']);
         $this->isViewer($this->sessionData['EFFECTIVE_SUNY_ID']);
