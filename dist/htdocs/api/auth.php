@@ -12,8 +12,9 @@
     }
 
     session_set_cookie_params($client_lifetime,$client_path,$client_domain,$client_secure,$client_httpOnly);
-    phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context);
-    phpCAS::setCasServerCACert($cas_server_ca_cert_path);
+    #phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context);
+    phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $client_service_name);
+    #phpCAS::setCasServerCACert($cas_server_ca_cert_path);
     phpCAS::setNoCasServerValidation();//TODO: should this be off?
     phpCAS::handleLogoutRequests(true, $cas_real_hosts);
     phpCAS::forceAuthentication();
@@ -21,7 +22,8 @@
     if (phpCAS::isAuthenticated()) {
         $db = @oci_connect(DBUSER,DBPASS,DB,NLS_LANG);
         if (!$db) die('cannot connect to DB');
-        $sessionData = array("SESSION_ID"=>$_COOKIE['session-id'],"CAS_SID"=>session_id(),"UDC_IDENTIFIER"=>phpCAS::getAttribute('UDC_IDENTIFIER'),"USER_ID"=>phpCAS::getUser(),"SUNY_ID"=>"");
+        $cookieSID = (array_key_exists('session-id',$_COOKIE)) ? $_COOKIE['session-id'] : null;
+        $sessionData = array("SESSION_ID"=>$cookieSID,"CAS_SID"=>session_id(),"UDC_IDENTIFIER"=>phpCAS::getAttribute('UDC_IDENTIFIER'),"USER_ID"=>phpCAS::getUser(),"SUNY_ID"=>"");
         if (!$sessionData['UDC_IDENTIFIER']) die('no UDC IDENTIFIER');
 
         // Get SUNY_ID:
@@ -46,7 +48,7 @@
             oci_bind_by_name($stmt, ":suny_id",$sessionData['SUNY_ID']);
             oci_execute($stmt);
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-            if ($row['USER_ID']) return;
+            if ($row && array_key_exists('USER_ID',$row)) return;
         }
         // Create new session
         $qry = "select suny_id from sunyhr.hr_id@banner.cc.binghamton.edu
