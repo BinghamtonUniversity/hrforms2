@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 2.0.0(DEV-20251031)
+  * Fixed error in SUNYAccount component required check due to testing value not removed before deploying.
+  * Updates and fixes to news.php:
+    * Fixed error when no data found.
+    * Fixed update to create when no record exists.
+    * Added modfied_by value to update and create functions.
+  * Added Update Date to the News alert block on the home page.
+  * Added controls in Settings to toggle showing News Update Date and format.
+  * Added Appointment Periods List to populate the field in Requests Position and Review tabs.
+  * Converted tabs to spaces across multiple files.
+  * Added error handling when session is invalid or missing.
+  * Fixed error when cookie session is not set.
+
+
 ## Version 2.0.0(DEV-20251028)
   * Added required fields for Requests.
   * Changed the "Rate" field on the Forms Salary tab to a number field to prevent non-number characters from being entered.
