@@ -24,6 +24,7 @@ export default function Position() {
     const titles = getListData(posTypes[posType]?.budgetTitlesList,{enabled:!!posType});
     const appttypes = getListData('appointmentTypes',{enabled:!!posType,
         select:d=>d.filter(a=>posTypes[posType]?.apptTypes.includes(a[0])).sort()});
+    const apptperiods = getListData('appointmentPeriods');
 
     const handleFTEBlur = e => {
         let v = parseInt(e.target.value);
@@ -319,10 +320,7 @@ export default function Position() {
                         control={control}
                         render={({field}) => (
                             <>
-                                <Form.Check {...field} inline type="radio" label="Year(s)" value='y' checked={field.value=='y'} disabled={!canEdit}/>
-                                <Form.Check {...field} inline type="radio" label="Semester(s)" value='s' checked={field.value=='s'} disabled={!canEdit}/>
-                                <Form.Check {...field} inline type="radio" label="Month(s)" value='m' checked={field.value=='m'} disabled={!canEdit}/>
-                                <Form.Check {...field} inline type="radio" label="Week(s)" value='w' checked={field.value=='w'} disabled={!canEdit}/>
+                                {apptperiods.data && apptperiods.data.map(p=><Form.Check key={`appt-periods-${p[0]}`} {...field} inline type="radio" label={p[1]} value={p[0]} checked={field.value==p[0]} disabled={!canEdit}/>)}
                             </>
                         )}
                     />

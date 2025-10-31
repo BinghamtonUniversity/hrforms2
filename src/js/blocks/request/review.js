@@ -5,6 +5,7 @@ import { Icon } from '@iconify/react';
 import { AppButton, DateFormat } from "../components";
 import { CommentsTable } from "./comments";
 import { useRequestContext } from "../../config/request"
+import useListsQueries from "../../queries/lists";
 
 function NewLine({gap}) { 
     let c = 'w-100';
@@ -16,6 +17,9 @@ export default function Review() {
     const { getValues } = useFormContext();
     const formValues = getValues();
     const { isDraft, isNew, createdBy } = useRequestContext();
+
+    const { getListData } = useListsQueries();
+    const apptperiods = getListData('appointmentPeriods');
 
     return (
         <article>
@@ -107,7 +111,7 @@ export default function Review() {
                     <Col as="dt" sm={3} md={2} className="mb-0">Appointment Status:</Col>
                     <Col as="dd" sm={9} md={4} className="mb-0">{formValues.apptStatus.title}</Col>
                     <Col as="dt" sm={3} md={2} className="mb-0">Appointment Duration:</Col>
-                    <Col as="dd" sm={9} md={4} className="mb-0">{formValues.apptDuration} {formValues.apptPeriod}</Col>
+                    <Col as="dd" sm={9} md={4} className="mb-0">{formValues.apptDuration} {apptperiods.data&&apptperiods.data.find(a=>a[0]==formValues.apptPeriod)?.at(1)}</Col>
                     <Col as="dt" sm={3} md={2} className="mb-0">Tentative End Date:</Col>
                     <Col as="dd" sm={9} md={4} className="mb-0"><DateFormat>{formValues.tentativeEndDate}</DateFormat></Col>
                 </Row>
