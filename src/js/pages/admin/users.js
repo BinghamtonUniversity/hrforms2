@@ -7,7 +7,7 @@ import useListsQueries from "../../queries/lists";
 import { Loading, ModalConfirm, AppButton, errorToast, DescriptionPopover } from "../../blocks/components";
 import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, Button } from "react-bootstrap";
 import { Icon } from "@iconify/react";
-import { orderBy, sortBy, difference, capitalize, startsWith, replace } from "lodash";
+import { orderBy, sortBy, difference, capitalize, startsWith } from "lodash";
 import DataTable from 'react-data-table-component';
 import { useForm, Controller, useWatch, FormProvider, useFormContext, useFieldArray } from "react-hook-form";
 import DatePicker from "react-datepicker";
