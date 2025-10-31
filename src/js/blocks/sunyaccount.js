@@ -71,7 +71,7 @@ export default function SUNYAccount(props) {
                                         const hasEmptyId = v.reduce((hasEmpty, currentObject) => {
                                             return hasEmpty || currentObject.id === "";
                                         }, false);
-                                        return (props.required && hasEmptyId)?`${label} is required`:'y';
+                                        return (props.required && hasEmptyId)?`${label} is required`:true;
                                     }
                                 }}
                                 render={({field})=><Typeahead 
