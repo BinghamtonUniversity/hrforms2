@@ -9,7 +9,7 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import { format } from "date-fns";
 
 export function News() {
-    const {general} = useSettingsContext();
+    const { general } = useSettingsContext();
     const { getNews } = useNewsQueries();
     const news = getNews();
     const [cookies, setCookie] = useCookies();
@@ -39,10 +39,12 @@ export function News() {
     if (show && news.data) {
         if (!news.data.NEWS_TEXT) return null;
         return (
-            <Alert variant="light" onClose={dismissNews} dismissible={general.hideNews}>
+            <Alert variant="light" onClose={dismissNews} dismissible={general.hideNews==="Y"}>
                 <Alert.Heading> <Icon icon="mdi:newspaper" className="iconify-inline"/>{t('home.news.heading')}</Alert.Heading>
                 {htmr(news.data.NEWS_TEXT)}
-                <p className="mb-0 news-date"><small>-- Updated: {format(news.data.MODIFIED_DATE,"PPP' at 'p")}</small></p>
+                {general.showUpdateDate === 'Y' &&
+                    <p className="mb-0 font-italic d-flex justify-content-end"><small>-- Updated: {format(news.data.MODIFIED_DATE,general.updateDateFormat)}</small></p>
+                }
             </Alert>        
         );
     }

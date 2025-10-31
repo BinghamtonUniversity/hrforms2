@@ -1,20 +1,78 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Form, Row, Col } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import useGroupQueries from "../../../queries/groups";
-import { sortBy } from 'lodash';
+import { get, sortBy } from 'lodash';
+import { format } from "date-fns";
 
 export default function SettingsGeneral() {
-    const { control, formState:{ errors }} = useFormContext();
+    const [exampleFormat, setExampleFormat] = React.useState("");
+
+    const { control, getValues, formState:{ errors }} = useFormContext();
 
     const { getGroups } = useGroupQueries();
     const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME']),placeholderData:[]});
 
+    const setExampleDateFormat = (fmt) => {
+        let dateFmt;
+        try {
+            dateFmt = format(new Date(),fmt);
+        } catch(err) {
+            dateFmt = "Invalid Format";
+        }
+        setExampleFormat(dateFmt);
+    }
+
+    const handleFormatChange = (e,field) => {
+        field.onChange(e);
+        const { value } = e.target;
+        setExampleDateFormat(value);
+    }
+
+    useEffect(() => {
+        // set initial example format
+        setExampleDateFormat(getValues('general.updateDateFormat'));
+    },[getValues]);
+
     const enabled = useWatch({name:'general.email.enabled',control:control});
-    const watchHideNews = useWatch({name:'general.hideNews'});
+    const watchHideNews = useWatch({name:'general.hideNews',defaultValue:true,control:control});
+    const watchShowUpdateDate = useWatch({name:'general.showUpdateDate',defaultValue:true,control:control});
 
     return (
         <section>
+            <Form.Group as={Row}>
+                <Form.Label column md={2}>Show News Update Date:</Form.Label>
+                <Col xs="auto">
+                    <Controller
+                        name="general.showUpdateDate"
+                        control={control}
+                        defaultValue="Y"
+                        render={({field}) => (
+                            <>
+                                <Form.Check {...field} inline type="checkbox" checked={field.value=="Y"} onChange={e=>field.onChange((e.target.checked)?'Y':'N')}/>
+                                <Form.Text id="showUpdateDateHelp" muted>Display the date and time the news was last updated.</Form.Text>
+                            </>
+                        )}
+                    />
+                </Col>
+            </Form.Group>
+            <Form.Group as={Row}>
+                <Form.Label column md={2}>News Update Date Format:</Form.Label>
+                <Col xs="auto">
+                    <Controller
+                        name="general.updateDateFormat"
+                        control={control}
+                        defaultValue="PPP' at 'p"
+                        render={({field}) => (
+                            <>
+                                <Form.Control {...field} type="text" onChange={e=>handleFormatChange(e,field)} disabled={!watchShowUpdateDate}/>
+                                <Form.Text id="updateDateFormatHelp" muted>Format to use for the News Update Date.  For format options see <a href="https://date-fns.org/v4.1.0/docs/format" target="date-fns-formats">date-fns formats</a>.</Form.Text>
+                                <Form.Text id="updateDateFormatExample" muted>Example: {exampleFormat}</Form.Text>
+                            </>
+                        )}
+                    />
+                </Col>
+            </Form.Group>
             <Form.Group as={Row}>
                 <Form.Label column md={2}>Allow Hide News:</Form.Label>
                 <Col xs="auto">
@@ -24,7 +82,7 @@ export default function SettingsGeneral() {
                         defaultValue="Y"
                         render={({field}) => (
                             <>
-                                <Form.Check {...field} inline type="checkbox" checked={field.value} onChange={e=>field.onChange(e.target.checked)}/>
+                                <Form.Check {...field} inline type="checkbox" checked={field.value=="Y"} onChange={e=>field.onChange((e.target.checked)?'Y':'N')}/>
                                 <Form.Text id="hideNewsHelp" muted>Allow users to hide news on home page.  Updating news content will show news again.</Form.Text>
                             </>
                         )}

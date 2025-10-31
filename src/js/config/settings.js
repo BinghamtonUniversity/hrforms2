@@ -10,6 +10,8 @@ export const tabs = [
 /** Default Form Values */
 export const defaultVals = {
     "general": {
+        "showUpdateDate": "Y",
+        "updateDateFormat": "PPP' at 'p",
         "hideNews": true,
         "hideNewsExpire": 24,
         "draftLimit": 10,
