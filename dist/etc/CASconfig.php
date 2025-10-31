@@ -17,7 +17,7 @@
  * @link     https://wiki.jasig.org/display/CASC/phpCAS
  */
 
-$phpcas_path = $_SERVER['DOCUMENT_ROOT'] . '/api/phpCAS';
+#$phpcas_path = $_SERVER['DOCUMENT_ROOT'] . '/api/phpCAS';
 
 ///////////////////////////////////////
 // Basic Config of the phpCAS client //
@@ -27,13 +27,13 @@ $phpcas_path = $_SERVER['DOCUMENT_ROOT'] . '/api/phpCAS';
 $cas_host = CAS_HOST;
 
 // Context of the CAS Server
-$cas_context = '/cas';
+$cas_context = '/idp/profile/cas';
 
 // Port of your CAS server. Normally for a https server it's 443
 $cas_port = 443;
 
 // Path to the ca chain that issued the cas server certificate
-$cas_server_ca_cert_path = '/etc/pki/tls/certs/ca-bundle.crt';
+#$cas_server_ca_cert_path = '/etc/pki/tls/certs/ca-bundle.crt';
 
 //////////////////////////////////////////
 // Advanced Config for special purposes //
@@ -49,6 +49,7 @@ $client_path = '/';
 $client_secure = true;
 $client_httpOnly = false;
 $client_lifetime = 0;
+$client_service_name = "https://" . HOST;
 
 // Database config for PGT Storage
 //$db = 'pgsql:host=localhost;dbname=phpcas';
