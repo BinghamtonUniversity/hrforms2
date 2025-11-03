@@ -73,7 +73,7 @@ class FormList extends HRForms2 {
                 f.form_data.employment.position.positionDetails.TITLE as TITLE,
                 nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
                 f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name,
-                j.status, j.sequence, f.form_data.GROUPS, js.journal_status,
+                j.status, j.sequence, f.form_data.WORKFLOW_ID, f.form_data.GROUPS, js.journal_status,
                 to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
                 from hrforms2_forms f,
                 (select jf2.* from (select jf1.*,
@@ -107,7 +107,7 @@ class FormList extends HRForms2 {
                 f.form_data.employment.position.positionDetails.TITLE as TITLE,
                 nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
                 f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name,
-                j.status, j.sequence, f.form_data.GROUPS, js.journal_status,
+                j.status, j.sequence, f.form_data.WORKFLOW_ID, f.form_data.GROUPS, js.journal_status,
                 to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
                 from hrforms2_forms f,
                 (select jf2.* from (
@@ -141,7 +141,7 @@ class FormList extends HRForms2 {
                     f.form_data.employment.position.positionDetails.TITLE as TITLE,
                     nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
                     f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name,
-                    j.status, j.sequence, f.form_data.GROUPS, js.journal_status,
+                    j.status, j.sequence, f.form_data.WORKFLOW_ID, f.form_data.GROUPS, js.journal_status,
                     to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
                     from hrforms2_forms f,
                     (select jf2.* from (select jf1.*,
@@ -176,7 +176,7 @@ class FormList extends HRForms2 {
                 f.form_data.employment.position.positionDetails.TITLE as TITLE,
                 nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
                 f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name, 
-                j.status, j.sequence, f.form_data.GROUPS, js.journal_status,
+                j.status, j.sequence, f.form_data.WORKFLOW_ID, f.form_data.GROUPS, js.journal_status,
                 to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
                 from hrforms2_forms f,
                 (select jf2.* from (select jf1.*,
@@ -209,7 +209,7 @@ class FormList extends HRForms2 {
                 f.form_data.employment.position.positionDetails.TITLE as TITLE,
                 nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
                 f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name, 
-                j.status, j.sequence, f.form_data.GROUPS, js.journal_status,
+                j.status, j.sequence, f.form_data.WORKFLOW_ID, f.form_data.GROUPS, js.journal_status,
                 to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
                 from hrforms2_forms f,
                 (select jf2.* from (select jf1.*,
