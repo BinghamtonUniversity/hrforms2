@@ -6,9 +6,11 @@ import { Icon } from "@iconify/react";
 import { useRequestContext } from "../../config/request";
 import useListsQueries from "../../queries/lists";
 import { PersonPickerComponent } from "../components";
+import { RequestFieldErrorMessage } from "../../pages/request";
+import { get } from "lodash";
 
 export default function Information() {
-    const { control, getValues, setValue, formState:{ errors } } = useFormContext();
+    const { control, getValues, setValue, clearErrors, formState:{ errors } } = useFormContext();
     const { posTypes, isDraft, canEdit } = useRequestContext();
     const [watchPosType,watchReqType,WatchNewFunding] = useWatch({name:['posType.id','reqType.id','newFunding.id'],control:control});
   
@@ -20,10 +22,12 @@ export default function Information() {
 
     const handlePosTypeChange = (field,e) => {
         field.onChange(e);
+        clearErrors();
         setValue('posType.title',posTypes[e.target.value].title);
     }
     const handleReqTypeChange = (field,e) => {
         field.onChange(e);
+        clearErrors();
         const rt = reqtypes.data.find(a=>a[0]==e.target.value);
         setValue('reqType.title',(rt)?rt[1]:'');
     }
@@ -33,7 +37,6 @@ export default function Information() {
         setValue('newFunding.title',(nfs)?nfs[1]:'');
     }
     const handleBlur = (field,e) => {
-        console.log('blur',field,e);
         field.onBlur(e);
         if (e.target.value != getValues(`${field.name}[0].label`)) {
             setValue(`${field.name}.0`,{id:'new-id-0',label:e.target.value});
@@ -65,7 +68,7 @@ export default function Information() {
                             </Form.Control>
                         )}
                     />
-                    <Form.Control.Feedback type="invalid">{errors.reqType?.id?.message}</Form.Control.Feedback>
+                    <RequestFieldErrorMessage fieldName="reqType.id"/>
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
@@ -85,7 +88,7 @@ export default function Information() {
                             </InputGroup.Text>
                         </InputGroup.Append>
                     </InputGroup>
-                    <Form.Control.Feedback type="invalid">{errors.effDate?.message}</Form.Control.Feedback>
+                    <RequestFieldErrorMessage fieldName="effDate"/>
                 </Col>
             </Form.Group>
 
@@ -105,7 +108,7 @@ export default function Information() {
                                     </Form.Control>
                                 )}
                             />
-                            <Form.Control.Feedback type="invalid">{errors.newFunding?.id?.message}</Form.Control.Feedback>
+                            <RequestFieldErrorMessage fieldName="newFunding.id"/>
                         </Col>
                     </Form.Group>
                     {['PC','PROV'].includes(WatchNewFunding) &&
@@ -123,7 +126,7 @@ export default function Information() {
                                         rules={{required:{value:true,message:'Strata Commitment ID is required'}}}
                                         render={({field}) => <Form.Control {...field} type="number" placeholder="Enter Commitment ID" isInvalid={errors.commitmentId} disabled={!canEdit}/>}
                                     />
-                                    <Form.Control.Feedback type="invalid">{errors.commitmentId?.message}</Form.Control.Feedback>
+                                    <RequestFieldErrorMessage fieldName="commitmentId"/>
                                 </Col>
                             </Form.Group>
                         </>
@@ -133,20 +136,23 @@ export default function Information() {
 
             {watchReqType == 'F' &&
                 <Form.Group as={Row}>
-                    <Form.Label column md={2}>Current/Previous Employee:</Form.Label>
+                    <Form.Label column md={2}>Current/Previous Employee*:</Form.Label>
                     <Col md={7} lg={6} xl={5}>
                         <Controller
                             name="currentEmployee"
                             defaultValue=""
+                            rules={{validate:value=>(!!(value?.at(0)?.id&&value?.at(0)?.label)) || 'Current/Previous Employee is required'}}
                             control={control}
                             render={({field}) => <PersonPickerComponent 
                                 field={field} 
                                 id="current-employee" 
                                 placeholder="Search for Current Employee" 
                                 onBlur={e=>handleBlur(field,e)} 
-                                disabled={!canEdit}/>
-                            }
+                                disabled={!canEdit}
+                                isInvalid={!!get(errors,field.name,false)}
+                            />}
                         />
+                        <RequestFieldErrorMessage fieldName="currentEmployee"/>
                     </Col>
                 </Form.Group>
             }
