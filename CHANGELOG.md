@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 2.0.0(DEV-20251106)
+  * Clear form errors on Requests when the Position Type or Request Type are changed.
+  * Make Request Current/Previous Employee on "Backfill a Position" be required.
+  * Convert field validation feedback on the Request Information tab to use the re-usable component; missed during initial implementation.
+  * Fixed missing WORKFLOW_ID field in formlist.php which caused error on Forms workflow component.
+
+
 ## Version 2.0.0(DEV-20251031)
   * Fixed error in SUNYAccount component required check due to testing value not removed before deploying.
   * Updates and fixes to news.php:
