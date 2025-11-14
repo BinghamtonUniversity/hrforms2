@@ -224,7 +224,7 @@ class User extends HRForms2 {
                     }
                 }
             }
-            $this->_arr['USER_OPTIONS'] = json_decode($user['USER_OPTIONS']);
+            $this->_arr['USER_OPTIONS'] = ($user) ? json_decode($user['USER_OPTIONS']) : '{"notifications":"n"}';
 
             $this->returnData = array((array)$this->_arr); // Need to cast as array instead of object
             if ($this->retJSON) $this->toJSON($this->returnData);
