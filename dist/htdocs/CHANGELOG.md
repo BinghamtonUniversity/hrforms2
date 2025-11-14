@@ -1,4 +1,10 @@
 # Changelog
+## Version 2.0.0(DEV-20251114)
+  * Fixed wrong field used in criteria to require home email on Forms
+  * Fixed missisng import for Form Field Error Feedback component on Employment|Leave tab.
+  * Fixed Request field validation for Current/Previous Employee triggering an error when a custom value entered.
+  * Fixed error in Non-Production alert banner when in production should return null.
+
 
 ## Version 2.0.0(DEV-20251106)
   * Clear form errors on Requests when the Position Type or Request Type are changed.
