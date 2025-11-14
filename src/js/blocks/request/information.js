@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
@@ -12,7 +12,8 @@ import { get } from "lodash";
 export default function Information() {
     const { control, getValues, setValue, clearErrors, formState:{ errors } } = useFormContext();
     const { posTypes, isDraft, canEdit } = useRequestContext();
-    const [watchPosType,watchReqType,WatchNewFunding] = useWatch({name:['posType.id','reqType.id','newFunding.id'],control:control});
+    const [watchPosType,watchReqType,watchNewFunding] = useWatch({name:['posType.id','reqType.id','newFunding.id'],control:control});
+    const [currentEmpl,setCurrentEmpl] = useState([{id:"",label:""}]);
   
     const { getListData } = useListsQueries();
     const reqtypes = getListData('reqTypes',{
@@ -39,7 +40,7 @@ export default function Information() {
     const handleBlur = (field,e) => {
         field.onBlur(e);
         if (e.target.value != getValues(`${field.name}[0].label`)) {
-            setValue(`${field.name}.0`,{id:'new-id-0',label:e.target.value});
+            setValue(`${field.name}.0`,{id:'new-id-0',label:e.target.value},{shouldValidate:true});
         }
     }
     return (
@@ -111,7 +112,7 @@ export default function Information() {
                             <RequestFieldErrorMessage fieldName="newFunding.id"/>
                         </Col>
                     </Form.Group>
-                    {['PC','PROV'].includes(WatchNewFunding) &&
+                    {['PC','PROV'].includes(watchNewFunding) &&
                         <>
                             <Alert variant="info">
                                 <Icon icon="mdi:alert" className="iconify-inline"/><strong>Attention!</strong> Be sure to enter the appropriate Department/School account number in this request.  The Budget office will transfer the funds.
@@ -140,14 +141,19 @@ export default function Information() {
                     <Col md={7} lg={6} xl={5}>
                         <Controller
                             name="currentEmployee"
-                            defaultValue=""
-                            rules={{validate:value=>(!!(value?.at(0)?.id&&value?.at(0)?.label)) || 'Current/Previous Employee is required'}}
+                            defaultValue={[{id:"",label:""}]}
+                            rules={{validate:value=>{
+                                if (!currentEmpl) return 'Current/Previous Employee is required1';
+                                if (currentEmpl == "" && !value?.at(0)?.id && !value?.at(0)?.label) return 'Current/Previous Employee is required2';
+                                return true;
+                            }}}
                             control={control}
                             render={({field}) => <PersonPickerComponent 
                                 field={field} 
                                 id="current-employee" 
                                 placeholder="Search for Current Employee" 
                                 onBlur={e=>handleBlur(field,e)} 
+                                onInputChange={val=>setCurrentEmpl(val)}
                                 disabled={!canEdit}
                                 isInvalid={!!get(errors,field.name,false)}
                             />}
