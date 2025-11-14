@@ -22,7 +22,7 @@ export default function Review() {
     const apptperiods = getListData('appointmentPeriods');
 
     return (
-        <article>
+        <article id="request-review">
             <Row>
                 <Col className="button-group justify-content-end d-print-none">
                     <AppButton format="print" title="Print Page" onClick={()=>window.print()}></AppButton>
