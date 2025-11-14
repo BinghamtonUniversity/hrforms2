@@ -440,10 +440,12 @@ const PersonPickerComponent = (props) => {
         minLength=3,
         placeholder='Search for person...',
         onBlur=()=>null,
+        onInputChange=()=>null,
         flip=true,
         allowNew=true,
         disabled=false,
         isInvalid=false,
+        selected=field.value,
     } = props;
 
     const [searchFilter,setSearchFilter] = useState('');
@@ -464,9 +466,10 @@ const PersonPickerComponent = (props) => {
             allowNew={allowNew}
             onSearch={handleSearch}
             onBlur={onBlur}
+            onInputChange={onInputChange}
             options={person.data}
             placeholder={placeholder}
-            selected={field.value}
+            selected={selected}
             disabled={disabled}
             isInvalid={isInvalid}
         />
