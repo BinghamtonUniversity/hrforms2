@@ -240,12 +240,11 @@ export function ErrorFallback({error,componentStack,resetErrorBoundary}) {
 
 function NonProductionAlert() {
     const { INSTANCE } = useAuthContext();
-    if (INSTANCE != 'PROD')
-    return (
+    return (INSTANCE != 'PROD')?(
         <Alert variant="warning2">
             <Icon icon="mdi:alert" className="iconify-inline"/><strong>Attention!</strong> you are currently in the <strong>{INSTANCE}</strong> instance.  This is a non-production instance used for testing and training only.
         </Alert>
-    );
+    ):null;
 }
 
 function ImpersonationAlert({SUNY_ID,fullname}) {
