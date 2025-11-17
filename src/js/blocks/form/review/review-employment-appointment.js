@@ -48,6 +48,8 @@ export default function ReviewEmploymentPositionAppointment() {
             }
             {(appointment.DERIVED_FAC_TYPE=="Y") &&
                 <>
+                    <Col as="dt" sm={3} md={2} className="mb-0">Adjunct:</Col>
+                    <Col as="dd" sm={9} md={4} className="mb-0">{(appointment.isAdjunct=="Y")?"Yes":"No"}</Col>
                     <Col as="dt" sm={3} md={2} className="mb-0">Tenure Status:</Col>
                     <Col as="dd" sm={9} md={4} className="mb-0">{appointment.TENURE_STATUS?.label}</Col>
                 </>
@@ -71,7 +73,7 @@ export default function ReviewEmploymentPositionAppointment() {
                 <Col as="dt" sm={3} md={2} className="mb-0">Department:</Col>
                 <Col as="dd" sm={9} md={4} className="mb-0">{appointment.REPORTING_DEPARTMENT_CODE?.label}</Col>
             </Row>
-            {appointment.DERIVED_FAC_TYPE == "Y" && <ReviewEmploymentAppointmentFacultyDetails details={appointment.facultyDetails}/>}
+            {(appointment.DERIVED_FAC_TYPE == "Y" && appointment.isAdjunct=="Y") && <ReviewEmploymentAppointmentFacultyDetails details={appointment.facultyDetails}/>}
             {payroll.PAYROLL_CODE == '28029' && <ReviewEmploymentAppointmentStudentDetails details={appointment.studentDetails}/>}
         </article>
     );
