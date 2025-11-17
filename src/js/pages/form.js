@@ -851,22 +851,22 @@ function FormInfoBox () {
     return (
         <Alert variant="secondary" className="mb-3">
             <Row as="dl" className="mb-0">
-                <Col as="dt" sm={3} md={2} className="mb-0">Form ID:</Col>
-                <Col as="dd" sm={9} md={4} className="mb-0">{getValues('formId')}</Col>
-                <Col as="dt" sm={3} md={2} className="mb-0">HR Person ID:</Col>
-                <Col as="dd" sm={9} md={4} className="mb-0">{getValues('selectedRow.HR_PERSON_ID')}</Col>
-                <Col as="dt" sm={3} md={2} className="mb-0">Payroll:</Col>
-                <Col as="dd" sm={9} md={4} className="mb-0">{getValues('payroll.PAYROLL_TITLE')}</Col>
-                <Col as="dt" sm={3} md={2} className="mb-0">SUNY ID:</Col>
-                <Col as="dd" sm={9} md={4} className="mb-0">{getValues('selectedRow.SUNY_ID')}</Col>
-                <Col as="dt" sm={3} md={2} className="mb-0">Form Type:</Col>
-                <Col as="dd" sm={9} md={4} className="mb-0"><FormTypeDisplay/></Col>
-                <Col as="dt" sm={3} md={2} className="mb-0">B-Number:</Col>
-                <Col as="dd" sm={9} md={4} className="mb-0">{getValues('person.information.LOCAL_CAMPUS_ID')}</Col>
-                <Col as="dt" sm={3} md={2} className="mb-0">Effective Date:</Col>
-                <Col as="dd" sm={9} md={4} className="mb-0"><DateFormat>{getValues('effDate')}</DateFormat></Col>
-                <Col as="dt" sm={3} md={2} className="mb-0">Name:</Col>
-                <Col as="dd" sm={9} md={4} className="mb-0">{getValues('person.information.LEGAL_FIRST_NAME')} {getValues('person.information.ALIAS_FIRST_NAME')&&<span>({getValues('person.information.ALIAS_FIRST_NAME')})</span>} {getValues('person.information.LEGAL_LAST_NAME')} {getValues('person.information.SUFFIX_CODE')}</Col>
+                <Col as="dt" xs={3} sm={2} className="mb-0">Form ID:</Col>
+                <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{getValues('formId')}</Col>
+                <Col as="dt" xs={3} sm={2} className="mb-0">HR Person ID:</Col>
+                <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{getValues('selectedRow.HR_PERSON_ID')}</Col>
+                <Col as="dt" xs={3} sm={2} className="mb-0">Payroll:</Col>
+                <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{getValues('payroll.PAYROLL_TITLE')}</Col>
+                <Col as="dt" xs={3} sm={2} className="mb-0">SUNY ID:</Col>
+                <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{getValues('selectedRow.SUNY_ID')}</Col>
+                <Col as="dt" xs={3} sm={2} className="mb-0">Form Type:</Col>
+                <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end"><FormTypeDisplay/></Col>
+                <Col as="dt" xs={3} sm={2} className="mb-0">B-Number:</Col>
+                <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{getValues('person.information.LOCAL_CAMPUS_ID')}</Col>
+                <Col as="dt" xs={3} sm={2} className="mb-0">Effective Date:</Col>
+                <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end"><DateFormat>{getValues('effDate')}</DateFormat></Col>
+                <Col as="dt" xs={3} sm={2} className="mb-0">Name:</Col>
+                <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{getValues('person.information.LEGAL_FIRST_NAME')} {getValues('person.information.ALIAS_FIRST_NAME')&&<span>({getValues('person.information.ALIAS_FIRST_NAME')})</span>} {getValues('person.information.LEGAL_LAST_NAME')} {getValues('person.information.SUFFIX_CODE')}</Col>
             </Row>
         </Alert>
     );
@@ -940,28 +940,28 @@ function EmploymentPositionInfoBoxList() {
     },[watchApptPercent]);
     return (
         <Row as="dl" className="mb-0">
-            <Col as="dt" sm={3} md={2} className="mb-0">Line Number:</Col>
-            <Col as="dd" sm={9} md={4} className="mb-0">{positionDetails?.LINE_NUMBER}</Col>
-            <Col as="dt" sm={3} md={2} className="mb-0">Pay Basis:</Col>
-            <Col as="dd" sm={9} md={4} className="mb-0">{positionDetails?.PAY_BASIS}</Col>
-            <Col as="dt" sm={3} md={2} className="mb-0">Payroll:</Col>
-            <Col as="dd" sm={9} md={4} className="mb-0">{positionDetails?.PAYROLL}</Col>
-            <Col as="dt" sm={3} md={2} className="mb-0">Negotiating Unit:</Col>
-            <Col as="dd" sm={9} md={4} className="mb-0">{positionDetails?.NEGOTIATING_UNIT}</Col>
-            <Col as="dt" sm={3} md={2} className="mb-0">Effective Date:</Col>
-            <Col as="dd" sm={9} md={4} className="mb-0"><DateFormat nvl="Effective Date Not Set">{positionDetails?.EFFECTIVE_DATE}</DateFormat></Col>
-            <Col as="dt" sm={3} md={2} className="mb-0">Salary Grade:</Col>
-            <Col as="dd" sm={9} md={4} className="mb-0">{positionDetails?.SALARY_GRADE}</Col>
-            <Col as="dt" sm={3} md={2} className="mb-0">Title:</Col>
-            <Col as="dd" sm={9} md={4} className="mb-0">{positionDetails?.TITLE}</Col>
-            <Col as="dt" sm={3} md={2} className="mb-0">Segment Code:</Col>
-            <Col as="dd" sm={9} md={4} className="mb-0">{positionDetails?.SEGMENT_CODE}</Col>
-            <Col as="dt" sm={3} md={2} className="mb-0">Position Department:</Col>
-            <Col as="dd" sm={9} md={4} className="mb-0">{positionDetails?.POSITION_DEPARTMENT}</Col>
-            <Col as="dt" sm={3} md={2} className="mb-0">Position Percent:</Col>
-            <Col as="dd" sm={9} md={4} className="mb-0">{apptPct}</Col>
-            <Col as="dt" sm={3} md={2} className="mb-0">Position Status:</Col>
-            <Col as="dd" sm={9} md={4} className="mb-0">{positionDetails?.POSITION_STATUS}</Col>
+            <Col as="dt" xs={3} sm={2} className="mb-0">Line Number:</Col>
+            <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{positionDetails?.LINE_NUMBER}</Col>
+            <Col as="dt" xs={3} sm={2} className="mb-0">Pay Basis:</Col>
+            <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{positionDetails?.PAY_BASIS}</Col>
+            <Col as="dt" xs={3} sm={2} className="mb-0">Payroll:</Col>
+            <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{positionDetails?.PAYROLL}</Col>
+            <Col as="dt" xs={3} sm={2} className="mb-0">Negotiating Unit:</Col>
+            <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{positionDetails?.NEGOTIATING_UNIT}</Col>
+            <Col as="dt" xs={3} sm={2} className="mb-0">Effective Date:</Col>
+            <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end"><DateFormat nvl="Effective Date Not Set">{positionDetails?.EFFECTIVE_DATE}</DateFormat></Col>
+            <Col as="dt" xs={3} sm={2} className="mb-0">Salary Grade:</Col>
+            <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{positionDetails?.SALARY_GRADE}</Col>
+            <Col as="dt" xs={3} sm={2} className="mb-0">Title:</Col>
+            <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{positionDetails?.TITLE}</Col>
+            <Col as="dt" xs={3} sm={2} className="mb-0">Segment Code:</Col>
+            <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{positionDetails?.SEGMENT_CODE}</Col>
+            <Col as="dt" xs={3} sm={2} className="mb-0">Position Department:</Col>
+            <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{positionDetails?.POSITION_DEPARTMENT}</Col>
+            <Col as="dt" xs={3} sm={2} className="mb-0">Position Percent:</Col>
+            <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{apptPct}</Col>
+            <Col as="dt" xs={3} sm={2} className="mb-0">Position Status:</Col>
+            <Col as="dd" xs={9} sm={4} className="mb-0 align-self-end">{positionDetails?.POSITION_STATUS}</Col>
         </Row>
     );
 }
