@@ -3,12 +3,12 @@ import { useQueryClient } from "react-query";
 import { Row, Col, Form, ToggleButtonGroup, ToggleButton } from "react-bootstrap";
 import { useForm, Controller, FormProvider, useFormContext, useWatch } from "react-hook-form";
 import { toast } from "react-toastify";
-import camelCase from "lodash/camelCase";
+import { camelCase, find } from "lodash";
 import { Loading, ModalConfirm, AppButton, errorToast } from "../../blocks/components";
-import { useHotkeys } from "react-hotkeys-hook";
 import { t } from "../../config/text";
 import useListsQueries from "../../queries/lists";
 import { Helmet } from "react-helmet";
+import { useHistory, useParams } from "react-router-dom";
 
 export default function AdminLists() {
     const [selectedList,setSelectedList] = useState();
@@ -17,6 +17,9 @@ export default function AdminLists() {
     const [confirmDelete,setConfirmDelete] = useState(false);
     const [confirmSave,setConfirmSave] = useState(false);
     const [runSQL,setRunSQL] = useState('');
+
+    const params = useParams();
+    const history = useHistory();
 
     const { getLists, getList, postList, putList, deleteList } = useListsQueries();
     const lists = getLists();
@@ -171,12 +174,19 @@ export default function AdminLists() {
         setRunSQL('');
         resetState();
     }
-    
+
+    const handleListsChange = e => {
+        setSelectedList(e.target.value)
+        const slug = find(lists.data,['LIST_ID',e.target.value])?.LIST_SLUG??'';
+        history.push('/admin/lists/'+slug);
+    }
+
     useEffect(()=>{
         methods.clearErrors();
         if (!listdetails.data) return;
         Object.keys(listdetails.data).forEach(k=>methods.setValue(k,listdetails.data[k]));
     },[listdetails.data]);
+
     useEffect(()=>{
         if (selectedList) {
             setIsNewList(false);
@@ -184,6 +194,13 @@ export default function AdminLists() {
             listdetails.refetch();
         }
     },[selectedList]);
+
+    useEffect(() => {
+        if (!lists.data) return;
+        const list = find(lists.data,['LIST_SLUG',params.subpage]);
+        setSelectedList(list?.LIST_ID??'');
+    },[lists,params]);
+
     return (
         <>
             <section>
@@ -198,12 +215,12 @@ export default function AdminLists() {
                     </Row>
                 </header>
                 <Form.Group as={Row}>
-                    <Form.Label column md={2}>Lists:</Form.Label>
+                    <Form.Label htmlFor="lists" column md={2}>Lists:</Form.Label>
                     <Col xs="auto">
                         {lists.isLoading && <Loading>Loading Lists...</Loading>}
                         {lists.isError && <Loading isError>Failed to load lists</Loading>}
                         {lists.data &&
-                            <Form.Control as="select" id="lists" value={selectedList} onChange={e=>setSelectedList(e.target.value)}>
+                            <Form.Control as="select" id="lists" value={selectedList} onChange={e=>handleListsChange(e)}>
                                 <option></option>
                                 {lists.data.map(l=><option key={l.LIST_ID} value={l.LIST_ID}>{l.LIST_NAME}</option>)}
                             </Form.Control>
