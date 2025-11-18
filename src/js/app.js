@@ -6,7 +6,7 @@ import { Container, Alert, Button } from "react-bootstrap";
 import { ToastContainer } from "react-toastify";
 import { useScrollPosition } from "@n8tb1t/use-scroll-position";
 import { ErrorBoundary } from "react-error-boundary";
-import head from "lodash/head";
+import { get, head } from "lodash";
 import { Icon, loadIcons } from '@iconify/react';
 import useUserQueries from "./queries/users";
 import AppNav from "./blocks/appnav";
@@ -113,14 +113,16 @@ export default function StartApp() {
 
     if (session.isError || settings.isError) return <LoadingAppError>{session.error?.message||settings.error?.message}</LoadingAppError>;
     if (session.isSuccess && settings.isSuccess) {
+        const instance = get(session.data,'INSTANCE','')
+        const prefix = (instance != "PROD")?`[${instance}] `:'';
         return (
             <SettingsContext.Provider value={{...settings.data}}>
                 <AuthContext.Provider value={{...authData}}>
                     <TextContext.Provider value={{}}>
                         <ErrorBoundary FallbackComponent={AppErrorFallback}>
                             <Helmet 
-                                titleTemplate="HR Forms 2 - %s"
-                                defaultTitle="HR Forms 2"
+                                titleTemplate={`${prefix}HR Forms 2 - %s`}
+                                defaultTitle={`${prefix}HR Forms 2`}
                             />
                             <AppContent OVR_SUNY_ID={authData.OVR_SUNY_ID}/>
                             {(session.data?.DEBUG&&session.data?.isAdmin) && <ReactQueryDevtools initialIsOpen={false} />}
