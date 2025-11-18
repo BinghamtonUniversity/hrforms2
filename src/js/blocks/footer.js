@@ -11,7 +11,7 @@ export default function Footer() {
     useEffect(()=>setCurrYear(new Date().getFullYear()),[]);
     return (
         <footer className="mt-4 mb-2">
-            <Row className="bg-main text-white py-1 mb-1">
+            <Row className={((INSTANCE!="PROD")?"bg-primary":"bg-main") + " text-white py-1 mb-1"}>
                 <Col className="d-flex justify-content-center">&copy; 2021 - {currYear} Binghamton University</Col>
             </Row>
             <Row>
