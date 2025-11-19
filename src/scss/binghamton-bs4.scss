@@ -336,6 +336,7 @@ button.btn-sm.no-label svg.iconify {
   padding: 0.3rem;
   border: 1px solid #aaa;
   border-radius: 3px;
+  overflow: clip;
 }
 .droplist div:hover {
   background-color: #bcc2bc;
