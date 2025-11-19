@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Row, Col, Card, ListGroup } from "react-bootstrap";
 import { capitalize } from "lodash";
