@@ -36,8 +36,7 @@ class Workflow extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        //TODO: check this, do regular users need to GET?
-        if (!$this->sessionData['isAdmin']) $this->raiseError(403);
+        if (in_array($this->method,array('PUT','PATCH','DELETE')) && !$this->sessionData['isAdmin']) $this->raiseError(403);
         if (in_array($this->method,array('PUT','PATCH','DELETE')) && !isset($this->req[1])) $this->raiseError(400);
         switch($this->req[0]) {
             case "request": /** Request Work Flows */
