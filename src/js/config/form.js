@@ -88,7 +88,7 @@ const advancedFields = {
     },
     "person.directory.phone":(frmData,v) => {
         if (get(frmData,'payroll.PAYROLL_CODE','X')!='28020') return true;
-        return get(frmData,'person.directory.phone',[]).some(p=>['HOME','CELL'].includes(p?.PHONE_TYPE)) ? true : 'Home or Cell phone number is required'
+        return get(frmData,'person.directory.phone',[]).some(p=>['HOME','CELL'].includes(p?.PHONE_TYPE)) ? true : 'Home or Cell Phone Number is required'
     },
     "person.directory.email":(frmData,v) => {
         if (get(frmData,'payroll.PAYROLL_CODE','X')!='28020') return true; // only 28020 requires home email
@@ -96,7 +96,7 @@ const advancedFields = {
         if (!['HIR','PAY'].includes(get(frmData,'formActions.actionCode.ACTION_CODE',''))) return true;
         //TODO: this should be done better; relying on title is bad.
         if (get(frmData,'formActions.actionCode.ACTION_CODE','') != 'PAY' && !get(frmData,'formActions.transactionCode.TRANSACTION_TITLE','').startsWith('Appoint') ) return true;
-        return get(frmData,'person.directory.email',[]).some(e=>e?.EMAIL_TYPE=='HOME') ? true : 'Home email is required'
+        return get(frmData,'person.directory.email',[]).some(e=>e?.EMAIL_TYPE=='HOME') ? true : 'Home Email is required'
     },
     "person.education.institutions":(frmData,v) => (['AS','BA','MA','DO','PR','GR'].includes(get(frmData,'person.demographics.HIGHEST_EDUCATION_LEVEL.id','')) && !v.length)?'Education is required':true,
     "employment.appointment.TENURE_STATUS.id":(frmData,v)=>get(frmData,'employment.appointment.DERIVED_FAC_TYPE','N') == 'N' ? true : (!!v||'Tenure Status is required'),
@@ -127,7 +127,7 @@ const advancedFields = {
     },
     "employment.salary.NUMBER_OF_PAYMENTS":(frmData,v) => {
         if (conditionalFields.noRateTransactions.includes(get(frmData,'formActions.transactionCode.TRANSACTION_CODE',''))) return true;
-        if (parseInt(v,10)<=0) return 'Number of payments must be greater than zero';
+        if (parseInt(v,10)<=0) return 'Number of Payments must be greater than zero';
         return true;
     },
     "employment.salary.RATE_AMOUNT":(frmData,v) => {
