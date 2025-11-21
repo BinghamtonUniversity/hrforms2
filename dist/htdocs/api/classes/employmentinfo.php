@@ -56,7 +56,7 @@ class EmploymentInfo extends HRForms2 {
                     "SUPERVISOR_SUNY_ID"=>"",
                     "SUPERVISOR_NAME"=>"",
                     "REPORTING_DEPARTMENT_CODE"=>"",
-                    "DERIVED_FAC_TYPE"=>""
+                    "DERIVED_FAC_TYPE"=>"N"
                 ),$row);
 
                 // Tenure Status
