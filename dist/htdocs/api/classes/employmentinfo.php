@@ -169,7 +169,7 @@ class EmploymentInfo extends HRForms2 {
 
                 // hasBenefits:
                 $pdata = (new codes(array('payroll',$row['PAYROLL_AGENCY_CODE']),false))->returnData;
-                if (!$payroll || count($pdata) == 0) {
+                if (!$pdata || count($pdata) == 0) {
                     $payroll = array("ADDITIONAL_INFO"=>array("hasBenefits"=>false));
                 } else {
                     $payroll = $pdata[0];
