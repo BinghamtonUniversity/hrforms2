@@ -17,6 +17,25 @@ const text = {
                     'hierarchy':'Hierarchy',
                     'workflow':'Workflow'
                 },
+                'workflow': {
+                    "actions": {
+                        'create':{
+                            'pending': 'Creating Workflow',
+                            'success': 'Workflow Created Successfully',
+                            'error': 'Error Creating Workflow'
+                        },
+                        'update':{
+                            'pending': 'Updating Workflow',
+                            'success': 'Workflow Updated Successfully',
+                            'error': 'Error Updating Workflow'
+                        },
+                        'delete':{
+                            'pending': 'Deleting Workflow',
+                            'success': 'Workflow Deleted Successfully',
+                            'error': 'Error Deleting Workflow'
+                        },
+                    }
+                }
             },
             'request': {
                 'title': 'Request Hierarchy',

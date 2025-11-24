@@ -150,9 +150,9 @@ function DeleteWorkflow({WORKFLOW_ID,setDeleteWorkflow}) {
                 setDeleteWorkflow({});
             });
         }),{
-            pending:'Deleting workfolow...',
-            success:'Workflow deleted successfully',
-            error:errorToast('Failed to delete workflow')
+            pending:t('admin.hierarchy.form.workflow.actions.delete.pending'),
+            success:t('admin.hierarchy.form.workflow.actions.delete.success'),
+            error:errorToast(t('admin.hierarchy.form.workflow.actions.delete.error'))
         });
     }
     useEffect(()=>setShow(true),[WORKFLOW_ID]);
@@ -229,31 +229,45 @@ function AddEditWorkflow(props) {
                 return false;
             }
             setStatus({state:'saving'});
-            create.mutateAsync(mutateData).then(d=>{
+            toast.promise(new Promise((resolve,reject) => {                
+                create.mutateAsync(mutateData).then(()=>{
+                    setStatus({state:'clear'});
+                    closeModal();
+                    resolve();
+                }).catch(e => {
+                    setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
+                    reject(e);
+                });
+            }).then(() => {
                 Promise.all([
                     queryclient.refetchQueries(['hierarchy','form']),
                     queryclient.refetchQueries(['workflow','form'])
-                ]).then(() => {
-                    setStatus({state:'clear'});
-                    toast.success('Workflow created successfully');
-                    closeModal();
-                });
-            }).catch(e => {
-                setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
+                ]);
+            }),{
+                pending:t('admin.hierarchy.form.workflow.actions.create.pending'),
+                success:t('admin.hierarchy.form.workflow.actions.create.success'),
+                error:errorToast(t('admin.hierarchy.form.workflow.actions.create.error'))
             });
         } else {
             setStatus({state:'saving'});
-            update.mutateAsync(mutateData).then(() => {
+            toast.promise(new Promise((resolve,reject) => {                
+                update.mutateAsync(mutateData).then(() => {
+                    setStatus({state:'clear'});
+                    closeModal();
+                    resolve();
+                }).catch(e => {
+                    setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
+                    reject(e);
+                });
+            }).then(() => {
                 Promise.all([
                     queryclient.refetchQueries(['hierarchy','form']),
                     queryclient.refetchQueries(['workflow','form'])
-                ]).then(() => {
-                    setStatus({state:'clear'});
-                    toast.success('Workflow updated successfully');
-                    closeModal();
-                })
-            }).catch(e => {
-                setStatus({state:'error',message:e.description || `${e.name}: ${e.message}`});
+                ]);
+            }),{
+                pending:t('admin.hierarchy.form.workflow.actions.update.pending'),
+                success:t('admin.hierarchy.form.workflow.actions.update.success'),
+                error:errorToast(t('admin.hierarchy.form.workflow.actions.update.error'))
             });
         }
     }
