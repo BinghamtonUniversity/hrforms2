@@ -31,7 +31,7 @@ class Forms extends HRForms2 {
             return strval($c->seq+1) == strval($seq); //add 1 to seq to account for submitter group at index 0
         });
         if ($this->conditions) {
-            $accounts = array_map(function($account) {return $account['account'][0]['id'];},$this->POSTvars['SUNYAccounts']);
+            $accounts = array_map(function($account) {return $account['account'][0]['id'];},$this->POSTvars['employment']['salary']['SUNY_ACCOUNTS']);
             $this->match = array_filter($accounts,function($account) {
                 foreach ($this->conditions as $condition) {
                     switch($condition->field_name) {
@@ -385,7 +385,7 @@ class Forms extends HRForms2 {
 
                 // Add submitter group to the beginning of the groups array if not already there
                 if ($groups_array[0] != "-99") array_unshift($groups_array,"-99");
-                
+
                 //extract comments from JSON
                 array_push($comments_array,$this->POSTvars['comment']);
                 unset($this->POSTvars['comment']);
