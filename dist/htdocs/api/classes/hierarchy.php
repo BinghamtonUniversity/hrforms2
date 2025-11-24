@@ -23,9 +23,10 @@ class Hierarchy extends HRForms2 {
     }
 
     private function __save_history() {
+        # To avoid collision of history and current when doing an update (PUT), we set history_date back by 1 second
         $hist_table = $this->table . "_history";
         $qry = "insert into $hist_table 
-            select h.*, g.hierarchy_groups, :method, sysdate 
+            select h.*, g.hierarchy_groups, :method, sysdate-(1/86400) 
             from $this->table h 
             left join (select hierarchy_id, listagg(group_id,',') as hierarchy_groups from " . $this->table . "_groups group by hierarchy_id) g on (h.hierarchy_id = g.hierarchy_id)
             where h,hierarchy_id = :id";

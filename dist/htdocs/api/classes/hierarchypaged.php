@@ -23,8 +23,9 @@ class HierarchyPaged extends HRForms2 {
     }
 
     private function __save_history() {
+        # To avoid collision of history and current when doing an update (PUT), we set history_date back by 1 second
         $hist_table = $this->table . "_history";
-        $qry = "insert into $hist_table select h.*, :method, sysdate from $this->table h where hierarchy_id = :id";
+        $qry = "insert into $hist_table select h.*, :method, sysdate-(1/86400) from $this->table h where hierarchy_id = :id";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt,":id", $this->req[1]);
         oci_bind_by_name($stmt,":method", $this->method);

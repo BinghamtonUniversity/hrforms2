@@ -21,7 +21,8 @@ class Groups extends HRForms2 {
     }
 
     function __save_history() {
-        $qry = "insert into hrforms2_groups_history SELECT g.*, :method, sysdate FROM hrforms2_groups g where group_id = :group_id";
+        # To avoid collision of history and current when doing an update (PUT), we set history_date back by 1 second
+        $qry = "insert into hrforms2_groups_history SELECT g.*, :method, sysdate-(1/86400) FROM hrforms2_groups g where group_id = :group_id";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt,":group_id", $this->req[0]);
         oci_bind_by_name($stmt,":method", $this->method);

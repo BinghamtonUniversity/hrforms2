@@ -23,7 +23,8 @@ class Workflow extends HRForms2 {
 
     private function __save_history() {
         $hist_table = $this->table . "_history";
-        $qry = "insert into $hist_table select w.*, :method, sysdate from $this->table w where workflow_id = :id";
+        # To avoid collision of history and current when doing an update (PUT), we set history_date back by 1 second
+        $qry = "insert into $hist_table select w.*, :method, sysdate-(1/86400) from $this->table w where workflow_id = :id";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt,":id", $this->req[1]);
         oci_bind_by_name($stmt,":method", $this->method);
@@ -111,6 +112,7 @@ class Workflow extends HRForms2 {
         if (!$r) $this->raiseError();
         $clob->save(json_encode($this->POSTvars['CONDITIONS']));
         oci_commit($this->db);
+        oci_free_statement($stmt);
         $this->done();
     }
     function DELETE() {
