@@ -65,7 +65,7 @@ class Workflow extends HRForms2 {
              $qry .= " where history_date >= sysdate";
         }
         if (isset($this->req[2])) $qry .= " and history_date >= to_date(:hist_date)";
-        $qry .= " order by workflow_id, history_date";
+        $qry .= " order by workflow_id, history_date desc";
         if (isset($this->req[1])) $qry .= " fetch first 1 row only"; //only one when looking for specific id)
         $stmt = oci_parse($this->db,$qry);
         if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $this->req[1]);
