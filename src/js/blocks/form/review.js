@@ -65,7 +65,7 @@ export function NewLine({gap}) {
 function ReviewFormData() {
     const { getValues } = useFormContext();
     const { isNew } = useHRFormContext(); //TODO:change isNew to isDraft?
-    const [formId,payroll,effDate] = getValues(['formId','payroll','effDate']);
+    const [formId,payroll,effDate,PRRequired,PRNumber] = getValues(['formId','payroll','effDate','formActions.PR_REQUIRED','formActions.PR_NUMBER']);
     return (
         <section className="mb-4">
             <Row as="header">
@@ -82,6 +82,12 @@ function ReviewFormData() {
                 <Col as="dd" sm={9} className="mb-0">{payroll?.title||payroll.PAYROLL_TITLE}</Col>
                 <Col as="dt" sm={3} className="mb-0">Effective Date:</Col>
                 <Col as="dd" sm={9} className="mb-0"><DateFormat>{effDate}</DateFormat></Col>
+                {PRRequired=="1"&&
+                    <>
+                        <Col as="dt" sm={3} className="mb-0">Position Request #:</Col>
+                        <Col as="dd" sm={9} className="mb-0">{PRNumber}</Col>
+                    </>
+                }
             </Row>
         </section>
     );

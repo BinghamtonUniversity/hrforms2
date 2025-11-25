@@ -792,16 +792,28 @@ function FormActionsTransactionCode({transactionCodes,description,formCode,actio
 }
 
 function FormPRRequired() {
-    const { control } = useFormContext();
+    const { control, setValue } = useFormContext();
     const { journalStatus } = useHRFormContext();
+    const handleBlur = useCallback(e => {
+        setValue('formActions.PR_REQUIRED',(e.target.value.trim()=="")?0:1);
+    },[setValue]);
+    const handleKeyDown = useCallback(e => {
+        if (e.key == 'Enter') {
+            e.preventDefault();
+            setValue('formActions.PR_REQUIRED',(e.target.value.trim()=="")?0:1);
+        }
+    },[setValue]);
     return (
         <Alert variant="warning">
-             <Controller
-                name="formActions.PR_REQUIRED"
-                control={control}
-                defaultValue={0}
-                render={({field}) => (<Form.Check {...field} type="checkbox" id="PR_REQUIRED" value={1} checked={field.value=="1"} label="Have you completed a Position Request?" disabled={journalStatus!=""}/>)}
-            />
+            <div className="form-inline">
+                <Form.Label className="mr-2" htmlFor="formActions.PR_NUMBER">Position Request # is Required:</Form.Label>
+                <Controller
+                    name="formActions.PR_NUMBER"
+                    control={control}
+                    defaultValue=""
+                    render={({field}) => (<Form.Control {...field} type="text" onBlur={handleBlur} onKeyDown={handleKeyDown} disabled={journalStatus!=""}/>)}
+                />
+            </div>
         </Alert>
     );
 }

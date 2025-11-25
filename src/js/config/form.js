@@ -200,7 +200,8 @@ const defaultFormActions = {
     transactionCode:{TRANSACTION_CODE:"",TRANSACTION_TITLE:"",TRANSACTION_DESCRIPTION:""},
     TABS:[],
     ROUTE_BY:"",
-    PR_REQUIRED:false
+    PR_REQUIRED:false,
+    PR_NUMBER:""
 };
 export {defaultFormActions}; //used on basic_info
 
