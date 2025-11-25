@@ -218,19 +218,19 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         }
     }
 
-    const navigate = tab => {
+    const navigate = useCallback(tab => {
         methods.setValue('action','');
         if (tab == 'review') handleValidation();
         setActiveTab(tab);
-    }
+    },[methods]);
 
-    const handleNext = () => {
+    const handleNext = useCallback(() => {
         const curIdx = tabs.map(t=>t.id).indexOf(activeTab);
         const nextTab = tabs[curIdx+1]?.id;
         if (!nextTab) return;
         navigate(nextTab);
-    }
-    const handleValidation = () => {
+    },[activeTab,navigate]);
+    const handleValidation = useCallback(() => {
         const acct_total = methods.getValues('SUNYAccounts').reduce((pv,a)=>pv+=parseInt(a.pct)||0,0);
         if (acct_total != 100) {
             methods.setError('SUNYAccounts',{
@@ -241,16 +241,16 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
             methods.clearErrors('SUNYAccounts');
         }
         methods.handleSubmit(handleSubmit,handleError)();
-    }
+    },[methods]);
     const history = useHistory();
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
         console.debug('Closing Request');
         if (isNew || methods.formState.isDirty) {
             setShowCloseModal(true);
         } else {
             handleRedirect();
         }
-    }
+    },[methods.formState.isDirty,isNew]);
     const handleReset = useCallback(() => {
         methods.clearErrors();
         methods.reset(Object.assign({"reqId":reqId},defaultVals,data));
@@ -258,12 +258,12 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         handleLockTabs(data);
         if (reset) history.push('/request/');
     },[methods]);
-    const handleSave = action => {
+    const handleSave = useCallback(action => {
         methods.setValue('action',action);
         // Skip validation if only saving; validation errors will still trigger handleError
         (action == 'save')?methods.handleSubmit(handleSubmit,handleError)():handleValidation();
-    }
-    const handleDelete = () => {
+    },[methods,handleValidation]);
+    const handleDelete = useCallback(() => {
         //setIsBlocking(false);
         toast.promise(new Promise((resolve,reject) => {
             deleteReq.mutateAsync().then(()=>resolve()).catch(e=>reject(e));
@@ -278,7 +278,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                 return data?.description||t('request.actions.delete.error')
             }}
         });
-    }
+    },[]);
     const handleSubmit = data => {
         setHasErrors(false);
         if (!data.action) return; // just validating the form, not saving
@@ -393,12 +393,12 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         }
     }
 
-    const handleLockTabs = d => {
+    const handleLockTabs = useCallback(d => {
         const posType = get(d,'posType.id');
         const reqType = get(d,'reqType.id');
         const effDate = d.effDate;
         setLockTabs(!(posType && reqType && effDate));
-    }
+    },[]);
 
     const canEdit = useMemo(()=>{
         if (isDraft && SUNY_ID == get(data,'CREATED_BY_SUNY_ID',SUNY_ID)) return true;
