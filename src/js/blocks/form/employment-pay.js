@@ -38,8 +38,6 @@ function ExistingEmploymentPayTable() {
     const handleEndDateBlur = (e,field) => {
         if (e.target.value == "") {
             setError(field.name,{type:'custom',message:'Existing Pay End Date is required'});
-            console.log(field.name);
-            console.log(errors);
         } else {
             clearErrors(field.name);
         }

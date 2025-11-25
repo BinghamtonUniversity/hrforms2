@@ -117,7 +117,6 @@ export default function ListArchiveTable() {
     }
 
     const handleSort = (column, sortDirection) => {
-        console.log(column?.id, sortDirection);
         setFilter({sortField:column?.id,sortDir:sortDirection});
         handleSearch();
     }

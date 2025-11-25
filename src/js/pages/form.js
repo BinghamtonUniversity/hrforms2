@@ -321,7 +321,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         setLockTabs(true);
         //TODO: switch? save, submit, appove, reject?
         if (action == 'validate') {
-            console.log('validate');
+            console.debug('Form Validated');
             setIsSaving(false);
             setIsBlocking(false);
             setLockTabs(false);
