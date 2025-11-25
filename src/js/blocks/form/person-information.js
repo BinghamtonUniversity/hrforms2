@@ -26,18 +26,18 @@ export default function PersonInfo() {
         return false;
     },[journalStatus, canEdit]);
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
-    }
+    },[setValue]);
 
-    const handleRehireRetireeChange = (e,field) => {
+    const handleRehireRetireeChange = useCallback((e,field) => {
         field.onChange(e);
         if (e.target.value == 'No') {
             ['retiredDate','retiredFrom'].forEach(f=>setValue(`${name}.${f}`,''));
         }
-    }
+    },[setValue]);
     useEffect(()=>{
         const field = document.querySelector(`#${activeNav} input:not([disabled])`);
         (canEdit&&field)&&field.focus({focusVisible:true});

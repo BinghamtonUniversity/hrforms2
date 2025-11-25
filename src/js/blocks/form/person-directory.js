@@ -71,14 +71,14 @@ function PersonDirectoryAddresses() {
         return !!get(watchAddress,fieldName);
     },[watchAddress]);
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const fieldName = field.name.split('.').slice(0,-1).join('.');
         const baseName = field.name.split('.').slice(0,-2).join('.');
         setValue(`${fieldName}.label`,e.target.selectedOptions[0].label);
         if (endsWith(fieldName,'.department')) setValue(`${baseName}.ADDRESS_1`,e.target.selectedOptions[0].label);
         if (endsWith(fieldName,'.building')) setValue(`${baseName}.ADDRESS_2`,e.target.selectedOptions[0].label);
-    }
+    },[setValue]);
 
     const defaultValues = {
         "ADDRESS_CODE": "",
@@ -95,31 +95,31 @@ function PersonDirectoryAddresses() {
         "createDate":new Date()
     }
 
-    const handleNew = () => {
+    const handleNew = useCallback(() => {
         if (fields.length > 2) return;
         append(defaultValues);
         setEditIndex(fields.length);
         setIsNew(true);
         setLockTabs(true);
-    }
-    const handleTypeChange = (e,field,index) => {
+    },[append,fields.length,setLockTabs]);
+    const handleTypeChange = useCallback((e,field,index) => {
         field.onChange(e);
         clearErrors(`${name}.${index}`);
-    }
-    const handleEdit = index => {
+    },[name,clearErrors]);
+    const handleEdit = useCallback(index => {
         setEditIndex(index);
         setEditValues(cloneDeep(getValues(`${name}.${index}`)));
         setIsNew(false); // can only edit existing
         setLockTabs(true);
-    }
-    const handleCancel = index => {
+    },[name,getValues,setLockTabs]);
+    const handleCancel = useCallback(index => {
         clearErrors(`${name}.${index}`);
         update(index,editValues);
         setEditValues(undefined);
         setEditIndex(undefined);
         setLockTabs(false);
-    }
-    const handleSave = index => {
+    },[name,clearErrors,editValues,update,setLockTabs]);
+    const handleSave = useCallback(index => {
         clearErrors(`${name}.${index}`);
         const arrayData = getValues(`${name}.${index}`);
         console.debug('Address Data:',arrayData);
@@ -144,19 +144,19 @@ function PersonDirectoryAddresses() {
             setIsNew(false);
             setLockTabs(false);
         }
-    }
-    const handleRemove = index => {
+    },[name,clearErrors,errors,getValues,setError,setLockTabs,testField]);
+    const handleRemove = useCallback(index => {
         clearErrors(`${name}.${index}`);
         remove(index);
         setEditIndex(undefined);
         setEditValues(undefined);
         setIsNew(false);
         setLockTabs(false);
-    }
-    const handleEscape = (e,index) => {
+    },[name,clearErrors,remove,setLockTabs]);
+    const handleEscape = useCallback((e,index) => {
         if (e.key == 'Escape' && editIndex != undefined) handleCancel(index);
         if (e.key == 'Escape' && isNew) handleRemove(index);
-    }
+    },[editIndex,isNew,handleCancel,handleRemove]);
 
     useEffect(()=>{
         const field = document.querySelector(`#${activeNav} input:not([disabled])`);
@@ -395,7 +395,7 @@ function PersonDirectoryPhone() {
         return phoneTypes.data.find(c=>c.id==watchPhone?.[index]?.PHONE_TYPE)?.edit;
     },[phoneTypes.data,watchPhone]);
 
-    const handlePhoneChange = (args,index,field) => {
+    const handlePhoneChange = useCallback((args,index,field) => {
         const [value,country,e,formattedValue] = args;
         field.onChange(e);
         setValue(`${name}.${index}.number`,value);
@@ -406,7 +406,7 @@ function PersonDirectoryPhone() {
         } else {
             setValue(`${name}.${index}.parsed`,'');
         }
-    }
+    },[name,setValue]);
 
     const defaultValues = {
         PHONE_TYPE:"",
@@ -416,31 +416,31 @@ function PersonDirectoryPhone() {
         createDate:new Date()
     };
 
-    const handleNew = () => {
+    const handleNew = useCallback(() => {
         if (fields.length > 2) return;
         append(defaultValues);
         setEditIndex(fields.length);
         setIsNew(true);
         setLockTabs(true);
-    }
-    const handleTypeChange = (e,field,index) => {
+    },[append,fields.length,setLockTabs]);
+    const handleTypeChange = useCallback((e,field,index) => {
         field.onChange(e);
         clearErrors(`${name}.${index}`);
-    }
-    const handleEdit = index => {
+    },[name,clearErrors]);
+    const handleEdit = useCallback(index => {
         setEditIndex(index);
         setEditValues(cloneDeep(getValues(`${name}.${index}`)));
         setIsNew(false); // can only edit existing
         setLockTabs(true);
-    }
-    const handleCancel = index => {
+    },[name,getValues,setLockTabs]);
+    const handleCancel = useCallback(index => {
         clearErrors(`${name}.${index}`);
         update(index,editValues);
         setEditValues(undefined);
         setEditIndex(undefined);
         setLockTabs(false);
-    }
-    const handleSave = index => {
+    },[name,clearErrors,editValues,update,setLockTabs]);
+    const handleSave = useCallback(index => {
         clearErrors(`${name}.${index}`);
         console.debug('Phone Number Data:',arrayData);
 
@@ -458,20 +458,20 @@ function PersonDirectoryPhone() {
             setIsNew(false);
             setLockTabs(false);
         }
-    }
-    const handleRemove = index => {
+    },[name,clearErrors,errors,getValues,setError,setLockTabs]);
+    const handleRemove = useCallback(index => {
         clearErrors(`${name}.${index}`);
         remove(index);
         setEditIndex(undefined);
         setEditValues(undefined);
         setIsNew(false);
         setLockTabs(false);
-    }
+    },[name,clearErrors,remove,setLockTabs]);
 
-    const handleEscape = (e,index) => {
+    const handleEscape = useCallback((e,index) => {
         if (e.key == 'Escape' && editIndex != undefined) handleCancel(index);
         if (e.key == 'Escape' && isNew) handleRemove(index);
-    }
+    },[editIndex,isNew,handleCancel,handleRemove]);
 
     useEffect(()=>{
         const field = document.querySelector(`#${activeNav} input:not([disabled])`);
@@ -611,31 +611,31 @@ function PersonDirectoryEmail() {
         "createDate":new Date()
     };
 
-    const handleNew = () => {
+    const handleNew = useCallback(() => {
         if (fields.length > 2) return;
         append(defaultValues);
         setEditIndex(fields.length);
         setIsNew(true);
         setLockTabs(true);
-    }
-    const handleTypeChange = (e,field,index) => {
+    },[append,fields.length,setLockTabs]);
+    const handleTypeChange = useCallback((e,field,index) => {
         field.onChange(e);
         clearErrors(`${name}.${index}`);
-    }
-    const handleEdit = index => {
+    },[name,clearErrors]);
+    const handleEdit = useCallback(index => {
         setEditIndex(index);
         setEditValues(cloneDeep(getValues(`${name}.${index}`)));
         setIsNew(false); // can only edit existing
         setLockTabs(true);
-    }
-    const handleCancel = index => {
+    },[name,getValues,setLockTabs]);
+    const handleCancel = useCallback(index => {
         clearErrors(`${name}.${index}`);
         update(index,editValues);
         setEditValues(undefined);
         setEditIndex(undefined);
         setLockTabs(false);
-    }
-    const handleSave = index => {
+    },[name,clearErrors,editValues,update,setLockTabs]);
+    const handleSave = useCallback(index => {
         clearErrors(`${name}.${index}`);
         const arrayData = getValues(`${name}.${index}`);
         console.debug('Email Address Data:',arrayData);
@@ -653,20 +653,20 @@ function PersonDirectoryEmail() {
             setIsNew(false);
             setLockTabs(false);
         }
-    }
-    const handleRemove = index => {
+    },[name,clearErrors,errors,getValues,setError,setLockTabs]);
+    const handleRemove = useCallback(index => {
         clearErrors(`${name}.${index}`);
         remove(index);
         setEditIndex(undefined);
         setEditValues(undefined);
         setIsNew(false);
         setLockTabs(false);
-    }
+    },[name,clearErrors,remove,setLockTabs]);
 
-    const handleEscape = (e,index) => {
+    const handleEscape = useCallback((e,index) => {
         if (e.key == 'Escape' && editIndex != undefined) handleCancel(index);
         if (e.key == 'Escape' && isNew) handleRemove(index);
-    }
+    },[editIndex,isNew,handleCancel,handleRemove]);
 
     useEffect(()=>{
         const field = document.querySelector(`#${activeNav} input:not([disabled])`);

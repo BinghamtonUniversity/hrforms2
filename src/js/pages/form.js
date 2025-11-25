@@ -294,7 +294,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         }
     }
 
-    const navigate = tab => {
+    const navigate = useCallback(tab => {
         // Change top level tab; e.g. Person, Employment, Commments, etc.
         //TODO: can we maintain last tab/sub-tab?  or should we use routing? so that it remembers when you switch
         const idx = tabList.findIndex(t=>t.value==tab);
@@ -303,14 +303,14 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         setTabsVisited(tabsVisited => Array.from(new Set([...tabsVisited,aNav||tab])));
         setActiveNav(aNav);
         setActiveTab(tab);
-    }
-    const navigate2 = nav => { 
+    },[tabList]);
+    const navigate2 = useCallback(nav => { 
         // Change sub-tab
         setTabsVisited(tabsVisited => Array.from(new Set([...tabsVisited,nav])));
         setActiveNav(nav);    
-    }
+    },[]);
 
-    const handleSubmit = (d,e) => {
+    const handleSubmit = d => {
         const data = d.hasOwnProperty('formId')?d:methods.getValues(); // make sure we have data
         setHasErrors(false);
         if (!data.action) return; // just validating the form, not saving
@@ -417,15 +417,15 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             console.error('Form Errors:',errors);
         }
     }
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
         console.debug('Closing Form');
         if (isNew || methods.formState.isDirty) {
             setShowCloseModal(true);
         } else {
             handleRedirect();
         }
-    }
-    const handleReset = () => {
+    },[isNew,methods.formState.isDirty]);
+    const handleReset = useCallback(() => {
         console.debug('Resetting Form');
         methods.clearErrors();
         methods.reset(defaultVals);
@@ -435,8 +435,8 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         setActiveTab('basic-info');
         setActiveNav('');
         if (reset) history.push('/form/');
-    }
-    const handleDelete = () => {
+    },[reset,methods,defaultVals]);
+    const handleDelete = useCallback(() => {
         if (isNew&&!isDraft) return;
         //setIsBlocking(false);
         toast.promise(new Promise((resolve,reject) => {
@@ -452,8 +452,8 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                 return data?.description||t('form.actions.delete.error')
             }}
         });
-    }
-    const handleNext = tablist => {
+    },[isNew,isDraft]);
+    const handleNext = useCallback(tablist => {
         const tabs = (tablist instanceof Array)?tablist:tabList;
         const aTabIdx = tabs.findIndex(t=>t.value==activeTab);
         const tabListLen = tabs.length;
@@ -473,8 +473,8 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         setTabsVisited(tabsVisited => Array.from(new Set([...tabsVisited,nextNav||nextTab])));
         setActiveTab(nextTab);
         setActiveNav(nextNav);    
-    }
-    const handleSave = action => {
+    },[tabList,activeTab,activeNav]);
+    const handleSave = useCallback(action => {
         methods.setValue('action',action);
         // Duplicate form check before submit.
         if (action=='submit') {
@@ -482,9 +482,9 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             return;
         }
         methods.handleSubmit(handleSubmit,handleError)();
-    }
+    },[methods]);
 
-    const handleCheck = (d,e) => {
+    const handleCheck = useCallback(d => {
         const data = d.hasOwnProperty('formId')?d:methods.getValues(); // make sure we have data
         const checkFields = {
             suny_id: data.person.information.SUNY_ID,
@@ -498,7 +498,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             (d?.count>0)?setShowDuplicatesModal(true):methods.handleSubmit(handleSubmit,handleError)();
         }).catch(e=>console.error(e));
 
-    }
+    },[methods]);
 
     const handleTabs = useCallback(tabs => {
         if (!tabs) {

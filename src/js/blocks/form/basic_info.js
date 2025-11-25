@@ -88,14 +88,14 @@ function PersonLookup({results}) {
 
     const queryclient = useQueryClient();
 
-    const resetLookup = () => {
+    const resetLookup = useCallback(() => {
         console.debug('resetLookup');
         clearErrors();
         queryclient.resetQueries(['personLookup']);
         reset();
         bNumberRef.current.focus();
-    }
-    const handleLookup = () => {
+    },[clearErrors,queryclient,reset]);
+    const handleLookup = useCallback(() => {
         console.debug('handleLookup');
         clearErrors();
         const lookup = getValues(['lookup.type','lookup.values']);
@@ -120,19 +120,19 @@ function PersonLookup({results}) {
             if (hasErrors) return;
         }
         results.refetch();
-    }
+    },[clearErrors,getValues,setError,results]);
 
-    const handleChange = (e,field) => {
+    const handleChange = useCallback((e,field) => {
         field.onChange(e);
         setFocus((e.target.value == 'lastNameDOB')?'lookup.values.lastName':'lookup.values.bNumber');
-    }
-    const handleKeyDown = e => e.key=='Escape' && resetLookup();
-    const handleLookupKeyDown = e => {
+    },[setFocus]);
+    const handleKeyDown = useCallback(e => e.key=='Escape' && resetLookup(),[resetLookup]);
+    const handleLookupKeyDown = useCallback(e => {
         if (e.key=='Enter') handleLookup(e);
         return true;
-    }
+    },[handleLookup]);
     
-    const handleFocus = e => {
+    const handleFocus = useCallback(e => {
         switch(e.target.name) {
             case "lookup.values.lastName":
             case "lookup.values.dob":
@@ -144,7 +144,7 @@ function PersonLookup({results}) {
                 setValue('lookup.values.lastName','');
                 setValue('lookup.values.dob','');
             }
-    }
+    },[setValue]);
 
     return (
         <article className="mt-3" onKeyDown={handleKeyDown}>
@@ -237,7 +237,7 @@ function LookupResults({data}) {
         setSelectedId((selectedId==row.id)?undefined:row.id);
     },[selectedId]);
 
-    const handleSelectedRowChange = args => {
+    const handleSelectedRowChange = useCallback(args => {
         const newRow = (args.selectedCount)?args.selectedRows[0]:{};
         if (selectedRow?.id === newRow?.id) return false;
         console.debug(`handleSelectedRowChange: ${selectedRow?.id} -> ${newRow.id}`);
@@ -249,12 +249,12 @@ function LookupResults({data}) {
         setValue('person.information.HR_PERSON_ID',newRow?.HR_PERSON_ID);
         setValue('person.information.SUNY_ID',newRow?.SUNY_ID);
         if (newRow.id == "0") setValue('person.demographics.birthDate',getValues('lookup.values.dob'));
-    }
+    },[selectedRow,setValue,getValues]);
 
-    const rowSelectCritera = row => {
+    const rowSelectCritera = useCallback(row => {
         if (infoComplete) return false;
         return row.id==selectedId;
-    }
+    },[selectedId,infoComplete]);
 
     const handleKeyDown = useCallback(e => { 
         if (e.key == 'ArrowDown' || e.key == 'ArrowUp') {
@@ -353,7 +353,7 @@ function PayrollDate({selectedId,selectedPayroll}) {
         select:d=>d.filter(p=>p.ACTIVE==1) // only show active payrolls
     });
 
-    const handleFieldChange = (e,field)=> {
+    const handleFieldChange = useCallback((e,field)=> {
         field.onChange(e);
         const values = [...watchPayrollDate];
         switch(field.name) {
@@ -377,7 +377,7 @@ function PayrollDate({selectedId,selectedPayroll}) {
             setValue('formActions',defaultFormActions);
             handleTabs(null);
         }
-    }
+    },[watchPayrollDate,payrollcodes.data,setValue,getValues,handleTabs]);
     useEffect(()=>{
         //TODO: can this be consolidated or moved to a function?
         if (!payrollcodes.data&&!infoComplete) {
@@ -665,7 +665,7 @@ function FormActionsFormCode({formCodes,description}) {
     const { journalStatus } = useHRFormContext();
     const ref = useRef();
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const code = formCodes.get(e.target.value); 
         const filteredCode = (!code)?defaultFormActions.formCode:Object.keys(code).filter(key=>!['ACTIONS'].includes(key)).reduce((obj,key)=>{
@@ -678,7 +678,7 @@ function FormActionsFormCode({formCodes,description}) {
         setValue('formActions.actionCode',defaultFormActions.actionCode);
         setValue('formActions.transactionCode',defaultFormActions.transactionCode);
         setValue('formActions.PR_REQUIRED',defaultFormActions.PR_REQUIRED);
-    }
+    },[formCodes,setValue]);
 
     useEffect(()=>{
         if (ref.current) {
@@ -712,7 +712,7 @@ function FormActionsActionCode({actionCodes,description,formCode,actionSize}) {
     const { control, setValue } = useFormContext();
     const { journalStatus } = useHRFormContext();
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const code = actionCodes.get(e.target.value); 
         const filteredCode = (!code)?defaultFormActions.actionCode:Object.keys(code).filter(key=>!['TRANACTIONS'].includes(key)).reduce((obj,key)=>{
@@ -724,7 +724,7 @@ function FormActionsActionCode({actionCodes,description,formCode,actionSize}) {
         setValue('formActions.actionCode',filteredCode);
         setValue('formActions.transactionCode',defaultFormActions.transactionCode);
         setValue('formActions.PR_REQUIRED',defaultFormActions.PR_REQUIRED);
-    }
+    },[actionCodes,setValue]);
     return (
         <Form.Group as={Row}>
             <Form.Label column md={2}>Action Code:</Form.Label>
@@ -753,14 +753,14 @@ function FormActionsTransactionCode({transactionCodes,description,formCode,actio
     const { control, setValue, formState: { errors } } = useFormContext();
     const { journalStatus } = useHRFormContext();
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const code = transactionCodes.get(e.target.value); 
         setValue('formActions.PAYTRANS_ID',"");
         setValue('formActions.ROUTE_BY',"");
         setValue('formActions.transactionCode',(!code)?defaultFormActions.transactionCode:code);
         setValue('formActions.PR_REQUIRED',defaultFormActions.PR_REQUIRED);
-    }
+    },[setValue,transactionCodes]);
     return (
         <Form.Group as={Row}>
             <Form.Label column md={2}>Transaction Code:</Form.Label>

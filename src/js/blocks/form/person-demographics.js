@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { HRFormContext, useHRFormContext } from "../../config/form";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
@@ -23,11 +23,11 @@ export default function PersonDemographics() {
     const gender = getListData('gender');
     const education = getListData('highestEducation');
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
-    }
+    },[setValue]);
     useEffect(()=>{
         const field = document.querySelector(`#${activeNav} input:not([disabled])`);
         (canEdit&&field)&&field.focus({focusVisible:true});
@@ -179,7 +179,7 @@ function PersonDemographicsMilitaryStatus() {
     const {getListData} = useListsQueries();
     const milstatus = getListData('militaryStatus');
 
-    const handleChange = (e,field) => {
+    const handleChange = useCallback((e,field) => {
         if (!milstatus.data) return;
         if (e.target.checked) {
             if (e.target.value == 'N') {
@@ -190,7 +190,7 @@ function PersonDemographicsMilitaryStatus() {
         } else {
             field.onChange(field.value.filter(v=>v[0]!==e.target.value));
         }
-    }
+    },[milstatus]);
     return (
         <HRFormContext.Consumer>
             {({canEdit}) => (
@@ -315,7 +315,7 @@ function PersonDemographicsVeteranDetails({watchVeteran}) {
     const {getListData} = useListsQueries();
     const vetstatus = getListData('protectedVeteranStatus');
 
-    const handleChange = (e,field) => {
+    const handleChange = useCallback((e,field) => {
         if (!vetstatus.data) return;
         if (e.target.checked) {
             if (e.target.value == 'N') {
@@ -326,7 +326,7 @@ function PersonDemographicsVeteranDetails({watchVeteran}) {
         } else {
             field.onChange(field.value.filter(v=>v[0]!==e.target.value));
         }
-    }
+    },[vetstatus]);
     return (
         <HRFormContext.Consumer>
             {({testHighlight,canEdit}) => (
