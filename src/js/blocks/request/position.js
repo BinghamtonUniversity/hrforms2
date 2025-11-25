@@ -13,10 +13,11 @@ export default function Position() {
     const { posTypes, canEdit } = useRequestContext();
     const [oldLineNum,setOldLineNum] = useState(getValues('lineNumber'));
 
-    const posType = useWatch({name:'posType.id',control:control})||'';
+    /*const posType = useWatch({name:'posType.id',control:control})||'';
     const isNewLine = useWatch({name:'newLine',control:control});
     const isMultiLine = useWatch({name:'multiLines',control:control});
-    const watchFTE = useWatch({name:'fte',control:control})||100;
+    const watchFTE = useWatch({name:'fte',control:control})||100;*/
+    const [posType,isNewLine,isMultiLine,watchFTE,watchApptStatus] = useWatch({name:['posType.id','newLine','multiLines','fte','apptStatus.id'],control:control});
 
     const { getListData } = useListsQueries();
     const paybasistypes = getListData('payBasisTypes',{enabled:!!posType,
@@ -295,14 +296,17 @@ export default function Position() {
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
-                <Form.Label column md={2}>Appointment Duration*:</Form.Label>
+                <Form.Label column md={2}>Appointment Duration{['TEMP','TERM'].includes(watchApptStatus)&&<span>*</span>}:</Form.Label>
                 <Col xs="auto">
                     <Controller
                         name="apptDuration"
                         defaultValue=""
                         rules={{
-                            min:{value:1,message:'Appointment Duration must greater than zero'},
-                            required:{value:true,message:'Appointment Duration is required'}
+                            validate: v => {
+                                if (!['TEMP','TERM'].includes(watchApptStatus)) return true;
+                                if (v=='') return 'Appointment Duration is required';
+                                return (v && parseInt(v)>0)?true:'Appointment Duration must be greater than zero';
+                            }
                         }}
                         control={control}
                         render={({field}) => <Form.Control {...field} type="number" min={1} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
@@ -323,14 +327,17 @@ export default function Position() {
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
-                <Form.Label column md={2}>Tentative End Date*:</Form.Label>
+                <Form.Label column md={2}>Tentative End Date{['TEMP','TERM'].includes(watchApptStatus)&&<span>*</span>}:</Form.Label>
                 <Col xs="auto">
                     <InputGroup>
                         <Controller
                             name="tentativeEndDate"
                             defaultValue=""
                             control={control}
-                            rules={{required:{value:true,message:'Tentative End Date is required'}}}
+                            rules={{validate: v => {
+                                if (!['TEMP','TERM'].includes(watchApptStatus)) return true;
+                                return (v)?true:'Tentative End Date is required';
+                            }}}
                             render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit} autoComplete="off"/>}
                         />
                         <InputGroup.Append>
