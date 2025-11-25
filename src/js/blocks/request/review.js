@@ -2,7 +2,7 @@ import React from "react";
 import { Row, Col } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { Icon } from '@iconify/react';
-import { AppButton, DateFormat } from "../components";
+import { AppButton, CurrencyFormat, DateFormat } from "../components";
 import { CommentsTable } from "./comments";
 import { useRequestContext } from "../../config/request"
 import useListsQueries from "../../queries/lists";
@@ -93,7 +93,7 @@ export default function Review() {
                     </>
                     }
                     <Col as="dt" sm={3} md={2} className="mb-0">Requested Salary:</Col>
-                    <Col as="dd" sm={9} md={4} className="mb-0">{formValues.minSalary} - {formValues.maxSalary}</Col>
+                    <Col as="dd" sm={9} md={4} className="mb-0"><CurrencyFormat>{formValues.minSalary}</CurrencyFormat> - <CurrencyFormat>{formValues.maxSalary}</CurrencyFormat></Col>
                     <Col as="dt" sm={3} md={2} className="mb-0">FTE:</Col>
                     <Col as="dd" sm={9} md={4} className="mb-0">{formValues.fte}</Col>
                     <Col as="dt" sm={3} md={2} className="mb-0">Pay Basis:</Col>
