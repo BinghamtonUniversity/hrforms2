@@ -1,4 +1,4 @@
-import React,{lazy, useEffect, useMemo, useState } from "react";
+import React,{lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Alert, Modal } from "react-bootstrap";
 import { useForm, FormProvider, useFormContext } from "react-hook-form";
@@ -251,13 +251,13 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
             handleRedirect();
         }
     }
-    const handleReset = () => {
+    const handleReset = useCallback(() => {
         methods.clearErrors();
         methods.reset(Object.assign({"reqId":reqId},defaultVals,data));
         setActiveTab('information');
         handleLockTabs(data);
         if (reset) history.push('/request/');
-    }
+    },[methods]);
     const handleSave = action => {
         methods.setValue('action',action);
         // Skip validation if only saving; validation errors will still trigger handleError

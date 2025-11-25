@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
@@ -21,28 +21,28 @@ export default function Information() {
     });
     const newfundingsource = getListData('newFundingSource');
 
-    const handlePosTypeChange = (field,e) => {
+    const handlePosTypeChange = useCallback((field,e) => {
         field.onChange(e);
         clearErrors();
         setValue('posType.title',posTypes[e.target.value].title);
-    }
-    const handleReqTypeChange = (field,e) => {
+    },[control]);
+    const handleReqTypeChange = useCallback((field,e) => {
         field.onChange(e);
         clearErrors();
         const rt = reqtypes.data.find(a=>a[0]==e.target.value);
         setValue('reqType.title',(rt)?rt[1]:'');
-    }
-    const handleNewFundingChange = (field,e) => {
+    },[control,reqtypes]);
+    const handleNewFundingChange = useCallback((field,e) => {
         field.onChange(e);
         const nfs = newfundingsource.data.find(a=>a[0]==e.target.value);
         setValue('newFunding.title',(nfs)?nfs[1]:'');
-    }
-    const handleBlur = (field,e) => {
+    },[control,newfundingsource]);
+    const handleBlur = useCallback((field,e) => {
         field.onBlur(e);
         if (e.target.value != getValues(`${field.name}[0].label`)) {
             setValue(`${field.name}.0`,{id:'new-id-0',label:e.target.value},{shouldValidate:true});
         }
-    }
+    },[control,getValues]);
     return (
         <>
             <Form.Group as={Row}>

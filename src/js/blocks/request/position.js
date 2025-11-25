@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import DatePicker from "react-datepicker";
@@ -26,31 +26,27 @@ export default function Position() {
         select:d=>d.filter(a=>posTypes[posType]?.apptTypes.includes(a[0])).sort()});
     const apptperiods = getListData('appointmentPeriods');
 
-    const handleFTEBlur = e => {
+    const handleFTEBlur = useCallback(e => {
         let v = parseInt(e.target.value);
         if (isNaN(v) || v<1) v=1;
         if (v>100) v=100;
         setValue('fte',v.toString());
-    }
-
-    const handleFTERangeChange = e => {
-        setValue('fte',e.target.value);
-    }
-    const handlePayBasisChange = (field,e) => {
+    },[control]);
+    const handlePayBasisChange = useCallback((field,e) => {
         field.onChange(e);
         const pb = paybasistypes.data.find(a=>a[0]==e.target.value);
         setValue('payBasis.title',(pb)?pb[1]:'');
-    }
-    const handleReqBudgetTitleChange = (field,e) => {
+    },[control,paybasistypes]);
+    const handleReqBudgetTitleChange = useCallback((field,e) => {
         field.onChange(e);
         const t = titles.data.find(a=>a[0]==e.target.value);
         setValue('reqBudgetTitle.title',(t)?t[1]:'');
-    }
-    const handleApptStatusChange = (field,e) => {
+    },[control,titles]);
+    const handleApptStatusChange = useCallback((field,e) => {
         field.onChange(e);
         const a = appttypes.data.find(a=>a[0]==e.target.value);
         setValue('apptStatus.title',(a)?a[1]:'');
-    }
+    },[control,appttypes]);
 
     useEffect(() => {
         if (isNewLine) {
@@ -190,7 +186,7 @@ export default function Position() {
                     <RequestFieldErrorMessage fieldName="fte"/>
                 </Col>
                 <Col sm={8} md={6} className="pt-2">
-                    <Form.Control type="range" name="fteRange" id="fteRange" min={1} max={100} value={watchFTE} onChange={handleFTERangeChange} disabled={!canEdit} list="markers"/>
+                    <Form.Control type="range" name="fteRange" id="fteRange" min={1} max={100} value={watchFTE} onChange={e=>setValue('fte',e.target.value)} disabled={!canEdit} list="markers"/>
                     <datalist id="markers" className="marker">
                         <option value="0">0%</option>
                         <option value="25">25%</option>

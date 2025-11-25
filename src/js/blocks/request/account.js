@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { Row, Col, Form } from "react-bootstrap";
 import { Controller, useWatch, useFormContext } from "react-hook-form";
 import { Loading } from "../components";
@@ -16,11 +16,11 @@ export default function Account() {
     const {getListData} = useListsQueries();
     const orgs = getListData('deptOrgs');
 
-    const handleOrgNameChange = (field,e) => {
+    const handleOrgNameChange = useCallback((field,e) => {
         field.onChange(e);
         const orgDesc = orgs.data.find(a=>a.DEPARTMENT_CODE==e.target.value)?.DEPARTMENT_DESC;
         setValue('orgName.title',(orgDesc)?orgDesc:'');
-    }
+    },[control,orgs]);
 
     return (
         <>
