@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, useReducer } from "react";
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/request";
 import { useWorkflowQueries } from "../../../../queries/hierarchy";
-import { find, set } from 'lodash';
+import { find } from 'lodash';
 import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Table } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
 import { toast } from "react-toastify";
@@ -307,7 +307,6 @@ function WorkflowForm() {
             setFilterText('');
         }
     }
-    const handleOnChange = e => setFilterText(e.target.value);
     useEffect(() => {
         const filtered = groups.filter(row =>{
             return Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
@@ -320,7 +319,7 @@ function WorkflowForm() {
             <Form.Row>
                 <Form.Group as={Col}>
                     <Form.Label>Filter Groups:</Form.Label>
-                    <Form.Control ref={ref} type="search" placeholder="filter available groups..." value={filterText} onChange={handleOnChange} onKeyDown={handleOnKeyDown}/>
+                    <Form.Control ref={ref} type="search" placeholder="filter available groups..." value={filterText} onChange={e=>setFilterText(e.target.value)} onKeyDown={handleOnKeyDown}/>
                 </Form.Group>
             </Form.Row>
 

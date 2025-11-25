@@ -264,8 +264,6 @@ function AddEditHierarchy(props) {
         availableGroups:[]
     }});
 
-    const navigate = tab => setActiveTab(tab);
-
     const findGroupsIntersection = useCallback(data =>{
         const assignedGroupsArray = data.assignedGroups.map(g=>g.GROUP_ID);
         const existingGroupsArray = hierarchy.filter(h=>h.POSITION_TYPE==data.posType&&h.HIERARCHY_ID!=data.hierarchyId).map(h=>h.WORKFLOW_GROUPS_ARRAY.map(g=>g.GROUP_ID)).flat();
@@ -387,7 +385,7 @@ function AddEditHierarchy(props) {
                                 </Alert>}
                             </Col>
                         </Row>
-                        <Tabs activeKey={activeTab} onSelect={navigate} id="form-hierarchy-tabs">
+                        <Tabs activeKey={activeTab} onSelect={tab=>setActiveTab(tab)} id="form-hierarchy-tabs">
                                 {tabs.map(t=>(
                                     <Tab key={t.id} eventKey={t.id} title={t.title} disabled={t.id=='hierarchy-groups'&&disableGroupsTab}>
                                         <Container className="mt-3" fluid>
@@ -517,7 +515,6 @@ function HierarchyGroups() {
             setFilterText('');
         }
     }
-    const handleOnChange = e => setFilterText(e.target.value);
     useEffect(() => {
         const filtered = getValues('availableGroups').filter(row =>{
             return Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase());
@@ -530,7 +527,7 @@ function HierarchyGroups() {
             <Form.Row>
                 <Form.Group as={Col}>
                     <Form.Label>Filter Groups:</Form.Label>
-                    <Form.Control ref={ref} type="search" placeholder="filter available groups..." value={filterText} onChange={handleOnChange} onKeyDown={handleOnKeyDown}/>
+                    <Form.Control ref={ref} type="search" placeholder="filter available groups..." value={filterText} onChange={e=>setFilterText(e.target.value)} onKeyDown={handleOnKeyDown}/>
                 </Form.Group>
             </Form.Row>
             <div className="drag-col-2">
