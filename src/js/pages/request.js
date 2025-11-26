@@ -168,6 +168,10 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     const [showDeleteModal,setShowDeleteModal] = useState(false);
     const [redirect,setRedirect] = useState('');
     const [showCloseModal,setShowCloseModal] = useState(false);
+    const [confirmModal,setConfirmModal] = useState({show:false,title:'',body:'',buttons:{
+        close: {title: 'Close', callback: () => setConfirmModal({show:false})},
+        confirm: {title: 'Continue', callback: () => setConfirmModal({show:false})}
+    }});
 
     const methods = useForm({
         mode:'onBlur',
@@ -230,15 +234,37 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
         if (!nextTab) return;
         navigate(nextTab);
     },[activeTab,navigate]);
-    const handleValidation = useCallback(() => {
+    const handleValidation = useCallback(action => {
+        // does this need to be here?
         const acct_total = methods.getValues('SUNYAccounts').reduce((pv,a)=>pv+=parseInt(a.pct)||0,0);
         if (acct_total != 100) {
             methods.setError('SUNYAccounts',{
                 type:'manual',
                 message:'SUNY Account total percentage must equal 100%'
             });
-        } else {
-            methods.clearErrors('SUNYAccounts');
+            return;
+        } 
+        methods.clearErrors('SUNYAccounts');
+        // Modal confirm before approve/reject
+        if (['approve','final','reject'].includes(action)) {
+            const strings = {
+                approve: {title:'Approve Request',action:'approve'},
+                final: {title:'Final Approve Request',action:'final approve'},
+                reject: {title:'Reject Request',action:'reject'}
+            }
+            setConfirmModal({
+                show:true,
+                title:`${strings[action].title}?`,
+                body:(<p>You are about to <strong>{strings[action].action}</strong> this request.  Do you wish to continue?</p>),
+                buttons:{
+                    close: {title: 'Close', callback: () => setConfirmModal({show:false})},
+                    confirm: {title: 'Continue', callback: () => {
+                        setConfirmModal({show:false});
+                        methods.handleSubmit(handleSubmit,handleError)();
+                    }}
+                }
+            });
+            return;
         }
         methods.handleSubmit(handleSubmit,handleError)();
     },[methods]);
@@ -261,7 +287,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
     const handleSave = useCallback(action => {
         methods.setValue('action',action);
         // Skip validation if only saving; validation errors will still trigger handleError
-        (action == 'save')?methods.handleSubmit(handleSubmit,handleError)():handleValidation();
+        (action == 'save')?handleSubmit(methods.getValues()):handleValidation(action);
     },[methods,handleValidation]);
     const handleDelete = useCallback(() => {
         //setIsBlocking(false);
@@ -501,6 +527,9 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                 <ModalConfirm show={showCloseModal} title="Close?" buttons={closeButtons}>
                     <p>Are you sure you want to close this request? {(isNew)?'Your request will not be saved':'Your changes will not be saved'}.</p>
                 </ModalConfirm>
+                <ModalConfirm show={confirmModal.show} icon="mdi:alert" title={confirmModal.title} buttons={confirmModal.buttons}>
+                    {confirmModal.body}
+                </ModalConfirm>                
             </RequestContext.Provider>
         </FormProvider>
     );

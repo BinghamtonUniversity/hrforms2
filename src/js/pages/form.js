@@ -5,7 +5,7 @@ import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
 import { Loading, AppButton, DateFormat, ModalConfirm } from "../blocks/components";
-import { get, set, has, zip, cloneDeep, merge, difference, defaultTo } from "lodash";
+import { get, set, has, zip, cloneDeep, merge, difference, defaultTo, reject } from "lodash";
 import useFormQueries from "../queries/forms";
 import { flattenObject } from "../utility";
 import { allTabs, fetchFormData, initFormValues, HRFormContext, validateForm, checkFields } from "../config/form";
@@ -213,6 +213,10 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const [dataLoadError,setDataLoadError] = useState(undefined);
     const [showDuplicatesModal,setShowDuplicatesModal] = useState(false);
     const [showCloseModal,setShowCloseModal] = useState(false);
+    const [confirmModal,setConfirmModal] = useState({show:false,title:'',body:'',buttons:{
+        close: {title: 'Close', callback: () => setConfirmModal({show:false})},
+        confirm: {title: 'Continue', callback: () => setConfirmModal({show:false})}
+    }});
 
     const defaultVals = merge({},initFormValues,{formId:formId});
     const methods = useForm({
@@ -479,6 +483,27 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
         // Duplicate form check before submit.
         if (action=='submit') {
             methods.handleSubmit(handleCheck,handleError)();
+            return;
+        }
+        // Modal confirm before approve/reject
+        if (['approve','final','reject'].includes(action)) {
+            const strings = {
+                approve: {title:'Approve Form',action:'approve'},
+                final: {title:'Final Approve Form',action:'final approve'},
+                reject: {title:'Reject Form',action:'reject'}
+            }
+            setConfirmModal({
+                show:true,
+                title:`${strings[action].title}?`,
+                body:(<p>You are about to <strong>{strings[action].action}</strong> this form.  Do you wish to continue?</p>),
+                buttons:{
+                    close: {title: 'Close', callback: () => setConfirmModal({show:false})},
+                    confirm: {title: 'Continue', callback: () => {
+                        setConfirmModal({show:false});
+                        methods.handleSubmit(handleSubmit,handleError)();
+                    }}
+                }
+            });
             return;
         }
         methods.handleSubmit(handleSubmit,handleError)();
@@ -775,6 +800,9 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                     </ModalConfirm>
                     <ModalConfirm show={showCloseModal} title="Close?" buttons={closeButtons}>
                         <p>Are you sure you want to close this form? {(isNew)?'Your form will not be saved':'Your changes will not be saved'}.</p>
+                    </ModalConfirm>
+                    <ModalConfirm show={confirmModal.show} icon="mdi:alert" title={confirmModal.title} buttons={confirmModal.buttons}>
+                        {confirmModal.body}
                     </ModalConfirm>
                 </HRFormContext.Provider>
             </FormProvider>
