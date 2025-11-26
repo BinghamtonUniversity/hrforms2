@@ -9,6 +9,7 @@ import { Icon } from "@iconify/react";
 import { cloneDeep, get } from "lodash";
 import useListsQueries from "../../queries/lists";
 import { FormFieldErrorMessage } from "../../pages/form";
+import { isAfter } from "date-fns";
 
 const name = 'employment.salary';
 
@@ -224,13 +225,16 @@ function AdditionalSalary({editing,setEditing}) {
     const handleSave = useCallback(index => {
         clearErrors(`${blockName}.${index}`);
         const arrayData = getValues(`${blockName}.${index}`);
-        setValue(`${blockName}.${index}.total`,calcTotal(index)); // here?
+        const total = parseFloat(arrayData.payments)*parseFloat(arrayData.amount);
+        arrayData.total = total.toFixed(2);
+        setValue(`${blockName}.${index}.total`,total);
         console.debug('Additional Salary Data:',arrayData);
-
+        
         /* Required fields */
         if (!arrayData.type.id) setError(`${blockName}.${index}.type.id`,{type:'manual',message:'Type is required'});
         if (!arrayData.startDate) setError(`${blockName}.${index}.startDate`,{type:'manual',message:'Start Date is required'});
         if (!arrayData.endDate) setError(`${blockName}.${index}.endDate`,{type:'manual',message:'End Date is required'});
+        if (!isAfter(arrayData.endDate,arrayData.startDate)) setError(`${blockName}.${index}.endDate`,{type:'manual',message:'End Date must be greater than Start Date'});
         if (!get(arrayData,'account.0.label','')) setError(`${blockName}.${index}.account`,{type:'manual',message:'Account is required'});
         if (!arrayData.payments) setError(`${blockName}.${index}.payments`,{type:'manual',message:'Pmts is required'});
         if (parseInt(arrayData.payments,10)<1) setError(`${blockName}.${index}.payments`,{type:'manual',message:'Pmts must be greater than zero'});
@@ -291,7 +295,7 @@ function AdditionalSalary({editing,setEditing}) {
         if (!watchFieldArray) return 0;
         const payments = get(watchFieldArray,`${index}.payments`,1);
         const amount = get(watchFieldArray,`${index}.amount`,0);
-        return parseFloat(payments)*parseFloat(amount);
+        return (parseFloat(payments)*parseFloat(amount)).toFixed(2);
     },[watchFieldArray]);
 
     useEffect(() => {
