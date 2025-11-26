@@ -232,7 +232,7 @@ class User extends HRForms2 {
     }
 
     function PUT() {
-        if ($this->POSTvars['refresh']) {
+        if (array_key_exists('refresh',$this->POSTvars)) {
             $data = $this->getSUNYHRUser();
             $this->updateUserInfo($data);
             $this->done();
