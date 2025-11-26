@@ -57,27 +57,27 @@ export default function PersonContacts() {
         "createDate":new Date()
     };
 
-    const handleNew = () => {
+    const handleNew = useCallback(() => {
         if (fields.length > 2) return;
         append(defaultValues);
         setEditIndex(fields.length);
         setIsNew(true);
         setLockTabs(true);
-    }
-    const handleEdit = index => {
+    },[append,fields.length,setLockTabs]);
+    const handleEdit = useCallback(index => {
         setEditIndex(index);
         setEditValues(cloneDeep(getValues(`${name}.${index}`)));
         setIsNew(false); // can only edit existing
         setLockTabs(true);
-    }
-    const handleCancel = index => {
+    },[getValues,setLockTabs]);
+    const handleCancel = useCallback(index => {
         clearErrors(`${name}.${index}`);
         update(index,editValues);
         setEditValues(undefined);
         setEditIndex(undefined);
         setLockTabs(false);
-    }
-    const handleSave = index => {
+    },[update,editValues,setLockTabs]);
+    const handleSave = useCallback(index => {
         clearErrors(`${name}.${index}`);
         const arrayData = getValues(`${name}.${index}`);
         console.debug(arrayData);
@@ -109,21 +109,21 @@ export default function PersonContacts() {
             setIsNew(false);
             setLockTabs(false);
         }
-    }
-    const handleRemove = index => {
+    },[getValues,setError,errors,watchContact,fields,setValue,setLockTabs]);
+    const handleRemove = useCallback(index => {
         clearErrors(`${name}.${index}`);
         remove(index);
         setEditIndex(undefined);
         setEditValues(undefined);
         setIsNew(false);
         setLockTabs(false);
-    }
+    },[remove,setLockTabs]);
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
-    }
+    },[setValue]);
 
     const checkPrimary = useCallback(() => {
         if (watchContact.length < 2) return false;
@@ -131,10 +131,10 @@ export default function PersonContacts() {
         return false;
     },[watchContact]);
 
-    const handleEscape = (e,index) => {
+    const handleEscape = useCallback((e,index) => {
         if (e.key == 'Escape' && editIndex != undefined) handleCancel(index);
         if (e.key == 'Escape' && isNew) handleRemove(index);
-    }
+    },[editIndex,isNew,handleCancel,handleRemove]);
 
     useEffect(()=>{
         const field = document.querySelector(`#${activeNav} input:not([disabled]):not([readonly])`);

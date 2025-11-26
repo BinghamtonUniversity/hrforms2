@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { Icon } from "@iconify/react";
@@ -24,7 +24,7 @@ export default function EmploymentSeparation() {
     const servicetypes = getListData('volunteerServiceTypes');
     const tenurestatus = getListData('tenureStatus',{enabled:subRoleId=='Instructor'});
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
@@ -34,7 +34,7 @@ export default function EmploymentSeparation() {
             setValue(`${name}.univOfficial`,[{id:'',label:''}]);
             setValue(`${name}.supervisor`,[{id:'',label:''}]);
         }
-    }
+    },[setValue]);
 
     useEffect(()=>(canEdit&&ref.current)&&ref.current.focus(),[activeNav]);
 

@@ -18,7 +18,7 @@ export default function EmploymentLeave() {
     const watchLeavePercent = useWatch({name:`${name}.leavePercent`,control:control})||0;
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
 
-    const handleLeavePct = (e,field) => {
+    const handleLeavePct = useCallback((e,field) => {
         switch(e.type) {
             case "change":
                 if (!!e.target.value && (parseInt(e.target.value,10) < 0 || parseInt(e.target.value,10) > 100)) return false;
@@ -28,17 +28,16 @@ export default function EmploymentLeave() {
                 if (!e.target.value) setValue(field.name,0);
                 break;
         }
-    }
-    const handleRangeChange = e => setValue(`${name}.leavePercent`,e.target.value);
+    },[setValue]);
 
     const { getListData } = useListsQueries();
     const justification = getListData('leaveJustification');
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
-    }
+    },[setValue]);
 
     const calcLeaveSalary = useCallback(()=>{
         const newSal = getValues(`${name}.origSalary`)*(1-(watchLeavePercent/100));
@@ -84,7 +83,7 @@ export default function EmploymentLeave() {
                                     />
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
-                                    <Form.Control type="range" name="leavePercentRange" id="leavePercentRange" min={0} max={100} value={watchLeavePercent} onChange={handleRangeChange} disabled={!canEdit} list="markers"/>
+                                    <Form.Control type="range" name="leavePercentRange" id="leavePercentRange" min={0} max={100} value={watchLeavePercent} onChange={e=>setValue(`${name}.leavePercent`,e.target.value)} disabled={!canEdit} list="markers"/>
                                     <datalist id="markers" className="marker">
                                         <option value="0">0%</option>
                                         <option value="25">25%</option>

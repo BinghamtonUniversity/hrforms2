@@ -123,7 +123,7 @@ function NewEmploymentPay() {
         created:new Date()
     };
 
-    const handleNew = () => {
+    const handleNew = useCallback(() => {
         if (fields.length > 2) return;
         append(defaultValues,{
             focusName:`${blockName}.${fields.length}.startDate`
@@ -131,16 +131,16 @@ function NewEmploymentPay() {
         setEditIndex(fields.length);
         setIsNew(true);
         setLockTabs(true);
-    }
-    const handleEdit = index => {
+    },[append,fields.length,setLockTabs,defaultValues,blockName]);
+    const handleEdit = useCallback(index => {
         setEditIndex(index);
         setEditValues(cloneDeep(getValues(`${blockName}.${index}`)));
         setMinDate(addDays(getValues(`${blockName}.${index}.startDate`),1));
         setMaxDate(subDays(getValues(`${blockName}.${index}.endDate`),1));
         setIsNew(false); // can only edit existing
         setLockTabs(true);
-    }
-    const handleCancel = index => {
+    },[getValues,blockName,setLockTabs]);
+    const handleCancel = useCallback(index => {
         clearErrors(`${blockName}.${index}`);
         update(index,editValues);
         setEditValues(undefined);
@@ -148,8 +148,8 @@ function NewEmploymentPay() {
         setMinDate(undefined);
         setMaxDate(undefined);
         setLockTabs(false);
-    }
-    const handleSave = index => {
+    },[clearErrors,update,editValues,blockName,setLockTabs]);
+    const handleSave = useCallback(index => {
         clearErrors(`${blockName}.${index}`);
         const arrayData = getValues(`${blockName}.${index}`);
         console.debug('New Pay Data:',arrayData);
@@ -175,8 +175,8 @@ function NewEmploymentPay() {
             setIsNew(false);
             setLockTabs(false);
         }
-    }
-    const handleRemove = index => {
+    },[clearErrors,getValues,setError,errors,blockName,setLockTabs]);
+    const handleRemove = useCallback(index => {
         remove(index);
         setMinDate(undefined);
         setMaxDate(undefined);
@@ -184,7 +184,7 @@ function NewEmploymentPay() {
         setEditValues(undefined);
         setIsNew(false);
         setLockTabs(false);
-    }
+    },[remove,setLockTabs]);
 
     const handleDateChange = useCallback((d,field) => {
         field.onChange(d);
@@ -192,11 +192,11 @@ function NewEmploymentPay() {
         if (field?.name.split('.').pop() == 'endDate') setMaxDate(subDays(d,1));
     },[setMinDate,setMaxDate,getValues]);
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
-    }
+    },[setValue]);
 
     return (
         <section className="mt-3">
@@ -344,12 +344,12 @@ function NewEmploymentPay() {
 function PaySupervisor({index,editIndex}) {
     const blockName = `${name}.newPay`;
     const { control, getValues, setValue, formState: { errors } } = useFormContext();
-    const handleBlur = (field,e) => {
+    const handleBlur = useCallback((field,e) => {
         field.onBlur(e);
         if (e.target.value != getValues(`${blockName}.${index}.supervisor[0].label`)) {
             setValue(`${blockName}.${index}.supervisor.0`,{id:`new-id-${index}`,label:e.target.value});
         }
-    }
+    },[getValues,blockName,index,setValue]);
     return (
         <Form.Group as={Row}>
             <Form.Label column xs={4} sm={3} md={2} xl={1}>Supervisor*:</Form.Label>

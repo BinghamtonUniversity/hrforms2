@@ -23,9 +23,12 @@ export default function EmploymentAppointment() {
         `${name}.NUMBER_OF_PAYMENTS`,
         'employment.position.APPOINTMENT_PERCENT'
     ],control:control,defaultValue:[0,1,100]});
-    const watchPayBasis = useWatch({name:'employment.position.positionDetails.PAY_BASIS',control:control});
-    const watchTransactionCode = useWatch({name:'formActions.transactionCode.TRANSACTION_CODE',control:control,defaultValue:''});
-    const watchPayrollCode = useWatch({name:'payroll.PAYROLL_CODE',control:control,defaultValue:''});
+    const [watchPayBasis,watchTransactionCode,watchPayrollCode] = useWatch({name:[
+        'employment.position.positionDetails.PAY_BASIS',
+        'formActions.transactionCode.TRANSACTION_CODE',
+        'payroll.PAYROLL_CODE'
+    ],control:control,defaultValue:['','','']});
+
     const rateAmountLabel = useMemo(() => {
         switch(watchPayBasis) {
             case "BIW":
@@ -38,7 +41,7 @@ export default function EmploymentAppointment() {
         }
     },[watchPayBasis]);
 
-    const handleNumPmtsField = (e,field) => {
+    const handleNumPmtsField = useCallback((e,field) => {
         switch (e.type) {
             case 'change':
                 if (parseInt(e.target.value,10) < 1) return false;
@@ -50,7 +53,7 @@ export default function EmploymentAppointment() {
             default:
                 break;
         }
-    }
+    },[setValue]);
 
     useEffect(() => {
         if (['BIW', 'FEE', 'HRY'].includes(watchPayBasis)) {
@@ -195,21 +198,21 @@ function AdditionalSalary({editing,setEditing}) {
         created:new Date()
     };
 
-    const handleNew = () => {
+    const handleNew = useCallback(() => {
         append(defaultValues);
         setEditIndex(fields.length);
         setIsNew(true);
         setLockTabs(true);
         setEditing('a');
-    }
-    const handleEdit = index => {
+    },[append,fields.length,setLockTabs,setEditing]);
+    const handleEdit = useCallback(index => {
         setEditIndex(index);
         setEditValues(cloneDeep(getValues(`${blockName}.${index}`)));
         setIsNew(false); // can only edit existing
         setLockTabs(true);
         setEditing('a');
-    }
-    const handleCancel = index => {
+    },[getValues,blockName,setLockTabs,setEditing]);
+    const handleCancel = useCallback(index => {
         //const checkFields = Object.keys(fields[index]).map(f=>`${blockName}.${index}.${f}`);
         clearErrors(`${blockName}.${index}`);
         update(index,editValues);
@@ -217,8 +220,8 @@ function AdditionalSalary({editing,setEditing}) {
         setEditIndex(undefined);
         setLockTabs(false);
         setEditing(undefined);
-    }
-    const handleSave = index => {
+    },[clearErrors,update,blockName,editValues,setLockTabs,setEditing]);
+    const handleSave = useCallback(index => {
         clearErrors(`${blockName}.${index}`);
         const arrayData = getValues(`${blockName}.${index}`);
         setValue(`${blockName}.${index}.total`,calcTotal(index)); // here?
@@ -243,24 +246,24 @@ function AdditionalSalary({editing,setEditing}) {
             setLockTabs(false);
             setEditing(undefined);
         }
-    }
+    },[getValues,calcTotal,clearErrors,setError,errors,blockName,setValue,setLockTabs,setEditing]);
 
-    const handleRemove = index => {
+    const handleRemove = useCallback(index => {
         remove(index);
         setEditIndex(undefined);
         setEditValues(undefined);
         setIsNew(false);
         setLockTabs(false);
         setEditing(undefined);
-    }
+    },[remove,setLockTabs,setEditing]);
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
-    }
+    },[setValue]);
 
-    const handlePmtsField = (e,field) => {
+    const handlePmtsField = useCallback((e,field) => {
         switch (e.type) {
             case 'change':
                 if (parseInt(e.target.value,10) < 1) return false;
@@ -270,9 +273,9 @@ function AdditionalSalary({editing,setEditing}) {
                 if (!e.target.value) setValue(field.name,1);
                 break;
         }
-    }
+    },[setValue]);
 
-    const handleAmount = (e,field) => {
+    const handleAmount = useCallback((e,field) => {
         switch (e.type) {
             case 'change':
                 if (parseInt(e.target.value,10) < 0) return false;
@@ -282,7 +285,7 @@ function AdditionalSalary({editing,setEditing}) {
                 if (!e.target.value) setValue(field.name,0);
                 break;
         }        
-    }
+    },[setValue]);
 
     const calcTotal = useCallback(index=>{
         if (!watchFieldArray) return 0;
@@ -505,21 +508,21 @@ function SplitAssignments({className,editing,setEditing}) {
         "commitmentEndDate":"",
         "createDate":new Date()
     }
-    const handleNew = () => {
+    const handleNew = useCallback(() => {
         append(defaultValues);
         setEditIndex(fields.length);
         setIsNew(true);
         setLockTabs(true);
         setEditing('s');
-    }
-    const handleEdit = index => {
+    },[append,fields.length,setLockTabs,setEditing]);
+    const handleEdit = useCallback(index => {
         setEditIndex(index);
         setEditValues(cloneDeep(getValues(`${blockName}.${index}`)));
         setIsNew(false); // can only edit existing
         setLockTabs(true);
         setEditing('s');
-    }
-    const handleCancel = index => {
+    },[getValues,blockName,setLockTabs,setEditing]);
+    const handleCancel = useCallback(index => {
         clearErrors(`${blockName}.${index}`);
         update(index,editValues);
         setEditValues(undefined);
@@ -527,8 +530,8 @@ function SplitAssignments({className,editing,setEditing}) {
         setChangePrimary(false);
         setLockTabs(false);
         setEditing(undefined);
-    }
-    const handleSave = index => {
+    },[clearErrors,update,blockName,editValues,setLockTabs,setEditing]);
+    const handleSave = useCallback(index => {
         clearErrors(`${blockName}.${index}`);
         const arrayData = getValues(`${blockName}.${index}`);
         console.debug('Split Assignment Data:',arrayData);
@@ -556,8 +559,8 @@ function SplitAssignments({className,editing,setEditing}) {
             setLockTabs(false);
             setEditing(undefined);
         }
-    }
-    const handleRemove = index => {
+    },[getValues,clearErrors,setError,errors,blockName,changePrimary,watchFieldArray,setValue,setLockTabs,setEditing]);
+    const handleRemove = useCallback(index => {
         remove(index);
         setEditIndex(undefined);
         setEditValues(undefined);
@@ -565,22 +568,22 @@ function SplitAssignments({className,editing,setEditing}) {
         setChangePrimary(false);
         setLockTabs(false);
         setEditing(undefined);
-    }
+    },[remove,setLockTabs,setEditing]);
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
-    }
+    },[setValue]);
 
-    const handleBlur = (field,e) => {
+    const handleBlur = useCallback((field,e) => {
         field.onBlur(e);
         const baseName = field.name.split('.').slice(0,-1).join('.');
         if (e.target.value != getValues(`${baseName}.0.label`)) {
             setValue(`${baseName}.0`,{id:'new-id-0',label:e.target.value});
         }
-    }
-    const handlePrimaryChange = (e,field) => {
+    },[getValues,setValue]);
+    const handlePrimaryChange = useCallback((e,field) => {
         if (e.target.checked) {
             // check for other primary; if any then warn. Set others to N on save
             const filter = watchFieldArray.filter((p,i)=>editIndex!=i&&p.COMMITMENT_PRIMARY_FLAG=='Y');
@@ -590,9 +593,9 @@ function SplitAssignments({className,editing,setEditing}) {
             field.onChange('N');
             setChangePrimary(false);
         }
-    }
+    },[watchFieldArray,editIndex]);
 
-    const handleWorkPct = (e,field) => {
+    const handleWorkPct = useCallback((e,field) => {
         switch(e.type) {
             case 'change':
                 if (e.target.value != "" && (parseInt(e.target.value,10)<0 || parseInt(e.target.value,10)>100)) return false;
@@ -601,7 +604,7 @@ function SplitAssignments({className,editing,setEditing}) {
             case 'blur':
                 if (!e.target.value) setValue(field.name,0);
         }
-    }
+    },[setValue]);
 
     useEffect(()=>{
         if (watchFieldArray.length==0) return;

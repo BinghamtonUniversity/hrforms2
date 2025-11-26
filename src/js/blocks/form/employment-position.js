@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Row, Col, Form, Alert, InputGroup, OverlayTrigger, Popover, Table } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { AppButton, Loading } from "../components";
@@ -37,30 +37,30 @@ function EmploymentPositionSearch({setShowResults}) {
     const { canEdit, activeNav } = useHRFormContext();
 
     const handleSearch = () => setShowResults(true);
-    const handleClear = () => {
+    const handleClear = useCallback(() => {
         setShowResults(false);
         setValue(`${name}.LINE_ITEM_NUMBER`,'');
         setValue(`${name}.positionDetails`,{});
-    }
-    const handleKeyDown = e => {
+    },[setValue,setShowResults]);
+    const handleKeyDown = useCallback(e => {
         if (e.key=='Enter') {
             e.preventDefault();
             handleSearch();
         } else {
             setShowResults(false);
         }
-    }
-    const handleChange = (field,e) => {
+    },[handleSearch,setShowResults]);
+    const handleChange = useCallback((field,e) => {
         if (e.target.value=='') setShowResults(false);
         field.onChange(e);
-    }
+    },[setShowResults]);
 
-    const handleTableClick = e => {
+    const handleTableClick = useCallback(e => {
         if (e.target.nodeName != 'TD') return;
         const lineNum = e.target.parentElement.children[0].textContent;
         setValue(`${name}.LINE_ITEM_NUMBER`,lineNum);
         handleSearch();
-    }
+    },[setValue,handleSearch]);
 
     useEffect(() => (canEdit&&ref.current)&&ref.current.focus(),[activeNav]);
    
@@ -202,7 +202,7 @@ function EmploymentAppointmentInformation() {
     const maxPercent = useMemo(()=>defaultTo(getValues(`${name}.positionDetails.POSITION_PERCENT`),100),[]);
     const getMinDate = useMemo(()=>(!watchEffectiveDate)?addDays(new Date(),-1):addDays(watchEffectiveDate,1),[watchEffectiveDate]);
 
-    const handleAppointmentPercent = (e,field) => {
+    const handleAppointmentPercent = useCallback((e,field) => {
         //const max = maxPercent || 100;
         switch (e.type) {
             case "change":
@@ -212,9 +212,7 @@ function EmploymentAppointmentInformation() {
             case "blur":
                 if (!e.target.value) setValue(field.name,max);
         }
-    }
-    const handleRangeChange = e => setValue(`${name}.APPOINTMENT_PERCENT`,e.target.value);
-
+    },[maxPercent,setValue]);
 
     return (
         <section className="mt-3">
@@ -235,7 +233,7 @@ function EmploymentAppointmentInformation() {
                     />
                 </Col>
                 <Col sm={8} md={6} className="pt-2">
-                    <Form.Control type="range" name="apptPercentRange" id="apptPercentRange" min={1} max={maxPercent} value={watchApptPercent} onChange={handleRangeChange} disabled={!canEdit} list="markers"/>
+                    <Form.Control type="range" name="apptPercentRange" id="apptPercentRange" min={1} max={maxPercent} value={watchApptPercent} onChange={e=>setValue(`${name}.APPOINTMENT_PERCENT`,e.target.value)} disabled={!canEdit} list="markers"/>
                     <datalist id="markers" className="marker">
                         <option value="1">1%</option>
                         {[.25,.5,.75].map(r => {
@@ -318,11 +316,11 @@ function AppointmentType() {
     const { getListData } = useListsQueries();
     const appttypes = getListData('appointmentTypes');
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
-    }
+    },[setValue]);
 
     return (
         <Form.Group as={Row}>
@@ -360,11 +358,11 @@ function BenefitsFlag() {
         select:d=>(getValues('payroll.PAYROLL_CODE')!='28029')?d:d.filter(b=>(b[0]=='T'))
     });
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
-    }
+    },[setValue]);
 
     return (
         <Form.Group as={Row}>
@@ -395,11 +393,11 @@ function CheckSortCode() {
     const { getListData } = useListsQueries();
     const checksortcodes = getListData('checkSortCodes');
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
-    }
+    },[setValue]);
 
     return (
         <Form.Group as={Row}>
@@ -433,11 +431,11 @@ function PositionJustification() {
     const { getListData } = useListsQueries();
     const positionjustification = getListData('positionJustification');
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
-    }
+    },[setValue]);
 
     return (
         <Form.Group as={Row}>

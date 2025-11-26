@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { HRFormContext, useHRFormContext } from "../../config/form";
@@ -16,22 +16,22 @@ export default function EmploymentAppointment() {
 
     const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
     const watchPayroll = useWatch({name:['payroll.PAYROLL_CODE','selectedRow.PAYROLL_AGENCY_CODE'],control:control});
-    const watchFaculty = useWatch({name:`${baseName}.DERIVED_FAC_TYPE`,control:control});
-    const watchAdjunct = useWatch({name:`${baseName}.isAdjunct`,control:control});
-    const watchTermDuration = useWatch({name:`${baseName}.TERM_DURATION`,control:control,defaultValue:"1"});
-    const watchFields = useWatch({name:[
+    const [watchFaculty,watchAdjunct,watchTermDuration,...watchFields] = useWatch({name:[
+        `${baseName}.DERIVED_FAC_TYPE`,
+        `${baseName}.isAdjunct`,
+        `${baseName}.TERM_DURATION`,
         'payroll.PAYROLL_CODE',
         'employment.position.APPOINTMENT_TYPE.id',
         `${baseName}.DERIVED_FAC_TYPE`,
         `${baseName}.TENURE_STATUS.id`,
-    ],contorl:control});
+    ],control:control,defaultValue:["1","N","1"]});
 
-    const handleRangeChange = e => {
+    const handleRangeChange = useCallback(e => {
         const value = (parseInt(e.target.value,10)<=5)?parseInt(e.target.value,10):5;
         setValue(`${baseName}.TERM_DURATION`,value);
-    }
+    },[setValue]);
 
-    const handleTermDuration = (e,field) => {
+    const handleTermDuration = useCallback((e,field) => {
         switch(e.type) {
             case "change":
                 if (e.target.value != "" && (e.target.value < 1 || e.target.value > 5)) return false;
@@ -40,16 +40,16 @@ export default function EmploymentAppointment() {
             case "blur":
                 if (!e.target.value) setValue(field.name,1);
         }
-    }
+    },[setValue]);
 
     const { getListData } = useListsQueries();
     const tenure = getListData('tenureStatus');
 
-    const handleSelectChange = (e,field) => {
+    const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
-    }
+    },[setValue]);
     const displayTermDuration = useMemo(() => {
         if (watchFields[0] == '28020'&&['TEMP','TERM'].includes(watchFields[1])) {
             if (watchFields[2]=='Y'&&['R','N'].includes(watchFields[3])) return true;
@@ -253,12 +253,12 @@ export default function EmploymentAppointment() {
 function AppointmentSupervisor() {
     const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
     const { canEdit } = useHRFormContext();
-    const handleBlur = (field,e) => {
+    const handleBlur = useCallback((field,e) => {
         field.onBlur(e);
         if (e.target.value != getValues(`${baseName}.supervisor[0].label`)) {
             setValue(`${baseName}.supervisor.0`,{id:'new-id-0',label:e.target.value});
         }
-    }
+    },[getValues,setValue]);
     return (
         <Form.Group as={Row}>
             <Form.Label column md={2}>Supervisor*:</Form.Label>
@@ -288,15 +288,13 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
     const { control, setValue, formState: { defaultValues, errors } } = useFormContext();
     const watchCourses = useWatch({name:[`${name}.fallCourses`,`${name}.springCourses`,],control:control});
 
-    const handleCountChange = (e,field) => {
+    const handleCountChange = useCallback((e,field) => {
         if (parseInt(e.target.value,10) < 0 || parseInt(e.target.value,10) > maxCourses) return false;
         field.onChange(e);
-    }
-    const handleCountBlur = (e,field) => {
+    },[]);
+    const handleCountBlur = useCallback((e,field) => {
         if (!e.target.value) setValue(field.name,'0');
-    }
-
-    const handleRangeChange = (e,fieldName) => setValue(fieldName,e.target.value);
+    },[]);
 
     return (
         <HRFormContext.Consumer>
@@ -322,7 +320,7 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                                     <FormFieldErrorMessage fieldName={`${name}.${c.id}.count`}/>
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
-                                    <Form.Control type="range" name={`${c.id}Range`} id={`${c.id}Range`} min={0} max={maxCourses} value={watchCourses[i].count} onChange={e=>handleRangeChange(e,`${name}.${c.id}.count`)} disabled={!canEdit} list={`markers-${c.id}`}/>
+                                    <Form.Control type="range" name={`${c.id}Range`} id={`${c.id}Range`} min={0} max={maxCourses} value={watchCourses[i].count} onChange={e=>setValue(`${name}.${c.id}.count`,e.target.value)} disabled={!canEdit} list={`markers-${c.id}`}/>
                                     <datalist id={`markers-${c.id}`} className="marker" style={{padding:"0 0.2rem"}}>
                                         <option value="0">0</option>
                                         <option value="1">1</option>
