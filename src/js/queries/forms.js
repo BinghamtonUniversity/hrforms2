@@ -63,7 +63,7 @@ export default function useFormQueries(FORM_ID) {
         options.select = data => {
             if (!data) return;
             data.map(d => {
-                d.effDate = (d?.EFFDATE)?new Date(d.EFFDATE):"";
+                d.effDate = (d?.EFFDATE)?new Date(d.EFFDATE):new Date(0);
                 d.effDateFmt = format(d.effDate,'P');
                 d.sortName = [[d.LEGAL_LAST_NAME,d.FIRST_NAME].join(', '),d.LEGAL_MIDDLE_NAME].join(' ');
                 d.createdDate = (d?.UNIX_TS)?new Date(d.UNIX_TS*1000):new Date(d.CREATED_DATE);
@@ -93,7 +93,7 @@ export default function useFormQueries(FORM_ID) {
         options.select = data => {
             if (!data.info.total_rows) return;
             data.results.map(d => {
-                d.effDate = (d?.EFFDATE)?new Date(d.EFFDATE):"";
+                d.effDate = (d?.EFFDATE)?new Date(d.EFFDATE):new Date(0);
                 d.effDateFmt = format(d.effDate,'P');
                 d.sortName = [[d.LEGAL_LAST_NAME,d.FIRST_NAME].join(', '),d.LEGAL_MIDDLE_NAME].join(' ');
                 d.createdDate = (d?.UNIX_TS)?new Date(d.UNIX_TS*1000):new Date(d.CREATED_DATE);
