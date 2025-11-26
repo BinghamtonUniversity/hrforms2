@@ -141,6 +141,8 @@ class ArchiveList extends HRForms2 {
                     r.request_data.reqBudgetTitle.title, 
                     nvl(r.created_by.ALIAS_FIRST_NAME,r.created_by.LEGAL_FIRST_NAME) as FIRST_NAME, 
                     r.created_by.LEGAL_LAST_NAME, 
+                    to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
+                    r.request_data.WORKFLOW_ID,
                     j.status, j.sequence, js.journal_groups as groups, js.journal_status,
                     to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
                     from hrforms2_requests_archive r,
@@ -280,7 +282,7 @@ class ArchiveList extends HRForms2 {
                     nvl(f.created_by.ALIAS_FIRST_NAME,f.created_by.LEGAL_FIRST_NAME) as created_by_first_name, 
                     f.created_by.LEGAL_LAST_NAME as created_by_legal_last_name,
                     to_char(f.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
-                    f.form_data.effDate,
+                    f.form_data.effDate, f.form_data.WORKFLOW_ID,
                     nvl(f.form_data.person.information.ALIAS_FIRST_NAME,f.form_data.person.information.LEGAL_FIRST_NAME) as FIRST_NAME,
                     f.form_data.person.information.LEGAL_MIDDLE_NAME as LEGAL_MIDDLE_NAME,
                     f.form_data.person.information.LEGAL_LAST_NAME as LEGAL_LAST_NAME,

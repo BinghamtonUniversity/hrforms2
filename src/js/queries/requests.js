@@ -79,6 +79,19 @@ export default function useRequestQueries(REQUEST_ID) {
             filteredParams['endDate'] = format(filteredParams.endDate,'dd-MMM-yyyy');
         }
         const options = args[0]?.options||args[1]||{};
+        if(options.select) options.select2 = options.select;
+        options.select = data => {
+            if (!data.info.total_rows) return;
+            data.results.map(d => {
+                d.createdDate = (d?.UNIX_TS)?new Date(d.UNIX_TS*1000):new Date(d.CREATED_DATE);
+                d.createdDateFmt = format(d.createdDate,'Pp');
+                const fName = (d?.ALIAS_FIRST_NAME)?d.ALIAS_FIRST_NAME:(d?.LEGAL_FIRST_NAME)?d.LEGAL_FIRST_NAME:'';
+                d.fullName = (fName)?`${fName} ${d.LEGAL_LAST_NAME}`:'';
+                d.sortName = (fName)?`${d.LEGAL_LAST_NAME}, ${fName}`:'';
+                d.id = d.REQUEST_ID;
+            });
+            return (options.select2)?options.select2(data):data;
+        }
         const urlParams = new URLSearchParams(filteredParams).toString();
         return useQuery(['archivelist','request',{...filteredParams}],q(`archivelist/request?${urlParams}`),options);
     }
