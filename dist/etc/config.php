@@ -6,9 +6,9 @@
 include('db.php');
 include('email.php');
 
-define('VERSION','2.0.0');
-define('REVISION','LOCAL-20250819');
-define('BUILD_TIME',1755618128);
+define('VERSION','2.0.1');
+define('REVISION','LOCAL-20251126');
+define('BUILD_TIME',1764169575);
 define('TITLE','HR Forms 2');
 define('API_PATH','/api/api.php/'); //trailing slash required
 

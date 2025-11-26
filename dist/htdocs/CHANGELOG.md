@@ -1,4 +1,22 @@
 # Changelog
+## Version 2.0.1(rev-20251126)
+  * Switching versioning and revisioning from "DEV" into a "Production" mode.
+  * Added Instance to title and nav header when not in PROD.
+  * Changed background color of navbar and footer when not in PROD.
+  * Fix to "No Data" return for news.php to include MODIFIED_DATE and MODIFIED_BY fields.
+  * Fixed formatting for drag and drop items when text is longer than the box; text is now clipped.
+  * Fixed 403 Permission Denied error on GET workflow for non-admin users.
+  * Fixed "Tenure Status is required" error when Faculty flag is "No"; error due to null value being passed instead of "N".
+  * Fixed date sort order in workflow.php to sort descending (newest -> oldest); code was returning wrong record in some cases.
+  * Fixed duplicate record return issue when updating history by setting history date back one second from sysdate.
+  * Applied currency formatting to Request Review field Requested Salary.
+  * Make Requests Position Appt Duration and Tentative End Date required for TEMP/TERM status only.
+  * Changed PR Required checkbox on Forms to an input for the PR Number and display on review tab.
+  * Added confirmation modal for Approve, Reject, and Final Approval to Forms and Requests.
+  * Fixed error in user.php checking for existence of "refresh" key on PUT call.
+  * Code cleanup and optimization via useCallback() function.
+
+
 ## Version 2.0.0(DEV-20251117)
   * Added Forms Employment|Appointment Adjunct field to Review page.
   * Changed Forms Employment|Appointment Faculty Details section on Review page to only show when Adjunct is "Yes"; matches logic on tab.
