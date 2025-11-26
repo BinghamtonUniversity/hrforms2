@@ -15,6 +15,11 @@
   * Added confirmation modal for Approve, Reject, and Final Approval to Forms and Requests.
   * Fixed error in user.php checking for existence of "refresh" key on PUT call.
   * Code cleanup and optimization via useCallback() function.
+  * Add error handling to Form submission if the Primary Group is not assigned for the department.
+  * Fixed missing data needed for row expander on Archive lists.
+  * Fixed Forms Additional Salary block showing total as $0.00 on Review tab.
+  * Added check to make sure Forms Additional Salary End Date is after Start Date.
+  * Fixed error if Effective Date is null in Form List data; date set to 12/13/1969.
 
 
 ## Version 2.0.0(DEV-20251117)
