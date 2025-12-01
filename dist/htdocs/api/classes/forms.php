@@ -116,7 +116,7 @@ class Forms extends HRForms2 {
             $journal = (new journal(array('form',$this->req[0]),false))->returnData;
             $submitter = array_shift($journal);
             $last_journal = (count($journal) == 0)?$submitter:array_pop($journal);
-            unset($last_journal['COMMENTS']); // We don't need commments
+            //unset($last_journal['COMMENTS']); // We don't need commments
             if (!$this->sessionData['isViewer']) {
                 // Validation: If not isViewer, only submitter and groups in workflow can view
                 $usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
@@ -150,7 +150,7 @@ class Forms extends HRForms2 {
                 $formData->formActions->TABS = json_decode($row['TABS']);
             }
             $formData->lastJournal = $last_journal;
-            $formData->comment = ""; // clear formData comment field
+            $formData->comment = $last_journal['COMMENTS'];
         }
         $this->returnData = $formData;
         if ($this->retJSON) $this->toJSON($this->returnData);
@@ -583,7 +583,6 @@ class Forms extends HRForms2 {
         // Format: /{action}/{form_id}
         // When draft: /save/draft/51645/123456789
         // When form: /save/48
-        // When approval: /approve/48
         if ($this->req[1] == 'draft') {
             $qry = "update HRFORMS2_FORMS_DRAFTS set data = EMPTY_CLOB() 
                 where SUNY_ID = :suny_id and unix_ts = :unix_ts
@@ -599,23 +598,55 @@ class Forms extends HRForms2 {
             oci_commit($this->db);
             if ($this->retJSON) $this->done();
         } else {
-            //TODO: do validation
-            $qry = "update HRFORMS2_FORMS set form_data = EMPTY_CLOB() 
+            // Validations
+            // Viewers cannot update forms
+            if ($this->sessionData['isViewer']) $this->raiseError(E_FORBIDDEN);
+            // verify path and formid match
+            if ($this->req[1] != $this->POSTvars['formId']) $this->raiseError(E_BAD_REQUEST);
+            // check to make sure user is permitted to edit/save; are they the submitter or in approval groups
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+            $journal = (new journal(array('form',$this->POSTvars['formId']),false))->returnData;
+            $submitter = array_shift($journal);
+            $last_journal = (count($journal) == 0)?$submitter:array_pop($journal);
+            if (!$this->sessionData['isViewer']) {
+                // Validation: If not isViewer, only submitter and groups in workflow can view
+                $usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
+                $workflow = (new workflow(array('form',$last_journal['WORKFLOW_ID']),false))->returnData[0];
+                if (!array_intersect(explode(",",$workflow['GROUPS']),array_column($usergroups,'GROUP_ID')) && 
+                    !($submitter['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID'])) {
+                        $this->raiseError(403);
+                }
+            }
+
+            $qry = "update HRFORMS2_FORMS set form_data = ".((INSTANCE=="LOCAL")?"'{}'":"EMPTY_CLOB()")."
                 where FORM_ID = :form_id
                 returning FORM_DATA into :data";
             $stmt = oci_parse($this->db,$qry);
             $clob = oci_new_descriptor($this->db, OCI_D_LOB);
-            oci_bind_by_name($stmt, ":form_id", $this->req[1]);
+            oci_bind_by_name($stmt, ":form_id", $this->POSTvars['formId']);
             oci_bind_by_name($stmt, ":data", $clob, -1, OCI_B_CLOB);
             $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
             if (!$r) $this->raiseError();
             $clob->save(json_encode($this->POSTvars));
             oci_commit($this->db);
-            //TODO: save comment?
-            /*if ($this->POSTvars['action']=='approve'||$this->POSTvars['action']=='reject') {
-                $_SERVER['REQUEST_METHOD'] = 'POST';
-                $this->POST();
-            }*/
+            
+            //save comment
+            $qry = "update HRFORMS2_FORMS_JOURNAL set COMMENTS = ".((INSTANCE=="LOCAL")?"' '":"EMPTY_CLOB()")."
+                where FORM_ID = :form_id
+                and SEQUENCE = :sequence
+                and STATUS = :status
+                returning COMMENTS into :comments";
+            $stmt = oci_parse($this->db,$qry);
+            $comment = oci_new_descriptor($this->db, OCI_D_LOB);
+            oci_bind_by_name($stmt, ":form_id", $this->POSTvars['formId']);
+            oci_bind_by_name($stmt, ":sequence", $this->POSTvars['lastJournal']['SEQUENCE']);
+            oci_bind_by_name($stmt, ":status", $this->POSTvars['lastJournal']['STATUS']);
+            oci_bind_by_name($stmt, ":comments", $comment, -1, OCI_B_CLOB);
+            $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+            if (!$r) $this->raiseError();
+            $comment->save($this->POSTvars['comment']);
+            oci_commit($this->db);
+
             if ($this->retJSON) $this->done();
         }
     }
