@@ -551,7 +551,22 @@ class Requests extends HRForms2 {
             oci_commit($this->db);
             if ($this->retJSON) $this->done();
         } else {
-            //TODO: do validation
+            // Viewers cannot update forms
+            if ($this->sessionData['isViewer']) $this->raiseError(E_FORBIDDEN);
+            // verify path and formid match
+            if ($this->req[1] != $this->POSTvars['reqId']) $this->raiseError(E_BAD_REQUEST);
+            // verify that user is submitter or in approval group
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+            $journal = (new journal(array('request',$this->req[1]),false))->returnData;
+            $submitter = array_shift($journal);
+            $last_journal = (count($journal) == 0)?$submitter:array_pop($journal);
+            $usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
+            $workflow = (new workflow(array('request',$last_journal['WORKFLOW_ID']),false))->returnData[0];
+            if (!array_intersect(explode(",",$workflow['GROUPS']),array_column($usergroups,'GROUP_ID')) && 
+                !($submitter['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID'])) {
+                    $this->raiseError(403);
+            }
+
             //Clear comment unless saving
             if ($this->req[0] != 'save') $this->POSTvars['comment'] = "";
             $qry = "update HRFORMS2_REQUESTS set request_data = EMPTY_CLOB() 
