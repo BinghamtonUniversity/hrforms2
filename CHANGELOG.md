@@ -1,5 +1,5 @@
 # Changelog
-## Version 2.0.1(rev-20251126)
+## Version 2.0.1(rev-20251202)
   * Switching versioning and revisioning from "DEV" into a "Production" mode.
   * Added Instance to title and nav header when not in PROD.
   * Changed background color of navbar and footer when not in PROD.
@@ -19,7 +19,9 @@
   * Fixed missing data needed for row expander on Archive lists.
   * Fixed Forms Additional Salary block showing total as $0.00 on Review tab.
   * Added check to make sure Forms Additional Salary End Date is after Start Date.
-  * Fixed error if Effective Date is null in Form List data; date set to 12/13/1969.
+  * Fixed error if Effective Date is null in Form List data; date set to 12/31/1969.
+  * Added validation checking for Forms and Requests when approvers Save and Exit.
+  * Added saving comments in Forms and Requests when approvers Save and Exit.
 
 
 ## Version 2.0.0(DEV-20251117)
