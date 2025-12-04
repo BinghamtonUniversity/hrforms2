@@ -94,7 +94,7 @@ class EmploymentInfo extends HRForms2 {
                         ) i on (i.shrtckg_pidm = spriden_pidm)
                         left join (select shrtckg_pidm, count(*) as shrtckg_mg_count
                             from shrtckg@banner.cc.binghamton.edu 
-                            where shrtckg_grde_code_finaarray_mergel = 'MG'
+                            where shrtckg_grde_code_final = 'MG'
                             and shrtckg_seq_no = (select max(i2.shrtckg_seq_no) from SHRTCKG@banner.cc.binghamton.edu i2 where i2.shrtckg_pidm = shrtckg_pidm and i2.shrtckg_term_code = shrtckg_term_code and i2.shrtckg_tckn_seq_no = shrtckg_tckn_seq_no)
                             group by shrtckg_pidm
                         ) mg on (mg.shrtckg_pidm = spriden_pidm)
