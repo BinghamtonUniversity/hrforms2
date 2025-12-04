@@ -54,6 +54,11 @@ $box-shadow-lg: 0 1rem 3rem rgba($black, .40);
 
 @import "../../node_modules/bootstrap/scss/bootstrap";
 
+.gap-0 { gap: 0 !important; }
+.gap-1 { gap: ($spacer * .25) !important; }
+.gap-2 { gap: ($spacer * .55) !important; }
+.gap-3 { gap: $spacer !important; }
+
 /* DataTables Formatting (n.b.: placed here to make use of SCSS variables)*/
 .rdt_Table {
   border: 2px solid $main;
