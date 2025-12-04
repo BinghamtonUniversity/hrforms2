@@ -117,8 +117,8 @@ class Forms extends HRForms2 {
             $submitter = array_shift($journal);
             $last_journal = (count($journal) == 0)?$submitter:array_pop($journal);
             //unset($last_journal['COMMENTS']); // We don't need commments
-            if (!$this->sessionData['isViewer']) {
-                // Validation: If not isViewer, only submitter and groups in workflow can view
+            if (!$this->sessionData['isViewer'] && !$this->sessionData['isAdmin']) {
+                // Validation: If not isViewer and not isAdmin, only submitter and groups in workflow can view
                 $usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
                 $workflow = (new workflow(array('form',$last_journal['WORKFLOW_ID']),false))->returnData[0];
                 if (!array_intersect(explode(",",$workflow['GROUPS']),array_column($usergroups,'GROUP_ID')) && 
