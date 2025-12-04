@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Row, Col, Form, InputGroup, Table, Alert } from "react-bootstrap";
 import { useFormContext, Controller, useWatch, useFieldArray } from "react-hook-form";
-import { HRFormContext, conditionalFields, useHRFormContext } from "../../config/form";
+import { HRFormContext, conditionalFields, rateAmountLabel, useHRFormContext } from "../../config/form";
 import DatePicker from "react-datepicker";
 import SUNYAccount, { SingleSUNYAccount } from "../sunyaccount";
 import { AppButton, CurrencyFormat, DateFormat, DepartmentSelector, PersonPickerComponent } from "../components";
@@ -30,17 +30,6 @@ export default function EmploymentAppointment() {
         'payroll.PAYROLL_CODE'
     ],control:control,defaultValue:['','','']});
 
-    const rateAmountLabel = useMemo(() => {
-        switch(watchPayBasis) {
-            case "BIW":
-            case "FEE":
-                return "Biweekly";
-            case "HRY":
-                return "Hourly";
-            default:
-                return "Full-Time";
-        }
-    },[watchPayBasis]);
 
     const handleNumPmtsField = useCallback((e,field) => {
         switch (e.type) {
@@ -59,6 +48,7 @@ export default function EmploymentAppointment() {
     useEffect(() => {
         if (['BIW', 'FEE', 'HRY'].includes(watchPayBasis)) {
             setValue(`${name}.totalSalary`,(+watchAmounts[0]*+watchAmounts[1]).toFixed(2));
+            setValue(`${name}.PAY_BASIS`,watchPayBasis);
         } else {
             setValue(`${name}.totalSalary`,((+watchAmounts[0]*+watchAmounts[1]) * (+watchAmounts[2]/100)).toFixed(2));
         }
@@ -133,7 +123,7 @@ export default function EmploymentAppointment() {
                             </Form.Group>
                         }
                         <Form.Group as={Row}>
-                            <Form.Label column md={2}>{rateAmountLabel} Rate*:</Form.Label>
+                            <Form.Label column md={2}>{rateAmountLabel(watchPayBasis)} Rate*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.RATE_AMOUNT`}

@@ -17,6 +17,18 @@ export const conditionalFields = {
     noRateTransactions: ['EXS','SUM','WIN']
 };
 
+export const rateAmountLabel = payBasis => {
+    switch(payBasis) {
+        case "BIW":
+        case "FEE":
+            return "Biweekly";
+        case "HRY":
+            return "Hourly";
+        default:
+            return "Full-Time";
+    }
+};
+
 /** TABS */
 // Format constructed for react-checkbox-tree (see:https://www.npmjs.com/package/react-checkbox-tree)
 const allTabs = [
@@ -127,12 +139,14 @@ const advancedFields = {
     },
     "employment.salary.NUMBER_OF_PAYMENTS":(frmData,v) => {
         if (conditionalFields.noRateTransactions.includes(get(frmData,'formActions.transactionCode.TRANSACTION_CODE',''))) return true;
+        if (!v) return 'Number of Payments is required';
         if (parseInt(v,10)<=0) return 'Number of Payments must be greater than zero';
         return true;
     },
     "employment.salary.RATE_AMOUNT":(frmData,v) => {
         if (conditionalFields.noRateTransactions.includes(get(frmData,'formActions.transactionCode.TRANSACTION_CODE',''))) return true;
-        if (parseInt(v,10)<=0) return 'Salary Rate must be greater than zero';
+        if (['BIW','FEE','HRY'].includes(frmData.employment.salary.PAY_BASIS) && !v) return `${rateAmountLabel(frmData.employment.salary.PAY_BASIS)} Rate is required`; 
+        if (parseInt(v,10)<=0) return ' Rate must be greater than zero';
         return true;
     },
     "employment.salary.SUNY_ACCOUNTS":(frmData,v) => {
