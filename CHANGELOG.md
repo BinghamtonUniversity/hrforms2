@@ -1,5 +1,5 @@
 # Changelog
-## Version 2.0.1(rev-20251202)
+## Version 2.0.1(rev-20251204)
   * Switching versioning and revisioning from "DEV" into a "Production" mode.
   * Added Instance to title and nav header when not in PROD.
   * Changed background color of navbar and footer when not in PROD.
@@ -22,6 +22,8 @@
   * Fixed error if Effective Date is null in Form List data; date set to 12/31/1969.
   * Added validation checking for Forms and Requests when approvers Save and Exit.
   * Added saving comments in Forms and Requests when approvers Save and Exit.
+  * Fixed Form Salary Rate Amount to indicate that it is required for BIW, FEE, and HRY Pay Basis.
+  * Fixed error caused by extraneous text in the SQL in employmentinfo.php.
 
 
 ## Version 2.0.0(DEV-20251117)
