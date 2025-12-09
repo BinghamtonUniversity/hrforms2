@@ -159,7 +159,7 @@ function EditDepartmentForm(props) {
 
     const handleSave =  data => {
         if (data.primaryGroup == props.GROUP_ID) {
-            toast.info('No changes to department data');
+            toast.info(t('admin.departments.actions.nochange'));
             closeModal();
             return true;
         }
@@ -171,9 +171,9 @@ function EditDepartmentForm(props) {
                     closeModal();
                 });
             }),{
-                pending:'Updating Department Group...',
-                success:'Department Group updated successfully',
-                error:errorToast('Failed to update Department Group')
+                pending:t('admin.departments.actions.delete.pending'),
+                success:t('admin.departments.actions.delete.success'),
+                error:errorToast(t('admin.departments.actions.delete.error'))
             });
         } else {
             toast.promise(new Promise((resolve,reject) => {
@@ -183,9 +183,9 @@ function EditDepartmentForm(props) {
                     closeModal();
                 });
             }),{
-                pending:'Updating Department Group...',
-                success:'Department Group updated successfully',
-                error:errorToast('Failed to update Department Group')
+                pending:t('admin.departments.actions.update.pending'),
+                success:t('admin.departments.actions.update.success'),
+                error:errorToast(t('admin.departments.actions.update.error'))
             });
         }
     }

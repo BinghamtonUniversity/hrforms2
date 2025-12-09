@@ -6,6 +6,19 @@ const text = {
     'admin': {
         'departments': {
             'title': 'Admin: Departments',
+            'actions': {
+                'nochange': 'No changes to Department data',
+                'update': {
+                    'pending': 'Updating Department Group',
+                    'success': 'Department Group Updated Successfully',
+                    'error': 'Error Updating Department Group'
+                },
+                'delete': {
+                    'pending': 'Removing Department Group',
+                    'success': 'Department Group Removed Successfully',
+                    'error': 'Error Removing Department Group'
+                }
+            }
         },
         'groups': {
             'title': 'Admin: Groups',
