@@ -16,7 +16,17 @@ $white:#fff;
 
 $pct:20%;
 
-$theme-colors: (
+/*
+// Create your own map
+$custom-colors: (
+  "custom-color": #900
+);
+
+// Merge the maps
+$theme-colors: map-merge($theme-colors, $custom-colors);
+*/
+
+$custom-colors: (
   "main":$main,
   "nav":$main,
   "white":$white,
@@ -37,6 +47,8 @@ $theme-colors: (
   "danger-light":scale-color($danger,$saturation:-30%,$lightness:50%),
   "secondary-light":scale-color($secondary,$saturation:-30%,$lightness:50%),
 );
+
+$theme-colors: map-merge($theme-colors, $custom-colors);
 
 $table-hover-bg: rgba($main, .15);
 
@@ -375,6 +387,20 @@ button.btn-sm.no-label svg.iconify {
   grid-template-areas:  "dlh1 dlh2"
                         "dl1  dl2";
 }
+
+/* Admin List Drag and Drop Styles */
+#admin-list .dragging {
+  background-color: map-get($theme-colors,'primary-light') !important;
+}
+#admin-list .dragging .list-group-item:not(.dragging-active) {
+  filter: brightness(0.8) contrast(0.8) grayscale(1);
+}
+#admin-list .dragging .list-group-item:not(.dragging-active) .form-control { color: #afafaf }
+
+#admin-list .dragging-active {
+  background-color: map-get($theme-colors,'warning-light') !important;
+}
+
 
 #listData-editor {
   font-family:"Lucida Console","Courier New","Courier",monospace;
