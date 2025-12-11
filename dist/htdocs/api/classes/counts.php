@@ -77,7 +77,7 @@ class Counts extends HRForms2 {
                 select 'pending', count(distinct j.request_id), trunc(sysdate) - trunc(min(jl.last_journal_date))
                 from hrforms2_requests_journal j
                 join (select * from hrforms2_requests_journal_last) jl on (j.request_id = jl.request_id)
-                where (j.suny_id = :suny_id) or (j.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id) and status != 'R')
+                where (j.suny_id = :suny_id or j.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) and status != 'R'
                 union
                 select 'rejections', count(j.request_id), trunc(sysdate) - trunc(min(j.last_journal_date))
                 from hrforms2_requests_journal_last j
@@ -120,7 +120,7 @@ class Counts extends HRForms2 {
                 select 'pending', count(distinct j.form_id), trunc(sysdate) - trunc(min(jl.last_journal_date))
                 from hrforms2_forms_journal j
                 join (select * from hrforms2_forms_journal_last) jl on (j.form_id = jl.form_id)
-                where (j.suny_id = :suny_id) or (j.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id) and status != 'R')
+                where (j.suny_id = :suny_id or j.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) and status != 'R'
                 union
                 select 'rejections', count(j.form_id), trunc(sysdate) - trunc(min(j.last_journal_date))
                 from hrforms2_forms_journal_last j
