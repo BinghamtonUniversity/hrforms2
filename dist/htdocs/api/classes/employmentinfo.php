@@ -365,7 +365,7 @@ class EmploymentInfo extends HRForms2 {
                     c.supervisor_suny_id, s.first_name as supervisor_first_name, s.legal_last_name as supervisor_legal_last_name, s.legal_middle_name as supervisor_legal_middle_name,
                     c.duties
                     from BUHR.BUHR_COMMITMENT_MV@banner.cc.binghamton.edu c
-                    left join(select suny_id, nvl(alias_first_name,legal_first_name) as first_name, legal_last_name, legal_middle_name
+                    left join(select distinct suny_id, nvl(alias_first_name,legal_first_name) as first_name, legal_last_name, legal_middle_name
                     from buhr.buhr_person_mv@banner.cc.binghamton.edu) s on (s.suny_id = c.supervisor_suny_id)
                     where data_status = 'C'
                     and nvl(commitment_end_date,sysdate) >= sysdate
