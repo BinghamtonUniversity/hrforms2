@@ -136,45 +136,38 @@ export default function Information() {
             }
 
             {watchReqType == 'F' &&
-                <Form.Group as={Row}>
-                    <Form.Label column md={2}>Current/Previous Employee*:</Form.Label>
-                    <Col md={7} lg={6} xl={5}>
-                        <Controller
-                            name="currentEmployee"
-                            defaultValue={[{id:"",label:""}]}
-                            rules={{validate:value=>{
-                                if (!currentEmpl) return 'Current/Previous Employee is required1';
-                                if (currentEmpl == "" && !value?.at(0)?.id && !value?.at(0)?.label) return 'Current/Previous Employee is required2';
-                                return true;
-                            }}}
-                            control={control}
-                            render={({field}) => <PersonPickerComponent 
-                                field={field} 
-                                id="current-employee" 
-                                placeholder="Search for Current Employee" 
-                                onBlur={e=>handleBlur(field,e)} 
-                                onInputChange={val=>setCurrentEmpl(val)}
-                                disabled={!canEdit}
-                                isInvalid={!!get(errors,field.name,false)}
-                            />}
-                        />
-                        <RequestFieldErrorMessage fieldName="currentEmployee"/>
-                    </Col>
-                </Form.Group>
+                <>
+                    <Form.Group as={Row}>
+                        <Form.Label column md={2}>Current/Previous Employee*:</Form.Label>
+                        <Col md={7} lg={6} xl={5}>
+                            <Controller
+                                name="currentEmployee"
+                                defaultValue={[{id:"",label:""}]}
+                                rules={{validate:value=>{
+                                    if (!currentEmpl) return 'Current/Previous Employee is required1';
+                                    if (currentEmpl == "" && !value?.at(0)?.id && !value?.at(0)?.label) return 'Current/Previous Employee is required2';
+                                    return true;
+                                }}}
+                                control={control}
+                                render={({field}) => <PersonPickerComponent 
+                                    field={field} 
+                                    id="current-employee" 
+                                    placeholder="Search for Current Employee" 
+                                    onBlur={e=>handleBlur(field,e)} 
+                                    onInputChange={val=>setCurrentEmpl(val)}
+                                    disabled={!canEdit}
+                                    isInvalid={!!get(errors,field.name,false)}
+                                />}
+                            />
+                            <RequestFieldErrorMessage fieldName="currentEmployee"/>
+                        </Col>
+                    </Form.Group>
+                    <Row>
+                        <Col><h4>New Candidate Information</h4></Col>
+                    </Row>
+                </>
             }
 
-
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>Candidate Name <span className="font-italic">(if known)</span>:</Form.Label>
-                <Col md={7} lg={6} xl={5}>
-                    <Controller
-                        name="candidateName"
-                        defaultValue=""
-                        control={control}
-                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Candidate Name" disabled={!canEdit}/>}
-                    />
-                </Col>
-            </Form.Group>
             <Form.Group as={Row}>
                 <Form.Label column md={2}>B-Number <span className="font-italic">(if known)</span>:</Form.Label>
                 <Col xs="auto">
@@ -183,6 +176,17 @@ export default function Information() {
                         defaultValue=""
                         control={control}
                         render={({field}) => <Form.Control {...field} type="text" placeholder="Enter B-Number" disabled={!canEdit}/>}
+                    />
+                </Col>
+            </Form.Group>
+            <Form.Group as={Row}>
+                <Form.Label column md={2}>Candidate Name <span className="font-italic">(if known)</span>:</Form.Label>
+                <Col md={7} lg={6} xl={5}>
+                    <Controller
+                        name="candidateName"
+                        defaultValue=""
+                        control={control}
+                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Candidate Name" disabled={!canEdit}/>}
                     />
                 </Col>
             </Form.Group>
