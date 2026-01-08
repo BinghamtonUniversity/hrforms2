@@ -17,6 +17,10 @@
       text-decoration: none !important;
       color: #333 !important;
     }
+    thead.bg-main.text-white th{
+        color: #000;
+    }
+  
 }
 @page {
     size: 8.5in 11in;
