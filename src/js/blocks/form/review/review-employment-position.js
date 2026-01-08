@@ -8,7 +8,7 @@ export default function ReviewEmploymentPosition() {
     const { getValues } = useFormContext();
     const [position,payroll] = getValues(['employment.position','payroll']);
     return (
-        <article className="border rounded p-1 mb-2">
+        <article className="border border-dark rounded p-1 mb-2">
             <Row as="header">
                 <Col as="h5">Position</Col>
             </Row>

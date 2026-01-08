@@ -9,7 +9,7 @@ export default function ReviewEmploymentLeave() {
     const { formType } = useHRFormContext();
     const [info] = getValues(['employment.leave']);
     return (
-        <article className="border rounded p-1 mb-2">
+        <article className="border border-dark rounded p-1 mb-2">
             <Row as="header">
                 <Col as="h5">Leave</Col>
             </Row>

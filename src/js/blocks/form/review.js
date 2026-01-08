@@ -112,7 +112,7 @@ function ReviewSections() {
                             </Col>
                         </Row>
                         {(tg == 'employment' && ['28020','28029'].includes(payroll_code)) && 
-                            <article className="border rounded p-1 mb-2">
+                            <article className="border border-dark rounded p-1 mb-2">
                                 <Row as="header">
                                     <Col as="h5">Position</Col>
                                 </Row>

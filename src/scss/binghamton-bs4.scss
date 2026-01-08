@@ -66,10 +66,38 @@ $box-shadow-lg: 0 1rem 3rem rgba($black, .40);
 
 @import "../../node_modules/bootstrap/scss/bootstrap";
 
+/* add gap classes */
 .gap-0 { gap: 0 !important; }
 .gap-1 { gap: ($spacer * .25) !important; }
-.gap-2 { gap: ($spacer * .55) !important; }
+.gap-2 { gap: ($spacer * .5) !important; }
 .gap-3 { gap: $spacer !important; }
+.gap-4 { gap: ($spacer * 1.5) !important; }
+.gap-5 { gap: ($spacer * 3) !important; }
+
+.row-gap-0 { row-gap: 0 !important; }
+.row-gap-1 { row-gap: ($spacer * .25) !important; }
+.row-gap-2 { row-gap: ($spacer * .5) !important; }
+.row-gap-3 { row-gap: $spacer !important; }
+.row-gap-4 { row-gap: ($spacer * 1.5) !important; }
+.row-gap-5 { row-gap: ($spacer * 3) !important; }
+
+.col-gap-0 { column-gap: 0 !important; }
+.col-gap-1 { column-gap: ($spacer * .25) !important; }
+.col-gap-2 { column-gap: ($spacer * .5) !important; }
+.col-gap-3 { column-gap: $spacer !important; }
+.col-gap-4 { column-gap: ($spacer * 1.5) !important; }
+.col-gap-5 { column-gap: ($spacer * 3) !important; }
+
+/* add class to remove button focus and hover styling */
+.btn-hidden:focus,
+.btn-hidden:hover,
+.btn-hidden:not(:disabled):not(.disabled):active,
+.btn-hidden:not(:disabled):not(.disabled).active:focus, 
+.btn-hidden:not(:disabled):not(.disabled):active:focus {
+    background-color: inherit;
+    border-color: transparent;
+    box-shadow:none;
+}
 
 /* DataTables Formatting (n.b.: placed here to make use of SCSS variables)*/
 .rdt_Table {
@@ -534,4 +562,17 @@ table.table.table-row-clickable tbody tr, .text-pointer {
   cursor: pointer;
 }
 
+/* Review Person Contacts and Education - 2 column layout */
+.review-col-2 {
+  display:grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto;
+  row-gap: 0.5rem;
+  margin-left: 0.4rem;
+  margin-right: 0.4rem;
+  @include media-breakpoint-up(md) {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
 
+}

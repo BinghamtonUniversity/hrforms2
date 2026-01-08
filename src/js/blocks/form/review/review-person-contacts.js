@@ -7,13 +7,13 @@ export default function ReviewPersonContacts() {
     const { getValues } = useFormContext();
     const [contacts] = getValues(['person.contact.contacts']);
     return (
-        <article className="border rounded p-1 mb-2">
+        <article className="border border-dark rounded p-1 mb-2">
             <Row as="header">
                 <Col as="h5">Contacts</Col>
             </Row>
-            <Row>
+            <Row noGutters className="review-col-2">
                 {contacts.map((c,i) => (
-                    <Col key={i} md={6} className={`mb-md-0 ${(i<contacts.length-1)?"mb-sm-4":""}`}>
+                    <Col key={i} className={`border rounded px-2 py-1 ${(c.isPrimary)=="Y"?"border-accent":""}`}>
                         <Row as="dl" className="mb-0">
                             <Col as="dt" sm={3} className="mb-0">Primary:</Col>
                             <Col as="dd" sm={9} className="mb-0">{(c.isPrimary)=="Y"?"Yes":"No"}</Col>

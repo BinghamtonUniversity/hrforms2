@@ -8,7 +8,7 @@ export default function ReviewPersonDemographics() {
     const { getValues } = useFormContext();
     const [demo] = getValues(['person.demographics']);
     return (
-        <article className="border rounded p-1 mb-2">
+        <article className="border border-dark rounded p-1 mb-2">
             <Row as="header">
                 <Col as="h5">Demographics</Col>
             </Row>

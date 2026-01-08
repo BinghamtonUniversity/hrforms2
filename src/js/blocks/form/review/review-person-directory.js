@@ -11,7 +11,7 @@ export default function ReviewPersonDirectory() {
     const { getValues } = useFormContext();
     const [dir] = getValues(['person.directory']);
     return (
-        <article className="border rounded p-2 mb-2">
+        <article className="border border-dark rounded p-2 mb-2">
             <Row as="header">
                 <Col as="h5">Directory</Col>
             </Row>

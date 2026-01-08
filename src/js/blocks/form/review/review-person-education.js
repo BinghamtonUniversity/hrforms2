@@ -7,13 +7,13 @@ export default function ReviewPersonEducation() {
     const { getValues } = useFormContext();
     const [education] = getValues(['person.education.institutions']);
     return (
-        <article className="border rounded p-1 mb-2">
+        <article className="border border-dark rounded p-1 mb-2">
             <Row as="header">
                 <Col as="h5">Education</Col>
             </Row>
-            <Row>
+            <Row noGutters className="review-col-2">
                 {education.map((e,i) => (
-                    <Col key={i} md={6} className={`mb-md-0 ${(i<education.length-1)?"mb-sm-4":""}`}>
+                    <Col key={i} className={`border rounded px-2 py-1 ${(e.HIGHEST_DEGREE_FLAG=="Y")?"border-accent":""}`}>
                         <Row as="dl" className="mb-0">
                             <Col as="dt" sm={3} className="mb-0">Degree Date:</Col>
                             <Col as="dd" sm={9} className="mb-0">
