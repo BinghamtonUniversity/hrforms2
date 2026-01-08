@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useEffect } from "react";
-import { Row, Col, Form } from "react-bootstrap";
+import { Row, Col, Form, OverlayTrigger, Tooltip  } from "react-bootstrap";
 import { Controller, useFormContext } from "react-hook-form";
 import { useHRFormContext } from "../../config/form";
 import { useSettingsContext, useAuthContext } from "../../app";
@@ -90,6 +90,11 @@ export function CommentsTable({formId}) {
             );
         }},
         {name:'By',selector:row=>row.SUNY_ID,format:row=><>{row.fullName} ({row.SUNY_ID})</>},
+        {name:'Status',selector:row=>(
+            <OverlayTrigger placement="auto" overlay={
+                <Tooltip id={`tooltip-status-${row.SEQUENCE}`}>{get(general.status,`${row.STATUS}.list`,'Unknown')}</Tooltip>
+            }><span>{row.STATUS}</span></OverlayTrigger>
+        ),width:'100px'},
         {name:'Comment',grow:3,selector:row=>row.COMMENTS,format:row=><pre className="m-0">{row.COMMENTS}</pre>}
     ],[journal.data]);
 
