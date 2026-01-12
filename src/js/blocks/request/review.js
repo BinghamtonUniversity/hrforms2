@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Row, Col } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { Icon } from '@iconify/react';
@@ -6,6 +6,8 @@ import { AppButton, CurrencyFormat, DateFormat } from "../components";
 import { CommentsTable } from "./comments";
 import { useRequestContext } from "../../config/request"
 import useListsQueries from "../../queries/lists";
+import { useHistory } from "react-router-dom";
+import get from "lodash/get";
 
 function NewLine({gap}) { 
     let c = 'w-100';
@@ -14,17 +16,26 @@ function NewLine({gap}) {
 }
 
 export default function Review() {
+    const [showReturn,setShowReturn] = useState(false);
+
     const { getValues } = useFormContext();
     const formValues = getValues();
-    const { isDraft, isNew, createdBy } = useRequestContext();
+    const { isDraft, isNew, createdBy, journalStatus } = useRequestContext();
 
     const { getListData } = useListsQueries();
     const apptperiods = getListData('appointmentPeriods');
+    const history = useHistory();
+
+    const handleReturnToList = () => history.push(get(history.location,'state.from',''));
+    useEffect(()=>{
+        (journalStatus!='Z')?setShowReturn(false):setShowReturn(!!(get(history.location,'state.from','')));
+    },[history]);
 
     return (
         <article id="request-review">
             <Row>
-                <Col className="button-group justify-content-end d-print-none">
+                <Col className={`button-group d-print-none ${showReturn?'justify-content-between':'justify-content-end'}`}>
+                    {showReturn && <AppButton size="sm" format="previous" onClick={handleReturnToList}>Return</AppButton>}
                     <AppButton format="print" title="Print Page" onClick={()=>window.print()}></AppButton>
                 </Col>
             </Row>

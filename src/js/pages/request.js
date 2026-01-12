@@ -8,7 +8,7 @@ import useListsQueries from "../queries/lists";
 import { useQueryClient } from "react-query";
 import { Loading, AppButton, ModalConfirm } from "../blocks/components";
 import format from "date-fns/format";
-import get from "lodash/get";
+import { get, defaultTo } from "lodash";
 import { Icon } from '@iconify/react';
 import { RequestContext, tabs, requiredFields, resetFields, defaultVals, useRequestContext } from "../config/request";
 import { t } from "../config/text";
@@ -30,6 +30,7 @@ export default function Request() {
 
     const {id,sunyid,ts} = useParams();
     const {SUNY_ID} = useUserContext();
+    const history = useHistory();
 
     useEffect(() => {
         if (!id||id=='new') {
@@ -48,10 +49,16 @@ export default function Request() {
         </Alert>
     );
     return(
-        <RequestWrapper reqId={reqId} isDraft={isDraft} isNew={isNew} reset={id=='new'}/>
+        <RequestWrapper 
+            reqId={reqId} 
+            isDraft={isDraft} 
+            isNew={isNew} 
+            reset={id=='new'}
+            historyFrom={get(history.location,'state.from','')}
+        />
     );
 }
-function RequestWrapper({reqId,isDraft,isNew,reset}) {
+function RequestWrapper({reqId,isDraft,isNew,reset,historyFrom}) {
     const [reqData,setReqData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
 
@@ -95,7 +102,15 @@ function RequestWrapper({reqId,isDraft,isNew,reset}) {
                     </Col>
                 </Row>
             </header>
-            {reqData && <RequestForm reqId={reqId} data={reqData} setIsBlocking={setIsBlocking} isDraft={isDraft} isNew={isNew} reset={reset}/>}
+            {reqData && <RequestForm 
+                reqId={reqId} 
+                data={reqData} 
+                setIsBlocking={setIsBlocking} 
+                isDraft={isDraft} 
+                isNew={isNew} 
+                reset={reset}
+                historyFrom={historyFrom}
+            />}
             {reqData && <BlockNav reqId={reqId} when={isBlocking} isDraft={isNew}/>}
         </section>
     );
@@ -160,7 +175,7 @@ function BlockNav({reqId,when,isDraft}) {
     );
 }
 
-function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
+function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset,historyFrom}) {
     const [activeTab,setActiveTab] = useState('information');
     const [lockTabs,setLockTabs] = useState(false);
     const [isSaving,setIsSaving] = useState(false);
@@ -196,7 +211,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
             setIsSaving(false);
             setLockTabs(false);
             setIsBlocking(false);
-            setRedirect('/');
+            setRedirect(defaultTo(historyFrom,'/'));
         }).catch(e => {
             setShowDeleteModal(false);
             setIsSaving(false);
@@ -472,6 +487,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset}) {
                 canEdit:canEdit
             }}>
                 <Form id="positionRequestForm" onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
+                    {historyFrom && <AppButton format="previous" size="sm" className="mb-3" variant={isNew?'danger':'secondary'} id="return" onClick={handleClose} disabled={isSaving||lockTabs}>Return</AppButton>}
                     <RequestErrorsAlert/>
                     <Tabs activeKey={activeTab} onSelect={navigate} className="d-print-none" id="position-request-tabs">
                         {tabs.map(t=>(

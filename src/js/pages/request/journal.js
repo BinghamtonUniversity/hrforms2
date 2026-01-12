@@ -48,7 +48,9 @@ export default function RequestJournal() {
     const handleReturnToList = () => setRedirect(get(history.location,'state.from',''));
     useEffect(()=>setShowReturn(get(history.location,'state.from','').startsWith('/request/list')),[history]);
     useEffect(()=>searchRef.current.focus(),[]);
-    if (redirect) return <Redirect to={redirect}/>;
+        if (redirect) {
+        return <Redirect to={{pathname:redirect,state:{from:get(history.location,'state.from',`/request/journal/${reqId}`)}}}/>;
+    }
     return (
         <>
             <Row>
