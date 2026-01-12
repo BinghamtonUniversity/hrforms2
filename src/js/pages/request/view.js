@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { useParams } from "react-router-dom";
 import { RequestContext, defaultVals } from "../../config/request";
@@ -28,8 +28,7 @@ function RequestViewData({data}) {
                 isDraft:false,
                 canEdit:false,
                 createdBy:data.createdBy,
-                //posTypes:postypes.data, //Not needed?
-                //lastJournal:data.lastJournal, //DNE
+                journalStatus:'Z'
             }}>
                 <Review/>
             </RequestContext.Provider>
