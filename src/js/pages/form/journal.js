@@ -48,12 +48,14 @@ export default function FormJournal() {
     const handleReturnToList = () => setRedirect(get(history.location,'state.from',''));
     useEffect(()=>setShowReturn(get(history.location,'state.from','').startsWith('/form/list')),[history]);
     useEffect(()=>searchRef.current.focus(),[]);
-    if (redirect) return <Redirect to={redirect}/>;
+    if (redirect) {
+        return <Redirect to={{pathname:redirect,state:{from:get(history.location,'state.from',`/form/journal/${formId}`)}}}/>;
+    }
     return (
         <>
             <Row>
                 <Col>
-                    {showReturn && <AppButton size="sm" format="previous" onClick={handleReturnToList}>{t('form.journal.return')}</AppButton>}
+                    {showReturn && <AppButton format="previous" size="sm" onClick={handleReturnToList}>{t('form.journal.return')}</AppButton>}
                     <h2>{t('form.journal.title')}</h2>
                 </Col>
             </Row>
