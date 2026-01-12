@@ -723,6 +723,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                     showInTest:showInTest
                 }}>
                     <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)} onReset={handleReset}>
+                        {historyFrom && <AppButton format="previous" size="sm" className="mb-3" variant={isNew?'danger':'secondary'} id="return" onClick={handleClose} disabled={isSaving||lockTabs}>Return</AppButton>}
                         <FormErrorsAlert/>
                         <Tabs activeKey={activeTab} onSelect={navigate} id="hr-forms-tabs" className="d-print-none">
                             {tabList.map(t => (

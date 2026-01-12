@@ -1,4 +1,4 @@
-import React, { useEffect, lazy } from "react";
+import React, { useState, useEffect, lazy } from "react";
 import { Row, Col } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { Icon } from "@iconify/react";
@@ -9,6 +9,7 @@ import { find, get, startCase } from "lodash";
 import useUserQueries from "../../queries/users";
 import { useAuthContext } from "../../app";
 import format from "date-fns/format";
+import { useHistory } from "react-router-dom";
 
 //lazy load sections
 const ReviewPersonInformation = lazy(()=>import("./review/review-person-information"));
@@ -27,12 +28,21 @@ const ReviewComments = lazy(()=>import("./review/review-comments"));
 const ReviewSubmitterInfo = lazy(()=>import("./review/review-submitter"));
 
 export default function Review() {
+    const [showReturn,setShowReturn] = useState(false);
+
     const { getValues, formState: { isValid, errors } } = useFormContext();
     const { journalStatus } = useHRFormContext();
+    const history = useHistory();
+
+    const handleReturnToList = () => history.push(get(history.location,'state.from',''));
+    useEffect(()=>{
+        (journalStatus!='Z')?setShowReturn(false):setShowReturn(!!(get(history.location,'state.from','')));
+    },[history,journalStatus]);
     useEffect(()=>{
         console.debug('Review Form Data:',getValues());
         if (!isValid&&journalStatus!='Z') console.debug('%cForm Errors:%o',"background-color:#A00;font-weight:bold",errors);
     },[]);
+
     return (
         <article id="form-review" className="mt-3">
             {journalStatus!='Z' && 
@@ -41,7 +51,8 @@ export default function Review() {
                 </Row>
             }
             <Row>
-                <Col className="button-group justify-content-end d-print-none">
+                <Col className={`button-group d-print-none ${showReturn?'justify-content-between':'justify-content-end'}`}>
+                    {showReturn && <AppButton size="sm" format="previous" onClick={handleReturnToList}>Return</AppButton>}
                     <AppButton format="print" title="Print Page" onClick={()=>window.print()}></AppButton>
                 </Col>
             </Row>
