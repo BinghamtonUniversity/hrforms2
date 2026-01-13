@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Button, Modal, ListGroup, NavDropdown, Form, OverlayTrigger, Popover, Badge, Tooltip } from "react-bootstrap";
+import { Alert, Button, Modal, ListGroup, NavDropdown, Form, OverlayTrigger, Popover, Badge, Tooltip, Row, Col } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { parse, format } from "date-fns";
 import { invoke, get, capitalize, isDate, has } from "lodash";
@@ -31,6 +31,7 @@ import { AsyncTypeahead } from "react-bootstrap-typeahead";
  * DescriptionPopover
  * WorkflowExpandedComponent
  * PersonPickerComponent
+ * ReviewUserInfo
  */
 
 /* formats for AppButton */
@@ -476,6 +477,51 @@ const PersonPickerComponent = (props) => {
     );
 }
 
+/* Review User Info Component 
+*  Returns SUNY ID, Name, Email, Date for the logged in user.  
+*  Used in Form and Request Review Pages.
+*/
+const ReviewUserInfo = () => { 
+    const now = new Date();
+    const { SUNY_ID } = useAuthContext();
+    const { lookupUser } = useUserQueries(SUNY_ID);
+    const [userData,setUserData] = React.useState({
+        SUNY_ID: SUNY_ID,
+        fullName: '',
+        email: ''
+    });
+    const _ = lookupUser({onSuccess:d=>{
+        if (d.length > 0) {
+            const u = d[0];
+            setUserData({
+                SUNY_ID: u.SUNY_ID,
+                fullName: u.fullName,
+                email: u.email
+            });
+        }
+    }});
+    return (
+        <section className="mb-4 col-sm-6">
+            <Row as="header">
+                <Col>
+                    <h4 className="border-bottom border-main">User Information</h4>
+                </Col>
+            </Row>
+            <Row as="dl" className="mb-0">
+                <Col as="dt" sm={3} md={2} className="mb-0">SUNY ID:</Col>
+                <Col as="dd" sm={9} md={10} className="mb-0">{userData.SUNY_ID}</Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Name:</Col>
+                <Col as="dd" sm={9} md={10} className="mb-0">{userData.fullName}</Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Email:</Col>
+                <Col as="dd" sm={9} md={10} className="mb-0">{userData.email}</Col>
+                <Col as="dt" sm={3} md={2} className="mb-0">Date:</Col>
+                <Col as="dd" sm={9} md={10} className="mb-0">{format(now,'LLL d, yyyy h:mm a')}</Col>
+            </Row>
+        </section>
+    );
+}
+
+
 export {Loading,ModalConfirm,AppButton,MenuCounts,errorToast,CheckboxTreeComponent,
     StateSelector,CountrySelector,DepartmentSelector,DescriptionPopover,WorkflowExpandedComponent,
-    PersonPickerComponent};
+    PersonPickerComponent,ReviewUserInfo};
