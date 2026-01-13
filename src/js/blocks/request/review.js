@@ -8,6 +8,7 @@ import { useRequestContext } from "../../config/request"
 import useListsQueries from "../../queries/lists";
 import { useHistory } from "react-router-dom";
 import get from "lodash/get";
+import { ReviewUserInfo } from "../components";
 
 function NewLine({gap}) { 
     let c = 'w-100';
@@ -20,7 +21,7 @@ export default function Review() {
 
     const { getValues } = useFormContext();
     const formValues = getValues();
-    const { isDraft, isNew, createdBy, journalStatus } = useRequestContext();
+    const { isDraft, isNew, journalStatus } = useRequestContext();
 
     const { getListData } = useListsQueries();
     const apptperiods = getListData('appointmentPeriods');
@@ -172,27 +173,36 @@ export default function Review() {
                     </article>
                 }
             </section>
-            {(!isDraft&&createdBy) && 
-                <section className="mb-4">
-                    <Row as="header">
-                        <Col>
-                            <h4 className="border-bottom border-main">Submitter Information</h4>
-                        </Col>
-                    </Row>
-                    {createdBy && 
-                        <Row as="dl" className="mb-0">
-                            <Col as="dt" sm={3} md={2} className="mb-0">SUNY ID:</Col>
-                            <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.SUNY_ID}</Col>
-                            <Col as="dt" sm={3} md={2} className="mb-0">Name:</Col>
-                            <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.fullName}</Col>
-                            <Col as="dt" sm={3} md={2} className="mb-0">Email:</Col>
-                            <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.EMAIL_ADDRESS_WORK}</Col>
-                            <Col as="dt" sm={3} md={2} className="mb-0">Department:</Col>
-                            <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.REPORTING_DEPARTMENT_NAME}</Col>
-                        </Row>
-                    }
-                </section>
-            }
+            <Row>
+                <ReviewSubmitterInfo/>
+                <ReviewUserInfo/>
+            </Row>
         </article>
+    );
+}
+
+function ReviewSubmitterInfo() {
+    const { isDraft, createdBy } = useRequestContext();
+    if (isDraft) return null;
+    return (
+        <section className="mb-4 col-sm-6">
+            <Row as="header">
+                <Col>
+                    <h4 className="border-bottom border-main">Submitter Information</h4>
+                </Col>
+            </Row>
+            {createdBy && 
+                <Row as="dl" className="mb-0">
+                    <Col as="dt" sm={3} md={2} className="mb-0">SUNY ID:</Col>
+                    <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.SUNY_ID}</Col>
+                    <Col as="dt" sm={3} md={2} className="mb-0">Name:</Col>
+                    <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.fullName}</Col>
+                    <Col as="dt" sm={3} md={2} className="mb-0">Email:</Col>
+                    <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.EMAIL_ADDRESS_WORK}</Col>
+                    <Col as="dt" sm={3} md={2} className="mb-0">Department:</Col>
+                    <Col as="dd" sm={9} md={10} className="mb-0">{createdBy.REPORTING_DEPARTMENT_NAME}</Col>
+                </Row>
+            }
+        </section>
     );
 }
