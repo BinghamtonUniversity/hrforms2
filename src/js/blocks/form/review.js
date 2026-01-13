@@ -6,10 +6,8 @@ import { AppButton, DateFormat } from "../components";
 import { EmploymentPositionInfoBox, FormTypeDisplay } from "../../pages/form";
 import { useHRFormContext } from "../../config/form";
 import { find, get, startCase } from "lodash";
-import useUserQueries from "../../queries/users";
-import { useAuthContext } from "../../app";
-import format from "date-fns/format";
 import { useHistory } from "react-router-dom";
+import { ReviewUserInfo } from "../components";
 
 //lazy load sections
 const ReviewPersonInformation = lazy(()=>import("./review/review-person-information"));
@@ -156,42 +154,3 @@ function ReviewSectionRouter({tab}) {
     }
 }
 
-function ReviewUserInfo() { 
-    const now = new Date();
-    const { SUNY_ID } = useAuthContext();
-    const { lookupUser } = useUserQueries(SUNY_ID);
-    const [userData,setUserData] = React.useState({
-        SUNY_ID: SUNY_ID,
-        fullName: '',
-        email: ''
-    });
-    const _ = lookupUser({onSuccess:d=>{
-        if (d.length > 0) {
-            const u = d[0];
-            setUserData({
-                SUNY_ID: u.SUNY_ID,
-                fullName: u.fullName,
-                email: u.email
-            });
-        }
-    }});
-    return (
-        <section className="mb-4 col-sm-6">
-            <Row as="header">
-                <Col>
-                    <h4 className="border-bottom border-main">User Information</h4>
-                </Col>
-            </Row>
-            <Row as="dl" className="mb-0">
-                <Col as="dt" sm={3} md={2} className="mb-0">SUNY ID:</Col>
-                <Col as="dd" sm={9} md={10} className="mb-0">{userData.SUNY_ID}</Col>
-                <Col as="dt" sm={3} md={2} className="mb-0">Name:</Col>
-                <Col as="dd" sm={9} md={10} className="mb-0">{userData.fullName}</Col>
-                <Col as="dt" sm={3} md={2} className="mb-0">Email:</Col>
-                <Col as="dd" sm={9} md={10} className="mb-0">{userData.email}</Col>
-                <Col as="dt" sm={3} md={2} className="mb-0">Date:</Col>
-                <Col as="dd" sm={9} md={10} className="mb-0">{format(now,'LLL d, yyyy h:mm a')}</Col>
-            </Row>
-        </section>
-    );
-}
