@@ -1,6 +1,6 @@
 import React, { useState, useReducer, useEffect, useMemo, lazy, useRef } from "react";
 import useFormQueries from "../../queries/forms";
-import { Row, Col, Form, Button, ButtonGroup, Modal, Accordion, Card } from "react-bootstrap";
+import { Row, Col, Form, Button, ButtonGroup, Modal, Accordion, Card, OverlayTrigger, Popover } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { format, startOfToday, endOfToday, subDays, addDays } from "date-fns";
 import DataTable from 'react-data-table-component';
@@ -11,10 +11,11 @@ import useCodesQueries from "../../queries/codes";
 import { useQueryClient } from "react-query";
 import { useSettingsContext, useAuthContext } from "../../app";
 import useGroupQueries from "../../queries/groups";
-import { find, orderBy, pick } from "lodash";
+import { defaultTo, find, omit, orderBy, pick } from "lodash";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import useUserQueries from "../../queries/users";
 import { Prompt } from "react-router-dom";
+import { Icon } from "@iconify/react/dist/iconify.js";
 
 const ArchiveView = lazy(()=>import("./view"));
 
@@ -33,6 +34,7 @@ const defaultValues = {
     lineNumber:'',
     benefitFlag:'',
     createdBy:'',
+    updatedBy:'',
     page:1,
     results:10,
     sortField:'effdate',
@@ -50,12 +52,25 @@ export default function ListArchiveTable() {
     const [totalRows,setTotalRows] = useState(0);
     const [submitted,setSubmitted] = useState(false);
     const [selectedRowId,setSelectedRowId] = useState();
-    const [ActiveAccordionKey,setActiveAccordionKey] = useState('0');
+    const [activeAccordionKey,setActiveAccordionKey] = useState('0');
+    const [savedFilter,setSavedFilter] = useState({});
+    const [showCols,setShowCols] = useState([
+        'form_id',
+        'effdate',
+        'fullname',
+        'payroll_code',
+        'form_code',
+        'line_number',
+        'benefit_flag',
+        'created_by',
+        'max_journal_date',
+        'last_updated_by'
+    ]);
 
     const { getUsers } = useUserQueries();
     const { getGroups } = useGroupQueries();
     const users = getUsers({onSuccess: d => {
-        const r = orderBy(d.filter(u=>(!!u.LEGAL_FIRST_NAME&&!!u.LEGAL_LAST_NAME)),['LEGAL_LAST_NAME','LEGAL_FIRST_NAME'],['asc','asc']).map(u=>({id:u.SUNY_ID, label:`${u.LEGAL_FIRST_NAME} ${u.LEGAL_LAST_NAME}`}));
+        const r = orderBy(d.filter(u=>(!!u.LEGAL_FIRST_NAME&&!!u.LEGAL_LAST_NAME)),['LEGAL_LAST_NAME','ALIAS_FIRST_NAME','LEGAL_FIRST_NAME'],['asc','asc','asc']).map(u=>({id:u.SUNY_ID, label:`${defaultTo(u.ALIAS_FIRST_NAME,u.LEGAL_FIRST_NAME)} ${u.LEGAL_LAST_NAME}`}));
         setUserData(r);
     }});
     const groups = getGroups();
@@ -95,6 +110,7 @@ export default function ListArchiveTable() {
     });
 
     const handleSearch = () => {
+        sessionStorage.setItem('formArchiveFilter',JSON.stringify(omit(filter,["startDate","endDate"])));
         setSubmitted(true);
     }
 
@@ -103,7 +119,10 @@ export default function ListArchiveTable() {
         setSelectedRowId(null);
         queryClient.removeQueries(['archivelist','form']);
         setData([]);
-        if (reset) setFilter(defaultValues);
+        if (reset) {
+            setFilter(defaultValues);
+            sessionStorage.removeItem('formArchiveFilter');
+        }
     }
 
     const handleChangePage = page => {
@@ -131,9 +150,9 @@ export default function ListArchiveTable() {
     const expandRow = useMemo(()=>((isAdmin && general.showFormWF == 'A')||general.showFormWF == 'Y'),[general,isAdmin]);
 
     const columns = [
-        {id:'form_id',name:'ID',selector:row=>row.FORM_ID,sortable:true},
-        {id:'effdate',name:'Effective Date',selector:row=>row.EFFDATE,format:row=>format(new Date(row.EFFDATE),'P'),sortable:true},
-        {id:'fullname',name:'Name',selector:row=>row.sortName,sortable:true},
+        {id:'form_id',name:'ID',selector:row=>row.FORM_ID,sortable:true,width:'80px'},
+        {id:'effdate',name:'Effective Date',selector:row=>row.EFFDATE,format:row=>format(new Date(row.EFFDATE),'P'),sortable:true,reorder:true,omit:!showCols.includes('effdate')},
+        {id:'fullname',name:'Name',selector:row=>row.sortName,sortable:true,reorder:true,omit:!showCols.includes('fullname')},
         {id:'payroll_code',name:'Payroll',selector:row=>(
             <DescriptionPopover 
                 id={`${row.PAYROLL_CODE}_description`}
@@ -141,7 +160,7 @@ export default function ListArchiveTable() {
             >
                 <p className="mb-0">{row.PAYROLL_TITLE}</p>
             </DescriptionPopover>
-        ),sortable:true},
+        ),sortable:true,reorder:true,omit:!showCols.includes('payroll_code')},
         {id:'form_code',name:'Form',selector:row=>(
             <DescriptionPopover
                 id={`${row.FORM_ID}_code_description`}
@@ -149,10 +168,13 @@ export default function ListArchiveTable() {
             >
                 <p className="mb-0">{displayFormCode({codes:[row.FORM_CODE,row.ACTION_CODE,row.TRANSACTION_CODE]})}</p>
             </DescriptionPopover>
-        ),sortable:true},
-        {id:'line_number',name:'Line #',selector:row=>row.LINE_NUMBER,sortable:true},
-        {id:'benefit_flag',name:'Benefits',selector:row=>row.BENEFIT_FLAG.id,format:row=>`${row.BENEFIT_FLAG.id} - ${row.BENEFIT_FLAG.label}`,sortable:true},
-        {id:'created_by_suny_id',name:'Created By',selector:row=>row.CREATED_BY_SUNY_ID,sortable:true,format:row=>`${row.createdByFullName} (${row.CREATED_BY_SUNY_ID})`,wrap:true},
+        ),sortable:true,reorder:true,omit:!showCols.includes('form_code')},
+        {id:'line_number',name:'Line #',selector:row=>row.LINE_NUMBER,sortable:true,reorder:true,omit:!showCols.includes('line_number')},
+        {id:'benefit_flag',name:'Benefits',selector:row=>row.BENEFIT_FLAG.id,format:row=>`${row.BENEFIT_FLAG.id} - ${row.BENEFIT_FLAG.label}`,sortable:true,reorder:true,omit:!showCols.includes('benefit_flag')},
+        {id:'created_by',name:'Created By',selector:row=>row.CREATED_BY_SUNY_ID,sortable:true,format:row=>`${row.createdByFullName} (${row.CREATED_BY_SUNY_ID})`,wrap:true,reorder:true,omit:!showCols.includes('created_by')},
+        {id:'max_journal_date',name:'Last Updated',selector:row=>row.MAX_JOURNAL_DATE,format:row=>format(new Date(row.MAX_JOURNAL_DATE),'P'),sortable:true,reorder:true,omit:!showCols.includes('max_journal_date')},
+        {id:'last_updated_by',name:'Last Updated By',selector:row=>row.LAST_UPDATED_SUNY_ID,sortable:true,format:row=>(<span>{row.LAST_UPDATED_NAME} ({row.LAST_UPDATED_SUNY_ID})</span>),wrap:true,reorder:true,omit:!showCols.includes('last_updated_by')},
+        {id:'changeCol',name:<ColumnSelect showCols={showCols} setShowCols={setShowCols}/>,allowOverflow:true,width:'50px'}
     ];
 
     const customStyles = {
@@ -190,10 +212,18 @@ export default function ListArchiveTable() {
         });
     },[filter,submitted,groups,listdata]);
 
+    useEffect(() => {
+        console.debug('Restoring Archive List settings from browser storage');
+        const cols = JSON.parse(localStorage.getItem('formArchiveCols')) || [];
+        if (cols.length > 0) setShowCols(cols);
+        const f = JSON.parse(sessionStorage.getItem('formArchiveFilter')) || {};
+        setSavedFilter(f);
+    },[]);
+
     if (listdata.isError) return <Loading type="alert" isError>Error Loading List Data</Loading>;
     return (
         <Accordion defaultActiveKey="0" onSelect={handleAccordionClick}>
-            <BlockNav accordionViewRef={accordionViewRef} ActiveAccordionKey={ActiveAccordionKey}/>
+            <BlockNav accordionViewRef={accordionViewRef} ActiveAccordionKey={activeAccordionKey}/>
             <Card style={{overflow:'visible'}}>
                 <Accordion.Toggle as={Card.Header} className="d-print-none clickable" eventKey="0">
                     <h3 className="m-0">Form Archive Search</h3>
@@ -213,7 +243,7 @@ export default function ListArchiveTable() {
                         paginationServer
                         paginationTotalRows={totalRows}
                         subHeader
-                        subHeaderComponent={<ArchiveTableSubHeader filter={filter} setFilter={setFilter} handleSearch={handleSearch} handleReset={handleReset} calculateDates={calculateDates} userData={userData}/>}
+                        subHeaderComponent={<ArchiveTableSubHeader filter={filter} setFilter={setFilter} savedFilter={savedFilter} handleSearch={handleSearch} handleReset={handleReset} calculateDates={calculateDates} userData={userData}/>}
                         onChangeRowsPerPage={handleChangeRowsPerPage}
                         onChangePage={handleChangePage}
                         onRowClicked={handleRowClick}
@@ -244,6 +274,50 @@ export default function ListArchiveTable() {
     );
 }
 
+function ColumnSelect({showCols,setShowCols}) {
+    const [columns,setColumns] = useState(showCols);
+
+    const handleColChange = e => {
+        const cols = new Set(columns);
+        (e.target.checked)?cols.add(e.target.id):cols.delete(e.target.id);
+        setColumns([...cols]);
+    }
+    const handleTogglePopover = (show) => {
+        if (show) return;
+        setShowCols(columns);
+        localStorage.setItem('formArchiveCols',JSON.stringify(columns));
+    }
+
+    useEffect(() => {
+        if (showCols.length == columns.length) return;
+        setColumns(showCols);
+    },[showCols]);
+
+    const popover = (
+        <Popover id="popover-display-columns">
+            <Popover.Title as="h3">Display Columns</Popover.Title>
+            <Popover.Content>
+                <Form.Check type="checkbox" id="form_id" onChange={handleColChange} label="ID" checked={columns.includes('form_id')} disabled/>
+                <Form.Check type="checkbox" id="effdate" onChange={handleColChange} label="Effective Date" checked={columns.includes('effdate')} />
+                <Form.Check type="checkbox" id="fullname" onChange={handleColChange} label="Name" checked={columns.includes('fullname')} />
+                <Form.Check type="checkbox" id="payroll_code" onChange={handleColChange} label="Payroll" checked={columns.includes('payroll_code')} />
+                <Form.Check type="checkbox" id="form_code" onChange={handleColChange} label="Form Code" checked={columns.includes('form_code')} />
+                <Form.Check type="checkbox" id="line_number" onChange={handleColChange} label="Line #" checked={columns.includes('line_number')} />
+                <Form.Check type="checkbox" id="benefit_flag" onChange={handleColChange} label="Benefits" checked={columns.includes('benefit_flag')} />
+                <Form.Check type="checkbox" id="created_by_suny_id" onChange={handleColChange} label="Created By" checked={columns.includes('created_by')} />
+                <Form.Check type="checkbox" id="max_journal_date" onChange={handleColChange} label="Last Updated" checked={columns.includes('max_journal_date')} />
+                <Form.Check type="checkbox" id="last_updated_suny_id" onChange={handleColChange} label="Updated By" checked={columns.includes('last_updated_by')} />
+            </Popover.Content>
+        </Popover>
+    );
+    
+    return (
+        <OverlayTrigger trigger="click" placement="left" overlay={popover} onToggle={handleTogglePopover} rootClose>
+            <Button className="btn-hidden" size="sm" variant="main"><Icon className="mr-0" icon="mdi:gear" /></Button>
+        </OverlayTrigger>
+    );
+}
+
 function BlockNav({accordionViewRef,ActiveAccordionKey}) {
     return (
         <Prompt
@@ -256,7 +330,7 @@ function BlockNav({accordionViewRef,ActiveAccordionKey}) {
     )
 }
 
-function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calculateDates,userData}) {
+function ArchiveTableSubHeader({filter,setFilter,savedFilter,handleSearch,handleReset,calculateDates,userData}) {
     const daysButtons = [
         { id: 'btn-days-30', label: '30 Days', value: '30' },
         { id: 'btn-days-60', label: '60 Days', value: '60' },
@@ -270,6 +344,7 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
     const [showFormCodeModal,setShowFormCodeModal] = useState(false);
     const [filteredUsers,setFilteredUsers] = useState(userData);
     const [createdBySearch,setCreatedBySearch] = useState([{id:'',label:''}]);
+    const [updatedBySearch,setUpdatedBySearch] = useState([{id:'',label:''}]);
     const [dateRange,setDateRange] = useState([filter.startDate,filter.endDate]);
     const [startDate,endDate] = dateRange;
 
@@ -331,9 +406,15 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
     const handlePersonSearch = search => {
         setFilteredUsers(userData.filter(u=>u.label.toLowerCase().includes(search.toLowerCase())));
     }
-    const handlePersonSearchChange = value => {
+    const handleCreatedBySearchChange = value => {
         setCreatedBySearch(value);
         setFilter({createdBy:value[0]?.id});
+        handleReset(false);
+    }
+    const handleUpdatedBySearchChange = value => {
+        setUpdatedBySearch(value);
+        setFilter({updatedBy:value[0]?.id});
+        handleReset(false);
     }
 
     const formCodeButtonLabel = useMemo(() => {
@@ -347,12 +428,23 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
         const daysObj = calculateDates({days:dv});
         setDateRange([daysObj.startDate,daysObj.endDate]);
         setCreatedBySearch([{id:'',label:''}]);
+        setUpdatedBySearch([{id:'',label:''}]);
         handleReset();
     }
 
     const handleKeyDown = e => {
         if (e.key === 'Enter') handleSearch();
     }
+
+    useEffect(() => {
+        const daysObj = calculateDates({days:savedFilter.days});
+        setDays(daysButtons.find(d=>d.value==savedFilter.days)?.id || defaultDays);
+        setDateRange([daysObj.startDate,daysObj.endDate]);
+        userData.find(u=>u.id==savedFilter.createdBy) ? setCreatedBySearch([userData.find(u=>u.id==savedFilter.createdBy)]) : setCreatedBySearch([{id:'',label:''}]);
+        userData.find(u=>u.id==savedFilter.updatedBy) ? setUpdatedBySearch([userData.find(u=>u.id==savedFilter.updatedBy)]) : setUpdatedBySearch([{id:'',label:''}]);
+        setFilter(savedFilter);
+        handleReset(false);
+    },[savedFilter,userData]);
 
     return(
         <Form style={{width:'100%'}} onKeyDown={handleKeyDown}>
@@ -365,7 +457,7 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                     <Form.Label>Name</Form.Label>
                     <Form.Control type="search" size="sm" value={filter.personName} onChange={handleFilterChange}  disabled={filter.formId!=""}/>
                 </Form.Group>
-                <Form.Group as={Col} sm={3} lg={2} controlId="payroll">
+                <Form.Group as={Col} sm={4} md={3} lg={2} controlId="payroll">
                     <Form.Label>Payroll</Form.Label>
                     <Form.Control size="sm" as="select" value={filter.payroll} onChange={handleFilterChange} disabled={filter.formId!=""}>
                         <option></option>
@@ -414,18 +506,18 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                         </Modal.Footer>
                     </Modal>
                 </Form.Group>
-                <Form.Group as={Col} sm={2} md={1} controlId="lineNumber">
+                <Form.Group as={Col} sm={3} md={2} controlId="lineNumber">
                     <Form.Label>Line #</Form.Label>
                     <Form.Control type="search" size="sm" value={filter.lineNumber} onChange={handleFilterChange} placeholder="Enter Line #" disabled={filter.formId!=""}/>
                 </Form.Group>
-                <Form.Group as={Col} sm={3} lg={2} controlId="benefitFlag">
+                <Form.Group as={Col} sm={4} md={3} lg={2} controlId="benefitFlag">
                     <Form.Label>Benefits</Form.Label>
                     <Form.Control size="sm" as="select" value={filter.benefitFlag} onChange={handleFilterChange} disabled={filter.formId!=""}>
                         <option></option>
                         {benefits.data && benefits.data.map(b=><option key={b[0]} value={b[0]}>{b[0]} - {b[1]}</option>)}
                     </Form.Control>
                 </Form.Group>
-                <Form.Group as={Col} sm={3} md={2} controlId="createdBy">
+                <Form.Group as={Col} sm={5} md={4} lg={3} xl={2} controlId="createdBy">
                     <Form.Label>Created By</Form.Label>
                     <AsyncTypeahead
                         size="sm"
@@ -433,8 +525,28 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                         clearButton
                         filterBy={()=>true}
                         onSearch={handlePersonSearch}
-                        onChange={handlePersonSearchChange}
+                        onChange={handleCreatedBySearchChange}
+                        onKeyDown={e=>(e.key==='Escape')&&setCreatedBySearch([{id:'',label:''}])}
                         selected={createdBySearch}
+                        minLength={2}
+                        flip={true}
+                        allowNew={false}
+                        options={filteredUsers}
+                        placeholder="Search for people..."
+                        disabled={filter.formId!=""}
+                    />
+                </Form.Group>
+                <Form.Group as={Col} sm={5} md={4} lg={3} xl={2} controlId="updatedBy">
+                    <Form.Label>Updated By</Form.Label>
+                    <AsyncTypeahead
+                        size="sm"
+                        id="updatedBy-search"
+                        clearButton
+                        filterBy={()=>true}
+                        onSearch={handlePersonSearch}
+                        onChange={handleUpdatedBySearchChange}
+                        onKeyDown={e=>(e.key==='Escape')&&setUpdatedBySearch([{id:'',label:''}])}
+                        selected={updatedBySearch}
                         minLength={2}
                         flip={true}
                         allowNew={false}

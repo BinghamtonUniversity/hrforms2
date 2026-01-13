@@ -1,6 +1,6 @@
 import React, { useState, useReducer, useEffect, useMemo, lazy, useRef } from "react";
 import useRequestQueries from "../../queries/requests";
-import { Row, Col, Form, Button, ButtonGroup, Accordion, Card } from "react-bootstrap";
+import { Row, Col, Form, Button, ButtonGroup, Accordion, Card, OverlayTrigger, Popover } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { format, startOfToday, endOfToday, subDays, addDays } from "date-fns";
 import DataTable from 'react-data-table-component';
@@ -9,10 +9,11 @@ import useListsQueries from "../../queries/lists";
 import { useQueryClient } from "react-query";
 import { useSettingsContext, useAuthContext } from "../../app";
 import useGroupQueries from "../../queries/groups";
-import { find, orderBy, pick } from "lodash";
+import { find, orderBy, pick, defaultTo, omit } from "lodash";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
 import useUserQueries from "../../queries/users";
 import { Prompt } from "react-router-dom";
+import { Icon } from "@iconify/react/dist/iconify.js";
 
 const ArchiveView = lazy(()=>import("./view"));
 
@@ -29,6 +30,7 @@ const defaultValues = {
     multiLines:'N',
     title:'',
     createdBy:'',
+    updatedBy:'',
     page:1,
     results:10,
     sortField:'effdate',
@@ -46,12 +48,26 @@ export default function ListArchiveTable() {
     const [totalRows,setTotalRows] = useState(0);
     const [submitted,setSubmitted] = useState(false);
     const [selectedRowId,setSelectedRowId] = useState();
-    const [ActiveAccordionKey,setActiveAccordionKey] = useState('0');
+    const [activeAccordionKey,setActiveAccordionKey] = useState('0');
+    const [savedFilter,setSavedFilter] = useState({});
+    const [showCols,setShowCols] = useState([
+        'request_id',
+        'pos_type',
+        'req_type',
+        'effdate',
+        'candidate_name',
+        'line_number',
+        'multi_lines',
+        'title',
+        'created_by',
+        'max_journal_date',
+        'last_updated_by'
+    ]);
 
     const { getUsers } = useUserQueries();
     const { getGroups } = useGroupQueries();
     const users = getUsers({onSuccess: d => {
-        const r = orderBy(d.filter(u=>(!!u.LEGAL_FIRST_NAME&&!!u.LEGAL_LAST_NAME)),['LEGAL_LAST_NAME','LEGAL_FIRST_NAME'],['asc','asc']).map(u=>({id:u.SUNY_ID, label:`${u.LEGAL_FIRST_NAME} ${u.LEGAL_LAST_NAME}`}));
+        const r = orderBy(d.filter(u=>(!!u.LEGAL_FIRST_NAME&&!!u.LEGAL_LAST_NAME)),['LEGAL_LAST_NAME','ALIAS_FIRST_NAME','LEGAL_FIRST_NAME'],['asc','asc','asc']).map(u=>({id:u.SUNY_ID, label:`${defaultTo(u.ALIAS_FIRST_NAME,u.LEGAL_FIRST_NAME)} ${u.LEGAL_LAST_NAME}`}));
         setUserData(r);
     }});
     const groups = getGroups();
@@ -91,6 +107,7 @@ export default function ListArchiveTable() {
     });
 
     const handleSearch = () => {
+        sessionStorage.setItem('requestArchiveFilter',JSON.stringify(omit(filter,["startDate","endDate"])));
         setSubmitted(true);
     }
 
@@ -99,7 +116,10 @@ export default function ListArchiveTable() {
         setSelectedRowId(null);
         queryClient.removeQueries(['archivelist','request']);
         setData([]);
-        if (reset) setFilter(defaultValues);
+        if (reset) {
+            setFilter(defaultValues);
+            sessionStorage.removeItem('requestArchiveFilter');
+        }
     }
 
     const handleChangePage = page => {
@@ -128,14 +148,17 @@ export default function ListArchiveTable() {
 
     const columns = [
         {id:'request_id',name:'ID',selector:row=>row.REQUEST_ID,sortable:true},
-        {id:'pos_type',name:'Position Type',selector:row=>row.POSTYPE.id,format:row=>`${row.POSTYPE.id} - ${row.POSTYPE.title}`,sortable:true},
-        {id:'req_type',name:'Request Type',selector:row=>row.REQTYPE.id,format:row=>`${row.REQTYPE.id} - ${row.REQTYPE.title}`,sortable:true},
-        {id:'effdate',name:'Effective Date',selector:row=>row.EFFDATE,format:row=>format(new Date(row.EFFDATE),'P'),sortable:true},
-        {id:'candidate_name',name:'Candidate Name',selector:row=>row.CANDIDATENAME,sortable:true,wrap:true},
-        {id:'line_number',name:'Line #',selector:row=>row.LINENUMBER,sortable:true},
-        {id:'multi_lines',name:'Multi-Line?',selector:row=>row.MULTILINES,format:row=>row.MULTILINES=='Y'?'Yes':'No',sortable:true},
-        {id:'title',name:'Title',selector:row=>row.REQBUDGETTITLE,sortable:true,wrap:true},
-        {id:'created_by',name:'Created By',selector:row=>row.CREATED_BY_SUNY_ID,sortable:true,format:row=>`${row.fullName} (${row.CREATED_BY_SUNY_ID})`,wrap:true},
+        {id:'pos_type',name:'Position Type',selector:row=>row.POSTYPE.id,format:row=>`${row.POSTYPE.id} - ${row.POSTYPE.title}`,sortable:true,reorder:true,omit:!showCols.includes('pos_type')},
+        {id:'req_type',name:'Request Type',selector:row=>row.REQTYPE.id,format:row=>`${row.REQTYPE.id} - ${row.REQTYPE.title}`,sortable:true,reorder:true,omit:!showCols.includes('req_type')},
+        {id:'effdate',name:'Effective Date',selector:row=>row.EFFDATE,format:row=>format(new Date(row.EFFDATE),'P'),sortable:true,reorder:true,omit:!showCols.includes('effdate')},
+        {id:'candidate_name',name:'Candidate Name',selector:row=>row.CANDIDATENAME,sortable:true,wrap:true,reorder:true,omit:!showCols.includes('candidate_name')},
+        {id:'line_number',name:'Line #',selector:row=>row.LINENUMBER,sortable:true,reorder:true,omit:!showCols.includes('line_number')},
+        {id:'multi_lines',name:'Multi-Line?',selector:row=>row.MULTILINES,format:row=>row.MULTILINES=='Y'?'Yes':'No',sortable:true,reorder:true,omit:!showCols.includes('multi_lines')},
+        {id:'title',name:'Title',selector:row=>row.REQBUDGETTITLE,sortable:true,wrap:true,reorder:true,omit:!showCols.includes('title')},
+        {id:'created_by',name:'Created By',selector:row=>row.CREATED_BY_SUNY_ID,sortable:true,format:row=>`${row.CREATED_BY_FIRST_NAME} ${row.CREATED_BY_LEGAL_LAST_NAME} (${row.CREATED_BY_SUNY_ID})`,wrap:true,reorder:true,omit:!showCols.includes('created_by')},
+        {id:'max_journal_date',name:'Last Updated',selector:row=>row.MAX_JOURNAL_DATE,format:row=>format(new Date(row.MAX_JOURNAL_DATE),'P'),sortable:true,reorder:true,omit:!showCols.includes('max_journal_date')},
+        {id:'last_updated_by',name:'Last Updated By',selector:row=>row.LAST_UPDATED_SUNY_ID,sortable:true,format:row=>(<span>{row.LAST_UPDATED_NAME} ({row.LAST_UPDATED_SUNY_ID})</span>),wrap:true,reorder:true,omit:!showCols.includes('last_updated_by')},
+        {id:'changeCol',name:<ColumnSelect showCols={showCols} setShowCols={setShowCols}/>,allowOverflow:true,width:'50px'}
     ];
 
     const customStyles = {
@@ -173,10 +196,18 @@ export default function ListArchiveTable() {
         });
     },[filter,submitted,groups,listdata]);
 
+    useEffect(() => {
+        console.debug('Restoring Archive List settings from browser storage');
+        const cols = JSON.parse(localStorage.getItem('requestArchiveCols')) || [];
+        if (cols.length > 0) setShowCols(cols);
+        const f = JSON.parse(sessionStorage.getItem('requestArchiveFilter')) || {};
+        setSavedFilter(f);
+    },[]);
+
     if (listdata.isError) return <Loading type="alert" isError>Error Loading List Data</Loading>;
     return (
         <Accordion defaultActiveKey="0" onSelect={handleAccordionClick}>
-            <BlockNav accordionViewRef={accordionViewRef} ActiveAccordionKey={ActiveAccordionKey}/>
+            <BlockNav accordionViewRef={accordionViewRef} ActiveAccordionKey={activeAccordionKey}/>
             <Card style={{overflow:'visible'}}>
                 <Accordion.Toggle as={Card.Header} className="d-print-none clickable" eventKey="0">
                     <h3 className="m-0">Request Archive Search</h3>
@@ -196,7 +227,7 @@ export default function ListArchiveTable() {
                         paginationServer
                         paginationTotalRows={totalRows}
                         subHeader
-                        subHeaderComponent={<ArchiveTableSubHeader filter={filter} setFilter={setFilter} handleSearch={handleSearch} handleReset={handleReset} calculateDates={calculateDates} userData={userData}/>}
+                        subHeaderComponent={<ArchiveTableSubHeader filter={filter} setFilter={setFilter} savedFilter={savedFilter} handleSearch={handleSearch} handleReset={handleReset} calculateDates={calculateDates} userData={userData}/>}
                         onChangeRowsPerPage={handleChangeRowsPerPage}
                         onChangePage={handleChangePage}
                         onRowClicked={handleRowClick}
@@ -227,6 +258,51 @@ export default function ListArchiveTable() {
     );
 }
 
+function ColumnSelect({showCols,setShowCols}) {
+    const [columns,setColumns] = useState(showCols);
+
+    const handleColChange = e => {
+        const cols = new Set(columns);
+        (e.target.checked)?cols.add(e.target.id):cols.delete(e.target.id);
+        setColumns([...cols]);
+    }
+    const handleTogglePopover = (show) => {
+        if (show) return;
+        setShowCols(columns);
+        localStorage.setItem('requestArchiveCols',JSON.stringify(columns));
+    }
+
+    useEffect(() => {
+        if (showCols.length == columns.length) return;
+        setColumns(showCols);
+    },[showCols]);
+
+    const popover = (
+        <Popover id="popover-display-columns">
+            <Popover.Title as="h3">Display Columns</Popover.Title>
+            <Popover.Content>
+                <Form.Check type="checkbox" id="req_id" onChange={handleColChange} label="ID" checked={columns.includes('request_id')} disabled/>
+                <Form.Check type="checkbox" id="pos_type" onChange={handleColChange} label="Position Type" checked={columns.includes('pos_type')} />
+                <Form.Check type="checkbox" id="req_type" onChange={handleColChange} label="Request Type" checked={columns.includes('req_type')} />
+                <Form.Check type="checkbox" id="effdate" onChange={handleColChange} label="Effective Date" checked={columns.includes('effdate')} />
+                <Form.Check type="checkbox" id="candidate_name" onChange={handleColChange} label="Candidate Name" checked={columns.includes('candidate_name')} />
+                <Form.Check type="checkbox" id="line_number" onChange={handleColChange} label="Line #" checked={columns.includes('line_number')} />
+                <Form.Check type="checkbox" id="multi_lines" onChange={handleColChange} label="Multi-Line?" checked={columns.includes('multi_lines')} />
+                <Form.Check type="checkbox" id="title" onChange={handleColChange} label="Title" checked={columns.includes('title')} />
+                <Form.Check type="checkbox" id="created_by" onChange={handleColChange} label="Created By" checked={columns.includes('created_by')} />
+                <Form.Check type="checkbox" id="max_journal_date" onChange={handleColChange} label="Last Updated" checked={columns.includes('max_journal_date')} />
+                <Form.Check type="checkbox" id="last_updated_by" onChange={handleColChange} label="Updated By" checked={columns.includes('last_updated_by')} />
+            </Popover.Content>
+        </Popover>
+    );
+    
+    return (
+        <OverlayTrigger trigger="click" placement="left" overlay={popover} onToggle={handleTogglePopover} rootClose>
+            <Button className="btn-hidden" size="sm" variant="main"><Icon className="mr-0" icon="mdi:gear" /></Button>
+        </OverlayTrigger>
+    );
+}
+
 function BlockNav({accordionViewRef,ActiveAccordionKey}) {
     return (
         <Prompt
@@ -239,7 +315,7 @@ function BlockNav({accordionViewRef,ActiveAccordionKey}) {
     )
 }
 
-function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calculateDates,userData}) {
+function ArchiveTableSubHeader({filter,setFilter,savedFilter,handleSearch,handleReset,calculateDates,userData}) {
     const daysButtons = [
         { id: 'btn-days-30', label: '30 Days', value: '30' },
         { id: 'btn-days-60', label: '60 Days', value: '60' },
@@ -252,6 +328,7 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
     const [pastFuture,setPastFuture] = useState(filter.pastFuture || 'past');
     const [filteredUsers,setFilteredUsers] = useState(userData);
     const [createdBySearch,setCreatedBySearch] = useState([{id:'',label:''}]);
+    const [updatedBySearch,setUpdatedBySearch] = useState([{id:'',label:''}]);
     const [dateRange,setDateRange] = useState([filter.startDate,filter.endDate]);
     const [startDate,endDate] = dateRange;
 
@@ -300,9 +377,15 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
     const handlePersonSearch = search => {
         setFilteredUsers(userData.filter(u=>u.label.toLowerCase().includes(search.toLowerCase())));
     }
-    const handlePersonSearchChange = value => {
+    const handleCreatedBySearchChange = value => {
         setCreatedBySearch(value);
         setFilter({createdBy:value[0]?.id});
+        handleReset(false);
+    }
+    const handleUpdatedBySearchChange = value => {
+        setUpdatedBySearch(value);
+        setFilter({updatedBy:value[0]?.id});
+        handleReset(false);
     }
 
     const resetDays = () => {
@@ -311,6 +394,7 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
         const daysObj = calculateDates({days:dv});
         setDateRange([daysObj.startDate,daysObj.endDate]);
         setCreatedBySearch([{id:'',label:''}]);
+        setUpdatedBySearch([{id:'',label:''}]);
         handleReset();
     }
 
@@ -318,47 +402,57 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
         if (e.key === 'Enter') handleSearch();
     }
 
+    useEffect(() => {
+        const daysObj = calculateDates({days:savedFilter.days});
+        setDays(daysButtons.find(d=>d.value==savedFilter.days)?.id || defaultDays);
+        setDateRange([daysObj.startDate,daysObj.endDate]);
+        userData.find(u=>u.id==savedFilter.createdBy) ? setCreatedBySearch([userData.find(u=>u.id==savedFilter.createdBy)]) : setCreatedBySearch([{id:'',label:''}]);
+        userData.find(u=>u.id==savedFilter.updatedBy) ? setUpdatedBySearch([userData.find(u=>u.id==savedFilter.updatedBy)]) : setUpdatedBySearch([{id:'',label:''}]);
+        setFilter(savedFilter);
+        handleReset(false);
+    },[savedFilter,userData]);
+
     return(
         <Form style={{width:'100%'}} onKeyDown={handleKeyDown}>
             <Row>
                 <Col><h3>Archive Search</h3></Col>
             </Row>
             <Form.Row className="justify-content-end">
-                <Form.Group as={Col} sm={2} lg={1} controlId="reqId">
+                <Form.Group as={Col} md={2} lg={1} controlId="reqId">
                     <Form.Label>ID</Form.Label>
                     <Form.Control type="search" size="sm" value={filter.reqId} onChange={handleFilterChange}/>
                 </Form.Group>
-                <Form.Group as={Col} sm={3} lg={1} controlId="posType" className="nowrap">
+                <Form.Group as={Col} md={3} lg={2} controlId="posType" className="nowrap">
                     <Form.Label>Position Type</Form.Label>
                     <Form.Control size="sm" as="select" value={filter.posType} onChange={handleFilterChange} disabled={filter.reqId!=""}>
                         <option></option>
                         {posTypes.data && Object.keys(posTypes.data).map(p=>(<option key={p} value={p}>{p} - {posTypes.data[p]?.title}</option>))}
                     </Form.Control>
                 </Form.Group>
-                <Form.Group as={Col} sm={3} lg={2} controlId="reqType">
+                <Form.Group as={Col} md={3} lg={2} controlId="reqType">
                     <Form.Label>Request Type</Form.Label>
                     <Form.Control size="sm" as="select" value={filter.reqType} onChange={handleFilterChange} disabled={filter.posType==""}>
                         <option></option>
                         {(reqTypes.data&&filter.posType!="") && reqTypes.data.filter(r=>posTypes.data[filter.posType]?.reqTypes.includes(r[0])).map(r=>(<option key={r[0]} value={r[0]}>{r[0]} - {r[1]}</option>))}
                     </Form.Control>
                 </Form.Group>
-                <Form.Group as={Col} sm={3} lg={2} controlId="candidateName">
+                <Form.Group as={Col} md={4} lg={3} xl={2} controlId="candidateName">
                     <Form.Label>Name</Form.Label>
                     <Form.Control type="search" size="sm" value={filter.candidateName} onChange={handleFilterChange} placeholder="Enter Name" disabled={filter.reqId!=""}/>
                 </Form.Group>
-                <Form.Group as={Col} sm={2} lg={1} controlId="lineNumber">
+                <Form.Group as={Col} md={2} lg={1} controlId="lineNumber">
                     <Form.Label>Line #</Form.Label>
                     <Form.Control type="search" size="sm" value={filter.lineNumber} onChange={handleFilterChange} placeholder="Line #" disabled={filter.reqId!=""}/>
                 </Form.Group>
-                <Form.Group as={Col} sm={1} lg={1} controlId="multiLines" className="text-center">
+                <Form.Group as={Col} md={1} lg={1} controlId="multiLines" className="text-center">
                     <Form.Label>Multi-Line?</Form.Label>
                     <Form.Check type="checkbox" value="Y" className="mt-1" checked={(filter.multiLines=='Y')} onChange={handleFilterChange} disabled={filter.reqId!=""}/>
                 </Form.Group>
-                <Form.Group as={Col} sm={3} lg={2} controlId="title">
+                <Form.Group as={Col} md={4} lg={3} xl={2} controlId="title">
                     <Form.Label>Title</Form.Label>
                     <Form.Control type="search" size="sm" value={filter.title} onChange={handleFilterChange} placeholder="Enter Title" disabled={filter.reqId!=""}/>
                 </Form.Group>
-                <Form.Group as={Col} sm={3} lg={2} controlId="createdBy">
+                <Form.Group as={Col} md={5} lg={4} xl={2} controlId="createdBy">
                     <Form.Label>Created By</Form.Label>
                     <AsyncTypeahead
                         size="sm"
@@ -366,8 +460,28 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                         clearButton
                         filterBy={()=>true}
                         onSearch={handlePersonSearch}
-                        onChange={handlePersonSearchChange}
+                        onChange={handleCreatedBySearchChange}
+                        onKeyDown={e=>(e.key==='Escape')&&setCreatedBySearch([{id:'',label:''}])}
                         selected={createdBySearch}
+                        minLength={2}
+                        flip={true}
+                        allowNew={false}
+                        options={filteredUsers}
+                        placeholder="Search for people..."
+                        disabled={filter.reqId!=""}
+                    />
+                </Form.Group>
+                <Form.Group as={Col} md={5} lg={4} xl={2} controlId="updatedBy">
+                    <Form.Label>Updated By</Form.Label>
+                    <AsyncTypeahead
+                        size="sm"
+                        id="updatedBy-search"
+                        clearButton
+                        filterBy={()=>true}
+                        onSearch={handlePersonSearch}
+                        onChange={handleUpdatedBySearchChange}
+                        onKeyDown={e=>(e.key==='Escape')&&setUpdatedBySearch([{id:'',label:''}])}
+                        selected={updatedBySearch}
                         minLength={2}
                         flip={true}
                         allowNew={false}
@@ -378,7 +492,7 @@ function ArchiveTableSubHeader({filter,setFilter,handleSearch,handleReset,calcul
                 </Form.Group>
             </Form.Row>
             <Form.Row className="justify-content-end">
-                <div className="form-group col-lg-2 col-sm-3 text-right pt-1 pr-3">Transaction Effective Date:</div>
+                <div className="form-group col-lg-2 col-md-3 text-right pt-1 pr-3">Transaction Effective Date:</div>
                 <div className="pt-1">
                     <Form.Check inline label="Past" name="pastFuture" type="radio" id="past" checked={filter.pastFuture=='past'} onChange={handleDaysChange} disabled={filter.reqId!=''}/>
                     <Form.Check inline label="Future" name="pastFuture" type="radio" id="future" checked={filter.pastFuture=='future'} onChange={handleDaysChange} disabled={filter.reqId!=''}/>
