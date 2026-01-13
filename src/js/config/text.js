@@ -222,7 +222,6 @@ const text = {
             },
         },
     },
-    'test': 'This is a test message'
 };
 
 /* do not edit below this line */
