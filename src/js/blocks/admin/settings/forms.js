@@ -13,11 +13,29 @@ import { Icon } from "@iconify/react";
 export default function SettingsForms() {
     return (
         <>
+            <DashBoardCardTitle/>
             <SettingsFormsMenu/>
             <SettingsFormsAgeWarning/>
             <SettingsFormsDefaultRouting/>
             <SettingsFormsEmail/>
         </>
+    );
+}
+
+function DashBoardCardTitle() {
+    const { control } = useFormContext();
+    return (
+        <Form.Group as={Row}>
+            <Form.Label column md={2}>Dashboard Title:</Form.Label>
+            <Col xs="auto">
+                <Controller
+                    name="forms.dashboardTitle"
+                    defaultValue=""
+                    control={control}
+                    render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Dashboard Title"/>}
+                />
+            </Col>
+        </Form.Group>
     );
 }
 

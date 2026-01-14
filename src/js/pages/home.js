@@ -1,8 +1,7 @@
 import React, { useMemo } from "react";
-import { Link } from "react-router-dom";
 import { Row, Col, Card, ListGroup } from "react-bootstrap";
-import { capitalize } from "lodash";
-import { useAuthContext, useUserContext} from "../app";
+import { get } from "lodash";
+import { useAuthContext, useSettingsContext, useUserContext} from "../app";
 import { News } from "../blocks/news";
 import { MenuCounts } from "../blocks/components";
 import { t } from "../config/text";
@@ -42,12 +41,13 @@ function Welcome() {
 
 function DashBoardCards() {
     const { isViewer } = useUserContext();
+    const settings = useSettingsContext();
     return (
         <Row>
             {['requests','forms'].map(c => (
                 <Col key={c} sm={6} md={5} lg={4}>
                     <Card border="main">
-                        <Card.Header className="bg-main text-white"><Link className="text-white" to={`/${c}/list`}>{capitalize(c)}</Link></Card.Header>
+                        <Card.Header className="bg-main text-white">{get(settings,`${c}.dashboardTitle`,'Title')}</Card.Header>
                         <ListGroup variant="flush">
                             <MenuCounts menu={c} showOn="home" showNew={!isViewer} isViewer={isViewer}/>
                         </ListGroup>
