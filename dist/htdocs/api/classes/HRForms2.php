@@ -28,6 +28,22 @@ Class HRForms2 {
     //protected $userData = array();
     public $returnData;
 
+    protected function traverse($data,&$result,$prefix="") {
+        if (is_object($data)) {
+            $data = get_object_vars($data);
+        }
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                $fkey = strtoupper(($prefix!="") ? $prefix.":".$key : $key);
+                if (is_array($value) || is_object($value)) {
+                    $this->traverse($value,$result,$fkey);
+                } else {
+                    $result[strtoupper($fkey)] = $value;
+                }
+            }
+        }
+    }
+
     function init(array $args = array()) {
         $this->AppPath = $_SERVER['DOCUMENT_ROOT'];
         // Set Allow response header indicating what methods are allowed.
@@ -139,13 +155,13 @@ Class HRForms2 {
         } else {
             if (!phpCAS::isInitialized()) {
                 session_set_cookie_params($client_lifetime,$client_path,$client_domain,$client_secure,$client_httpOnly);
-                phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context);
-                #phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context, $client_service_name);
-                phpCAS::setCasServerCACert($cas_server_ca_cert_path);
+                #phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context);
+                phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $client_service_name);
+                #phpCAS::setCasServerCACert($cas_server_ca_cert_path);
                 phpCAS::setNoCasServerValidation();//TODO: should this be off?
                 phpCAS::handleLogoutRequests(true, $cas_real_hosts);
+                phpCAS::forceAuthentication();
             }
-            phpCAS::forceAuthentication();
             $this->sessionData = array_merge($this->sessionData,array("SESSION_ID"=>$_COOKIE['session-id'],"CAS_SID"=>session_id(),"UDC_IDENTIFIER"=>phpCAS::getAttribute('UDC_IDENTIFIER')));
         }
         if (!isset($this->sessionData['CAS_SID'])) $this->raiseError(401);
@@ -254,7 +270,7 @@ Class HRForms2 {
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
         $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-        $this->sessionData['isAdmin'] = ($row['IS_ADMIN'] == '1') ? true : false;
+        $this->sessionData['isAdmin'] = ($row&&isset($row['IS_ADMIN'])) ? $row['IS_ADMIN'] : 0;
         return $this->sessionData['isAdmin'];
     }
 
@@ -271,7 +287,7 @@ Class HRForms2 {
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
         $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-        $this->sessionData['isViewer'] = ($row['IS_VIEWER'] == '1') ? true : false;
+        $this->sessionData['isViewer'] = ($row&&isset($row['IS_VIEWER'])) ? $row['IS_VIEWER'] : 0;
         return $this->sessionData['isViewer'];
     }
 
@@ -447,16 +463,27 @@ Class HRForms2 {
             'INSTANCE' => INSTANCE,
             'DEBUG' => DEBUG,
             'SMTP_DEBUG' => SMTP_DEBUG,
+            'URL' => ''
         );
         if (array_key_exists('request_id',$journal)) {
             $id = $journal['request_id'];
             $type = 'requests';
             $template_type = 'R';
+            $vars['URL'] = 'https://'.HOST.'/#/request/'.$id;
+            $requestData = (new requests(array($id),false))->returnData;
+            $flat = array();
+            $this->traverse($requestData,$flat,"REQ");
+            $vars = array_merge($vars,$flat);
         }
         if (array_key_exists('form_id',$journal)) {
             $id = $journal['form_id'];
             $type = 'forms';
             $template_type = 'F';
+            $vars['URL'] = 'https://'.HOST.'/#/form/'.$id;
+            $formData = (new form(array($id),false))->returnData;
+            $flat = array();
+            $this->traverse($formData,$flat,"FORM");
+            $vars = array_merge($vars,$flat);
         }
         if ($type == null) {
             $_SERVER['REQUEST_METHOD'] = $origMethod;
@@ -470,7 +497,7 @@ Class HRForms2 {
         /*
         $defaultEmail = $settings[$type]['email']['default']; //not valid; group now
         */
-        $defaultEmail = "geigers+hrforms2-dev-default@binghamton.edu";
+        $defaultEmail = "geigers+hrforms2-".strtolower(INSTANCE)."-default@binghamton.edu";
         $errorEmail = $this->getGroupEmails($email_settings['errorsGroup']);
 
         // Check for no "To" options and return
@@ -478,6 +505,10 @@ Class HRForms2 {
             $_SERVER['REQUEST_METHOD'] = $origMethod;
             return "No email notification for this status";
         }
+        // Get Submitter Info
+        $submitter = (new user(array($journal['submitted_by']),false))->returnData[0];
+        $vars['SUBMITTER_NAME'] = (empty($submitter['ALIAS_FIRST_NAME'])?$submitter['LEGAL_FIRST_NAME']:$submitter['ALIAS_FIRST_NAME']).' '.$submitter['LEGAL_LAST_NAME'];
+        $vars['SUBMITTER_EMAIL'] = $submitter['EMAIL_ADDRESS_WORK'];
 
         // Get Groups Info
         $groups = (new groups(array(),false))->returnData;
@@ -567,6 +598,19 @@ Class HRForms2 {
             'MAILCC' => function() use ($email_list) { return implode(', ',$email_list['mailcc']); },
             'REPLYTO' => $replyto
         ));
+
+        // add helper functions
+        $vars = array_merge($vars,array(
+            'formatCurrency' => function($text, Mustache_LambdaHelper $helper) {
+                $value = $helper->render($text);
+                return '$'.number_format($value,2);
+            },
+            'formatDate' => function($text, Mustache_LambdaHelper $helper) {
+                $value = $helper->render($text);
+                return date("m/d/Y",strtotime($value));
+            }
+        ));
+
         $m = new Mustache_Engine(array(
             'partials' => $partials
         ));
