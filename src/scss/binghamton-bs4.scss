@@ -429,7 +429,6 @@ button.btn-sm.no-label svg.iconify {
   background-color: map-get($theme-colors,'warning-light') !important;
 }
 
-
 #listData-editor {
   font-family:"Lucida Console","Courier New","Courier",monospace;
   background-color:#393939;
@@ -446,6 +445,11 @@ button.btn-sm.no-label svg.iconify {
 /*.editor-container .jodit-source * { font-size: 18px !important }*/
 .ace_editor * { font-size: 18px !important }
 div.jodit-workplace > div.jodit-source{ background-color:inherit }
+/* Jodit toolbar dropdown button height fix - reduce gap/whitespace around buttons */
+.jodit-toolbar-editor-collection_mode_vertical .jodit-toolbar-button,
+.jodit-toolbar-editor-collection_mode_vertical .jodit-toolbar-button__button {
+  min-height: 1.5rem !important;
+}
 
 /* SUNY Account styles */
 #col-SUNYAccount div.rbt {
