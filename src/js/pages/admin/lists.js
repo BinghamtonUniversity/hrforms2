@@ -1,33 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useQueryClient } from "react-query";
-import { Row, Col, Form, ToggleButtonGroup, ToggleButton } from "react-bootstrap";
-import { useForm, Controller, FormProvider, useFormContext, useWatch } from "react-hook-form";
+import { Row, Col, Form, ToggleButtonGroup, ToggleButton, Card, ListGroup, Button } from "react-bootstrap";
+import { useForm, Controller, FormProvider, useFormContext, useWatch, useFieldArray } from "react-hook-form";
 import { toast } from "react-toastify";
-import { camelCase, find } from "lodash";
+import { camelCase, cloneDeep, find, set } from "lodash";
 import { Loading, ModalConfirm, AppButton, errorToast } from "../../blocks/components";
+import { useHotkeys } from "react-hotkeys-hook";
 import { t } from "../../config/text";
 import useListsQueries from "../../queries/lists";
 import { Helmet } from "react-helmet";
+import { Icon } from "@iconify/react/dist/iconify.js";
 import { useHistory, useParams } from "react-router-dom";
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 
 export default function AdminLists() {
     const [selectedList,setSelectedList] = useState();
     const [isNewList,setIsNewList] = useState(false);
     const [slugHint,setSlugHint] = useState('');
-    const [confirmDelete,setConfirmDelete] = useState(false);
     const [confirmSave,setConfirmSave] = useState(false);
     const [runSQL,setRunSQL] = useState('');
 
     const params = useParams();
     const history = useHistory();
 
-    const { getLists, getList, postList, putList, deleteList } = useListsQueries();
+    const { getLists, getList, postList, putList } = useListsQueries();
     const lists = getLists();
     const listdetails = getList(selectedList,{enabled:false});
     const queryclient = useQueryClient();
     const createlist = postList();
     const updatelist = putList(selectedList);
-    const deletelist = deleteList(selectedList);
 
     const defaultValues = {
         LIST_ID:'',
@@ -36,7 +37,8 @@ export default function AdminLists() {
         LIST_TYPE:'',
         LIST_SLUG:'',
         PROTECTED:'',
-        LIST_DATA:''
+        LIST_DATA:'',
+        LIST_ARRAY_DATA:[]
     };
     const methods = useForm({defaultValues:defaultValues});
     
@@ -64,26 +66,6 @@ export default function AdminLists() {
     }
     const pickSlugHint = () => methods.setValue('LIST_SLUG',slugHint);
     
-    const handleDeleteList = () => setConfirmDelete(true);
-    const confirmDeleteButtons = {
-        close:{title:'Cancel',callback:()=>setConfirmDelete(false)},
-        confirm:{title:'Delete',variant:'danger',callback:()=>{
-            setConfirmDelete(false);
-            toast.promise(new Promise((resolve,reject) => {
-                deletelist.mutateAsync(selectedList).then(()=>{
-                    queryclient.refetchQueries('lists',{exact:true}).then(() => {
-                        setSelectedList('');
-                        setRunSQL('');
-                        resolve();
-                    }).catch(err=>reject(err))
-                }).catch(err=>reject(err));
-            }),{
-                pending: 'Deleting list...',
-                success: 'List deleted successfully',
-                error: errorToast('Failed to delete list')
-            });
-        }}
-    };
     const saveList = data =>{
         //TODO: make this a promise and test SQL remotely
         if (data.LIST_TYPE=='json') {
@@ -95,7 +77,13 @@ export default function AdminLists() {
             }
         }
         if (data.LIST_TYPE == 'list') {
-            try {
+            if (!data.LIST_ARRAY_DATA.length) {
+                methods.setError("LIST_DATA",{type:'manual',message:'List cannot be empty',},{shouldFocus:true});
+                return false;  
+            }
+            data.LIST_DATA = JSON.stringify(data.LIST_ARRAY_DATA.map(r=>[r.key,r.value]));
+            //probably don't need to do this now
+            /*try {
                 const list = JSON.parse(data.LIST_DATA);
                 if (list.filter(l=>l.length!=2).length != 0) {
                     methods.setError("LIST_DATA",{type:'manual',message:'Invalid List',},{shouldFocus:true});
@@ -104,7 +92,7 @@ export default function AdminLists() {
             } catch(e) {
                 methods.setError("LIST_DATA",{type:'manual',message:'Invalid List',},{shouldFocus:true});
                 return false;    
-            }
+            }*/
         }
         if (data.LIST_TYPE == 'sql') {
             const sql = data.LIST_DATA.toLowerCase();
@@ -123,6 +111,8 @@ export default function AdminLists() {
         confirm:{title:'Save',callback:()=>{
             setConfirmSave(false);
             const data = methods.getValues();
+            if (data.LIST_TYPE == 'list') data.LIST_DATA = JSON.stringify(data.LIST_ARRAY_DATA.map(r=>[r.key,r.value]));
+            delete(data.LIST_ARRAY_DATA); // remove temp field
             if (isNewList) {
                 toast.promise(new Promise((resolve,reject) => {
                     createlist.mutateAsync(data).then(d=>{
@@ -160,12 +150,10 @@ export default function AdminLists() {
 
     const resetState = () => {
         methods.clearErrors();
-        setConfirmDelete(false);
-        setConfirmDelete(false);
         setSlugHint('');
         setRunSQL('');
         if (!selectedList){
-            ['LIST_ID','LIST_NAME','LIST_DESCRIPTION','LIST_TYPE','LIST_SLUG','PROTECTED','LIST_DATA'].forEach(k=>methods.setValue(k,''));
+            ['LIST_ID','LIST_NAME','LIST_DESCRIPTION','LIST_TYPE','LIST_SLUG','PROTECTED','LIST_DATA'].forEach(k=>methods.setValue(k,''));            
         }
     }
     const cancelList = () => {
@@ -180,7 +168,7 @@ export default function AdminLists() {
         const slug = find(lists.data,['LIST_ID',e.target.value])?.LIST_SLUG??'';
         history.push('/admin/lists/'+slug);
     }
-
+    
     useEffect(()=>{
         methods.clearErrors();
         if (!listdetails.data) return;
@@ -200,7 +188,6 @@ export default function AdminLists() {
         const list = find(lists.data,['LIST_SLUG',params.subpage]);
         setSelectedList(list?.LIST_ID??'');
     },[lists,params]);
-
     return (
         <>
             <section>
@@ -234,20 +221,20 @@ export default function AdminLists() {
                 {(listdetails.data||isNewList) && 
                     <FormProvider {...methods}>
                         <Form onSubmit={methods.handleSubmit(saveList)} onReset={cancelList}>
-                            <ListDetails locked={listdetails.data?.PROTECTED} handleBlur={handleBlur} slugHint={slugHint} pickSlugHint={pickSlugHint} handleDeleteList={handleDeleteList} isNewList={isNewList} setRunSQL={setRunSQL}/>
+                            <ListDetails locked={listdetails.data?.PROTECTED} handleBlur={handleBlur} slugHint={slugHint} pickSlugHint={pickSlugHint} isNewList={isNewList} setRunSQL={setRunSQL}/>
                         </Form>
                     </FormProvider>
                 }
             </section>
             {runSQL!='' && <ListRunSQL runSQL={runSQL}/>}
             <ModalConfirm show={confirmSave} title="Save?" buttons={confirmSaveButtons}>Are you sure you want to save this list?</ModalConfirm>
-            <ModalConfirm show={confirmDelete} title="Delete?" buttons={confirmDeleteButtons}>Are you sure you want to delete this list?</ModalConfirm>
         </>
     );
 }
 
-function ListDetails({locked,handleBlur,slugHint,pickSlugHint,handleDeleteList,isNewList,setRunSQL}) {
-    const [allowUpload,setAllowUpload] = useState(false);
+function ListDetails({locked,handleBlur,slugHint,pickSlugHint,isNewList,setRunSQL}) {
+    const [allowUpload,setAllowUpload] = useState(false); //TODO: implement upload
+    const [showListRaw,setShowListRaw] = useState(false);
     
     const { control, getValues, formState: { errors }} = useFormContext();
     const watchListType = useWatch({name:'LIST_TYPE'});
@@ -258,6 +245,10 @@ function ListDetails({locked,handleBlur,slugHint,pickSlugHint,handleDeleteList,i
             t.setRangeText('  ',t.selectionStart,t.selectionEnd,'end');
         }
     }
+    const handleShowListRaw = () => {
+        setShowListRaw(!showListRaw);
+    };
+
     return (
         <>
             <Form.Group as={Row}>
@@ -334,27 +325,112 @@ function ListDetails({locked,handleBlur,slugHint,pickSlugHint,handleDeleteList,i
                 </Col>
             </Form.Group>
             <Form.Group as={Row}>
-                <Form.Label column md={2}>List Data:</Form.Label>
+                <Col md={2}>
+                    <Form.Label>List Data:</Form.Label>
+                    {watchListType=='list' && <Button size="sm" className="ml-1" tabIndex={-1} onClick={handleShowListRaw}>{showListRaw?'Hide':'Show'} Raw Data</Button>}
+                </Col>
                 <Col md={9}>
-                    {(watchListType=='list'&&allowUpload)&&<AppButton format="upload" size="sm">Upload Data</AppButton>}
-                    <Controller
-                        name="LIST_DATA"
-                        defaultValue=''
-                        control={control}
-                        render={({field})=><Form.Control {...field} id="listData-editor" spellCheck="false" as="textarea" rows={8} onKeyDown={tabIndent} isInvalid={errors.LIST_DATA}/>}
-                    />
-                    <Form.Control.Feedback type="invalid">{errors.LIST_DATA?.message}</Form.Control.Feedback>
+                    {(watchListType=='list' && !showListRaw)?
+                    <ListCardGroup listData={getValues('LIST_DATA')}/>:
+                    <>
+                        {(watchListType=='list'&&allowUpload)&&<AppButton format="upload" size="sm">Upload Data</AppButton>}
+                        <Controller
+                            name="LIST_DATA"
+                            defaultValue=''
+                            control={control}
+                            render={({field})=><Form.Control {...field} id="listData-editor" spellCheck="false" as="textarea" rows={8} onKeyDown={tabIndent} isInvalid={errors.LIST_DATA}/>}
+                        />
+                        <Form.Control.Feedback type="invalid">{errors.LIST_DATA?.message}</Form.Control.Feedback>
+                    </>
+                    }
                 </Col>
             </Form.Group>
             <Row>
                 <Col className="button-group">
                     <AppButton format="save" type="submit" disabled={!!Object.keys(errors).length}>Save</AppButton>
-                    {(locked!="1"&&!isNewList) && <AppButton format="delete" onClick={handleDeleteList}>Delete</AppButton>}
+                    {/*{(locked!="1"&&!isNewList) && <AppButton format="delete" onClick={handleDeleteList}>Delete</AppButton>}*/}
                     {(watchListType=='sql'&&!isNewList) && <AppButton format="run" onClick={()=>setRunSQL(getValues('LIST_SLUG'))}>Run SQL</AppButton>}
                     <AppButton format="cancel" variant="secondary" type="reset">Cancel</AppButton>
                 </Col>
             </Row>
         </>
+    );
+}
+
+function ListCardGroup({listData}) {
+    const { control, setValue, getValues } = useFormContext();
+    const { fields, insert, move, replace, remove } = useFieldArray({control:control,name:'LIST_ARRAY_DATA'});
+
+    const handleListChange = useCallback((e,index,type) => {
+        // cannot use update method of useFieldArray because input field will lose focus
+        setValue(`LIST_ARRAY_DATA.${index}.${type}`,e.target.value);
+        const flds = getValues('LIST_ARRAY_DATA');
+        flds[index][type] = e.target.value;
+        setValue('LIST_DATA',JSON.stringify(flds.map(r=>[r.key,r.value]))); 
+    },[fields]);
+
+    const onDragEnd = useCallback((result) => {
+        if (!result.destination) return;
+        move(result.source.index, result.destination.index);
+        const flds = getValues('LIST_ARRAY_DATA');
+        setValue('LIST_DATA',JSON.stringify(flds.map(r=>[r.key,r.value])));
+    },[fields]);
+
+    const handleRemove = useCallback((index) => {
+        remove(index);
+        const flds = getValues('LIST_ARRAY_DATA');
+        setValue('LIST_DATA',JSON.stringify(flds.map(r=>[r.key,r.value])));
+    },[fields]);
+
+    useEffect(()=>{
+        replace(listData?JSON.parse(listData).map(r=>({key:r[0],value:r[1]})):[]);
+    },[listData]);
+
+    return (
+        <article id="admin-list" className="mb-3">
+            <Card>
+                <DragDropContext onDragEnd={onDragEnd}>
+                    <Droppable droppableId="list-cards-droppable">
+                        {(provided, snapshot) => (
+                            <ListGroup variant="flush" ref={provided.innerRef} className={`${snapshot.isDraggingOver?'dragging':''}`}>
+                                {fields.length ? fields.map((item, index) => (
+                                    <Draggable key={item.id} draggableId={item.id} index={index}>
+                                        {(provided, snapshot) => (
+                                            <ListGroup.Item 
+                                                key={item.id} 
+                                                ref={provided.innerRef}
+                                                {...provided.draggableProps}
+                                                {...provided.dragHandleProps}
+                                                className={`d-sm-flex gap-2 align-items-center px-3 draggable-item ${snapshot.isDragging?'dragging-active':''}`}
+                                            >
+                                                <div className="pr-2"><Icon icon="mdi:arrow-all"/></div>
+                                                <Controller
+                                                    name={`LIST_ARRAY_DATA.${index}.key`}
+                                                    control={control}
+                                                    defaultValue={item.key}
+                                                    render={({field})=><Form.Control {...field} id={`listcard-key-${index}`} onChange={e=>handleListChange(e,index,'key')} type="text" />}
+                                                />
+                                                <Controller
+                                                    name={`LIST_ARRAY_DATA.${index}.value`}
+                                                    control={control}
+                                                    defaultValue={item.value}
+                                                    render={({field})=><Form.Control {...field} id={`listcard-value-${index}`} onChange={e=>handleListChange(e,index,'value')} type="text" />}
+                                                />
+                                                <div className="button-group">
+                                                    <AppButton format="add" size="sm" onClick={()=>insert(index+1,{key:'',value:''})} tabIndex="-1"></AppButton>
+                                                    <AppButton format="remove" size="sm" onClick={()=>handleRemove(index)} tabIndex="-1"></AppButton>
+                                                </div>
+                                            </ListGroup.Item>
+                                        )}
+                                    </Draggable>
+                                )):null}
+                                {provided.placeholder}
+                            </ListGroup>
+                        )}
+                    </Droppable>
+                </DragDropContext>
+            </Card>
+        </article>
     );
 }
 
