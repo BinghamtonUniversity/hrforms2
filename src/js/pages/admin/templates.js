@@ -55,7 +55,6 @@ export default function AdminTemplates() {
 }
 
 function EditTemplate({selectedTemplate,setSelectedTemplate}) {
-    const isNew = false;
     const [locked,setLocked] = useState(1);
     const [isSaving,setIsSaving] = useState(0);
     const [content,setContent] = useState('');
