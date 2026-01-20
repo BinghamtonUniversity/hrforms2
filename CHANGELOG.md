@@ -1,4 +1,24 @@
 # Changelog
+## Version 2.0.2(rev-20260120)
+  * Changed Admin Lists to be a list group with drag and drop functionality.
+  * Fixed duplicate records appearing in Forms Existing Pay.
+  * Fixed incorrect counts for "Pending" status; SQL was including Rejected due to incorrect AND/OR logic.
+  * Changed order of Request Information fields and added heading for New Candidate Information.
+  * Added Status column to Comments History in both Forms and Requests.
+  * Formatting changes for Form Review screen and print to improve layout and readability.
+  * Added back navigation to return to lists/journal from viewing a Request or Form.
+  * Added "Updated By" search field for Requests and Form Archive List
+  * Added ability to clear "Created By" and "Updated By" search fields in Archive lists when Escape key pressed within the field.
+  * Fixed people list for "Created By" and "Updated By" search fields in Archive lists to use preferred (alias) first name.
+  * Added session save for Archive list search values; last values are restored upon returning the list in the same session.
+  * Fixed Archive lists to sort by person's name instead of SUNY ID.
+  * Added ability to choose columns displayed in the Archive list; saved in browser storage.
+  * Added ability to re-order columns in the Archive list via drag-and-drop headers.
+  * Added User Information block to Requests Review to be consistent with Forms Review.
+  * Added Request and Form values as replacement variables for email Templates.
+  * Added formatters (currency and date) for email Templates.
+
+
 ## Version 2.0.1(rev-20251204)
   * Switching versioning and revisioning from "DEV" into a "Production" mode.
   * Added Instance to title and nav header when not in PROD.
