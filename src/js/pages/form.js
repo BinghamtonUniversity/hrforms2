@@ -5,7 +5,7 @@ import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
 import { Loading, AppButton, DateFormat, ModalConfirm } from "../blocks/components";
-import { get, set, has, zip, cloneDeep, merge, difference, defaultTo, reject } from "lodash";
+import { get, set, has, zip, cloneDeep, merge, difference, defaultTo, isEmpty } from "lodash";
 import useFormQueries from "../queries/forms";
 import { flattenObject } from "../utility";
 import { allTabs, fetchFormData, initFormValues, HRFormContext, validateForm, checkFields } from "../config/form";
@@ -272,7 +272,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
             setIsSaving(false);
             setLockTabs(false);
             setIsBlocking(false);
-            setRedirect(defaultTo(historyFrom,'/'));
+            setRedirect(isEmpty(historyFrom)?'/':historyFrom);
         }).catch(e => {
             setShowDeleteModal(false);
             setIsSaving(false);

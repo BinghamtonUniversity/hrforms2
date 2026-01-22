@@ -8,7 +8,7 @@ import useListsQueries from "../queries/lists";
 import { useQueryClient } from "react-query";
 import { Loading, AppButton, ModalConfirm } from "../blocks/components";
 import format from "date-fns/format";
-import { get, defaultTo } from "lodash";
+import { get, isEmpty } from "lodash";
 import { Icon } from '@iconify/react';
 import { RequestContext, tabs, requiredFields, resetFields, defaultVals, useRequestContext } from "../config/request";
 import { t } from "../config/text";
@@ -211,7 +211,7 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset,historyFrom})
             setIsSaving(false);
             setLockTabs(false);
             setIsBlocking(false);
-            setRedirect(defaultTo(historyFrom,'/'));
+            setRedirect(isEmpty(historyFrom)?'/':historyFrom);
         }).catch(e => {
             setShowDeleteModal(false);
             setIsSaving(false);
