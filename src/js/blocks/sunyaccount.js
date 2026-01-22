@@ -9,7 +9,7 @@ import useListsQueries from "../queries/lists";
 export default function SUNYAccount(props) {
     const name = props.name||'SUNYAccounts';
     const label = props.label||'SUNY Account';
-    const { control, getValues, setValue, formState: { errors } } = useFormContext();
+    const { control, getValues, setValue, clearErrors, formState: { errors } } = useFormContext();
     const { fields, append, remove } = useFieldArray({control,name:name});
 
     const [showSplit,setShowSplit] = useState(false);
@@ -30,6 +30,7 @@ export default function SUNYAccount(props) {
             //remove splits
             for (let i=1;i<fields.length;i++) {
                 remove(i);
+                clearErrors(`${name}.${i}.pct`);
             }
             setValue(`${name}.0.pct`,'100');
         }
@@ -42,6 +43,7 @@ export default function SUNYAccount(props) {
             remove(index);
             if (fields.length <= 2) {
                 setValue(`${name}Split`,false);
+                setValue(`${name}.0.pct`,'100');
                 setShowSplit(false);
             }
         }
