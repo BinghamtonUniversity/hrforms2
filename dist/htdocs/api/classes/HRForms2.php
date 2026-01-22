@@ -14,7 +14,7 @@ define("E_NO_SESSION",481);
 define("E_FORBIDDEN",403);
 define("E_METHOD_NOT_ALLOWED",405);
 define("E_NOT_FOUND",404);
-define("E_TOO_MANY_DRAFTS",4291);
+define("E_TOO_MANY_DRAFTS",429);
 define("E_TEST",999);
 
 Class HRForms2 {
@@ -480,7 +480,7 @@ Class HRForms2 {
             $type = 'forms';
             $template_type = 'F';
             $vars['URL'] = 'https://'.HOST.'/#/form/'.$id;
-            $formData = (new form(array($id),false))->returnData;
+            $formData = (new forms(array($id),false))->returnData;
             $flat = array();
             $this->traverse($formData,$flat,"FORM");
             $vars = array_merge($vars,$flat);
