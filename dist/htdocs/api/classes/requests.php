@@ -306,7 +306,11 @@ class Requests extends HRForms2 {
                     $journal = (new journal(array('request',$request_id,$j,$data),false))->returnData;
                     
                     // Email Notification
-                    $return_data['email_response'][$j] = $this->sendEmail($data);
+                    try {
+                        $return_data['email_response'][$j] = $this->sendEmail($data);
+                    } catch (Exception $e) {
+                        $this->raiseError(500,array('errMsg'=>$e->getMessage()));
+                    }
                 }
 
                 if ($this->req[0] == "submit") {
@@ -422,8 +426,11 @@ class Requests extends HRForms2 {
                     $journal = (new journal(array('request',$request_id,$j,$data),false))->returnData;
                     
                     // Email Notification
-                    $return_data['email_response'][$j] = $this->sendEmail($data);
-
+                    try {
+                        $return_data['email_response'][$j] = $this->sendEmail($data);
+                    } catch (Exception $e) {
+                        $this->raiseError(500,array('errMsg'=>$e->getMessage()));
+                    }
                 }
 
                 $this->toJSON($return_data);
@@ -473,7 +480,11 @@ class Requests extends HRForms2 {
                 );
 
                 // Email Notification
-                $return_data['email_response'] = $this->sendEmail($return_data['journal']);
+                try {
+                    $return_data['email_response'] = $this->sendEmail($return_data['journal']);
+                } catch (Exception $e) {
+                    $this->raiseError(500,array('errMsg'=>$e->getMessage()));
+                }
 
                 $this->toJSON($return_data);
                 break;
@@ -524,7 +535,11 @@ class Requests extends HRForms2 {
                 );
 
                 // Email Notification
-                $return_data['email_response'] = $this->sendEmail($return_data['journal']);
+                try {
+                    $return_data['email_response'] = $this->sendEmail($return_data['journal']);
+                } catch (Exception $e) {
+                    $this->raiseError(500,array('errMsg'=>$e->getMessage()));
+                }
 
                 $this->toJSON($return_data);
 
