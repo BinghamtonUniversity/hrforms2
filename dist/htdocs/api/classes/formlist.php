@@ -228,7 +228,6 @@ class FormList extends HRForms2 {
         }
         $stmt = oci_parse($this->db,$qry);
         if ($this->req[0] == 'viewer') {
-            $dept = "851130";
             oci_bind_by_name($stmt,":dept_code",$dept);
         } else {
             oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
