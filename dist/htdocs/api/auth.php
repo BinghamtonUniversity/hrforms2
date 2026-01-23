@@ -10,14 +10,15 @@
         setcookie('session-id',$sid,$client_lifetime,$client_path,$client_domain,$client_secure,$client_httpOnly);
         return;
     }
-
-    session_set_cookie_params($client_lifetime,$client_path,$client_domain,$client_secure,$client_httpOnly);
-    #phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context);
-    phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $client_service_name);
-    #phpCAS::setCasServerCACert($cas_server_ca_cert_path);
-    phpCAS::setNoCasServerValidation();//TODO: should this be off?
-    phpCAS::handleLogoutRequests(true, $cas_real_hosts);
-    phpCAS::forceAuthentication();
+    if (!phpCAS::isInitialized()) {
+        session_set_cookie_params($client_lifetime,$client_path,$client_domain,$client_secure,$client_httpOnly);
+        #phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context);
+        phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $client_service_name);
+        #phpCAS::setCasServerCACert($cas_server_ca_cert_path);
+        phpCAS::setNoCasServerValidation();//TODO: should this be off?
+        phpCAS::handleLogoutRequests(true, $cas_real_hosts);
+        phpCAS::forceAuthentication();
+    }
 
     if (phpCAS::isAuthenticated()) {
         $db = @oci_connect(DBUSER,DBPASS,DB,NLS_LANG);
