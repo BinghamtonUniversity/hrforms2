@@ -1,4 +1,11 @@
 # Changelog
+## Version 2.0.3(rev-20260126)
+  * Fixed bug in Requests and Forms not returning to home page after "Save & Exit" and other button actions.
+  * Fixed validation error on SUNY Account component when removing a split by deleting split row.
+  * Fixed typo in sendEmail function that caused error when submitting Forms.
+  * Added error handling around email notifications.
+
+
 ## Version 2.0.2(rev-20260120)
   * Changed Admin Lists to be a list group with drag and drop functionality.
   * Fixed duplicate records appearing in Forms Existing Pay.
