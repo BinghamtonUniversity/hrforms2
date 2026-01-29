@@ -4,7 +4,7 @@ import { useFormContext, Controller } from "react-hook-form";
 import { useSettingsContext } from "../../../app";
 
 export default function SettingsWorkflow() {
-    const { control, formState:{ errors }} = useFormContext();
+    const { control } = useFormContext();
     return (
         <>
             <section>
