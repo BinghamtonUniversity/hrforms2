@@ -15,6 +15,7 @@ export default function SettingsForms() {
         <>
             <DashBoardCardTitle/>
             <SettingsFormsMenu/>
+            <SettingsFormsApproverPermission/>
             <SettingsFormsAgeWarning/>
             <SettingsFormsDefaultRouting/>
             <SettingsFormsEmail/>
@@ -138,6 +139,29 @@ function SettingsFormsMenu() {
         </DragDropContext>
     );
 }
+
+function SettingsFormsApproverPermission() {
+    const { control } = useFormContext();
+    return (
+        <section>
+            <Row as="header" className="mt-3">
+                <Col as="h4">Approver Permissions</Col>
+            </Row>
+            <Form.Group as={Row} controlId="formsApproveOwn">
+                <Form.Label column md={2}>Submitter Approve Own:</Form.Label>
+                <Col xs="auto" className="pt-2">
+                    <Controller
+                        name='forms.permissions.approveown'
+                        control={control}
+                        render={({field}) => <Form.Check {...field} type="checkbox" checked={!!field.value}/>}
+                    />
+                    <Form.Text id="formsApproveOwnHelp" muted>Allow the submitter to approve their own Forms.</Form.Text>
+                </Col>
+            </Form.Group> 
+        </section>
+    );
+}
+
 
 function SettingsFormsAgeWarning() {
     const { control } = useFormContext();

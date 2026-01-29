@@ -145,6 +145,9 @@ export const defaultVals = {
             }
         },
         "defaultWorkflow": "",
+        "permissions": {
+            "approveown": false
+        },
         "agewarn": {
             "enabled": false,
             "age": "180"
@@ -237,6 +240,9 @@ export const defaultVals = {
             }
         },
         "defaultWorkflow": "",
+        "permissions": {
+            "approveown": false
+        },
         "agewarn": {
             "enabled": false,
             "age": "180"

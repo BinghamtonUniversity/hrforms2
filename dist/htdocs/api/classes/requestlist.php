@@ -30,6 +30,8 @@ class RequestList extends HRForms2 {
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
     function GET() {
         // drafts:
+        $settings = (new settings(array(),false))->returnData;
+        $approveOwn = $settings['requests']['permissions']['approveown'] ?? false;
         switch($this->req[0]) {
             case "drafts":
                 $qry = "select suny_id, unix_ts, drafts.data.reqId as REQUEST_ID, 
@@ -56,9 +58,10 @@ class RequestList extends HRForms2 {
                 where jr2.rnk = 1 and jr2.status = 'PA' and
                 jr2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
                 left join (select request_id, max(journal_date) as max_journal_date, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
-                where r.request_id = j.request_id
-                and r.created_by.SUNY_ID != :suny_id";
+                where r.request_id = j.request_id";
+                if (!$approveOwn) $qry .= " and r.created_by.SUNY_ID != :suny_id";
                 break;
+
             case "rejections":
                 $qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id, 
                 to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
@@ -77,6 +80,7 @@ class RequestList extends HRForms2 {
                 where r.request_id = j.request_id
                 and r.created_by.SUNY_ID = :suny_id";
                 break;
+
             case "pending":
                 $qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id,
                 to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
@@ -96,6 +100,7 @@ class RequestList extends HRForms2 {
                 left join (select request_id, max(journal_date) as max_journal_date, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
                 where r.request_id = j.request_id";
                 break;
+
             case "final":
                 $qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id, 
                 to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
@@ -115,25 +120,7 @@ class RequestList extends HRForms2 {
                 where r.request_id = j.request_id
                 and r.created_by.SUNY_ID != :suny_id";
                 break;
-/*			case "archived":
-                $qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id,
-                to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
-                r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
-                r.request_data.lineNumber, r.request_data.reqBudgetTitle.title,
-                r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
-                j.status, j.sequence, js.journal_groups as groups ,js.journal_status,
-                to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
-                from hrforms2_requests_archive r,
-                (select jr2.* from (select jr1.*,
-                    rank() over (partition by jr1.request_id order by jr1.journal_date desc) as rnk
-                    from hrforms2_requests_journal_archive jr1
-                ) jr2
-                where jr2.rnk = 1 and jr2.status ='Z') j
-                left join (select request_id, max(journal_date) as max_journal_date, listagg(group_to,',') as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
-                where r.request_id = j.request_id
-                and r.created_by.SUNY_ID = :suny_id";
-                break;
-*/
+
             default:
                 $this->raiseError(E_BAD_REQUEST);
         }

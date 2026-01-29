@@ -69,6 +69,8 @@ class Counts extends HRForms2 {
         } else {
             $usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
             $groups = array_column($usergroups, 'GROUP_ID');
+            $settings = (new settings(array(),false))->returnData;
+            $approveOwnReqs = $settings['requests']['permissions']['approveown'] ?? false;
             /* Requests */
             $qry = "with counts as (select 'drafts' as menu, count(suny_id) as count, 0 as age
                 from hrforms2_requests_drafts
@@ -90,8 +92,8 @@ class Counts extends HRForms2 {
                     from hrforms2_requests_journal_last j
                     join (select * from hrforms2_requests) r on (j.request_id = r.request_id)
                     where last_status = 'PA'
-                    and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
-                    and r.created_by.SUNY_ID != :suny_id";
+                    and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)";
+                if (!$approveOwnReqs) $qry .= " and r.created_by.SUNY_ID != :suny_id";
             }
             if (in_array('-1',$groups)||in_array('0',$groups)) {
                 $qry .= " union
@@ -112,6 +114,7 @@ class Counts extends HRForms2 {
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
             $counts['requests'] = json_decode($row['JSON']);
         
+            $approveOwnForms = $settings['forms']['permissions']['approveown'] ?? false;
             /* Forms */
             $qry = "with counts as (select 'drafts' as menu, count(suny_id) as count, 0 as age
                 from hrforms2_forms_drafts
@@ -133,8 +136,8 @@ class Counts extends HRForms2 {
                 from hrforms2_forms_journal_last j
                 join (select * from hrforms2_forms) f on (j.form_id = f.form_id)
                 where last_status = 'PA'
-                and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
-                and f.created_by.SUNY_ID != :suny_id";
+                and last_group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)";
+                if (!$approveOwnForms) $qry .= " and f.created_by.SUNY_ID != :suny_id";
             }
             if (in_array('-1',$groups)||in_array('0',$groups)) {
                 $qry .= " union

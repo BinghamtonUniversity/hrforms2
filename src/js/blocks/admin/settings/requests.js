@@ -15,6 +15,7 @@ export default function SettingsRequests() {
         <>
             <DashBoardCardTitle/>
             <SettingsRequestsMenu/>
+            <SettingsRequestsApproverPermission/>
             <SettingsRequestsAgeWarning/>
             <SettingsRequestsDefaultRouting/>
             <SettingsRequestsEmail/>
@@ -133,6 +134,28 @@ function SettingsRequestsMenu() {
                 )}
             </Droppable>
         </DragDropContext>
+    );
+}
+
+function SettingsRequestsApproverPermission() {
+    const { control } = useFormContext();
+    return (
+        <section>
+            <Row as="header" className="mt-3">
+                <Col as="h4">Approver Permissions</Col>
+            </Row>
+            <Form.Group as={Row} controlId="requestsApproveOwn">
+                <Form.Label column md={2}>Submitter Approve Own:</Form.Label>
+                <Col xs="auto" className="pt-2">
+                    <Controller
+                        name='requests.permissions.approveown'
+                        control={control}
+                        render={({field}) => <Form.Check {...field} type="checkbox" checked={!!field.value}/>}
+                    />
+                    <Form.Text id="requestsApproveOwnHelp" muted>Allow the submitter to approve their own Requests.</Form.Text>
+                </Col>
+            </Form.Group> 
+        </section>
     );
 }
 

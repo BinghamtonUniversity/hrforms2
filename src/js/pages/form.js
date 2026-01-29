@@ -663,7 +663,7 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
     const canEdit = useMemo(()=>{
         if (isDraft && SUNY_ID == get(data,'CREATED_BY_SUNY_ID',SUNY_ID)) return true;
         if (!isDraft && SUNY_ID == data.lastJournal.CREATED_BY_SUNY_ID && data.lastJournal.STATUS == 'R') return true;
-        if (!isDraft && SUNY_ID == data.lastJournal.CREATED_BY_SUNY_ID) return false;
+        if (!isDraft && SUNY_ID == data.lastJournal.CREATED_BY_SUNY_ID && !forms.permissions.approveown) return false;
         const userGroups = (!USER_GROUPS)?[]:USER_GROUPS.split(',');
         if (userGroups.includes(get(data,'lastJournal.GROUP_TO')) && data.lastJournal.STATUS != 'R') return true;
         return false;

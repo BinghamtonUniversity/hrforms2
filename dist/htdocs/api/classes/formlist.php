@@ -30,6 +30,8 @@ class FormList extends HRForms2 {
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
     function GET() {
         // drafts:
+        $settings = (new settings(array(),false))->returnData;
+        $approveOwn = $settings['forms']['permissions']['approveown'] ?? false;
         switch($this->req[0]) {
             case "drafts":
                 $qry = "select suny_id, unix_ts, drafts.data.formId as FORM_ID, 
@@ -83,8 +85,8 @@ class FormList extends HRForms2 {
                 where jf2.rnk = 1 and jf2.status = 'PA' and
                 jf2.group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)) j
                 left join (select form_id, max(journal_date) as max_journal_date, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal group by form_id) js on (js.form_id = j.form_id)
-                where f.form_id = j.form_id
-                and f.created_by.SUNY_ID != :suny_id";
+                where f.form_id = j.form_id";
+                if (!$approveOwn) $qry .= " and f.created_by.SUNY_ID != :suny_id";
                 break;
     
             case "pending":
