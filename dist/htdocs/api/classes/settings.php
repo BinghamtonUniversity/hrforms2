@@ -40,7 +40,7 @@ class Settings extends HRForms2 {
     }
 
     function PUT() {
-        $qry = "update hrforms2_settings set settings = EMPTY_CLOB() returning settings into :json";
+        $qry = "update hrforms2_settings set settings = ".((INSTANCE=="LOCAL")?"'{}'":"EMPTY_CLOB()")." returning settings into :json";
         $stmt = oci_parse($this->db,$qry);
         $clob = oci_new_descriptor($this->db, OCI_D_LOB);
         oci_bind_by_name($stmt, ":json", $clob, -1, OCI_B_CLOB);
