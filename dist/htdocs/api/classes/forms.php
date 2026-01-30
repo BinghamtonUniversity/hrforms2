@@ -150,7 +150,7 @@ class Forms extends HRForms2 {
                 $formData->formActions->TABS = json_decode($row['TABS']);
             }
             $formData->lastJournal = $last_journal;
-            $formData->comment = $last_journal['COMMENTS'];
+            //$formData->comment = $last_journal['COMMENTS'];
         }
         $this->returnData = $formData;
         if ($this->retJSON) $this->toJSON($this->returnData);
@@ -635,6 +635,7 @@ class Forms extends HRForms2 {
                 }
             }
 
+            if ($this->req[0] != 'save') $this->POSTvars['comment'] = "";
             $qry = "update HRFORMS2_FORMS set form_data = ".((INSTANCE=="LOCAL")?"'{}'":"EMPTY_CLOB()")."
                 where FORM_ID = :form_id
                 returning FORM_DATA into :data";
@@ -648,7 +649,7 @@ class Forms extends HRForms2 {
             oci_commit($this->db);
             
             //save comment
-            $qry = "update HRFORMS2_FORMS_JOURNAL set COMMENTS = ".((INSTANCE=="LOCAL")?"' '":"EMPTY_CLOB()")."
+            /*$qry = "update HRFORMS2_FORMS_JOURNAL set COMMENTS = ".((INSTANCE=="LOCAL")?"' '":"EMPTY_CLOB()")."
                 where FORM_ID = :form_id
                 and SEQUENCE = :sequence
                 and STATUS = :status
@@ -662,7 +663,7 @@ class Forms extends HRForms2 {
             $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
             if (!$r) $this->raiseError();
             $comment->save($this->POSTvars['comment']);
-            oci_commit($this->db);
+            oci_commit($this->db);*/
 
             if ($this->retJSON) $this->done();
         }
