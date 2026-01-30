@@ -129,7 +129,7 @@ class Journal extends HRForms2 {
             // Verify the ID is valid/exists
             if (!$this->validateID()) $this->raiseError(E_NOT_FOUND);
             // Verify effective user is permitted to access information
-            if (!$this->validateUser()) $this->raiseError(E_NOT_FOUND);
+            if (!$this->validateUser()) $this->raiseError(E_FORBIDDEN);
         }
     }
 
