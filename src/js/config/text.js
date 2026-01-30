@@ -104,6 +104,11 @@ const text = {
                 'success': 'Form Submitted Successfully',
                 'error': 'Error Submitting Form'
             },
+            'resubmit':{
+                'pending': 'Re-Submitting Form',
+                'success': 'Form Re-Submitted Successfully',
+                'error': 'Error Re-Submitting Form'
+            },
             'approve':{
                 'pending': 'Approving Form',
                 'success': 'Form Approved Successfully',
