@@ -13,10 +13,6 @@ export default function Position() {
     const { posTypes, canEdit } = useRequestContext();
     const [oldLineNum,setOldLineNum] = useState(getValues('lineNumber'));
 
-    /*const posType = useWatch({name:'posType.id',control:control})||'';
-    const isNewLine = useWatch({name:'newLine',control:control});
-    const isMultiLine = useWatch({name:'multiLines',control:control});
-    const watchFTE = useWatch({name:'fte',control:control})||100;*/
     const [posType,isNewLine,isMultiLine,watchFTE,watchApptStatus] = useWatch({name:['posType.id','newLine','multiLines','fte','apptStatus.id'],control:control});
 
     const { getListData } = useListsQueries();
