@@ -24,7 +24,7 @@ class ListData extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (!isset($this->req[0])) $this->raiseError(E_BAD_REQUEST);
+        if (!isset($this->req[0])) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"List identifier (ID or SLUG) is required."));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -33,7 +33,8 @@ class ListData extends HRForms2 {
         $qry .= (is_numeric($this->req[0])) ? "LIST_ID = :req" : "LIST_SLUG = :req";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt,":req",$this->req[0]);
-        oci_execute($stmt);
+        $r = oci_execute($stmt);
+        if (!$r) $this->raiseError();
         $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
         $this->_arr['LIST_TYPE'] = $row['LIST_TYPE'];
         $this->_arr['LIST_DATA'] = $row['LIST_DATA'];
@@ -41,7 +42,8 @@ class ListData extends HRForms2 {
         if ($this->_arr['LIST_TYPE'] == 'sql') {
             $qry = $this->_arr['LIST_DATA'];
             $stmt = oci_parse($this->db,$qry);
-            oci_execute($stmt);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
             oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
             $this->returnData = $this->_arr;
         } else {

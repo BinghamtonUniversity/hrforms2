@@ -164,7 +164,7 @@ Class HRForms2 {
             }
             $this->sessionData = array_merge($this->sessionData,array("SESSION_ID"=>$_COOKIE['session-id'],"CAS_SID"=>session_id(),"UDC_IDENTIFIER"=>phpCAS::getAttribute('UDC_IDENTIFIER')));
         }
-        if (!isset($this->sessionData['CAS_SID'])) $this->raiseError(401);
+        if (!isset($this->sessionData['CAS_SID'])) $this->raiseError(E_NOT_AUTHORIZED,array("errMsg"=>"No valid session found."));
         $this->sessionInfo();
         return true;
     }
@@ -184,7 +184,7 @@ Class HRForms2 {
         oci_bind_by_name($stmt, ":sid", $this->sessionData['SESSION_ID']);
         oci_execute($stmt);
         $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
-        if (!$row) $this->raiseError(401);
+        if (!$row) $this->raiseError(E_NOT_AUTHORIZED,array("errMsg"=>"Invalid session."));
         $this->sessionData = (!$row)?array():array_merge($this->sessionData,$row);
         $this->isAdmin($this->sessionData['SUNY_ID']);
         $this->isViewer($this->sessionData['EFFECTIVE_SUNY_ID']);
@@ -297,7 +297,7 @@ Class HRForms2 {
      * @return array
      */
     protected function getGroupIds($deptcode) {
-        if (!isset($deptcode)) $this->raiseError(400); //return?
+        if (!isset($deptcode)) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Department Code is required"));
         $qry = "select group_id from hrforms2_group_departments where department_code = :dept_code";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt, ":dept_code", $deptcode);

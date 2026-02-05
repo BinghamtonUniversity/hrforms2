@@ -26,11 +26,11 @@ class Codes extends HRForms2 {
      */
     function validate() {
         if (in_array($this->method,array('PUT','PATCH','DELETE'))) {
-            if (!$this->sessionData['isAdmin']) $this->raiseError(403);
-            if (!isset($this->req[1])) $this->raiseError(400);
+            if (!$this->sessionData['isAdmin']) $this->raiseError(E_FORBIDDEN,array("msg"=>"Insufficient privileges to modify codes."));
+            if (!isset($this->req[1])) $this->raiseError(E_BAD_REQUEST,array("msg"=>"Missing code value."));
         }
-        if ($this->method=="POST" && !$this->sessionData['isAdmin']) $this->raiseError(403);
-        if (!in_array(strtolower($this->req[0]),$this->codes)) $this->raiseError(400);
+        if ($this->method=="POST" && !$this->sessionData['isAdmin']) $this->raiseError(E_FORBIDDEN,array("msg"=>"Insufficient privileges to create new codes."));
+        if (!in_array(strtolower($this->req[0]),$this->codes)) $this->raiseError(E_BAD_REQUEST,array("msg"=>"Invalid code type specified."));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */

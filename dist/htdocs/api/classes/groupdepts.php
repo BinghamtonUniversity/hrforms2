@@ -24,7 +24,7 @@ class GroupDepts extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (!$this->sessionData['isAdmin']) $this->raiseError(403);
+        if (!$this->sessionData['isAdmin']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"You do not have permission to access this resource."));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */

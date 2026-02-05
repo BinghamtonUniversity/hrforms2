@@ -24,7 +24,7 @@ class DeptGroup extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        //if (!isset($this->req[0])) $this->raiseError(400);
+        //if (!isset($this->req[0])) $this->raiseError(E_BAD_REQUEST,array("msg"=>"Missing department_code"));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */

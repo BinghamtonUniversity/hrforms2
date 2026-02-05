@@ -24,14 +24,15 @@ class Settings extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        // Validation...
+        if ($this->method != 'GET' && !$this->sessionData['isAdmin']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"You do not have permission to access this resource."));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
     function GET() {
         $qry = "select settings from hrforms2_settings";
         $stmt = oci_parse($this->db,$qry);
-        oci_execute($stmt);
+        $r = oci_execute($stmt);
+        if (!$r) $this->raiseError();
         $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
         oci_free_statement($stmt);
         $this->_arr = json_decode($row['SETTINGS'],true);
@@ -44,7 +45,8 @@ class Settings extends HRForms2 {
         $stmt = oci_parse($this->db,$qry);
         $clob = oci_new_descriptor($this->db, OCI_D_LOB);
         oci_bind_by_name($stmt, ":json", $clob, -1, OCI_B_CLOB);
-        oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+        $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+        if (!$r) $this->raiseError();
         $clob->save(json_encode($this->POSTvars));
         oci_commit($this->db);
         oci_free_statement($stmt);

@@ -24,7 +24,7 @@ class RequestList extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (!isset($this->req[0])) $this->raiseError(E_BAD_REQUEST);
+        if (!isset($this->req[0])) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Request type not specified"));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -122,13 +122,14 @@ class RequestList extends HRForms2 {
                 break;
 
             default:
-                $this->raiseError(E_BAD_REQUEST);
+                $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Invalid request type specified"));
         }
         $stmt = oci_parse($this->db,$qry);
         //TESTING: remove for testing:
         //$id = (isset($this->req[1]))?$this->req[1]:$this->sessionData['EFFECTIVE_SUNY_ID'];
         oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
-        oci_execute($stmt);
+        $r = oci_execute($stmt);
+        if (!$r) $this->raiseError();
         while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
             $row['POSTYPE'] = json_decode($row['POSTYPE']);
             $row['REQTYPE'] = json_decode($row['REQTYPE']);
@@ -157,7 +158,8 @@ class RequestList extends HRForms2 {
                     order by journal_date, sequence, rank";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":id",$line['REQUEST_ID']);
-                oci_execute($stmt);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
                 $last_seq = null;
                 while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
                     if ($last_seq == $row['SEQUENCE']) continue;

@@ -24,7 +24,7 @@ class Position extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (sizeof($this->req)<2) $this->raiseError(400);
+        if (sizeof($this->req)<2) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Insufficient parameters supplied."));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */

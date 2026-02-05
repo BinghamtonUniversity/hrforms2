@@ -35,7 +35,8 @@ class LoginHistory extends HRForms2 {
             order by login_date desc";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
-        oci_execute($stmt);
+        $r = oci_execute($stmt);
+        if (!$r) $this->raiseError();
         $rows = array();
         while ($row = oci_fetch_assoc($stmt)) {
             $rows[] = $row;

@@ -25,10 +25,10 @@ class PayTrans extends HRForms2 {
      */
     function validate() {
         if (in_array($this->method,array('PUT','PATCH','DELETE'))) {
-            if (!$this->sessionData['isAdmin']) $this->raiseError(403);
-            if (!isset($this->req[0])) $this->raiseError(400);
+            if (!$this->sessionData['isAdmin']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"You do not have permission to access this resource."));
+            if (!isset($this->req[0])) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"PayTrans identifier (ID) is required."));
         }
-        if ($this->method=="POST" && !$this->sessionData['isAdmin']) $this->raiseError(403);
+        if ($this->method=="POST" && !$this->sessionData['isAdmin']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"You do not have permission to access this resource."));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -126,7 +126,7 @@ class PayTrans extends HRForms2 {
             $r = oci_execute($stmt);
             if (!$r) $this->raiseError();
             $row = oci_fetch_array($stmt,OCI_RETURN_NULLS);
-            if ($row[0] == 0) $this->raiseError(400,array("errMsg"=>"Dependency is not Active, cannot activate"));
+            if ($row[0] == 0) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Dependency is not Active, cannot activate"));
 
             // Check to see if any forms are using the paytrans_id
             $qry = "select sum(c) from (

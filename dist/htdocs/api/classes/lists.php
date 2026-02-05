@@ -24,8 +24,8 @@ class Lists extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if ($this->method != 'GET' && !$this->sessionData['isAdmin']) $this->raiseError(403);
-        if (($this->method == 'PUT' || $this->method == 'DELETE') && !isset($this->req[0])) $this->raiseError(E_BAD_REQUEST);
+        if ($this->method != 'GET' && !$this->sessionData['isAdmin']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"You do not have permission to access this resource."));
+        if (($this->method == 'PUT' || $this->method == 'DELETE') && !isset($this->req[0])) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"List identifier (ID) is required."));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -34,14 +34,16 @@ class Lists extends HRForms2 {
             $qry = "select * from hrforms2_lists where list_id = :list_id";
             $stmt = oci_parse($this->db,$qry);
             oci_bind_by_name($stmt,":list_id",$this->req[0]);
-            oci_execute($stmt);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
             $this->_arr = $row;
             $this->_arr['LIST_DATA'] = $row['LIST_DATA'];
         } else {
             $qry = "select LIST_ID,LIST_NAME,LIST_SLUG from hrforms2_lists order by LIST_NAME";
             $stmt = oci_parse($this->db,$qry);
-            oci_execute($stmt);
+            $r = oci_execute($stmt);
+            if (!$r) $this->raiseError();
             oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
         }
         $this->_arr = $this->null2Empty($this->_arr);
@@ -59,7 +61,8 @@ class Lists extends HRForms2 {
         oci_bind_by_name($stmt, ":list_slug", $this->POSTvars['LIST_SLUG']);
         oci_bind_by_name($stmt, ":list_data", $clob, -1, OCI_B_CLOB);
         oci_bind_by_name($stmt, ":list_id", $list_id, -1, SQLT_INT);
-        oci_execute($stmt,OCI_DEFAULT);
+        $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+        if (!$r) $this->raiseError();
         $clob->save($this->POSTvars['LIST_DATA']);
         oci_commit($this->db);
         $this->toJSON(array(LIST_ID=>$list_id));
@@ -74,7 +77,8 @@ class Lists extends HRForms2 {
         oci_bind_by_name($stmt, ":list_type", $this->POSTvars['LIST_TYPE']);
         oci_bind_by_name($stmt, ":list_slug", $this->POSTvars['LIST_SLUG']);
         oci_bind_by_name($stmt, ":list_data", $clob, -1, OCI_B_CLOB);
-        oci_execute($stmt,OCI_DEFAULT);
+        $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+        if (!$r) $this->raiseError();
         $clob->save($this->POSTvars['LIST_DATA']);
         oci_commit($this->db);
         $this->done();
@@ -83,7 +87,8 @@ class Lists extends HRForms2 {
         $qry = "delete from hrforms2_lists where LIST_ID = :list_id";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt, ":list_id", $this->req[0]);
-        oci_execute($stmt,OCI_DEFAULT);
+        $r = oci_execute($stmt,OCI_DEFAULT);
+        if (!$r) $this->raiseError();
         oci_commit($this->db);
         $this->done();
     }

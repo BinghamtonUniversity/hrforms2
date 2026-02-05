@@ -24,7 +24,7 @@ class Education extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (!isset($this->req[0])) $this->raiseError(400);
+        if (!isset($this->req[0])) $this->raiseError(E_BAD_REQUEST,array("msg"=>"Missing country code."));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -40,7 +40,7 @@ class Education extends HRForms2 {
         if ($this->req[0] == 'VIR') $this->req = array('USA','VI');
         switch(sizeof($this->req)) {
             case 1:
-                if ($this->req[0] == 'USA') $this->raiseError(400);
+                if ($this->req[0] == 'USA') $this->raiseError(E_BAD_REQUEST,array("msg"=>"State code required for USA."));
                 $qry = "select
                 'F'||fgn_dgr_instn_id as id, institution, null as institution_address, 
                 null as institution_city, null as institution_state, null as institution_zip, country_code as institution_country_code
@@ -51,7 +51,7 @@ class Education extends HRForms2 {
                 oci_bind_by_name($stmt,":country_code",$this->req[0]);
                 break;
             case 2:
-                if ($this->req[0] != 'USA') $this->raiseError(400);
+                if ($this->req[0] != 'USA') $this->raiseError(E_BAD_REQUEST,array("msg"=>"State code only valid for USA."));
                 $qry = "select unt_id as id, institution, institution_address, institution_city, institution_state, institution_zip, 'USA' as institution_country_code
                 from SUNYHR.DEGREE_INSTITUTIONS@banner.cc.binghamton.edu
                 where data_status = 'C' and institution_state = :state
@@ -60,7 +60,7 @@ class Education extends HRForms2 {
                 oci_bind_by_name($stmt,":state",$this->req[1]);
                 break;
             default:
-                $this->raiseError(400);
+                $this->raiseError(E_BAD_REQUEST,array("msg"=>"Invalid number of parameters."));
         }
         oci_execute($stmt);
         oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);

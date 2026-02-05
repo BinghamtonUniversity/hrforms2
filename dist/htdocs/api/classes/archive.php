@@ -75,7 +75,7 @@ class Archive extends HRForms2 {
                 if ($this->retJSON) $this->done();
                 break;
             default:
-                $this->raiseError(400);
+                $this->raiseError(E_BADREQUEST,array("msg"=>"Invalid archive type"));
         }
     }
     function DELETE() {
@@ -102,7 +102,7 @@ class Archive extends HRForms2 {
                 echo "unarchive forms";
                 break;
             default:
-                $this->raiseError(400);
+                $this->raiseError(E_BADREQUEST,array("msg"=>"Invalid archive type"));
         }
     }
 }

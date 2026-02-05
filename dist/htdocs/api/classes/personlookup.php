@@ -31,15 +31,15 @@ class PersonLookup extends HRForms2 {
             switch($this->req[0]) {
                 case "bnumber":
                 case "sunyid":
-                    if (sizeof($this->req)!=2) $this->raiseError(400);
+                    if (sizeof($this->req)!=2) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Invalid number of parameters"));
                     break;
                 case "lastnamedob":
-                    if (sizeof($this->req)!=3) $this->raiseError(400);
+                    if (sizeof($this->req)!=3) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Invalid number of parameters"));
                     $d = date_parse_from_format('d-M-Y',$this->req[2]);
-                    if (!$d || $d['error_count']!=0) $this->raiseError(400);
+                    if (!$d || $d['error_count']!=0) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Invalid date format. Expected: DD-MON-YYYY"));
                     break;
                 default:
-                    $this->raiseError(400);
+                    $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Invalid lookup type"));
             }
         }
     }
@@ -83,7 +83,7 @@ class PersonLookup extends HRForms2 {
                 break;    
             default:
                 //should not get here, just in case.
-                $this->raiseError(400);
+                $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Invalid lookup type"));
         }
         // Generate list of field names; used by JS to generate New Employee option
         oci_execute($stmt,OCI_DESCRIBE_ONLY);

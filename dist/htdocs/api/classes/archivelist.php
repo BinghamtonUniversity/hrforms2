@@ -43,7 +43,7 @@ class ArchiveList extends HRForms2 {
      */
     function validate() {
         $this->setType();
-        if ($this->k['id'] == "") $this->raiseError(E_BAD_REQUEST);
+        if ($this->k['id'] == "") $this->raiseError(E_BAD_REQUEST,array("msg"=>"Invalid archive type specified."));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -372,7 +372,7 @@ class ArchiveList extends HRForms2 {
 
             /* BAD REQUEST - Should not get here */
             default:
-                $this->raiseError(E_BAD_REQUEST);
+                $this->raiseError(E_BAD_REQUEST,array("msg"=>"Invalid archive type specified."));
         }
 
         $this->returnData = array(

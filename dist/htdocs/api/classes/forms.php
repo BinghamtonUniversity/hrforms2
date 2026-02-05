@@ -68,7 +68,7 @@ class Forms extends HRForms2 {
     function validate() {
         //if ($this->method == 'GET' && sizeof($this->req) != 2) $this->raiseError(E_BAD_REQUEST);
         //if ($this->method == 'DELETE' && $this->req[1] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN);
-        if ($this->method == 'DELETE' && $this->req[0] == 'draft' && $this->req[1] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN);
+        if ($this->method == 'DELETE' && $this->req[0] == 'draft' && $this->req[1] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"Cannot delete draft for another user"));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -123,7 +123,7 @@ class Forms extends HRForms2 {
                 $workflow = (new workflow(array('form',$last_journal['WORKFLOW_ID']),false))->returnData[0];
                 if (!array_intersect(explode(",",$workflow['GROUPS']),array_column($usergroups,'GROUP_ID')) && 
                     !($submitter['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID'])) {
-                        $this->raiseError(403);
+                        $this->raiseError(E_FORBIDDEN,array("errMsg"=>"You do not have permission to view this form"));
                 }
             }
             $last_journal['SUBMITTER_SUNY_ID'] = $submitter['SUNY_ID'];            
@@ -198,7 +198,7 @@ class Forms extends HRForms2 {
                 // check settings to see if "resubmit" is enabled.
                 $_SERVER['REQUEST_METHOD'] = 'GET';
                 $settings = (new settings(array(),false))->returnData;
-                if (!$settings['forms']['menu']['rejections']['resubmit']) $this->raiseError(E_FORBIDDEN);
+                if (!$settings['forms']['menu']['rejections']['resubmit']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"Resubmission of rejected Forms is disabled."));
                 
                 $max = $this->POSTvars['lastJournal']['SEQUENCE'];
                 $form_id = $this->POSTvars['formId'];
@@ -406,7 +406,7 @@ class Forms extends HRForms2 {
                         break;
                     default:
                         // if last status is not PA or PF should not be approving
-                        $this->raiseError(E_BAD_REQUEST);
+                        $this->raiseError(E_BAD_REQUEST,array('errMsg'=>'Cannot approve a Form that is not in Pending Approval or Pending Final status'));
                         return;
                 }
 
@@ -484,7 +484,7 @@ class Forms extends HRForms2 {
                 // check settings to see if "rejection" is enabled.
                 $_SERVER['REQUEST_METHOD'] = 'GET';
                 $settings = (new settings(array(),false))->returnData;
-                if (!$settings['forms']['menu']['rejections']['enabled']) $this->raiseError(E_FORBIDDEN);
+                if (!$settings['forms']['menu']['rejections']['enabled']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"Rejection of Forms is disabled."));
 
                 $journal = (new journal(array('form',$this->POSTvars['formId']),false))->returnData;
                 $last_journal = array_pop($journal);
@@ -590,7 +590,7 @@ class Forms extends HRForms2 {
                 break;
 
             default:
-                $this->raiseError(E_BAD_REQUEST);
+                $this->raiseError(E_BAD_REQUEST,array('errMsg'=>'Invalid action'));
         };
 
         return;
@@ -617,9 +617,9 @@ class Forms extends HRForms2 {
         } else {
             // Validations
             // Viewers cannot update forms
-            if ($this->sessionData['isViewer']) $this->raiseError(E_FORBIDDEN);
+            if ($this->sessionData['isViewer']) $this->raiseError(E_FORBIDDEN,array('errMsg'=>'Viewers are not permitted to modify Forms.'));
             // verify path and formid match
-            if ($this->req[1] != $this->POSTvars['formId']) $this->raiseError(E_BAD_REQUEST);
+            if ($this->req[1] != $this->POSTvars['formId']) $this->raiseError(E_BAD_REQUEST,array('errMsg'=>'Form ID in path does not match Form ID in submitted data.'));
             // check to make sure user is permitted to edit/save; are they the submitter or in approval groups
             $_SERVER['REQUEST_METHOD'] = 'GET';
             $journal = (new journal(array('form',$this->POSTvars['formId']),false))->returnData;
@@ -631,7 +631,7 @@ class Forms extends HRForms2 {
                 $workflow = (new workflow(array('form',$last_journal['WORKFLOW_ID']),false))->returnData[0];
                 if (!array_intersect(explode(",",$workflow['GROUPS']),array_column($usergroups,'GROUP_ID')) && 
                     !($submitter['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID'])) {
-                        $this->raiseError(403);
+                        $this->raiseError(E_FORBIDDEN,array("errMsg"=>"You do not have permission to modify this Form"));
                 }
             }
 
@@ -685,7 +685,7 @@ class Forms extends HRForms2 {
             $_SERVER['REQUEST_METHOD'] = 'GET';
             $journal = (new journal(array('form',$this->req[0]),false))->returnData;
             $last_journal = array_pop($journal);
-            if ($last_journal['STATUS'] != 'R') $this->raiseError(E_FORBIDDEN);
+            if ($last_journal['STATUS'] != 'R') $this->raiseError(E_FORBIDDEN,array("errMsg"=>"Only rejected Forms may be deleted."));
             $first_journal = array_shift($journal);
             if ($first_journal['SUNY_ID'] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN,array('errMsg'=>'Only the submitter may delete a rejected form.'));
 

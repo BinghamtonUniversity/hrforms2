@@ -74,11 +74,7 @@ class User extends HRForms2 {
         oci_bind_by_name($update_stmt,":suny_id", $this->req[0]);	
         oci_bind_by_name($update_stmt,":user_info", $clob, -1, OCI_B_CLOB);
         $r = oci_execute($update_stmt,OCI_NO_AUTO_COMMIT);
-        if (!$r) {
-            $e = oci_error($update_stmt);
-            var_dump($e);
-            $this->raiseError();
-        }
+        if (!$r) $this->raiseError();
         $clob->save(json_encode($data));
         oci_commit($this->db);
         oci_free_statement($update_stmt);
@@ -89,10 +85,10 @@ class User extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (!isset($this->req[0]) && !$this->sessionData['isAdmin']) $this->raiseError(400);
+        if (!isset($this->req[0]) && !$this->sessionData['isAdmin']) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"SUNY ID is required"));
         //need to allow non-admin users to query user data
         //if ($this->method != "GET" && !$this->sessionData['isAdmin']) $this->raiseError(403);
-        if ($this->method == 'PUT' && !isset($this->req[0])) $this->raiseError(400);
+        if ($this->method == 'PUT' && !isset($this->req[0])) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"SUNY ID is required"));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */

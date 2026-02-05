@@ -24,14 +24,15 @@ class News extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if ($this->method != 'GET' && !$this->sessionData['isAdmin']) $this->raiseError(403);
+        if ($this->method != 'GET' && !$this->sessionData['isAdmin']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"You do not have permission to access this resource."));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
     function GET() {
         $qry = "select NEWS_TEXT, to_char(modified_date,'DD-MON-YY HH24:MI:SS') as MODIFIED_DATE, MODIFIED_BY from hrforms2_news";
         $stmt = oci_parse($this->db,$qry);
-        oci_execute($stmt);
+        $r = oci_execute($stmt);
+        if (!$r) $this->raiseError();
         $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
         if (!$row) $row = ["NEWS_TEXT"=>"","MODIFIED_DATE"=>"0","MODIFIED_BY"=>""];
         oci_free_statement($stmt);
@@ -41,7 +42,8 @@ class News extends HRForms2 {
     function PATCH() {
         $qry = "select count(*) as CNT from hrforms2_news";
         $stmt = oci_parse($this->db,$qry);
-        oci_execute($stmt);
+        $r = oci_execute($stmt);
+        if (!$r) $this->raiseError();
         $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
         oci_free_statement($stmt);
         if ($row['CNT'] == 0) {
@@ -51,10 +53,7 @@ class News extends HRForms2 {
             oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
             oci_bind_by_name($stmt, ":news", $clob, -1, OCI_B_CLOB);
             $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
-            if (!$r) {
-                $e = oci_error($stmt);
-                $this->raiseError(500,"Database error: ".$e['message']);
-            }
+            if (!$r) $this->raiseError();
             $clob->save($this->POSTvars['NEWS_TEXT']);
             oci_commit($this->db);
             oci_free_statement($stmt);
@@ -65,10 +64,7 @@ class News extends HRForms2 {
             oci_bind_by_name($stmt, ":suny_id", $this->sessionData['SUNY_ID']);
             oci_bind_by_name($stmt, ":news", $clob, -1, OCI_B_CLOB);
             $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
-            if (!$r) {
-                $e = oci_error($stmt);
-                $this->raiseError(500,"Database error: ".$e['message']);
-            }
+            if (!$r) $this->raiseError();
             $clob->save($this->POSTvars['NEWS_TEXT']);
             oci_commit($this->db);
             oci_free_statement($stmt);

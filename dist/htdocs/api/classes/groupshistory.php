@@ -89,14 +89,14 @@ class GroupsHistory extends HRForms2 {
      */
     function validate() {
         $this->setType();
-        if ($this->k['id'] == "") $this->raiseError(E_BAD_REQUEST);
+        if ($this->k['id'] == "") $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Invalid history type specified"));
         if ($this->method == 'GET') {
             // GET should receive two parameters; type and id
-            if (sizeof($this->req) != 2) $this->raiseError(E_BAD_REQUEST);
+            if (sizeof($this->req) != 2) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Invalid number of parameters for GET request"));
             // Verify the ID is valid/exists
-            if (!$this->validateID()) $this->raiseError(E_NOT_FOUND);
+            if (!$this->validateID()) $this->raiseError(E_NOT_FOUND,array("errMsg"=>"Requested item not found"));
             // Verify effective user is permitted to access information
-            if (!$this->validateUser()) $this->raiseError(E_NOT_FOUND);
+            if (!$this->validateUser()) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"You do not have permission to access this item"));
         }
     }
 

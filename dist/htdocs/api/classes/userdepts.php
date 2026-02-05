@@ -24,8 +24,8 @@ class UserDepts extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (!isset($this->req[0])) $this->raiseError(400);
-        if ($this->method=='PUT' && !$this->sessionData['isAdmin']) $this->raiseError(403);
+        if (!isset($this->req[0])) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"SUNY ID is required"));
+        if ($this->method=='PUT' && !$this->sessionData['isAdmin']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"You do not have permission to access this resource."));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */

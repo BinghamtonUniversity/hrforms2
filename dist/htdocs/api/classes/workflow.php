@@ -37,8 +37,8 @@ class Workflow extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (in_array($this->method,array('PUT','PATCH','DELETE')) && !$this->sessionData['isAdmin']) $this->raiseError(403);
-        if (in_array($this->method,array('PUT','PATCH','DELETE')) && !isset($this->req[1])) $this->raiseError(400);
+        if (in_array($this->method,array('PUT','PATCH','DELETE')) && !$this->sessionData['isAdmin']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"Insufficient privileges"));
+        if (in_array($this->method,array('PUT','PATCH','DELETE')) && !isset($this->req[1])) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Missing Workflow ID"));
         switch($this->req[0]) {
             case "request": /** Request Work Flows */
                 $this->table = "hrforms2_requests_workflow";
@@ -47,7 +47,7 @@ class Workflow extends HRForms2 {
                 $this->table = "hrforms2_forms_workflow";
                 break;
             default:
-                $this->raiseError(400);
+                $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Missing Workflow Type"));
         }
     }
 

@@ -25,9 +25,9 @@ class Session extends HRForms2 {
     function validate() {
         
         if (in_array($this->method,array('PATCH','DELETE'))) {
-            if (!$this->checkAuth()) $this->raiseError(401);
-            if (!$this->sessionData['isAdmin']) $this->raiseError(403);
-            if (!isset($this->POSTvars['IMPERSONATE_SUNY_ID'])) $this->raiseError(400);
+            if (!$this->checkAuth()) $this->raiseError(E_NOT_AUTHORIZED,array("errMsg"=>"Authentication required"));
+            if (!$this->sessionData['isAdmin']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"Only administrators may impersonate users."));
+            if (!isset($this->POSTvars['IMPERSONATE_SUNY_ID'])) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"IMPERSONATE_SUNY_ID is required"));
         }
     }
     
@@ -45,7 +45,8 @@ class Session extends HRForms2 {
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt,":bnumber",$this->sessionData['BNUMBER']);
         oci_bind_by_name($stmt,":sid",$sid);
-        oci_execute($stmt);
+        $r = oci_execute($stmt);
+        if (!$r) $this->raiseError();
         $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
         oci_free_statement($stmt);
         if (!$row) return $empty;
@@ -97,7 +98,8 @@ class Session extends HRForms2 {
         $qry = "DELETE FROM hrforms2_session_override where start_override < :start_time and end_override is not null";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt, ":start_time", $start_time);
-        oci_execute($stmt,OCI_DEFAULT);
+        $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+        if (!$r) $this->raiseError();
         $count = oci_num_rows($stmt);
         oci_commit($this->db);
         $this->returnData = array("start_time"=>$start_time,"deleted"=>$count);

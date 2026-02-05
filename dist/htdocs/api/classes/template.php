@@ -25,7 +25,7 @@ class Template extends HRForms2 {
      */
     function validate() {
         // Validation...
-        if (($this->method == 'PATCH' || $this->method == 'PUT') && !isset($this->req[0])) $this->raiseError(E_BAD_REQUEST);
+        if (($this->method == 'PATCH' || $this->method == 'PUT') && !isset($this->req[0])) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Template ID is required"));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -58,7 +58,8 @@ class Template extends HRForms2 {
         $clob = oci_new_descriptor($this->db, OCI_D_LOB);
         oci_bind_by_name($stmt, ":template_id", $this->req[0]);
         oci_bind_by_name($stmt, ":template", $clob, -1, OCI_B_CLOB);
-        oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+        $r = oci_execute($stmt,OCI_NO_AUTO_COMMIT);
+        if (!$r) $this->raiseError();
         $clob->save($this->POSTvars['TEMPLATE']);
         oci_commit($this->db);
         $this->done();

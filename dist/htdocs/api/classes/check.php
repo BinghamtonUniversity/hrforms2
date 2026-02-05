@@ -24,7 +24,7 @@ class Check extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (!in_array(strtolower($this->req[0]),array('form'))) $this->raiseError(400);
+        if (!in_array(strtolower($this->req[0]),array('form'))) $this->raiseError(E_BAD_REQUEST,array("msg"=>"Invalid check type specified."));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -54,6 +54,6 @@ class Check extends HRForms2 {
             if ($this->retJSON) $this->toJSON($this->returnData);
             return;
         }
-        $this->raiseError(400); // Should not get here
+        $this->raiseError(E_BAD_REQUEST,array("msg"=>"Invalid check type specified.")); // Should not get here
     }
 }

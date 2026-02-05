@@ -24,7 +24,7 @@ class PersonInfo extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (count($this->req) != 2) $this->raiseError(400);
+        if (count($this->req) != 2) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Invalid number of parameters"));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */

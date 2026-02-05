@@ -24,7 +24,7 @@ class FormList extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (!isset($this->req[0])) $this->raiseError(E_BAD_REQUEST);
+        if (!isset($this->req[0])) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"List type not specified"));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
@@ -226,7 +226,7 @@ class FormList extends HRForms2 {
                 break;
 
             default:
-                $this->raiseError(E_BAD_REQUEST);
+                $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Invalid list type specified"));
         }
         $stmt = oci_parse($this->db,$qry);
         if ($this->req[0] == 'viewer') {
