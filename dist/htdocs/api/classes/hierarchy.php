@@ -34,7 +34,10 @@ class Hierarchy extends HRForms2 {
         oci_bind_by_name($stmt,":id", $this->req[1]);
         oci_bind_by_name($stmt,":method", $this->method);
         $r = oci_execute($stmt);
-        if (!$r) $this->raiseError();
+        if (!$r) { 
+            $e = oci_error($stmt);
+            $this->raiseError(500,array("errMsg"=>$e['message']));
+        }
         oci_free_statement($stmt);
     }
 
@@ -42,19 +45,31 @@ class Hierarchy extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (in_array($this->method,array('POST','PATCH','DELETE')) && !isset($this->req[1])) $this->raiseError(400);
+        if (in_array($this->method,array('PATCH','DELETE')) && !isset($this->req[1])) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Missing Hierarchy ID"));
         if (in_array($this->method,array('POST','PATCH','DELETE'))) {
             switch($this->req[0]) {
                 case "request": /** Request Hierarchy */
                     $this->table = "hrforms2_requests_hierarchy";
-                    $this->key2 = $this->POSTvars['posType'];
+                    if ($this->method != 'DELETE') {
+                        try {
+                            $this->key2 = $this->POSTvars['posType'];
+                        } catch (Exception $e) {
+                            $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Missing Position Type"));
+                        }
+                    }
                     break;
                 case "form": /** Form Hierarchy */
                     $this->table = "hrforms2_forms_hierarchy";
-                    $this->key2 = $this->POSTvars['formCode'];
+                    if ($this->method != 'DELETE') {
+                        try {
+                            $this->key2 = $this->POSTvars['formCode'];
+                        } catch (Exception $e) {
+                            $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Missing Form Code"));
+                        }
+                    }
                     break;
                 default:
-                    $this->raiseError(400);
+                    $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Missing Hierarchy Type"));
             }
         }
     }
@@ -76,7 +91,10 @@ class Hierarchy extends HRForms2 {
                 $stmt = oci_parse($this->db,$qry);
                 if (isset($this->req[1])&&$this->req[1]!='group') oci_bind_by_name($stmt,":id", $id);
                 $r = oci_execute($stmt);
-                if (!$r) $this->raiseError();
+                if (!$r) {
+                    $e = oci_error($stmt);
+                    $this->raiseError(500,array("errMsg"=>$e['message']));
+                }
                 while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_LOBS)) {
                     if (isset($this->req[1]) && $this->req[1] == 'group') {
                         $hgroups = explode(',',$row['HIERARCHY_GROUPS']);
@@ -97,7 +115,10 @@ class Hierarchy extends HRForms2 {
                     $stmt = oci_parse($this->db,$qry);
                     if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $id);
                     $r = oci_execute($stmt);
-                    if (!$r) $this->raiseError();
+                    if (!$r) {
+                        $e = oci_error($stmt);
+                        $this->raiseError(500,array("errMsg"=>$e['message']));
+                    }
                     while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
                         $row['CONDITIONS'] = json_decode($row['CONDITIONS']);
                         $this->_arr[] = $row;
@@ -127,7 +148,10 @@ class Hierarchy extends HRForms2 {
                     left join (select * from hrforms2_transaction_codes) t on (p.transaction_code = t.transaction_code)";
                 $stmt = oci_parse($this->db,$qry);
                 $r = oci_execute($stmt);
-                if (!$r) $this->raiseError();
+                if (!$r) {
+                    $e = oci_error($stmt);
+                    $this->raiseError(500,array("errMsg"=>$e['message']));
+                }
                 while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
                     if (isset($this->req[1]) && $this->req[1] == 'group') {
                         $hgroups = explode(',',$row['HIERARCHY_GROUPS']);
@@ -148,7 +172,10 @@ class Hierarchy extends HRForms2 {
                     $stmt = oci_parse($this->db,$qry);
                     if (isset($this->req[1])) oci_bind_by_name($stmt,":id", $id);
                     $r = oci_execute($stmt);
-                    if (!$r) $this->raiseError();
+                    if (!$r) {
+                        $e = oci_error($stmt);
+                        $this->raiseError(500,array("errMsg"=>$e['message']));
+                    }
                     while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS)) {
                         $row['CONDITIONS'] = json_decode($row['CONDITIONS']);
                         $this->_arr[] = $row;
@@ -157,7 +184,7 @@ class Hierarchy extends HRForms2 {
                 }
                 break;
             default:
-                $this->raiseError(E_BAD_REQUEST);
+                $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Missing Hierarchy Type"));
         }
         $this->returnData = $this->_arr;
         if ($this->retJSON) $this->toJSON($this->returnData);
@@ -171,7 +198,10 @@ class Hierarchy extends HRForms2 {
         oci_bind_by_name($stmt,":workflow_id", $this->POSTvars['workflowId']);
         oci_bind_by_name($stmt,":hierarchy_id", $HIERARCHY_ID,-1,SQLT_INT);
         $r = oci_execute($stmt);
-        if (!$r) $this->raiseError();
+        if (!$r) {
+            $e = oci_error($stmt);
+            $this->raiseError(500,array("errMsg"=>$e['message']));
+        }
         oci_free_statement($stmt);
         // add groups
         foreach ($this->POSTvars['addGroups'] as $group) {
@@ -180,7 +210,10 @@ class Hierarchy extends HRForms2 {
             oci_bind_by_name($stmt,":hierarchy_id", $HIERARCHY_ID);
             oci_bind_by_name($stmt,":group_id", $group);
             $r = oci_execute($stmt);
-            if (!$r) $this->raiseError();
+            if (!$r) {
+                $e = oci_error($stmt);
+                $this->raiseError(500,array("errMsg"=>$e['message']));
+            }
             oci_free_statement($stmt);
         }
         $this->toJSON(array("HIERARCHY_ID"=>$HIERARCHY_ID));
@@ -194,7 +227,10 @@ class Hierarchy extends HRForms2 {
         oci_bind_by_name($stmt,":workflow_id", $this->POSTvars['workflowId']);
         oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
         $r = oci_execute($stmt);
-        if (!$r) $this->raiseError();
+        if (!$r) {
+            $e = oci_error($stmt);
+            $this->raiseError(500,array("errMsg"=>$e['message']));
+        }
         oci_commit($this->db);
         oci_free_statement($stmt);
         // add groups
@@ -204,7 +240,10 @@ class Hierarchy extends HRForms2 {
             oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
             oci_bind_by_name($stmt,":group_id", $group);
             $r = oci_execute($stmt);
-            if (!$r) $this->raiseError();
+            if (!$r) {
+                $e = oci_error($stmt);
+                $this->raiseError(500,array("errMsg"=>$e['message']));
+            }
             oci_free_statement($stmt);
         }
         // delete groups
@@ -214,7 +253,10 @@ class Hierarchy extends HRForms2 {
             oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
             oci_bind_by_name($stmt,":group_id", $group);
             $r = oci_execute($stmt);
-            if (!$r) $this->raiseError();
+            if (!$r) {
+                $e = oci_error($stmt);
+                $this->raiseError(500,array("errMsg"=>$e['message']));
+            }
             oci_free_statement($stmt);
         }
 
@@ -226,7 +268,10 @@ class Hierarchy extends HRForms2 {
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt,":hierarchy_id", $this->req[1]);
         $r = oci_execute($stmt);
-        if (!$r) $this->raiseError();
+        if (!$r) {
+            $e = oci_error($stmt);
+            $this->raiseError(500,array("errMsg"=>$e['message']));
+        }
         oci_commit($this->db);
         oci_free_statement($stmt);
         $this->done();
