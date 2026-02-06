@@ -243,8 +243,8 @@ function ListTable({data,list}) {
             );
         },ignoreRowClick:true,maxWidth:'100px'},
         {name:'Form ID',selector:row=>row.FORM_ID,sortable:true,sortField:'FORM_ID'},
-        {name:'Effective Date',selector:row=>row.effDateFmt},
-        {name:'Name',selector:row=>row.sortName},
+        {name:'Effective Date',selector:row=>row.effDateFmt,sortable:true},
+        {name:'Name',selector:row=>row.sortName,sortable:true},
         {name:'Form',selector:row=>(
                 <DescriptionPopover
                     id={`${row.FORM_ID}_code_description`}
@@ -294,6 +294,7 @@ function ListTable({data,list}) {
                 expandableRowsComponent={WorkflowExpandedComponent}
                 expandableRowExpanded={()=>expandAll}
                 noDataComponent={noData}
+                defaultSortFieldId={2}
             />
             <ModalConfirm 
                 id={selectedRow?.FORM_ID}
