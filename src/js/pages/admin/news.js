@@ -28,9 +28,9 @@ export default function AdminNews() {
                 queryclient.refetchQueries('news').then(()=>resolve()).catch(err=>reject(err));
             }).catch(err=>reject(err));
         }),{
-            pending:'Updating news...',
-            success:'News updated successfully',
-            error:errorToast('Failed to update news')
+            pending:t('admin.news.actions.update.pending'),
+            success:t('admin.news.actions.update.success'),
+            error:errorToast(t('admin.news.actions.update.error'))
         });
     }
     return (
