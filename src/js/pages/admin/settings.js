@@ -5,7 +5,7 @@ import { useForm, FormProvider } from "react-hook-form";
 import { AppButton, Loading, errorToast } from "../../blocks/components";
 import { toast } from "react-toastify";
 import { t } from "../../config/text";
-import { NotFound } from "../../app";
+import { NotFound, lazyRetry } from "../../app";
 import useSettingsQueries from "../../queries/settings";
 import { useHistory, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet";
@@ -13,10 +13,10 @@ import { tabs, defaultVals } from "../../config/settings";
 
 /* N.B. Must use t.id instead of activeTab or radio options will not work */
 
-const SettingsRequests = lazy(()=>import("../../blocks/admin/settings/requests"));
-const SettingsForms = lazy(()=>import("../../blocks/admin/settings/forms"));
-const SettingsGeneral = lazy(()=>import("../../blocks/admin/settings/general"));
-const SettingsWorkflow = lazy(()=>import("../../blocks/admin/settings/workflow"));
+const SettingsRequests = lazy(()=>lazyRetry(()=>import("../../blocks/admin/settings/requests")));
+const SettingsForms = lazy(()=>lazyRetry(()=>import("../../blocks/admin/settings/forms")));
+const SettingsGeneral = lazy(()=>lazyRetry(()=>import("../../blocks/admin/settings/general")));
+const SettingsWorkflow = lazy(()=>lazyRetry(()=>import("../../blocks/admin/settings/workflow")));
 
 export default function AdminSettings() {
     const { getSettings } = useSettingsQueries();

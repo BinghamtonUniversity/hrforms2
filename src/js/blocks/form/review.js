@@ -8,22 +8,23 @@ import { useHRFormContext } from "../../config/form";
 import { find, get, startCase } from "lodash";
 import { useHistory } from "react-router-dom";
 import { ReviewUserInfo } from "../components";
+import { lazyRetry } from "../../app";
 
 //lazy load sections
-const ReviewPersonInformation = lazy(()=>import("./review/review-person-information"));
-const ReviewPersonDemographics = lazy(()=>import("./review/review-person-demographics"));
-const ReviewPersonDirectory = lazy(()=>import("./review/review-person-directory"));
-const ReviewPersonEducation = lazy(()=>import("./review/review-person-education"));
-const ReviewPersonContacts = lazy(()=>import("./review/review-person-contacts"));
-//const ReviewEmploymentPosition = lazy(()=>import("./review/review-employment-position"));
-const ReviewEmploymentAppointment = lazy(()=>import("./review/review-employment-appointment"));
-const ReviewEmploymentSalary = lazy(()=>import("./review/review-employment-salary"));
-const ReviewEmploymentSeparation = lazy(()=>import("./review/review-employment-separation"));
-const ReviewEmploymentLeave = lazy(()=>import("./review/review-employment-leave"));
-const ReviewEmploymentPay = lazy(()=>import("./review/review-employment-pay"));
-const ReviewEmploymentVolunteer = lazy(()=>import("./review/review-employment-volunteer"));
-const ReviewComments = lazy(()=>import("./review/review-comments"));
-const ReviewSubmitterInfo = lazy(()=>import("./review/review-submitter"));
+const ReviewPersonInformation = lazy(()=>lazyRetry(()=>import("./review/review-person-information")));
+const ReviewPersonDemographics = lazy(()=>lazyRetry(()=>import("./review/review-person-demographics")));
+const ReviewPersonDirectory = lazy(()=>lazyRetry(()=>import("./review/review-person-directory")));
+const ReviewPersonEducation = lazy(()=>lazyRetry(()=>import("./review/review-person-education")));
+const ReviewPersonContacts = lazy(()=>lazyRetry(()=>import("./review/review-person-contacts")));
+//const ReviewEmploymentPosition = lazy(()=>lazyRetry(()=>import("./review/review-employment-position")));
+const ReviewEmploymentAppointment = lazy(()=>lazyRetry(()=>import("./review/review-employment-appointment")));
+const ReviewEmploymentSalary = lazy(()=>lazyRetry(()=>import("./review/review-employment-salary")));
+const ReviewEmploymentSeparation = lazy(()=>lazyRetry(()=>import("./review/review-employment-separation")));
+const ReviewEmploymentLeave = lazy(()=>lazyRetry(()=>import("./review/review-employment-leave")));
+const ReviewEmploymentPay = lazy(()=>lazyRetry(()=>import("./review/review-employment-pay")));
+const ReviewEmploymentVolunteer = lazy(()=>lazyRetry(()=>import("./review/review-employment-volunteer")));
+const ReviewComments = lazy(()=>lazyRetry(()=>import("./review/review-comments")));
+const ReviewSubmitterInfo = lazy(()=>lazyRetry(()=>import("./review/review-submitter")));
 
 export default function Review() {
     const [showReturn,setShowReturn] = useState(false);

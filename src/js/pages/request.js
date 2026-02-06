@@ -2,7 +2,7 @@ import React,{lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Alert, Modal } from "react-bootstrap";
 import { useForm, FormProvider, useFormContext } from "react-hook-form";
-import { NotFound, useSettingsContext, useUserContext } from "../app";
+import { NotFound, useSettingsContext, useUserContext, lazyRetry } from "../app";
 import useRequestQueries from "../queries/requests";
 import useListsQueries from "../queries/lists";
 import { useQueryClient } from "react-query";
@@ -17,12 +17,11 @@ import { Helmet } from "react-helmet";
 import { flattenObject } from "../utility";
 
 /* TABS */
-const Information = lazy(()=>import("../blocks/request/information"));
-const Position = lazy(()=>import("../blocks/request/position"));
-const Account = lazy(()=>import("../blocks/request/account"));
-const Comments = lazy(()=>import("../blocks/request/comments"));
-const Review = lazy(()=>import("../blocks/request/review"));
-
+const Information = lazy(()=>lazyRetry(()=>import("../blocks/request/information")));
+const Position = lazy(()=>lazyRetry(()=>import("../blocks/request/position")));
+const Account = lazy(()=>lazyRetry(()=>import("../blocks/request/account")));
+const Comments = lazy(()=>lazyRetry(()=>import("../blocks/request/comments")));
+const Review = lazy(()=>lazyRetry(()=>import("../blocks/request/review")));
 export default function Request() {
     const [reqId,setReqId] = useState('');
     const [isNew,setIsNew] = useState(false);
@@ -619,7 +618,7 @@ function RequestInfoBox() {
         <Alert variant="secondary">
             <Row as="dl" className="mb-0">
                 <Col as="dt" sm={2} className="mb-0">Request ID:</Col>
-                <Col as="dd" sm={4} className="mb-0">{reqId} {isNew && <span className="text-warning">[<Icon className="iconify-inline" icon="mdi:alert"/>not saved]</span>}</Col>
+                <Col as="dd" sm={4} className="mb-0">{reqId} {isNew && <span className="not-saved-text">[<Icon className="iconify-inline" icon="mdi:alert"/>not saved]</span>}</Col>
                 <Col as="dt" sm={2} className="mb-0">Effective Date:</Col>
                 <Col as="dd" sm={4} className="mb-0">{effDate && format(effDate,'M/d/yyyy')}</Col>
                 <Col as="dt" sm={2} className="mb-0">Position Type:</Col>

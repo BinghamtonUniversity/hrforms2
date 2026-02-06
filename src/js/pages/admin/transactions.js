@@ -3,12 +3,11 @@ import { useParams, useHistory } from "react-router-dom";
 import { Container, Row, Col, Tabs, Tab } from "react-bootstrap";
 import { useHotkeys } from "react-hotkeys-hook";
 import { t } from "../../config/text";
-import { NotFound } from "../../app";
+import { NotFound, lazyRetry } from "../../app";
 import { Helmet } from "react-helmet";
 
-const PayrollTransactionsTab = lazy(()=>import("../../blocks/admin/transactions/paytrans"));
-const CodesTab = lazy(()=>import("../../blocks/admin/transactions/codes"));
-
+const PayrollTransactionsTab = lazy(()=>lazyRetry(()=>import("../../blocks/admin/transactions/paytrans")));
+const CodesTab = lazy(()=>lazyRetry(()=>import("../../blocks/admin/transactions/codes")));
 /** 
  * Using t.id instead of activeTab for the Router on this page to 
  * improve performance and pre-load data.

@@ -15,26 +15,27 @@ import AppHotKeys from "./blocks/apphotkeys";
 import { AppButton } from "./blocks/components";
 import useSettingsQueries from "./queries/settings";
 import useSessionQueries from "./queries/session";
+//import useStringsQueries from "./queries/strings";
 import { Helmet } from "react-helmet";
 import { icons } from "../js/config/app";
+//import { flattenObject } from "./utility";
 
 /* PAGES */
-const Home = lazy(()=>import("./pages/home"));
-const Request = lazy(()=>import("./pages/request"));
-const RequestArchiveView = lazy(()=>import("./pages/request/view"));
-const RequestArchiveList = lazy(()=>import("./pages/request/archive"));
-const RequestList = lazy(()=>import("./pages/request/list"));
-const RequestJournal = lazy(()=>import("./pages/request/journal"));
-const HRForm = lazy(()=>import("./pages/form"));
-const HRFormArchiveView = lazy(()=>import("./pages/form/view"));
-const HRFormArchiveList = lazy(()=>import("./pages/form/archive"));
-const HRFormList = lazy(()=>import("./pages/form/list"));
-const HRFormJournal = lazy(()=>import("./pages/form/journal"));
-const AdminPages = lazy(()=>import("./pages/admin"));
-const TestPages = lazy(()=>import("./pages/testing"));
-const VersionInfo = lazy(()=>import("./pages/version"));
-const LoginHistory = lazy(()=>import("./pages/login-history"));
-
+const Home = lazy(()=>lazyRetry(()=>import("./pages/home")));
+const Request = lazy(()=>lazyRetry(()=>import("./pages/request")));
+const RequestArchiveView = lazy(()=>lazyRetry(()=>import("./pages/request/view")));
+const RequestArchiveList = lazy(()=>lazyRetry(()=>import("./pages/request/archive")));
+const RequestList = lazy(()=>lazyRetry(()=>import("./pages/request/list")));
+const RequestJournal = lazy(()=>lazyRetry(()=>import("./pages/request/journal")));
+const HRForm = lazy(()=>lazyRetry(()=>import("./pages/form")));
+const HRFormArchiveView = lazy(()=>lazyRetry(()=>import("./pages/form/view")));
+const HRFormArchiveList = lazy(()=>lazyRetry(()=>import("./pages/form/archive")));
+const HRFormList = lazy(()=>lazyRetry(()=>import("./pages/form/list")));
+const HRFormJournal = lazy(()=>lazyRetry(()=>import("./pages/form/journal")));
+const AdminPages = lazy(()=>lazyRetry(()=>import("./pages/admin")));
+const TestPages = lazy(()=>lazyRetry(()=>import("./pages/testing")));
+const VersionInfo = lazy(()=>lazyRetry(()=>import("./pages/version")));
+const LoginHistory = lazy(()=>lazyRetry(()=>import("./pages/login-history")));
 /* CONTEXTS */
 export const AuthContext = React.createContext();
 AuthContext.displayName = 'AuthContext';
@@ -42,13 +43,39 @@ export const UserContext = React.createContext();
 UserContext.displayName = 'UserContext';
 export const SettingsContext = React.createContext();
 SettingsContext.displayName = 'SettingsContext';
-export const TextContext = React.createContext();
-TextContext.displayName = 'TextContext';
+export const StringsContext = React.createContext();
+StringsContext.displayName = 'StringsContext';
 
 export function useAuthContext() { return useContext(AuthContext); }
 export function useUserContext() { return useContext(UserContext); } 
 export function useSettingsContext() { return useContext(SettingsContext); }
-export function useTextContext() { return useContext(TextContext); }
+export function useStringsContext() { return useContext(StringsContext); }
+
+/* lazyRetry */
+export const lazyRetry = (componentImport) =>
+  new Promise((resolve, reject) => {
+    const storageKey = `retry-lazy-refreshed\${btoa(componentImport.toString())}`;
+    const hasRefreshed = JSON.parse(
+      window.sessionStorage.getItem(storageKey) || "false",
+    );
+    componentImport()
+      .then((component) => {
+        window.sessionStorage.setItem(storageKey, "false");
+        if (component === undefined) {
+          window.sessionStorage.setItem(storageKey, "true");
+          return window.location.reload(); // refresh the page
+        }
+        resolve(component);
+      })
+      .catch((error) => {
+        if (!hasRefreshed) {
+          // not been refreshed yet
+          window.sessionStorage.setItem(storageKey, "true");
+          window.location.reload();
+        }
+        reject(error); // Default error behaviour as already tried refresh
+      });
+  });
 
 /* Pre-Load Iconify Icons */
 function loadAppIcons(icons) {
@@ -89,6 +116,7 @@ export default function StartApp() {
     const [authData,setAuthData] = useState();
     const { getSession } = useSessionQueries();
     const { getSettings } = useSettingsQueries();
+    //const { getStrings } = useStringsQueries();
 
     //const queryclient = useQueryClient();
     const session = getSession();
@@ -103,6 +131,16 @@ export default function StartApp() {
             loadAppIcons(icons);
         }
     });
+    /*const strings = getStrings({
+        enabled:session.isSuccess,
+        select:data => {
+            const str = {};
+            data.map(s => flattenObject(s.STRINGS_DATA,s.CATEGORY)).forEach(o=>Object.assign(str,o));
+            return str;
+        }
+    });*/
+
+    //const _t = useCallback((key,def='') => strings.data && get(strings.data,key,def),[strings.data]);
 
     useEffect(() => {
         if (session.data) {
@@ -118,7 +156,7 @@ export default function StartApp() {
         return (
             <SettingsContext.Provider value={{...settings.data}}>
                 <AuthContext.Provider value={{...authData}}>
-                    <TextContext.Provider value={{}}>
+                    <StringsContext.Provider value={{ /*_t*/ }}>
                         <ErrorBoundary FallbackComponent={AppErrorFallback}>
                             <Helmet 
                                 titleTemplate={`${prefix}HR Forms 2 - %s`}
@@ -127,7 +165,7 @@ export default function StartApp() {
                             <AppContent OVR_SUNY_ID={authData.OVR_SUNY_ID}/>
                             {(session.data?.DEBUG&&session.data?.isAdmin) && <ReactQueryDevtools initialIsOpen={false} />}
                         </ErrorBoundary>
-                    </TextContext.Provider>
+                    </StringsContext.Provider>
                 </AuthContext.Provider>
             </SettingsContext.Provider>
         );

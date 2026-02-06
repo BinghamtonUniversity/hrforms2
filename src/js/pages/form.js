@@ -1,11 +1,11 @@
 import React, { useState, useEffect, lazy, useCallback, useMemo } from "react";
-import { ErrorFallback, UserContext, useUserContext, useSettingsContext } from "../app";
+import { ErrorFallback, UserContext, useUserContext, useSettingsContext, lazyRetry } from "../app";
 import { useQueryClient } from "react-query";
 import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Alert, Modal, Nav } from "react-bootstrap";
 import { useForm, FormProvider, useWatch, useFormContext } from "react-hook-form";
 import { Loading, AppButton, DateFormat, ModalConfirm } from "../blocks/components";
-import { get, set, has, zip, cloneDeep, merge, difference, defaultTo, isEmpty } from "lodash";
+import { get, set, has, zip, cloneDeep, merge, difference, isEmpty } from "lodash";
 import useFormQueries from "../queries/forms";
 import { flattenObject } from "../utility";
 import { allTabs, fetchFormData, initFormValues, HRFormContext, validateForm, checkFields } from "../config/form";
@@ -14,22 +14,21 @@ import { toast } from "react-toastify";
 import { Helmet } from "react-helmet";
 
 /* TABS */
-const BasicInfo = lazy(()=>import("../blocks/form/basic_info"));
-const PersonInformation = lazy(()=>import("../blocks/form/person-information"));
-const PersonDemographics = lazy(()=>import("../blocks/form/person-demographics"));
-const PersonDirectory = lazy(()=>import("../blocks/form/person-directory"));
-const PersonEducation = lazy(()=>import("../blocks/form/person-education"));
-const PersonContacts = lazy(()=>import("../blocks/form/person-contacts"));
-const EmploymentPosition = lazy(()=>import("../blocks/form/employment-position"));
-const EmploymentAppointment = lazy(()=>import("../blocks/form/employment-appointment"));
-const EmploymentSalary = lazy(()=>import("../blocks/form/employment-salary"));
-const EmploymentSeparation = lazy(()=>import("../blocks/form/employment-separation"));
-const EmploymentLeave = lazy(()=>import("../blocks/form/employment-leave"));
-const EmploymentPay = lazy(()=>import("../blocks/form/employment-pay"));
-const EmploymentVolunteer = lazy(()=>import("../blocks/form/employment-volunteer"));
-const Comments = lazy(()=>import("../blocks/form/comments"));
-const Review = lazy(()=>import("../blocks/form/review"));
-
+const BasicInfo = lazy(()=>lazyRetry(()=>import("../blocks/form/basic_info")));
+const PersonInformation = lazy(()=>lazyRetry(()=>import("../blocks/form/person-information")));
+const PersonDemographics = lazy(()=>lazyRetry(()=>import("../blocks/form/person-demographics")));
+const PersonDirectory = lazy(()=>lazyRetry(()=>import("../blocks/form/person-directory")));
+const PersonEducation = lazy(()=>lazyRetry(()=>import("../blocks/form/person-education")));
+const PersonContacts = lazy(()=>lazyRetry(()=>import("../blocks/form/person-contacts")));
+const EmploymentPosition = lazy(()=>lazyRetry(()=>import("../blocks/form/employment-position")));
+const EmploymentAppointment = lazy(()=>lazyRetry(()=>import("../blocks/form/employment-appointment")));
+const EmploymentSalary = lazy(()=>lazyRetry(()=>import("../blocks/form/employment-salary")));
+const EmploymentSeparation = lazy(()=>lazyRetry(()=>import("../blocks/form/employment-separation")));
+const EmploymentLeave = lazy(()=>lazyRetry(()=>import("../blocks/form/employment-leave")));
+const EmploymentPay = lazy(()=>lazyRetry(()=>import("../blocks/form/employment-pay")));
+const EmploymentVolunteer = lazy(()=>lazyRetry(()=>import("../blocks/form/employment-volunteer")));
+const Comments = lazy(()=>lazyRetry(()=>import("../blocks/form/comments")));
+const Review = lazy(()=>lazyRetry(()=>import("../blocks/form/review")));
 export default function HRForm() {
     const [formId,setFormId] = useState('');
     const [isNew,setIsNew] = useState(false);

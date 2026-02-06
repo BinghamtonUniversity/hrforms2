@@ -7,7 +7,7 @@ import DataTable from 'react-data-table-component';
 import { AppButton, Loading, WorkflowExpandedComponent } from "../../blocks/components";
 import useListsQueries from "../../queries/lists";
 import { useQueryClient } from "react-query";
-import { useSettingsContext, useAuthContext } from "../../app";
+import { useSettingsContext, useAuthContext, lazyRetry } from "../../app";
 import useGroupQueries from "../../queries/groups";
 import { find, orderBy, pick, defaultTo, omit } from "lodash";
 import { AsyncTypeahead } from "react-bootstrap-typeahead";
@@ -15,7 +15,7 @@ import useUserQueries from "../../queries/users";
 import { Prompt } from "react-router-dom";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
-const ArchiveView = lazy(()=>import("./view"));
+const ArchiveView = lazy(()=>lazyRetry(()=>import("./view")));
 
 const defaultValues = {
     days:60,

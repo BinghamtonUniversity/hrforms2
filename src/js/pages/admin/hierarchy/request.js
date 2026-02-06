@@ -8,14 +8,14 @@ import { Loading, AppButton, DescriptionPopover } from "../../../blocks/componen
 import { Icon } from "@iconify/react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { t } from "../../../config/text";
-import { NotFound } from "../../../app";
+import { NotFound, lazyRetry } from "../../../app";
 import { Helmet } from "react-helmet";
 
 export const WorkflowContext = React.createContext();
 WorkflowContext.displayName = 'WorkflowContext';
 
-const AdminRequestHierarchyHierarchy = lazy(()=>import("../../../blocks/admin/hierarchy/requests/hierarchy"));
-const AdminRequestHierarchyWorkflow = lazy(()=>import("../../../blocks/admin/hierarchy/requests/workflow"));
+const AdminRequestHierarchyHierarchy = lazy(()=>lazyRetry(()=>import("../../../blocks/admin/hierarchy/requests/hierarchy")));
+const AdminRequestHierarchyWorkflow = lazy(()=>lazyRetry(()=>import("../../../blocks/admin/hierarchy/requests/workflow")));
 
 export default function AdminRequestHierarchy() {
     const tabs = [
