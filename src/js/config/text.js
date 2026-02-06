@@ -63,6 +63,13 @@ const text = {
         },
         'news': {
             'title': 'Admin: News',
+            'actions': {
+                'update': {
+                    'pending': 'Updating News',
+                    'success': 'News Updated Successfully',
+                    'error': 'Error Updating News'
+                }
+            }
         },
         'settings': {
             'title': 'Admin: Settings',
