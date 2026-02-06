@@ -3,6 +3,10 @@ import { formats } from "../blocks/components";
 import { get } from "lodash";
 import bracesIcon from "../../images/mdi--code-braces.png";
 import functionIcon from "../../images/mdi--function-variant.png";
+//import { createTheme } from "react-data-table-component";
+
+// createTheme - see: https://deepwiki.com/jbetancur/react-data-table-component/5-styling-and-theming#theme-creation-api
+// overrides in scss file to make use of SCSS variables and nesting capabilities
 
 // Icons not used by the AppButton component formats
 const additionalIcons = [
