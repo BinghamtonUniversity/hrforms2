@@ -290,6 +290,7 @@ function ListTable({data,list}) {
                 expandableRowsComponent={WorkflowExpandedComponent}
                 expandableRowExpanded={()=>expandAll}
                 noDataComponent={noData}
+                defaultSortFieldId={2}
             />
             <ModalConfirm 
                 id={selectedRow?.REQUEST_ID}
