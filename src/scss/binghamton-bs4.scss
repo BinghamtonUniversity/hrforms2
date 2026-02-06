@@ -1,13 +1,15 @@
 @import "../../node_modules/bootstrap/scss/functions";
 @import "../../node_modules/bootstrap/scss/variables";
 @import "../../node_modules/bootstrap/scss/mixins";
+@import "./a11y-color";
 
 $enable-responsive-font-sizes: true;
 
 $h3-font-size: $font-size-base * 1.7;
 
+$a11y-level:'AA';
+
 $main:#004333;
-//$nav:rgba($main,.9);
 $accent: #6BC04B;
 $accent2: #90669c;
 $warning2: #ff6600;
@@ -45,7 +47,7 @@ $custom-colors: (
   "warning-light":scale-color($warning,$saturation:-30%,$lightness:50%),
   "warning2-light":scale-color($warning2,$saturation:-30%,$lightness:50%),
   "danger-light":scale-color($danger,$saturation:-30%,$lightness:50%),
-  "secondary-light":scale-color($secondary,$saturation:-30%,$lightness:50%),
+  "secondary-light":scale-color($secondary,$saturation:-30%,$lightness:50%)
 );
 
 $theme-colors: map-merge($theme-colors, $custom-colors);
@@ -63,8 +65,11 @@ $box-shadow-sm: 0 .125rem .25rem rgba($black, .175);
 $box-shadow: 0 .5rem 1rem rgba($black, .35);
 $box-shadow-lg: 0 1rem 3rem rgba($black, .40);
 
-
 @import "../../node_modules/bootstrap/scss/bootstrap";
+
+.not-saved-text {
+  color: a11y-color(theme-color('danger'),theme-color-level('secondary',$alert-bg-level),$a11y-level,1rem,false);
+}
 
 /* add gap classes */
 .gap-0 { gap: 0 !important; }
@@ -118,6 +123,17 @@ $box-shadow-lg: 0 1rem 3rem rgba($black, .40);
 .rdt_Table .rdt_TableBody .rdt_TableRow {
   font-size: 0.9rem;
 }
+
+/* hide sort icons for unsorted columns */
+/* doesn't work as expected - need to revisit */
+/*.rdt_TableCol_Sortable span[style*="color: rgba(255, 255, 255, 0)"] {
+    visibility: hidden
+}*/
+/* this is a hack to hide the sort icons for unsorted columns - need to revisit */
+.gnetL {
+    visibility:hidden
+}
+
 /* Compact/Smaller DataTable */
 .compact .rdt_Table .rdt_TableBody .rdt_TableRow {
   font-size: 0.8rem;
@@ -211,6 +227,9 @@ h6 { font-size: 1rem }
 
 /* force white text links to be color #fff */
 a.text-white:hover,a.text-white:focus { color: #fff !important }
+
+/* default link color for accessibilty contrast ratio */
+a { color: a11y-color($primary,$body-bg,$a11y-level,16,false) }
 
 /* smaller font */
 .font-size-95 { font-size: 95% }

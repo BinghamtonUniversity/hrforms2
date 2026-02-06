@@ -16,7 +16,7 @@ export default function Comments() {
     const { canEdit, isDraft } = useRequestContext();
     return (
         <>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId="reqComment">
                 <Form.Label column md={2}>Comment*:</Form.Label>
                 <Col md={9}>
                     <Controller

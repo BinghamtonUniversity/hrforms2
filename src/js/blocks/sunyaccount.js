@@ -8,7 +8,9 @@ import useListsQueries from "../queries/lists";
 
 export default function SUNYAccount(props) {
     const name = props.name||'SUNYAccounts';
+    const id = props.id||camelCase(name);
     const label = props.label||'SUNY Account';
+
     const { control, getValues, setValue, clearErrors, formState: { errors } } = useFormContext();
     const { fields, append, remove } = useFieldArray({control,name:name});
 
@@ -57,7 +59,7 @@ export default function SUNYAccount(props) {
     useEffect(()=>setShowSplit(getValues(`${name}Split`)),[]);
     return(
         <>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId={id}>
                 <Form.Label column md={2}>{label}{(props.required)?'*':''}:</Form.Label>
                 <Col xl={5} lg={6} md={7}>
                     {accounts.isLoading && <Loading>Loading SUNY Accounts</Loading>}
@@ -79,6 +81,7 @@ export default function SUNYAccount(props) {
                                 render={({field})=><Typeahead 
                                     {...field} 
                                     id={camelCase(`${name}.0.account`)}
+                                    inputProps={{'id':id}}
                                     options={accounts.data} 
                                     flip={true} 
                                     minLength={2} 
@@ -105,6 +108,9 @@ export default function SUNYAccount(props) {
 }
 
 export function SingleSUNYAccount(props) {
+    const name = props.name||'SUNYAccounts';
+    const id = props.id||camelCase(name);
+
     const {control, getValues, setValue } = useFormContext();
 
     const { getListData } = useListsQueries();
@@ -128,7 +134,8 @@ export function SingleSUNYAccount(props) {
                     control={control}
                     render={({field})=><Typeahead 
                         {...field} 
-                        id={camelCase(props.name)}
+                        inputProps={{'id':id}}
+                        id={camelCase(name)}
                         options={accounts.data} 
                         flip={true} 
                         minLength={2} 
@@ -187,25 +194,30 @@ function SplitTable({accounts,fields,splitAction,handleBlur,disabled,name}) {
                             </td>
                             <td>
                                 {accounts &&
-                                    <Controller
-                                        name={`${name}.${index}.account`}
-                                        defaultValue=""
-                                        control={control}
-                                        render={({field})=><Typeahead 
-                                            {...field} 
-                                            id={camelCase(`${name}.${index}.account`)} 
-                                            options={accounts} 
-                                            flip={true} 
-                                            minLength={2} 
-                                            allowNew={true} 
-                                            selected={field.value} 
-                                            onBlur={e=>handleBlur(field,index,e)} 
-                                            disabled={disabled}
-                                        />}
-                                    />
+                                    <>
+                                        <Form.Label className="sr-only" htmlFor={camelCase(`${name}.${index}.account`)}>Account</Form.Label>
+                                        <Controller
+                                            name={`${name}.${index}.account`}
+                                            defaultValue=""
+                                            control={control}
+                                            render={({field})=><Typeahead 
+                                                {...field} 
+                                                inputProps={{id:camelCase(`${name}.${index}.account`)}}
+                                                id={camelCase(`${name}.${index}.account`)} 
+                                                options={accounts} 
+                                                flip={true} 
+                                                minLength={2} 
+                                                allowNew={true} 
+                                                selected={field.value} 
+                                                onBlur={e=>handleBlur(field,index,e)} 
+                                                disabled={disabled}
+                                            />}
+                                        />
+                                    </>
                                 }
                             </td>
                             <td className="text-right">
+                                <Form.Label className="sr-only" htmlFor={camelCase(`${name}.${index}.pct`)}>Percentage</Form.Label>
                                 <Controller
                                     name={`${name}.${index}.pct`}
                                     defaultValue=""
@@ -215,7 +227,7 @@ function SplitTable({accounts,fields,splitAction,handleBlur,disabled,name}) {
                                         max:{value:100,message:'Percentage cannot be more than 100'}
                                     }}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="text" inputMode="number" title={get(errors,`${name}.${index}.pct.message`)} isInvalid={get(errors,`${name}.${index}.pct`)} disabled={disabled}/>}
+                                    render={({field}) => <Form.Control {...field} id={camelCase(`${name}.${index}.pct`)} type="text" inputMode="number" title={get(errors,`${name}.${index}.pct.message`)} isInvalid={get(errors,`${name}.${index}.pct`)} disabled={disabled}/>}
                                 />
                             </td>
                         </tr>

@@ -25,8 +25,8 @@ export default function Account() {
     return (
         <>
             {(posType?.id=='F') && 
-                <Form.Group as={Row}>
-                    <Form.Label column md={2}>Expenditure Type:</Form.Label>
+                <Row as="fieldset" className="mb-3">
+                    <legend className="col-form-label col-md-2">Expenditure Type:</legend>
                     <Col xs="auto">
                         <Controller
                             name="expType"
@@ -40,9 +40,9 @@ export default function Account() {
                             )}
                         />
                     </Col>
-                </Form.Group>
+                </Row>
             }
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId="reqOrgName">
                 <Form.Label column md={2}>Org Name*:</Form.Label>
                 <Col xs="auto">
                     {orgs.isLoading && <Loading>Loading Department Orgs</Loading>}
@@ -64,7 +64,7 @@ export default function Account() {
                     <RequestFieldErrorMessage fieldName="orgName.id"/>
                 </Col>
             </Form.Group>
-            <SUNYAccount label="SUNY Account" isInvalid={!!get(errors,'SUNYAccounts',false)} disabled={!canEdit} required/>
+            <SUNYAccount id="reqSUNYAccount" label="SUNY Account" isInvalid={!!get(errors,'SUNYAccounts',false)} disabled={!canEdit} required/>
         </>
     );
 }

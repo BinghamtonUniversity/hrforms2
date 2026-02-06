@@ -57,7 +57,7 @@ export default function Position() {
     return (
         <>
             <Form.Group as={Row}>
-                <Form.Label column md={2}>Line Number*:</Form.Label>
+                <Form.Label htmlFor="reqLineNumber" column md={2}>Line Number*:</Form.Label>
                 <Col xs="auto">
                     <Controller
                         name="lineNumber"
@@ -69,7 +69,7 @@ export default function Position() {
                                 return (!isNewLine&&v=='')?'Line Number is required':true;
                             }
                         }}
-                        render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Line Number" isInvalid={!!get(errors,field.name,false)} disabled={isNewLine||!canEdit}/>}
+                        render={({field}) => <Form.Control {...field} id="reqLineNumber" type="text" placeholder="Enter Line Number" isInvalid={!!get(errors,field.name,false)} disabled={isNewLine||!canEdit}/>}
                     />
                     <RequestFieldErrorMessage fieldName="lineNumber"/>
                 </Col>
@@ -78,12 +78,14 @@ export default function Position() {
                         name="newLine"
                         defaultValue={false}
                         control={control}
-                        render={({field}) => <Form.Check {...field} type="checkbox" size="lg" label="New Line" checked={field.value} disabled={!canEdit}/>}
+                        render={({field}) => <Form.Check {...field} id="reqNewLine" type="checkbox" size="lg" label="New Line" checked={field.value} disabled={!canEdit}/>}
                     />                    
                 </Col>
             </Form.Group>
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>Multiple Duplicate Lines:</Form.Label>
+            <Row as="fieldset" className="mb-2">
+                <Col md={2}>
+                    <legend className="form-label col-form-label">Multiple Duplicate Lines:</legend>
+                </Col>
                 <Col xs="auto">
                     <Controller
                         name="multiLines"
@@ -91,13 +93,13 @@ export default function Position() {
                         control={control}
                         render={({field}) => (
                             <>
-                                <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={!canEdit}/>
-                                <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value=='N'} disabled={!canEdit}/>
+                                <Form.Check {...field} inline type="radio" id="reqMultiLinesYes" label="Yes" value='Y' checked={field.value=='Y'} disabled={!canEdit}/>
+                                <Form.Check {...field} inline type="radio" id="reqMultiLinesNo" label="No" value='N' checked={field.value=='N'} disabled={!canEdit}/>
                             </>
                         )}
                     />
                 </Col>
-            </Form.Group>
+            </Row>
             {(isMultiLine=='Y') && 
             <aside>
                 <Row>
@@ -105,7 +107,7 @@ export default function Position() {
                         <Alert variant="warning">All lines <strong>must</strong> have the same Title, Pay Basis, FTE, Account, and Effective Date</Alert>
                     </Col>
                 </Row>
-                <Form.Group as={Row}>
+                <Form.Group as={Row} controlId="reqNumLines">
                     <Form.Label column md={2}>Number Of Lines*:</Form.Label>
                     <Col xs="auto">
                         <Controller
@@ -123,9 +125,12 @@ export default function Position() {
                 </Form.Group>
             </aside>
             }
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>Requested Salary*:</Form.Label>
+            <Row as="fieldset" className="mb-2">
+                <Col md={2}>
+                    <legend className="form-label col-form-label">Requested Salary*:</legend>
+                </Col>
                 <Col xs="auto">
+                    <Form.Label srOnly htmlFor="reqMinSalary">Minimum Requested Salary:*</Form.Label>
                     <Controller
                         name="minSalary"
                         defaultValue=""
@@ -143,11 +148,12 @@ export default function Position() {
                             deps:['maxSalary']
                         }}
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="number" isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
+                        render={({field}) => <Form.Control {...field} id="reqMinSalary" type="number" isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
                     <RequestFieldErrorMessage fieldName="minSalary"/>
                 </Col>
                 <Col xs="auto">
+                    <Form.Label srOnly htmlFor="reqMaxSalary">Maximum Requested Salary:*</Form.Label>
                     <Controller
                         name="maxSalary"
                         defaultValue=""
@@ -165,25 +171,29 @@ export default function Position() {
                             deps:['minSalary']
                         }}
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="number" isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
+                        render={({field}) => <Form.Control {...field} id="reqMaxSalary" type="number" isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
                     <RequestFieldErrorMessage fieldName="maxSalary"/>
                 </Col>
-            </Form.Group>
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>FTE*:</Form.Label>
+            </Row>
+            <Row as="fieldset" className="mb-2">
+                <Col md={2}>
+                    <legend className="form-label col-form-label">FTE*:</legend>
+                </Col>
                 <Col xs="auto">
+                    <Form.Label srOnly htmlFor="reqFTE">FTE:</Form.Label>
                     <Controller
                         name="fte"
                         defaultValue="100"
                         control={control}
                         rules={{min:{value:1,message:'FTE cannot be less than 1%'},max:{value:100,message:'FTE cannot be greater than 100%'}}}
-                        render={({field}) => <Form.Control {...field} type="number" min={1} max={100} onBlur={handleFTEBlur} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
+                        render={({field}) => <Form.Control {...field} type="number" id="reqFTE" min={1} max={100} onBlur={handleFTEBlur} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
                     <RequestFieldErrorMessage fieldName="fte"/>
                 </Col>
                 <Col sm={8} md={6} className="pt-2">
-                    <Form.Control type="range" name="fteRange" id="fteRange" min={1} max={100} value={watchFTE} onChange={e=>setValue('fte',e.target.value)} disabled={!canEdit} list="markers"/>
+                    <Form.Label srOnly htmlFor="reqFTERange">FTE Range:</Form.Label>
+                    <Form.Control type="range" name="fteRange" id="reqFTERange" min={1} max={100} value={watchFTE} onChange={e=>setValue('fte',e.target.value)} disabled={!canEdit} list="markers"/>
                     <datalist id="markers" className="marker">
                         <option value="0">0%</option>
                         <option value="25">25%</option>
@@ -192,8 +202,8 @@ export default function Position() {
                         <option value="100">100%</option>
                     </datalist>
                 </Col>
-            </Form.Group>
-            <Form.Group as={Row}>
+            </Row>
+            <Form.Group as={Row} controlId="reqPayBasis">
                 <Form.Label column md={2}>Pay Basis*:</Form.Label>
                 <Col xs="auto">
                     <Controller
@@ -213,7 +223,7 @@ export default function Position() {
             </Form.Group>
             {(posType=='C') && 
             <>
-                <Form.Group as={Row}>
+                <Form.Group as={Row} controlId="reqCurrentGrade">
                     <Form.Label column md={2}>Current Salary Grade*:</Form.Label>
                     <Col xs="auto">
                         <Controller
@@ -233,7 +243,7 @@ export default function Position() {
                         <RequestFieldErrorMessage fieldName="currentGrade"/>
                     </Col>
                 </Form.Group>
-                <Form.Group as={Row}>
+                <Form.Group as={Row} controlId="reqNewGrade">
                     <Form.Label column md={2}>New Salary Grade*:</Form.Label>
                     <Col xs="auto">
                         <Controller
@@ -255,7 +265,7 @@ export default function Position() {
                 </Form.Group>
             </>
             }
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId="reqBudgetTitle">
                 <Form.Label column md={2}>Requested Budget Title*:</Form.Label>
                 <Col xs="auto">
                     <Controller
@@ -273,7 +283,7 @@ export default function Position() {
                     <RequestFieldErrorMessage fieldName="reqBudgetTitle.id"/>
                 </Col>
             </Form.Group>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId="reqApptStatus">
                 <Form.Label column md={2}>Appointment Status*:</Form.Label>
                 <Col xs="auto">
                     <Controller
@@ -291,9 +301,12 @@ export default function Position() {
                     <RequestFieldErrorMessage fieldName="apptStatus.id"/>
                 </Col>
             </Form.Group>
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>Appointment Duration{['TEMP','TERM'].includes(watchApptStatus)&&<span>*</span>}:</Form.Label>
+            <Row as="fieldset" className="mb-2">
+                <Col md={2}>
+                    <legend className="form-label col-form-label">Appointment Duration{['TEMP','TERM'].includes(watchApptStatus)&&<span>*</span>}:</legend>
+                </Col>
                 <Col xs="auto">
+                    <Form.Label srOnly htmlFor="reqApptDuration">Appointment Duration{['TEMP','TERM'].includes(watchApptStatus)&&<span>*</span>}:</Form.Label>
                     <Controller
                         name="apptDuration"
                         defaultValue=""
@@ -305,7 +318,7 @@ export default function Position() {
                             }
                         }}
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="number" min={1} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
+                        render={({field}) => <Form.Control {...field} id="reqApptDuration" type="number" min={1} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                     />
                     <RequestFieldErrorMessage fieldName="apptDuration"/>
                 </Col>
@@ -316,13 +329,13 @@ export default function Position() {
                         control={control}
                         render={({field}) => (
                             <>
-                                {apptperiods.data && apptperiods.data.map(p=><Form.Check key={`appt-periods-${p[0]}`} {...field} inline type="radio" label={p[1]} value={p[0]} checked={field.value==p[0]} disabled={!canEdit}/>)}
+                                {apptperiods.data && apptperiods.data.map(p=><Form.Check key={`appt-periods-${p[0]}`} {...field} id={`appt-periods-${p[0]}`} inline type="radio" label={p[1]} value={p[0]} checked={field.value==p[0]} disabled={!canEdit}/>)}
                             </>
                         )}
                     />
                 </Col>
-            </Form.Group>
-            <Form.Group as={Row}>
+            </Row>
+            <Form.Group as={Row} controlId="reqTentativeEndDate">
                 <Form.Label column md={2}>Tentative End Date{['TEMP','TERM'].includes(watchApptStatus)&&<span>*</span>}:</Form.Label>
                 <Col xs="auto">
                     <InputGroup>

@@ -12,7 +12,7 @@ export default function AppNav() {
     return (
         <header>
             <Navbar bg={(INSTANCE=="PROD")?'main':'primary'} variant="dark" expand="lg" className="mb-4 shadow" fixed="top" collapseOnSelect={true}>
-                <Navbar.Brand href="/#/">{INSTANCE!="PROD"&&<span>[{INSTANCE}] </span>}HR Forms 2</Navbar.Brand>
+                <Navbar.Brand as="h1" href="/#/" className="m-0">{INSTANCE!="PROD"&&<span>[{INSTANCE}] </span>}HR Forms 2</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav" className="justify-content-end">
                     <Nav>
@@ -53,7 +53,7 @@ export default function AppNav() {
                                 <NavDropdown.Item as={Link} to="/test/users">Users</NavDropdown.Item>
                                 <NavDropdown.Item as={Link} to="/test/email">Email Test</NavDropdown.Item>
                                 <NavDropdown.Item as={Link} to="/test/error">Error Test</NavDropdown.Item>
-                                <NavDropdown.Item as={Link} to="/admin/listsnew">New Admin Lists</NavDropdown.Item>
+                                <NavDropdown.Item as={Link} to="/admin/strings">Text Strings</NavDropdown.Item>
                             </NavDropdown>
                         }
                         {/*<Nav.Link onClick={logout}>Logout</Nav.Link>*/}

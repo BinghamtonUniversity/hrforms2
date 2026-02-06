@@ -45,8 +45,10 @@ export default function Information() {
     },[control,getValues]);
     return (
         <>
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>Position Type*:</Form.Label>
+            <Row as="fieldset" className="mb-2">
+                <Col md={2}>
+                    <legend className="col-form-label">Position Type*:</legend>
+                </Col>
                 <Col xs="auto">
                     <Controller
                         name="posType.id"
@@ -54,8 +56,8 @@ export default function Information() {
                         render={({field})=>Object.keys(posTypes).map(k=><Form.Check key={k} {...field} inline id={`posType-${k}`} type="radio" label={posTypes[k].title} value={k} checked={k==field.value} onChange={e=>handlePosTypeChange(field,e)} disabled={!isDraft}/>) }
                     />
                 </Col>
-            </Form.Group>
-            <Form.Group as={Row}>
+            </Row>
+            <Form.Group as={Row} controlId="reqReqType">
                 <Form.Label column md={2}>Request Type*:</Form.Label>
                 <Col sm={9} md={6} lg={5} xl={4}>
                     <Controller
@@ -72,7 +74,7 @@ export default function Information() {
                     <RequestFieldErrorMessage fieldName="reqType.id"/>
                 </Col>
             </Form.Group>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId="reqEffDate">
                 <Form.Label column md={2}>Effective Date*:</Form.Label>
                 <Col xs="auto">
                     <InputGroup>
@@ -95,7 +97,7 @@ export default function Information() {
 
             {watchReqType == 'N' &&
                 <>
-                    <Form.Group as={Row}>
+                    <Form.Group as={Row} controlId="reqNewFunding">
                         <Form.Label column md={2}>New Position Funding*:</Form.Label>
                         <Col sm={9} md={6} lg={5} xl={4}>
                             <Controller
@@ -117,7 +119,7 @@ export default function Information() {
                             <Alert variant="info">
                                 <Icon icon="mdi:alert" className="iconify-inline"/><strong>Attention!</strong> Be sure to enter the appropriate Department/School account number in this request.  The Budget office will transfer the funds.
                             </Alert>
-                            <Form.Group as={Row}>
+                            <Form.Group as={Row} controlId="reqCommitmentId">
                                 <Form.Label column md={2}>Strata Commitment ID*:</Form.Label>
                                 <Col xs="auto">
                                     <Controller
@@ -137,7 +139,7 @@ export default function Information() {
 
             {watchReqType == 'F' &&
                 <>
-                    <Form.Group as={Row}>
+                    <Form.Group as={Row} controlId="reqCurrentEmployee">
                         <Form.Label column md={2}>Current/Previous Employee*:</Form.Label>
                         <Col md={7} lg={6} xl={5}>
                             <Controller
@@ -168,7 +170,7 @@ export default function Information() {
                 </>
             }
 
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId="reqBNumber">
                 <Form.Label column md={2}>B-Number <span className="font-italic">(if known)</span>:</Form.Label>
                 <Col xs="auto">
                     <Controller
@@ -179,7 +181,7 @@ export default function Information() {
                     />
                 </Col>
             </Form.Group>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId="reqCandidateName">
                 <Form.Label column md={2}>Candidate Name <span className="font-italic">(if known)</span>:</Form.Label>
                 <Col md={7} lg={6} xl={5}>
                     <Controller
@@ -191,7 +193,7 @@ export default function Information() {
                 </Col>
             </Form.Group>
             {!['EX','FS'].includes(watchReqType) &&
-                <Form.Group as={Row}>
+                <Form.Group as={Row} controlId="reqJobDesc">
                     <Form.Label column md={2}>Brief Job Description:</Form.Label>
                     <Col md={9}>
                         <Controller
