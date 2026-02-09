@@ -119,6 +119,7 @@ export default function useFormQueries(FORM_ID) {
                 d.sortName = (fName)?`${d.LEGAL_LAST_NAME}, ${fName}`:'';
                 d.journalDate = parse(d.JOURNAL_DATE,'dd-MMM-yyyy H:m:s',new Date())
                 d.journalDateFmt = d.JOURNAL_DATE && format(d.journalDate,'Pp');
+                d.journalDateSort = (d.journalDate?.getTime() || 0) + (d.SEQUENCE || 0);
                 d.shortComment = truncate(d.COMMENTS,{'length':100});
             });
             return (options.select2)?options.select2(data):data;

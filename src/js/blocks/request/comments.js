@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Row, Col, Form, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Controller, useFormContext } from "react-hook-form";
 import useRequestQueries from "../../queries/requests";
@@ -35,17 +35,28 @@ export default function Comments() {
 }
 
 function CommentsHistory() {
+    const { isAdmin } = useAuthContext();
+    const [showSequence, setShowSequence] = useState(false);
+
     return (
         <section className="my-3">
             <Row as="header">
                 <Col as="h3">Comment History</Col>
+                <Col className="d-flex justify-content-end">
+                    {isAdmin && <Form.Check 
+                        type="switch"
+                        id="show-sequence-switch"
+                        label=<span>Show Sequence <small className="font-italic">(Admin Only)</small></span>
+                        onChange={e=>setShowSequence(e.target.checked)}
+                    />}
+                </Col>
             </Row>
-            <CommentsTable/>
+            <CommentsTable showSequence={showSequence}/>
         </section>
     );
 }
 
-export function CommentsTable() {
+export function CommentsTable({showSequence}) {
     const { general } = useSettingsContext();
     const { isAdmin } = useAuthContext();
     const { reqId } = useRequestContext();
@@ -61,7 +72,8 @@ export function CommentsTable() {
     }});
 
     const columns = useMemo(() => [
-        {name:'Date',selector:row=>row.JOURNAL_DATE},
+        {name:'Date',selector:row=>row.journalDateSort,sortable:true,format:row=><>{row.journalDateFmt}</>},
+        {name:'Seq',selector:row=>row.SEQUENCE,width:'100px',omit:!showSequence},
         {name:'Group',cell:row=>{
             let description = row.GROUP_TO_DESCRIPTION||<span className="font-italic">No Group Description</span>;
             let title = row.GROUP_TO_NAME;
@@ -89,8 +101,8 @@ export function CommentsTable() {
                 <Tooltip id={`tooltip-status-${row.SEQUENCE}`}>{get(general.status,`${row.STATUS}.list`,'Unknown')}</Tooltip>
             }><span>{row.STATUS}</span></OverlayTrigger>
         ),width:'100px'},
-        {name:'Comment',grow:3,selector:row=>row.COMMENTS,format:row=><pre className="m-0">{row.COMMENTS}</pre>}
-    ],[journal.data]);
+        {name:'Comment',grow:3,selector:row=>row.COMMENTS,format:row=><pre className="m-0 py-2">{row.COMMENTS}</pre>}
+    ],[journal.data,showSequence]);
 
     const conditionalRowStyles = [
         {
@@ -110,6 +122,8 @@ export function CommentsTable() {
                     responsive
                     progressPending={journal.isLoading}
                     conditionalRowStyles={conditionalRowStyles}
+                    defaultSortFieldId={1}
+                    defaultSortAsc={false}
                 />
             </Col>
         </Row>
