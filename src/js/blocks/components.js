@@ -89,14 +89,21 @@ const Loading = React.memo(function Loading({children,className='',isError,error
     }
 });
 
-export function DateFormat({children,inFmt,outFmt,nvl}) {
+export const DateFormat = React.memo(function DateFormat({children,inFmt,outFmt,nvl}) {
     if (!children) return (nvl)?<em>{nvl}</em>:null;
-    const iFmt = inFmt || 'dd-MMM-yy';
-    const d = (isDate(children))?children:parse(children,iFmt,new Date());
-    if (d=='Invalid Date') return (nvl)?<em>{nvl}</em>:null;
+    let d;
+    // if no inFmt try to parse using Date.parse()
+    if (!inFmt) {
+        d = Date.parse(children);
+    }
+    if (inFmt || Number.isNaN(d)) { // try to parse with date-fns using the fmt
+        const iFmt = inFmt || 'dd-MMM-yy';
+        d = (isDate(children))?children:parse(children,iFmt,new Date());
+    }
+    if (Number.isNaN(d.valueOf())) return (nvl)?<em>{nvl}</em>:<em>Invalid Format</em>;
     const oFmt = outFmt || 'M/d/yyyy'; //TODO: global date default format and user date format
     return format(d,oFmt);
-}
+});
 
 export function CurrencyFormat({children}) {
     return new Intl.NumberFormat('en-us',{
