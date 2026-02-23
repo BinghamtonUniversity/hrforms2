@@ -96,10 +96,35 @@ class Archive extends HRForms2 {
                 oci_bind_by_name($stmt,":request_id",$this->req[1]);
                 $r = oci_execute($stmt);
                 if (!$r) $this->raiseError();
+                $qry = "update from HRFORMS2_REQUESTS_JOURNAL set status = 'PF' where status = 'Z' and request_id = :request_id";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":request_id",$this->req[1]);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
                 $this->done();
                 break;
             case "form":
-                echo "unarchive forms";
+                $qry = "insert into HRFORMS2_FORMS select * from HRFORMS2_FORMS_ARCHIVE where form_id = :form_id";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":form_id",$this->req[1]);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
+                $qry = "insert into HRFORMS2_FORMS_JOURNAL select * from HRFORMS2_FORMS_JOURNAL_ARCHIVE where form_id = :form_id";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":form_id",$this->req[1]);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
+                $qry = "delete from HRFORMS2_FORMS_ARCHIVE where form_id = :form_id";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":form_id",$this->req[1]);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
+                $qry = "update from HRFORMS2_FORMS_JOURNAL set status = 'PF' where status = 'Z' and form_id = :form_id";
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":form_id",$this->req[1]);
+                $r = oci_execute($stmt);
+                if (!$r) $this->raiseError();
+                $this->done();
                 break;
             default:
                 $this->raiseError(E_BADREQUEST,array("msg"=>"Invalid archive type"));
