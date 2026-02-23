@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller } from "react-hook-form";
-import { get, cloneDeep } from "lodash";
+import { get, cloneDeep, camelCase } from "lodash";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import { AppButton, CurrencyFormat, DateFormat, DepartmentSelector, PersonPickerComponent } from "../components";
@@ -13,6 +13,7 @@ import { useHRFormContext } from "../../config/form";
 import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'employment.pay';
+const idName = camelCase(name);
 
 export default function EmploymentPay() {
     return (
@@ -47,22 +48,26 @@ function ExistingEmploymentPayTable() {
     const columns = useMemo(() => [
         {name:'Start Date',selector:row=><DateFormat>{row.commitmentEffDate}</DateFormat>},
         {name:'End Date',selector:(row,index)=>(
-            <Controller
-                name={`${blockName}.${index}.commitmentEndDate`}
-                control={control}
-                defaultValue={defaultValues[`${blockName}.${index}.commitmentEndDate`]}
-                render={({field}) => <Form.Control 
-                    as={DatePicker} 
-                    name={field.name}
-                    selected={field.value} 
-                    closeOnScroll={true} 
-                    onChange={field.onChange}
-                    onBlur={e=>handleEndDateBlur(e,field)}
-                    autoComplete="off"
-                    popperContainer={CalendarPortal}
-                    isInvalid={!!get(errors,field.name,false)}
-                />}
-            />
+            <>
+                <Form.Label htmlFor={`${idName}${index}-commitmentEndDate`} srOnly>Commitment End Date</Form.Label>
+                <Controller
+                    name={`${blockName}.${index}.commitmentEndDate`}
+                    control={control}
+                    defaultValue={defaultValues[`${blockName}.${index}.commitmentEndDate`]}
+                    render={({field}) => <Form.Control 
+                        as={DatePicker} 
+                        id={`${idName}${index}-commitmentEndDate`}
+                        name={field.name}
+                        selected={field.value} 
+                        closeOnScroll={true} 
+                        onChange={field.onChange}
+                        onBlur={e=>handleEndDateBlur(e,field)}
+                        autoComplete="off"
+                        popperContainer={CalendarPortal}
+                        isInvalid={!!get(errors,field.name,false)}
+                    />}
+                />
+            </>
         )},
         {name:'Account',selector:row=>[row.ACCOUNT_NUMBER?.ACCOUNT_CODE,row.ACCOUNT_NUMBER?.ACCOUNT_DESCRIPTION].join(': ')},
         {name:'Department',selector:row=>row.REPORTING_DEPARTMENT_NAME},
@@ -97,6 +102,8 @@ function ExistingEmploymentPayTable() {
 
 function NewEmploymentPay() {
     const blockName = `${name}.newPay`;
+    const blockIdName = camelCase(blockName);
+
     const { canEdit, setLockTabs } = useHRFormContext();
 
     const { control, getValues, setValue, clearErrors, setError, formState: { errors } } = useFormContext();
@@ -207,7 +214,7 @@ function NewEmploymentPay() {
                 <section key={flds.id} className="border rounded p-2 mb-2">
                     <Form.Row>
                         <Col xs="auto" className="mb-2">
-                            <Form.Label>Start Date*:</Form.Label>
+                            <Form.Label htmlFor={`${blockIdName}${index}-startDate`}>Start Date*:</Form.Label>
                             <InputGroup>
                                 <Controller
                                     name={`${blockName}.${index}.startDate`}
@@ -215,6 +222,7 @@ function NewEmploymentPay() {
                                     control={control}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
+                                        id={`${blockIdName}${index}-startDate`}
                                         name={field.name}
                                         closeOnScroll={true}
                                         selected={field.value}
@@ -235,7 +243,7 @@ function NewEmploymentPay() {
                             <FormFieldErrorMessage fieldName={`${blockName}.${index}.startDate`}/>
                         </Col>
                         <Col xs="auto" className="mb-2">
-                            <Form.Label>End Date*:</Form.Label>
+                            <Form.Label htmlFor={`${blockIdName}${index}-endDate`}>End Date*:</Form.Label>
                             <InputGroup>
                                 <Controller
                                     name={`${blockName}.${index}.endDate`}
@@ -243,6 +251,7 @@ function NewEmploymentPay() {
                                     control={control}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
+                                        id={`${blockIdName}${index}-endDate`}
                                         name={field.name}
                                         closeOnScroll={true}
                                         selected={field.value}
@@ -262,37 +271,37 @@ function NewEmploymentPay() {
                             <FormFieldErrorMessage fieldName={`${blockName}.${index}.endDate`}/>
                         </Col>
                         <Col xs={6} md={4} className="mb-2">
-                            <Form.Label>Account*:</Form.Label>
-                            <SingleSUNYAccount name={`${blockName}.${index}.account`} isInvalid={!!get(errors,`${blockName}.${index}.account.message`,false)} disabled={editIndex!=index} required/>
+                            <Form.Label htmlFor={`${blockIdName}${index}-account`}>Account*:</Form.Label>
+                            <SingleSUNYAccount name={`${blockName}.${index}.account`} id={`${blockIdName}${index}-account`} isInvalid={!!get(errors,`${blockName}.${index}.account.message`,false)} disabled={editIndex!=index} required/>
                         </Col>
                         <Col xs={6} sm={3} md={2} className="mb-2">
-                            <Form.Label>Hourly Rate*:</Form.Label>
+                            <Form.Label htmlFor={`${blockIdName}${index}-hourlyRate`}>Hourly Rate*:</Form.Label>
                             <Controller
                                 name={`${blockName}.${index}.hourlyRate`}
                                 defaultValue={defaultValues.hourlyRate}
                                 control={control}
-                                render={({field}) => <Form.Control {...field} type="number" min={0} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Control {...field} type="number" id={`${blockIdName}${index}-hourlyRate`} min={0} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                             />
                             <FormFieldErrorMessage fieldName={`${blockName}.${index}.hourlyRate`}/>
                         </Col>
                         <Col xs={6} sm={3} md={2} className="mb-2">
-                            <Form.Label>Award Amount:</Form.Label>
+                            <Form.Label htmlFor={`${blockIdName}${index}-awardAmount`}>Award Amount:</Form.Label>
                             <Controller
                                 name={`${blockName}.${index}.awardAmount`}
                                 defaultValue={defaultValues.awardAmount}
                                 control={control}
-                                render={({field}) => <Form.Control {...field} type="number" min={0} disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Control {...field} type="number" id={`${blockIdName}${index}-awardAmount`} min={0} disabled={editIndex!=index}/>}
                             />
                         </Col>
                     </Form.Row>
                     <Form.Group as={Row}>
-                        <Form.Label column xs={4} sm={3} md={2} xl={1}>Department*:</Form.Label>
+                        <Form.Label column xs={4} sm={3} md={2} xl={1} htmlFor={`${blockIdName}${index}-department`}>Department*:</Form.Label>
                         <Col xs="auto">
                             <Controller
                                 name={`${blockName}.${index}.department.id`}
                                 control={control}
                                 defaultValue={defaultValues.department}
-                                render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
+                                render={({field}) => <DepartmentSelector field={field} id={`${blockIdName}${index}-department`} onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                             />
                             <FormFieldErrorMessage fieldName={`${blockName}.${index}.department.id`}/>
                         </Col>
@@ -301,13 +310,13 @@ function NewEmploymentPay() {
                     <PaySupervisor index={index} editIndex={editIndex}/>
 
                     <Form.Group as={Row}>
-                        <Form.Label column xs={4} sm={3} md={2} xl={1}>Duties*:</Form.Label>
+                        <Form.Label column xs={4} sm={3} md={2} xl={1} htmlFor={`${blockIdName}${index}-duties`}>Duties*:</Form.Label>
                         <Col xs={8} md={7} xl={6}>
                             <Controller
                                 name={`${blockName}.${index}.duties`}
                                 control={control}
                                 defaultValue={defaultValues.duties}
-                                render={({field}) => <Form.Control {...field} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Control {...field} id={`${blockIdName}${index}-duties`} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                             />
                             <FormFieldErrorMessage fieldName={`${blockName}.${index}.duties`}/>
                         </Col>
@@ -343,6 +352,8 @@ function NewEmploymentPay() {
 
 function PaySupervisor({index,editIndex}) {
     const blockName = `${name}.newPay`;
+    const blockIdName = camelCase(blockName);
+    
     const { control, getValues, setValue, formState: { errors } } = useFormContext();
     const handleBlur = useCallback((field,e) => {
         field.onBlur(e);
@@ -352,7 +363,7 @@ function PaySupervisor({index,editIndex}) {
     },[getValues,blockName,index,setValue]);
     return (
         <Form.Group as={Row}>
-            <Form.Label column xs={4} sm={3} md={2} xl={1}>Supervisor*:</Form.Label>
+            <Form.Label column xs={4} sm={3} md={2} xl={1} htmlFor={`${blockIdName}${index}-supervisor`}>Supervisor*:</Form.Label>
             <Col xs="auto">
                 <Controller
                     name={`${blockName}.${index}.supervisor`}
@@ -361,6 +372,7 @@ function PaySupervisor({index,editIndex}) {
                     render={({field}) => <PersonPickerComponent
                         field={field}
                         id={`supervisor-search-${index}`}
+                        inputProps={{id:`${blockIdName}${index}-supervisor`}}
                         placeholder="Search for Supervisor"
                         onBlur={e=>handleBlur(field,e)}
                         disabled={editIndex!=index}

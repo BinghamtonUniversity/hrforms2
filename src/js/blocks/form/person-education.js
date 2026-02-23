@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import useFormQueries from "../../queries/forms";
@@ -13,6 +13,7 @@ import { useHRFormContext } from "../../config/form";
 import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'person.education.institutions';
+const idName = 'personEducation';
 
 const yesNoOptions = [
     {id:'HIGHEST_DEGREE_FLAG',title:'Highest Degree',unique:true},
@@ -197,7 +198,7 @@ export default function PersonEducation() {
             {fields.map((flds,index)=>(
                 <section key={flds.id} className="border rounded p-2 mb-2" onKeyDown={e=>handleEscape(e,index)}>
                     <Form.Group as={Row} className="mb-1">
-                        <Form.Label column md={3}>Degree Award Date*:</Form.Label>
+                        <Form.Label htmlFor={`${idName}${index}-awardDate`} column md={3}>Degree Award Date*:</Form.Label>
                         <Col xs="auto">
                             <InputGroup>
                                 <Controller
@@ -206,6 +207,7 @@ export default function PersonEducation() {
                                     control={control}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
+                                        id={`${idName}${index}-awardDate`}
                                         name={field.name}
                                         dateFormat="MMM yyyy"
                                         showMonthYearPicker
@@ -231,12 +233,12 @@ export default function PersonEducation() {
                                 name={`${name}.${index}.PENDING_DEGREE_FLAG`}
                                 defaultValue={defaultValues.PENDING_DEGREE_FLAG}
                                 control={control}
-                                render={({field}) => <Form.Check {...field} label="Pending Degree" onChange={()=>handlePendingChange(field)} checked={field.value=='Y'} disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Check {...field} id={`${idName}${index}-pendingDegree`} label="Pending Degree" onChange={()=>handlePendingChange(field)} checked={field.value=='Y'} disabled={editIndex!=index}/>}
                             />
                         </Col>
                     </Form.Group>
                     <Form.Group as={Row} className="mb-1">
-                        <Form.Label column md={3}>Degree Type*:</Form.Label>
+                        <Form.Label htmlFor={`${idName}${index}-degreeType`} column md={3}>Degree Type*:</Form.Label>
                         <Col xs={12} md={8}>
                             {degreeTypes.isError && <Loading isError error={degreeTypes.error}>Error Loading Degree Types</Loading>}
                             {degreeTypes.isLoading && <Loading>Loading Degree Types</Loading>}
@@ -248,6 +250,7 @@ export default function PersonEducation() {
                                     render={({field}) => <Typeahead 
                                         {...field} 
                                         id={`degreeType-${index}`}
+                                        inputProps={{id:`${idName}${index}-degreeType`}}
                                         options={degreeTypes.data} 
                                         flip={true} 
                                         minLength={2} 
@@ -264,7 +267,7 @@ export default function PersonEducation() {
 
                     <DegreeProgramComponent index={index} editIndex={editIndex}/>
 
-                    <Form.Group as={Row} className="mb-1">
+                    <Form.Group as={Row} className="mb-1" controlId={`${idName}${index}-degreeSpecialization`}>
                         <Form.Label column md={3}>Degree Specialization:</Form.Label>
                         <Col md={8}>
                             <Controller
@@ -276,7 +279,7 @@ export default function PersonEducation() {
                         </Col>
                     </Form.Group>
 
-                    <Form.Group as={Row} className="mb-1">
+                    <Form.Group as={Row} className="mb-1" controlId={`${idName}${index}-country`}>
                         <Form.Label column md={3}>University/College Country*:</Form.Label>
                         <Col xs="auto">
                             <Controller
@@ -290,7 +293,7 @@ export default function PersonEducation() {
                     </Form.Group>
                     {watchEducation[index]?.COUNTRY_CODE.id=='USA' &&
                         <>
-                            <Form.Group as={Row} className="mb-1">
+                            <Form.Group as={Row} className="mb-1" controlId={`${idName}${index}-state`}>
                                 <Form.Label column md={3}>University/College State*:</Form.Label>
                                 <Col xs="auto">
                                     <Controller
@@ -308,8 +311,10 @@ export default function PersonEducation() {
                     }
                     {(watchEducation[index]?.COUNTRY_CODE.id&&watchEducation[index]?.COUNTRY_CODE.id!='USA') && <UniversityNameComponent index={index} editIndex={editIndex}/>}
                     {yesNoOptions.map(yn => (
-                        <Form.Group key={yn.id} as={Row} className="mb-1">
-                            <Form.Label column md={3}>{yn.title}:</Form.Label>
+                        <Row as="fieldset" key={yn.id} className="mb-1">
+                            <Col md={3}>
+                                <legend className="form-label col-form-label">{yn.title}:</legend>
+                            </Col>
                             <Col xs="auto" className="pt-2">
                                 <Controller
                                     name={`${name}.${index}.${yn.id}`}
@@ -317,8 +322,8 @@ export default function PersonEducation() {
                                     control={control}
                                     render={({field}) => (
                                         <>
-                                            <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=="Y"} disabled={editIndex!=index}/>
-                                            <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!="Y"} disabled={editIndex!=index}/>
+                                            <Form.Check {...field} id={`${idName}${index}-${yn.id}-yes`} inline type="radio" label="Yes" value="Y" checked={field.value=="Y"} disabled={editIndex!=index}/>
+                                            <Form.Check {...field} id={`${idName}${index}-${yn.id}-no`} inline type="radio" label="No" value="N" checked={field.value!="Y"} disabled={editIndex!=index}/>
                                         </>
                                     )}
                                 />
@@ -328,7 +333,7 @@ export default function PersonEducation() {
                                     </div>
                                 }
                             </Col>
-                        </Form.Group>
+                        </Row>
                     ))}
                     {canEdit &&
                         <Row>
@@ -373,7 +378,7 @@ function DegreeProgramComponent({editIndex,index}) {
 
     return (
         <Form.Group as={Row} className="mb-1">
-            <Form.Label column md={3}>Degree Program/Major*:</Form.Label>
+            <Form.Label htmlFor={`${idName}${index}-degreeProgram`} column md={3}>Degree Program/Major*:</Form.Label>
             <Col xs={12} md={8}>
                 {programs.isError && <Loading isError error={programs.error}>Error Loading Degree Programs</Loading>}
                 {programs.isLoading && <Loading>Loading Degree Programs</Loading>}
@@ -385,6 +390,7 @@ function DegreeProgramComponent({editIndex,index}) {
                         render={({field}) => <Typeahead 
                             {...field} 
                             id={`degreeProgram-${index}`}
+                            inputProps={{id:`${idName}${index}-degreeProgram`}}
                             options={programs.data} 
                             flip={true} 
                             minLength={2} 
@@ -423,7 +429,7 @@ function UniversityCityComponent({editIndex,index}) {
 
     return (
         <Form.Group as={Row} className="mb-1">
-            <Form.Label column md={3}>University/College City*:</Form.Label>
+            <Form.Label htmlFor={`${idName}${index}-institutionCity`} column md={3}>University/College City*:</Form.Label>
             <Col xs="auto">
                 {city.isError && <Loading isError error={city.error}>Error Loading Cities</Loading>}
                 {city.isLoading && <Loading>Loading Cities</Loading>}
@@ -435,6 +441,7 @@ function UniversityCityComponent({editIndex,index}) {
                         render={({field}) => <Typeahead 
                             {...field} 
                             id={`institutionCity-${index}`}
+                            inputProps={{id:`${idName}${index}-institutionCity`}}
                             options={city.data} 
                             flip={true} 
                             minLength={2} 
@@ -471,7 +478,7 @@ function UniversityNameComponent({editIndex,index}) {
     }});
     return (
         <Form.Group as={Row} className="mb-1">
-            <Form.Label column md={3}>University/College Name*:</Form.Label>
+            <Form.Label htmlFor={`${idName}${index}-institutionName`} column md={3}>University/College Name*:</Form.Label>
             <Col xs={12} md={8}>
                 {institutionName.isError && <Loading isError error={institutionName.error}>Error Loading University/College Names</Loading>}
                 {institutionName.isLoading && <Loading>Loading University/College Names</Loading>}
@@ -483,6 +490,7 @@ function UniversityNameComponent({editIndex,index}) {
                         render={({field}) => <Typeahead 
                             {...field} 
                             id={`institutionName-${index}`}
+                            inputProps={{id:`${idName}${index}-institutionName`}}
                             options={institutionName.data} 
                             flip={true} 
                             minLength={2} 

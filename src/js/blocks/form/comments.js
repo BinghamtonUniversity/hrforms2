@@ -22,7 +22,7 @@ export default function Comments() {
                     <Row as="header">
                         <Col as="h3">Comment</Col>
                     </Row>
-                    <Form.Group as={Row}>
+                    <Form.Group as={Row} controlId="comment">
                         <Form.Label column md={2}>Comment:</Form.Label>
                         <Col md={9}>
                             <Controller

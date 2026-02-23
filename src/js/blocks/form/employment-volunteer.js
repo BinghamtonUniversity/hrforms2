@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { Icon } from "@iconify/react";
-import { get } from "lodash";
+import { camelCase, get } from "lodash";
 import { Loading, DepartmentSelector, PersonPickerComponent } from "../components";
 import DatePicker from "react-datepicker";
 import { useHRFormContext } from "../../config/form";
@@ -10,6 +10,7 @@ import useListsQueries from "../../queries/lists";
 import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'employment.volunteer';
+const idName = camelCase(name);
 
 export default function EmploymentSeparation() {
     const ref = useRef();
@@ -43,7 +44,7 @@ export default function EmploymentSeparation() {
             <Row as="header">
                 <Col as="h3">Volunteer</Col>
             </Row>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId={`${idName}-subRole`}>
                 <Form.Label column md={2}>Sub-Role*:</Form.Label>
                 <Col xs="auto">
                     {subroles.isLoading && <Loading>Loading Data</Loading>}
@@ -64,7 +65,7 @@ export default function EmploymentSeparation() {
                     <FormFieldErrorMessage fieldName={`${name}.subRole.id`}/>
                 </Col>
             </Form.Group>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId={`${idName}-startDate`}>
                 <Form.Label column md={2}>Start Date*:</Form.Label>
                 <Col xs="auto">
                     <InputGroup>
@@ -92,7 +93,7 @@ export default function EmploymentSeparation() {
                     <FormFieldErrorMessage fieldName={`${name}.startDate`}/>
                 </Col>
             </Form.Group>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId={`${idName}-endDate`}>
                 <Form.Label column md={2}>End Date*:</Form.Label>
                 <Col xs="auto">
                     <InputGroup>
@@ -121,7 +122,7 @@ export default function EmploymentSeparation() {
                 </Col>
             </Form.Group>
             {(subRoleId=='Instructor'||showInTest)&&
-                <Form.Group as={Row} className={testHighlight(subRoleId=='Instructor')}>
+                <Form.Group as={Row} className={testHighlight(subRoleId=='Instructor')} controlId={`${idName}-tenureStatus`}>
                     <Form.Label column md={2}>Tenure Status:</Form.Label>
                     <Col xs="auto">
                         {tenurestatus.isLoading && <Loading>Loading Data</Loading>}
@@ -142,7 +143,7 @@ export default function EmploymentSeparation() {
                     </Col>
                 </Form.Group>
             }
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId={`${idName}-hoursPerWeek`}>
                 <Form.Label column md={2}>Hours/Week*:</Form.Label>
                 <Col xs="auto">
                     <Controller
@@ -154,7 +155,7 @@ export default function EmploymentSeparation() {
                     <FormFieldErrorMessage fieldName={`${name}.hoursPerWeek`}/>
                 </Col>
             </Form.Group>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId={`${idName}-serviceType`}>
                 <Form.Label column md={2}>Service Type*:</Form.Label>
                 <Col xs="auto">
                     {servicetypes.isLoading && <Loading>Loading Data</Loading>}
@@ -175,7 +176,7 @@ export default function EmploymentSeparation() {
                     <FormFieldErrorMessage fieldName={`${name}.serviceType.id`}/>
                 </Col>
             </Form.Group>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId={`${idName}-department`}>
                 <Form.Label column md={2}>Department*:</Form.Label>
                 <Col xs="auto">
                     <Controller
@@ -193,7 +194,7 @@ export default function EmploymentSeparation() {
             {(subRoleId&&!subRoleId.startsWith('CP')||showInTest)&& 
                 <VolunteerSupervisor fieldName={`${name}.supervisor`} fieldLabel="Supervisor*" testHighlight={testHighlight(subRoleId&&!subRoleId.startsWith('CP'))}/>
             }
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId={`${idName}-duties`}>
                 <Form.Label column md={2}>Duties*:</Form.Label>
                 <Col xs={12} sm={10} md={8} lg={6}>
                     <Controller
@@ -220,7 +221,7 @@ function VolunteerSupervisor({fieldName,fieldLabel,testHighlight}) {
     }
     return (
         <Form.Group as={Row} className={testHighlight}>
-            <Form.Label column md={2}>{fieldLabel}:</Form.Label>
+            <Form.Label htmlFor={`${idName}-${camelCase(fieldName)}`} column md={2}>{fieldLabel}:</Form.Label>
             <Col xs={10} sm={8} md={6} lg={5} xl={4}>
                 <Controller
                     name={fieldName}
@@ -229,6 +230,7 @@ function VolunteerSupervisor({fieldName,fieldLabel,testHighlight}) {
                     render={({field}) => <PersonPickerComponent
                         field={field}
                         id={`${fieldName.replaceAll('.','-')}-search`}
+                        inputProps={{id:`${idName}-${camelCase(fieldName)}`}}
                         placeholder="Search for people..."
                         onBlur={e=>handleBlur(field,e)}
                         disabled={!canEdit}

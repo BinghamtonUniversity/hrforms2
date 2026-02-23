@@ -10,6 +10,7 @@ import { get } from "lodash";
 import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'employment.separation';
+const idName = 'employmentSeparation';
 
 export default function EmploymentSeparation() {
     const ref = useRef();
@@ -26,13 +27,15 @@ export default function EmploymentSeparation() {
             <Row as="header">
                 <Col as="h3">Separation</Col>
             </Row>
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>Effective Date:</Form.Label>
+            <Row className="mb-2">
+                <Col md={2}>
+                    <p className="form-label col-form-label">Effective Date:</p>
+                </Col>
                 <Col xs="auto" className="pt-2">
                     <DateFormat nvl="Effective Date Not Set">{watchEffectiveDate}</DateFormat>
                 </Col>
-            </Form.Group>
-            <Form.Group as={Row}>
+            </Row>
+            <Form.Group as={Row} controlId={`${idName}-lastDateWorked`}>
                 <Form.Label column md={2}>Last Date Worked:</Form.Label>
                 <Col xs="auto">
                     <InputGroup>

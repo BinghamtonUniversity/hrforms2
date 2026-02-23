@@ -12,6 +12,7 @@ import useListsQueries from "../../queries/lists";
 import { defaultTo, get } from "lodash";
 
 const name = 'employment.position';
+const idName = 'employmentPosition';
 
 export default function EmploymentPosition() {
     const { control, getValues } = useFormContext();
@@ -69,7 +70,7 @@ function EmploymentPositionSearch({setShowResults}) {
             <Row as="header">
                 <Col as="h4">Position Search</Col>
             </Row>
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId={`${idName}-lineNumber`}>
                 <Form.Label column md={2}>Line Number*:</Form.Label>
                 <Col xs="auto">
                     <Controller
@@ -134,7 +135,7 @@ function EmploymentPositionSearch({setShowResults}) {
                             </Popover>
                         }
                     >
-                        <AppButton size="sm" format="info" variant="outline-primary"/>
+                        <AppButton size="sm" format="info" variant="outline-primary" className="no-label"><span className="sr-only">Line Number Help</span></AppButton>
                     </OverlayTrigger>
                 </Col>
             </Form.Group>
@@ -222,18 +223,22 @@ function EmploymentAppointmentInformation() {
             
             <AppointmentType/>
             
-            <Form.Group as={Row}>
-                <Form.Label column md={2}>Apointment Percent*:</Form.Label>
+            <Row as="fieldset" className="mb-2">
+                <Col md={2}>
+                    <legend className="form-label col-form-label">Appointment Percent*:</legend>
+                </Col>
                 <Col xs="auto">
+                    <Form.Label htmlFor={`${idName}-apptPercent`} srOnly>Appointment Percent*:</Form.Label>
                     <Controller
                         name={`${name}.APPOINTMENT_PERCENT`}
                         defaultValue={maxPercent}
                         control={control}
-                        render={({field}) => <Form.Control {...field} type="number" min={1} max={maxPercent} disabled={!canEdit} onBlur={e=>handleAppointmentPercent(e,field)} onChange={e=>handleAppointmentPercent(e,field)}/>}
+                        render={({field}) => <Form.Control {...field} id={`${idName}-apptPercent`} type="number" min={1} max={maxPercent} disabled={!canEdit} onBlur={e=>handleAppointmentPercent(e,field)} onChange={e=>handleAppointmentPercent(e,field)}/>}
                     />
                 </Col>
                 <Col sm={8} md={6} className="pt-2">
-                    <Form.Control type="range" name="apptPercentRange" id="apptPercentRange" min={1} max={maxPercent} value={watchApptPercent} onChange={e=>setValue(`${name}.APPOINTMENT_PERCENT`,e.target.value)} disabled={!canEdit} list="markers"/>
+                    <Form.Label htmlFor={`${idName}-apptPercentRange`} srOnly>Appointment Percent Range*:</Form.Label>
+                    <Form.Control type="range" name="apptPercentRange" id={`${idName}-apptPercentRange`} min={1} max={maxPercent} value={watchApptPercent} onChange={e=>setValue(`${name}.APPOINTMENT_PERCENT`,e.target.value)} disabled={!canEdit} list="markers"/>
                     <datalist id="markers" className="marker">
                         <option value="1">1%</option>
                         {[.25,.5,.75].map(r => {
@@ -243,7 +248,7 @@ function EmploymentAppointmentInformation() {
                         <option value={maxPercent}>{maxPercent}%</option>
                     </datalist>
                 </Col>
-            </Form.Group>
+            </Row>
 
             <BenefitsFlag/>
             
@@ -256,7 +261,7 @@ function EmploymentAppointmentInformation() {
             </Form.Group>
             */}
             
-            <Form.Group as={Row}>
+            <Form.Group as={Row} controlId={`${idName}-appointmentEndDate`}>
                 <Form.Label column md={2}>Appointment End Date:</Form.Label>
                 <Col xs="auto">
                     <InputGroup>
@@ -284,8 +289,10 @@ function EmploymentAppointmentInformation() {
                 </Col>
             </Form.Group>
             {(watchPayroll=='28020'||showInTest) && 
-                <Form.Group as={Row} className={testHighlight(watchPayroll=='28020')}>
-                    <Form.Label column md={2}>Voluntary Reduction:</Form.Label>
+                <Row as="fieldset" className={`mb-2 ${testHighlight(watchPayroll=='28020')}`}>
+                    <Col md={2}>
+                        <legend className="form-label col-form-label">Voluntary Reduction:</legend>
+                    </Col>
                     <Col xs="auto" className="pt-2">
                         <Controller
                             name={`${name}.VOLUNTARY_REDUCTION`}
@@ -293,13 +300,13 @@ function EmploymentAppointmentInformation() {
                             control={control}
                             render={({field}) => (
                                 <>
-                                    <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={!canEdit}/>
-                                    <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'} disabled={!canEdit}/>
+                                    <Form.Check {...field} id={`${idName}-voluntaryReduction-yes`} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={!canEdit}/>
+                                    <Form.Check {...field} id={`${idName}-voluntaryReduction-no`} inline type="radio" label="No" value='N' checked={field.value!='Y'} disabled={!canEdit}/>
                                 </>
                             )}
                         />
                     </Col>
-                </Form.Group>
+                </Row>
             }
             
             <CheckSortCode/>
@@ -323,7 +330,7 @@ function AppointmentType() {
     },[setValue]);
 
     return (
-        <Form.Group as={Row}>
+        <Form.Group as={Row} controlId={`${idName}-appointmentType`}>
             <Form.Label column md={2}>Appointment Type*:</Form.Label>
             <Col xs="auto">
                 {appttypes.isLoading && <Loading>Loading Data</Loading>}
@@ -365,7 +372,7 @@ function BenefitsFlag() {
     },[setValue]);
 
     return (
-        <Form.Group as={Row}>
+        <Form.Group as={Row} controlId={`${idName}-benefitsFlag`}>
             <Form.Label column md={2}>Benefits Flag*:</Form.Label>
             <Col xs="auto">
                 {benefitcodes.isLoading && <Loading>Loading Data</Loading>}
@@ -400,7 +407,7 @@ function CheckSortCode() {
     },[setValue]);
 
     return (
-        <Form.Group as={Row}>
+        <Form.Group as={Row} controlId={`${idName}-checkSortCodes`}>
             <Form.Label column md={2}>Check Sort Codes*:</Form.Label>
             <Col xs="auto">
                 {checksortcodes.isLoading && <Loading>Loading Data</Loading>}
@@ -438,7 +445,7 @@ function PositionJustification() {
     },[setValue]);
 
     return (
-        <Form.Group as={Row}>
+        <Form.Group as={Row} controlId={`${idName}-justification`}>
             <Form.Label column md={2}>Justification:</Form.Label>
             <Col xs="auto">
                 {positionjustification.isLoading && <Loading>Loading Data</Loading>}

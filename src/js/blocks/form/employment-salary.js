@@ -12,6 +12,7 @@ import { FormFieldErrorMessage } from "../../pages/form";
 import { isAfter } from "date-fns";
 
 const name = 'employment.salary';
+const idName = 'employmentSalary';
 
 export default function EmploymentAppointment() {
     const [editing,setEditing] = useState(undefined);
@@ -65,7 +66,7 @@ export default function EmploymentAppointment() {
                 <Row as="header">
                     <Col as="h3">Salary</Col>
                 </Row>
-                <Form.Group as={Row}>
+                <Form.Group as={Row} controlId={`${idName}-effDate`}>
                     <Form.Label column md={2}>Effective Date*:</Form.Label>
                     <Col xs="auto">
                         <InputGroup>
@@ -92,24 +93,24 @@ export default function EmploymentAppointment() {
                         <FormFieldErrorMessage fieldName={`${name}.effDate`}/>
                     </Col>
                 </Form.Group>
-                <Form.Group as={Row}>
+                <Form.Group as={Row} controlId={`${idName}-payBasis`}>
                     <Form.Label column md={2}>Pay Basis:</Form.Label>
-                    <Col xs="auto" className="pt-2">
-                        <p className="mb-0">{watchPayBasis}</p>
+                    <Col xs="auto">
+                        <Form.Control plaintext readOnly defaultValue={watchPayBasis} />
                     </Col>
                 </Form.Group>
                 {(!['HRY','BIW','FEE'].includes(watchPayBasis)||showInTest) && 
-                    <Form.Group as={Row} className={testHighlight(!['HRY','BIW','FEE'].includes(watchPayBasis))}>
+                    <Form.Group as={Row} className={testHighlight(!['HRY','BIW','FEE'].includes(watchPayBasis))} controlId={`${idName}-apptPercent`}>
                         <Form.Label column md={2}>Appointment Percent:</Form.Label>
-                        <Col xs="auto" className="pt-2">
-                            <p className="mb-0">{watchAmounts[2]}%</p>
+                        <Col xs="auto">
+                            <Form.Control plaintext readOnly defaultValue={`${watchAmounts[2]}%`} />
                         </Col>
                     </Form.Group>
                 }
                 {(!['EXS','SUM','WIN'].includes(watchTransactionCode)||showInTest) &&
                     <>
                         {(['BIW','FEE'].includes(watchPayBasis)||showInTest) && 
-                            <Form.Group as={Row} className={testHighlight(['BIW','FEE'].includes(watchPayBasis))}>
+                            <Form.Group as={Row} className={testHighlight(['BIW','FEE'].includes(watchPayBasis))} controlId={`${idName}-numberOfPayments`}>
                                 <Form.Label column md={2}># Payments*:</Form.Label>
                                 <Col xs="auto">
                                     <Controller
@@ -122,7 +123,7 @@ export default function EmploymentAppointment() {
                                 </Col>
                             </Form.Group>
                         }
-                        <Form.Group as={Row}>
+                        <Form.Group as={Row} controlId={`${idName}-rateAmount`}>
                             <Form.Label column md={2}>{rateAmountLabel(watchPayBasis)} Rate*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
@@ -134,9 +135,11 @@ export default function EmploymentAppointment() {
                                 <FormFieldErrorMessage fieldName={`${name}.RATE_AMOUNT`}/>
                             </Col>
                         </Form.Group>
-                        <Form.Group as={Row}>
-                            <Form.Label column md={2}>Total Salary:</Form.Label>
-                            <Col xs="auto" className="pt-2">
+                        <Row className="mb-2">
+                            <Col md={2}>
+                                <p className="form-label col-form-label">Total Salary:</p>
+                            </Col>
+                            <Col xs="auto">
                             <Controller
                                     name={`${name}.totalSalary`}
                                     defaultValue={defaultValues[`${name}.totalSalary`]}
@@ -144,7 +147,7 @@ export default function EmploymentAppointment() {
                                     render={({field}) => <p className="mb-0"><CurrencyFormat>{field.value}</CurrencyFormat></p>}
                                 />
                             </Col>
-                        </Form.Group>
+                        </Row>
                         <SUNYAccount label="SUNY Account" name={`${name}.SUNY_ACCOUNTS`} isInvalid={!!get(errors,`${name}.SUNY_ACCOUNTS`,false)} disabled={!canEdit||['a','s'].includes(editing)} required={(watchPayrollCode!='28020')}/>
                     </>
                 }
@@ -161,6 +164,7 @@ export default function EmploymentAppointment() {
 
 function AdditionalSalary({editing,setEditing}) {
     const blockName = `${name}.ADDITIONAL_SALARY`;
+    const blockIdName = `${idName}AdditionalSalary`;
 
     const { control, getValues, setValue, setError, clearErrors, formState: { errors } } = useFormContext();
     const { setLockTabs } = useHRFormContext();
@@ -305,13 +309,13 @@ function AdditionalSalary({editing,setEditing}) {
                         <section key={flds.id} className="border rounded p-2 mb-2">
                             <Form.Row>
                                 <Col xs="auto" className="mb-2">
-                                    <Form.Label>Type*:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-type`}>Type*:</Form.Label>
                                     <Controller
                                         name={`${blockName}.${index}.type.id`}
                                         defaultValue={defaultValues.type}
                                         control={control}
                                         render={({field}) => (
-                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}>
+                                            <Form.Control {...field} as="select" id={`${blockIdName}${index}-type`} onChange={e=>handleSelectChange(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}>
                                                 <option></option>
                                                 {types.data && types.data.map(t=><option key={t[0]} value={t[0]}>{t[1]}</option>)}
                                             </Form.Control>
@@ -320,7 +324,7 @@ function AdditionalSalary({editing,setEditing}) {
                                     <FormFieldErrorMessage fieldName={`${blockName}.${index}.type.id`}/>
                                 </Col>
                                 <Col xs="auto" className="mb-2">
-                                    <Form.Label>Start Date*:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-startDate`}>Start Date*:</Form.Label>
                                     <InputGroup>
                                         <Controller
                                             name={`${blockName}.${index}.startDate`}
@@ -328,6 +332,7 @@ function AdditionalSalary({editing,setEditing}) {
                                             control={control}
                                             render={({field}) => <Form.Control 
                                                 as={DatePicker} 
+                                                id={`${blockIdName}${index}-startDate`}
                                                 name={field.name}
                                                 selected={field.value} 
                                                 closeOnScroll={true} 
@@ -347,7 +352,7 @@ function AdditionalSalary({editing,setEditing}) {
                                     <FormFieldErrorMessage fieldName={`${blockName}.${index}.startDate`}/>
                                 </Col>
                                 <Col xs="auto" className="mb-2">
-                                    <Form.Label>End Date*:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-endDate`}>End Date*:</Form.Label>
                                     <InputGroup>
                                         <Controller
                                             name={`${blockName}.${index}.endDate`}
@@ -355,6 +360,7 @@ function AdditionalSalary({editing,setEditing}) {
                                             control={control}
                                             render={({field}) => <Form.Control 
                                                 as={DatePicker} 
+                                                id={`${blockIdName}${index}-endDate`}
                                                 name={field.name}
                                                 selected={field.value} 
                                                 closeOnScroll={true} 
@@ -374,30 +380,30 @@ function AdditionalSalary({editing,setEditing}) {
                                 </Col>
                                 <Col xs={6} md={4} className="mb-2">
                                     <Form.Label>Account:</Form.Label>
-                                    <SingleSUNYAccount name={`${blockName}.${index}.account`} isInvalid={!!get(errors,`${blockName}.${index}.account`,false)} disabled={editIndex!=index} required/>
+                                    <SingleSUNYAccount id={`${blockIdName}${index}-account`} name={`${blockName}.${index}.account`} isInvalid={!!get(errors,`${blockName}.${index}.account`,false)} disabled={editIndex!=index} required/>
                                 </Col>
                                 <Col xs={2} md={1} className="mb-2">
-                                    <Form.Label>Pmts*:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-payments`}>Pmts*:</Form.Label>
                                     <Controller
                                         name={`${blockName}.${index}.payments`}
                                         defaultValue={defaultValues.payments}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" min={1} onChange={e=>handlePmtsField(e,field)} onBlur={e=>handlePmtsField(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" id={`${blockIdName}${index}-payments`} min={1} onChange={e=>handlePmtsField(e,field)} onBlur={e=>handlePmtsField(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                                     />
                                     <FormFieldErrorMessage fieldName={`${blockName}.${index}.payments`}/>
                                 </Col>
                                 <Col xs={4} sm={3} md={2} className="mb-2">
-                                    <Form.Label>Amount*:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-amount`}>Amount*:</Form.Label>
                                     <Controller
                                         name={`${blockName}.${index}.amount`}
                                         defaultValue={defaultValues.amount}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" onBlur={e=>handleAmount(e,field)} onChange={e=>handleAmount(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" id={`${blockIdName}${index}-amount`} onBlur={e=>handleAmount(e,field)} onChange={e=>handleAmount(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                                     />
                                     <FormFieldErrorMessage fieldName={`${blockName}.${index}.amount`}/>
                                 </Col>
                                 <Col xs={4} sm={3} md={2} className="mb-2">
-                                    <Form.Label>Total:</Form.Label>
+                                    <p className="form-label">Total:</p>
                                     <p className="mb-0 py-2"><CurrencyFormat>{calcTotal(index)}</CurrencyFormat></p>
                                 </Col>
                             </Form.Row>
@@ -441,6 +447,7 @@ function ExistingAdditionalSalary() {
         <Row>
             <Col>
                 <Table striped bordered size="sm" responsive>
+                    <caption className="sr-only">Existing Additional Salary</caption>
                     <thead>
                         <tr className="bg-main text-white">
                             <th scope="col">Type</th>
@@ -467,6 +474,7 @@ function ExistingAdditionalSalary() {
 
 function SplitAssignments({className,editing,setEditing}) {
     const blockName = `${name}.SPLIT_ASSIGNMENTS`;
+    const blockIdName = `${idName}SplitAssignments`;
 
     const { control, getValues, setValue, setError, clearErrors, formState: { errors } } = useFormContext();
     const { setLockTabs } = useHRFormContext();
@@ -640,16 +648,16 @@ function SplitAssignments({className,editing,setEditing}) {
                             }
                             <Form.Row>
                                 <Col xs="auto" className="mb-2">
-                                    <Form.Label>Primary:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-primary`}>Primary:</Form.Label>
                                     <Controller
                                         name={`${blockName}.${index}.COMMITMENT_PRIMARY_FLAG`}
                                         control={control}
                                         defaultValue={defaultValues.COMMITMENT_PRIMARY_FLAG}
-                                        render={({field}) => <Form.Check {...field} type="checkbox" className="ml-3 mt-1 form-check-input-lg" value="Y" onChange={e=>handlePrimaryChange(e,field)} checked={field.value=="Y"} disabled={editIndex!=index}/>}
+                                        render={({field}) => <Form.Check {...field} type="checkbox" id={`${blockIdName}${index}-primary`} className="ml-3 mt-1 form-check-input-lg" value="Y" onChange={e=>handlePrimaryChange(e,field)} checked={field.value=="Y"} disabled={editIndex!=index}/>}
                                     />
                                 </Col>
                                 <Col xs="auto" className="mb-2">
-                                    <Form.Label>Start Date*:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-commitmentEffDate`}>Start Date*:</Form.Label>
                                     <InputGroup>
                                         <Controller
                                             name={`${blockName}.${index}.commitmentEffDate`}
@@ -657,6 +665,7 @@ function SplitAssignments({className,editing,setEditing}) {
                                             control={control}
                                             render={({field}) => <Form.Control 
                                                 as={DatePicker} 
+                                                id={`${blockIdName}${index}-commitmentEffDate`}
                                                 name={field.name}
                                                 selected={field.value} 
                                                 closeOnScroll={true} 
@@ -676,7 +685,7 @@ function SplitAssignments({className,editing,setEditing}) {
                                     <FormFieldErrorMessage fieldName={`${blockName}.${index}.commitmentEffDate`}/>
                                 </Col>
                                 <Col xs="auto" className="mb-2">
-                                    <Form.Label>End Date:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-commitmentEndDate`}>End Date:</Form.Label>
                                     <InputGroup>
                                         <Controller
                                             name={`${blockName}.${index}.commitmentEndDate`}
@@ -684,6 +693,7 @@ function SplitAssignments({className,editing,setEditing}) {
                                             control={control}
                                             render={({field}) => <Form.Control 
                                                 as={DatePicker} 
+                                                id={`${blockIdName}${index}-commitmentEndDate`}
                                                 name={field.name}
                                                 selected={field.value} 
                                                 closeOnScroll={true} 
@@ -700,27 +710,27 @@ function SplitAssignments({className,editing,setEditing}) {
                                     </InputGroup>
                                 </Col>
                                 <Col xs="auto" className="mb-2">
-                                    <Form.Label>Title:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-campusTitle`}>Title:</Form.Label>
                                     <Controller
                                         name={`${blockName}.${index}.CAMPUS_TITLE`}
                                         defaultValue={defaultValues.CAMPUS_TITLE}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={!!get(errors,field.name,false)}/>}
+                                        render={({field}) => <Form.Control {...field} type="text" id={`${blockIdName}${index}-campusTitle`} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={!!get(errors,field.name,false)}/>}
                                     />
                                     <FormFieldErrorMessage fieldName={`${blockName}.${index}.CAMPUS_TITLE`}/>
                                 </Col>
                                 <Col xs="auto" className="mb-2">
-                                    <Form.Label>Department:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-department`}>Department:</Form.Label>
                                     <Controller
                                         name={`${blockName}.${index}.REPORTING_DEPARTMENT_CODE.id`}
                                         defaultValue={defaultValues.REPORTING_DEPARTMENT_CODE}
                                         control={control}
-                                        render={({field}) => <DepartmentSelector field={field} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={!!get(errors,field.name,false)}/>}
+                                        render={({field}) => <DepartmentSelector field={field} id={`${blockIdName}${index}-department`} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={!!get(errors,field.name,false)}/>}
                                     />
                                     <FormFieldErrorMessage fieldName={`${blockName}.${index}.REPORTING_DEPARTMENT_CODE.id`}/>
                                 </Col>
                                 <Col xs={12} sm={8} md={6} lg={5} xl={4} className="mb-2">
-                                    <Form.Label>Supervisor:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-supervisor`}>Supervisor:</Form.Label>
                                     <Controller
                                         name={`${blockName}.${index}.supervisor`}
                                         defaultValue={defaultValues.supervisor}
@@ -728,6 +738,7 @@ function SplitAssignments({className,editing,setEditing}) {
                                         render={({field}) => <PersonPickerComponent
                                             field={field}
                                             id="supervisor-search"
+                                            inputProps={{id:`${blockIdName}${index}-supervisor`}}
                                             placeholder="Search for supervisor..."
                                             onBlur={e=>handleBlur(field,e)}
                                             disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""}/>
@@ -735,13 +746,13 @@ function SplitAssignments({className,editing,setEditing}) {
                                     />
                                 </Col>
                                 <Col xs="auto" className="mb-2">
-                                    <Form.Label>Allocation*:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-allocation`}>Allocation*:</Form.Label>
                                     <Controller
                                         name={`${blockName}.${index}.WORK_ALLOCATION.id`}
                                         defaultValue={defaultValues.WORK_ALLOCATION}
                                         control={control}
                                         render={({field}) => (
-                                            <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={!!get(errors,field.name,false)}>
+                                            <Form.Control {...field} as="select" id={`${blockIdName}${index}-allocation`} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""} isInvalid={!!get(errors,field.name,false)}>
                                                 <option></option>
                                                 {workAllocation.data && workAllocation.data.map(a=><option key={a[0]} value={a[0]}>{a[1]}</option>)}
                                             </Form.Control>
@@ -750,24 +761,24 @@ function SplitAssignments({className,editing,setEditing}) {
                                     <FormFieldErrorMessage fieldName={`${blockName}.${index}.WORK_ALLOCATION.id`}/>
                                 </Col>
                                 <Col xs="auto" className="mb-2">
-                                    <Form.Label>Work %*:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-workPercent`}>Work %*:</Form.Label>
                                     <Controller
                                         name={`${blockName}.${index}.WORK_PERCENT`}
                                         defaultValue={defaultValues.WORK_PERCENT}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={100} onChange={e=>handleWorkPct(e,field)} onBlur={e=>handleWorkPct(e,field)} disabled={editIndex!=index} isInvalid={(editIndex==undefined&&totalPct!=100)||!!get(errors,field.name,false)}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" id={`${blockIdName}${index}-workPercent`} min={0} max={100} onChange={e=>handleWorkPct(e,field)} onBlur={e=>handleWorkPct(e,field)} disabled={editIndex!=index} isInvalid={(editIndex==undefined&&totalPct!=100)||!!get(errors,field.name,false)}/>}
                                     />
                                     <FormFieldErrorMessage fieldName={`${blockName}.${index}.WORK_PERCENT`}/>
                                 </Col>
                             </Form.Row>
                             <Form.Row>
                                 <Col xs={12} sm={10} md={8} lg={6} className="mb-2">
-                                    <Form.Label>Duties:</Form.Label>
+                                    <Form.Label htmlFor={`${blockIdName}${index}-duties`}>Duties:</Form.Label>
                                     <Controller
                                         name={`${blockName}.${index}.DUTIES`}
                                         defaultValue={defaultValues.DUTIES}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} as="textarea" rows={2} disabled={editIndex!=index}/>}
+                                        render={({field}) => <Form.Control {...field} as="textarea" id={`${blockIdName}${index}-duties`} rows={2} disabled={editIndex!=index}/>}
                                     />
                                 </Col>
                             </Form.Row>

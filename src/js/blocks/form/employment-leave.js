@@ -10,6 +10,7 @@ import get from "lodash/get";
 import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'employment.leave';
+const idName = 'employmentLeave';
 
 export default function EmploymentLeave() {
     const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
@@ -57,8 +58,10 @@ export default function EmploymentLeave() {
                     <Row as="header">
                         <Col as="h3">Leave</Col>
                     </Row>
-                    <Form.Group as={Row}>
-                        <Form.Label column md={2}>Orginal Salary:</Form.Label>
+                    <Row className="mb-2">
+                        <Col md={2}>
+                            <p className="form-label col-form-label">Original Salary:</p>
+                        </Col>
                         <Col xs="auto">
                             <Controller
                                 name={`${name}.CALCULATED_ANNUAL`}
@@ -67,23 +70,27 @@ export default function EmploymentLeave() {
                                 render={({field}) => <p className="mb-0"><CurrencyFormat>{field.value}</CurrencyFormat></p>}
                             />
                         </Col>
-                    </Form.Group>
+                    </Row>
 
                     {/* Show Leave Pct and Leave Sal for Partial Paid Leaves */}
                     {(conditionalFields.partialLeave.includes(formType)||showInTest) && 
                         <>
-                            <Form.Group as={Row} className={testHighlight(conditionalFields.partialLeave.includes(formType))}>
-                                <Form.Label column md={2}>Leave Percent:</Form.Label>
+                            <Row as="fieldset" className={`mb-2 ${testHighlight(conditionalFields.partialLeave.includes(formType))}`}>
+                                <Col md={2}>
+                                    <legend className="form-label col-form-label">Leave Percent:</legend>
+                                </Col>
                                 <Col xs="auto">
+                                    <Form.Label htmlFor={`${idName}-leavePercent`} srOnly>Leave Percent:</Form.Label>
                                     <Controller
                                         name={`${name}.leavePercent`}
                                         defaultValue={defaultValues[`${name}.leavePercent`]}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={100} onChange={e=>handleLeavePct(e,field)} onBlur={e=>handleLeavePct(e,field)} disabled={!canEdit}/>}
+                                        render={({field}) => <Form.Control {...field} type="number" id={`${idName}-leavePercent`} min={0} max={100} onChange={e=>handleLeavePct(e,field)} onBlur={e=>handleLeavePct(e,field)} disabled={!canEdit}/>}
                                     />
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
-                                    <Form.Control type="range" name="leavePercentRange" id="leavePercentRange" min={0} max={100} value={watchLeavePercent} onChange={e=>setValue(`${name}.leavePercent`,e.target.value)} disabled={!canEdit} list="markers"/>
+                                    <Form.Label htmlFor={`${idName}-leavePercentRange`} srOnly>Leave Percent Range:</Form.Label>
+                                    <Form.Control type="range" name="leavePercentRange" id={`${idName}-leavePercentRange`} min={0} max={100} value={watchLeavePercent} onChange={e=>setValue(`${name}.leavePercent`,e.target.value)} disabled={!canEdit} list="markers"/>
                                     <datalist id="markers" className="marker">
                                         <option value="0">0%</option>
                                         <option value="25">25%</option>
@@ -92,19 +99,21 @@ export default function EmploymentLeave() {
                                         <option value="100">100%</option>
                                     </datalist>
                                 </Col>
-                            </Form.Group>
-                            <Form.Group as={Row}>
-                                <Form.Label column md={2}>Leave Salary:</Form.Label>
+                            </Row>
+                            <Row className="mb-2">
+                                <Col md={2}>
+                                    <p className="form-label col-form-label">Leave Salary:</p>
+                                </Col>
                                 <Col xs="auto" className="pt-2">
                                     <p className="mb-0">
                                         <CurrencyFormat>{calcLeaveSalary()}</CurrencyFormat>
                                     </p>
                                 </Col>
-                            </Form.Group>
+                            </Row>
                         </>
                     }
 
-                    <Form.Group as={Row}>
+                    <Form.Group as={Row} controlId={`${idName}-leaveEndDate`}>
                         <Form.Label column md={2}>Leave End Date*:</Form.Label>
                         <Col xs="auto">
                             <InputGroup>
@@ -132,7 +141,7 @@ export default function EmploymentLeave() {
                             <FormFieldErrorMessage fieldName={`${name}.leaveEndDate`}/>
                         </Col>
                     </Form.Group>
-                    <Form.Group as={Row}>
+                    <Form.Group as={Row} controlId={`${idName}-justification`}>
                         <Form.Label column md={2}>Justification*:</Form.Label>
                         <Col xs="auto">
                             {justification.isLoading && <Loading>Loading Data</Loading>}

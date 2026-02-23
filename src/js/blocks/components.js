@@ -445,6 +445,7 @@ const PersonPickerComponent = (props) => {
     const {
         field,
         id='person_picker',
+        inputProps={id:'person_picker'},
         minLength=3,
         placeholder='Search for person...',
         onBlur=()=>null,
@@ -468,6 +469,7 @@ const PersonPickerComponent = (props) => {
             {...field}
             filterBy={()=>true}
             id={id}
+            inputProps={inputProps}
             isLoading={person.isLoading}
             minLength={minLength}
             flip={flip} 

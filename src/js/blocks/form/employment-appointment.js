@@ -10,6 +10,7 @@ import { get } from "lodash";
 import { FormFieldErrorMessage } from "../../pages/form";
 
 const baseName = 'employment.appointment';
+const idBaseName = 'employmentAppointment';
 
 export default function EmploymentAppointment() {
     const { canEdit, activeNav } = useHRFormContext();
@@ -71,8 +72,10 @@ export default function EmploymentAppointment() {
                         <Col as="h3">Appointment Details</Col>
                     </Row>
                     {((watchPayroll[0]=='28020'&&watchPayroll[1]=='')||showInTest) &&
-                        <Form.Group as={Row} className={testHighlight((watchPayroll[0]=='28020'&&watchPayroll[1]==''))}>
-                            <Form.Label column md={2}>Faculty*:</Form.Label>
+                        <Row as="fieldset" className={`mb-2 ${testHighlight((watchPayroll[0]=='28020'&&watchPayroll[1]==''))}`}>
+                            <Col md={2}>
+                                <legend className="form-label col-form-label">Faculty*:</legend>
+                            </Col>
                             <Col xs="auto" className="pt-2">
                                 <Controller
                                     name={`${baseName}.DERIVED_FAC_TYPE`}
@@ -80,18 +83,20 @@ export default function EmploymentAppointment() {
                                     control={control}
                                     render={({field}) => (
                                         <>
-                                            <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'} disabled={!canEdit}/>
-                                            <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!='Y'} disabled={!canEdit}/>
+                                            <Form.Check {...field} id={`${idBaseName}-derivedFacType-yes`} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'} disabled={!canEdit}/>
+                                            <Form.Check {...field} id={`${idBaseName}-derivedFacType-no`} inline type="radio" label="No" value="N" checked={field.value!='Y'} disabled={!canEdit}/>
                                         </>
                                     )}
                                 />
                             </Col>
-                        </Form.Group>
+                        </Row>
                     }
                     {(watchFaculty=='Y'||showInTest) &&
                         <>
-                        <Form.Group as={Row} className={testHighlight(watchFaculty=='Y')}>
-                            <Form.Label column md={2}>Adjunct*:</Form.Label>
+                        <Row as="fieldset" className={`{mb-2 ${testHighlight(watchFaculty=='Y')}`}>
+                            <Col md={2}>
+                                <legend className="form-label col-form-label">Adjunct*:</legend>
+                            </Col>
                             <Col xs="auto">
                             <Controller
                                     name={`${baseName}.isAdjunct`}
@@ -99,15 +104,15 @@ export default function EmploymentAppointment() {
                                     control={control}
                                     render={({field}) => (
                                         <>
-                                            <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'} disabled={!canEdit}/>
-                                            <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!='Y'} disabled={!canEdit}/>
+                                            <Form.Check {...field} id={`${idBaseName}-isAdjunct-yes`} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'} disabled={!canEdit}/>
+                                            <Form.Check {...field} id={`${idBaseName}-isAdjunct-no`} inline type="radio" label="No" value="N" checked={field.value!='Y'} disabled={!canEdit}/>
                                         </>
                                     )}
                                 />
                             </Col>
-                        </Form.Group>
+                        </Row>
 
-                        <Form.Group as={Row} className={testHighlight(watchFaculty=='Y')}>
+                        <Form.Group as={Row} className={testHighlight(watchFaculty=='Y')} controlId={`${idBaseName}-tenureStatus`}>
                             <Form.Label column md={2}>Tenure Status*:</Form.Label>
                             <Col xs="auto">
                                 {tenure.isLoading && <Loading>Loading Data</Loading>}
@@ -133,18 +138,22 @@ export default function EmploymentAppointment() {
                         </>
                     }
                     {(displayTermDuration||showInTest) && 
-                        <Form.Group as={Row} className={testHighlight(displayTermDuration)}>
-                            <Form.Label column md={2}>Term Duration*:</Form.Label>
+                        <Row as="fieldset" className={`mb-2 ${testHighlight(displayTermDuration)}`}>
+                            <Col md={2}>
+                                <legend className="form-label col-form-label">Term Duration*:</legend>
+                            </Col>
                             <Col xs="auto">
+                                <Form.Label htmlFor={`${idBaseName}-termDuration`} srOnly>Term Duration:</Form.Label>
                                 <Controller
                                     name={`${baseName}.TERM_DURATION`}
                                     defaultValue={defaultValues[`${baseName}.TERM_DURATION`]}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="number" min={1} max={5} onBlur={e=>handleTermDuration(e,field)} onChange={e=>handleTermDuration(e,field)} disabled={!canEdit} />}
+                                    render={({field}) => <Form.Control {...field} id={`${idBaseName}-termDuration`} type="number" min={1} max={5} onBlur={e=>handleTermDuration(e,field)} onChange={e=>handleTermDuration(e,field)} disabled={!canEdit} />}
                                 />
                             </Col>
                             <Col sm={8} md={6} className="pt-2">
-                                <Form.Control type="range" name="termDurationRange" id="termDurationRange" min={1} max={5} value={watchTermDuration} onChange={handleRangeChange} disabled={!canEdit} list="markers"/>
+                                <Form.Label htmlFor={`${idBaseName}-termDurationRange`} srOnly>Term Duration Range:</Form.Label>
+                                <Form.Control id={`${idBaseName}-termDurationRange`} type="range" name="termDurationRange" min={1} max={5} value={watchTermDuration} onChange={handleRangeChange} disabled={!canEdit} list="markers"/>
                                 <datalist id="markers" className="marker" style={{padding:"0 0.2rem"}}>
                                     <option value="1">1</option>
                                     <option value="2">2</option>
@@ -153,12 +162,12 @@ export default function EmploymentAppointment() {
                                     <option value="5">5</option>
                                 </datalist>
                             </Col>
-                        </Form.Group>
+                        </Row>
                     }
                     {(getValues(`${baseName}.NOTICE_DATE`)||showInTest) && 
                         <>
                             {(getValues(`${baseName}.NOTICE_DATE`)||showInTest) && 
-                                <Form.Group as={Row} className={testHighlight(getValues(`${baseName}.NOTICE_DATE`))}>
+                                <Form.Group as={Row} className={testHighlight(getValues(`${baseName}.NOTICE_DATE`))} controlId={`${idBaseName}-noticeDate`}>
                                     <Form.Label column md={2}>Notice Date:</Form.Label>
                                     <Col xs="auto">
                                     <InputGroup>
@@ -186,7 +195,7 @@ export default function EmploymentAppointment() {
                                 </Form.Group>
                             }
                             {(getValues(`${baseName}.CONTINUING_PERMANENCY_DATE`)||showInTest) &&
-                                <Form.Group as={Row} className={testHighlight(getValues(`${baseName}.CONTINUING_PERMANENCY_DATE`))}>
+                                <Form.Group as={Row} className={testHighlight(getValues(`${baseName}.CONTINUING_PERMANENCY_DATE`))} controlId={`${idBaseName}-contPermDate`}>
                                     <Form.Label column md={2}>Continuing/Permanency Date:</Form.Label>
                                     <Col xs="auto">
                                     <InputGroup>
@@ -215,7 +224,7 @@ export default function EmploymentAppointment() {
                             }
                         </>
                     }
-                    <Form.Group as={Row}>
+                    <Form.Group as={Row} controlId={`${idBaseName}-campusTitle`}>
                         <Form.Label column md={2}>Campus Title:</Form.Label>
                         <Col xs={10} sm={9} md={8} lg={6} xl={5}>
                             <Controller
@@ -229,7 +238,7 @@ export default function EmploymentAppointment() {
 
                     <AppointmentSupervisor/>
 
-                    <Form.Group as={Row}>
+                    <Form.Group as={Row} controlId={`${idBaseName}-departmentCode`}>
                         <Form.Label column md={2}>Department*:</Form.Label>
                         <Col xs="auto">
                             <Controller
@@ -261,7 +270,7 @@ function AppointmentSupervisor() {
     },[getValues,setValue]);
     return (
         <Form.Group as={Row}>
-            <Form.Label column md={2}>Supervisor*:</Form.Label>
+            <Form.Label htmlFor={`${idBaseName}-supervisor`} column md={2}>Supervisor*:</Form.Label>
             <Col xs={10} sm={8} md={6} lg={5} xl={4}>
                 <Controller
                     name={`${baseName}.supervisor`}
@@ -269,7 +278,8 @@ function AppointmentSupervisor() {
                     control={control}
                     render={({field}) => <PersonPickerComponent 
                         field={field} 
-                        id="supervisor-search" 
+                        id="supervisor-search"
+                        inputProps={{id:`${idBaseName}-supervisor`}}
                         placeholder="Search for Supervisor" 
                         onBlur={e=>handleBlur(field,e)} 
                         disabled={!canEdit}/>
@@ -283,6 +293,7 @@ function AppointmentSupervisor() {
 
 function FacultyDetails({watchFaculty,watchAdjunct}) {
     const name = `${baseName}.facultyDetails`;
+    const idName = `${idBaseName}FacultyDetails`
     const maxCourses = 3;
 
     const { control, setValue, formState: { defaultValues, errors } } = useFormContext();
@@ -308,19 +319,23 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                         {id:'springCourses',label:'Spring Courses'}
                     ].map((c,i) => (
                         <div key={c.id} id={c.id}>
-                            <Form.Group as={Row}>
-                                <Form.Label column md={2}>{c.label}*:</Form.Label>
+                            <Row as="fieldset" className="mb-2">
+                                <Col md={2}>
+                                    <legend className="form-label col-form-label">{c.label}*:</legend>
+                                </Col>
                                 <Col xs="auto">
+                                    <Form.Label htmlFor={`${idName}-${c.id}Count`} srOnly>{c.label}:</Form.Label>
                                     <Controller
                                         name={`${name}.${c.id}.count`}
                                         defaultValue={defaultValues[`${name}.${c.id}.count`]}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={maxCourses} onChange={e=>handleCountChange(e,field)} onBlur={e=>handleCountBlur(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
+                                        render={({field}) => <Form.Control {...field} id={`${idName}-${c.id}Count`} type="number" min={0} max={maxCourses} onChange={e=>handleCountChange(e,field)} onBlur={e=>handleCountBlur(e,field)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                                     />
                                     <FormFieldErrorMessage fieldName={`${name}.${c.id}.count`}/>
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
-                                    <Form.Control type="range" name={`${c.id}Range`} id={`${c.id}Range`} min={0} max={maxCourses} value={watchCourses[i].count} onChange={e=>setValue(`${name}.${c.id}.count`,e.target.value)} disabled={!canEdit} list={`markers-${c.id}`}/>
+                                    <Form.Label htmlFor={`${idName}-${c.id}Range`} srOnly>{c.label} Range:</Form.Label>
+                                    <Form.Control type="range" name={`${c.id}Range`} id={`${idName}-${c.id}Range`} min={0} max={maxCourses} value={watchCourses[i].count} onChange={e=>setValue(`${name}.${c.id}.count`,e.target.value)} disabled={!canEdit} list={`markers-${c.id}`}/>
                                     <datalist id={`markers-${c.id}`} className="marker" style={{padding:"0 0.2rem"}}>
                                         <option value="0">0</option>
                                         <option value="1">1</option>
@@ -328,8 +343,8 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                                         <option value={maxCourses}>{maxCourses}</option>
                                     </datalist>
                                 </Col>
-                            </Form.Group>
-                            <Form.Group as={Row}>
+                            </Row>
+                            <Form.Group as={Row} controlId={`${idName}-${c.id}Credits`}>
                                 <Form.Label column md={2}>Credits*:</Form.Label>
                                 <Col xs="auto">
                                     <Controller
@@ -341,7 +356,7 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
                                     <FormFieldErrorMessage fieldName={`${name}.${c.id}.credits`}/>
                                 </Col>
                             </Form.Group>
-                            <Form.Group as={Row}>
+                            <Form.Group as={Row} controlId={`${idName}-${c.id}List`}>
                                 <Form.Label column md={2}>{c.label} List*:</Form.Label>
                                 <Col md={9}>
                                     <Controller
@@ -363,6 +378,7 @@ function FacultyDetails({watchFaculty,watchAdjunct}) {
 
 function StudentDetails({watchPayroll,handleSelectChange}) {
     const name = `${baseName}.studentDetails`;
+    const idName = `${idBaseName}studentDetails`;
     const maxCredits = 20;
 
     const { control, getValues, setValue, formState: { defaultValues } } = useFormContext();
@@ -418,7 +434,7 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                         {id:'spring',label:'Spring'}
                     ].map((c,i) => (
                         <div key={c.id} id={c.id}>
-                            <Form.Group as={Row}>
+                            <Form.Group as={Row} controlId={`${idName}-${c.id}Tuition`}>
                                 <Form.Label column md={2}>{c.label} Tuition:</Form.Label>
                                 <Col xs={12} sm={6} md={4} lg={3}>
                                     <Controller
@@ -429,18 +445,22 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                                     />
                                 </Col>
                             </Form.Group>
-                            <Form.Group as={Row}>
-                                <Form.Label column md={2}>{c.label} Credits:</Form.Label>
+                            <Row as="fieldset" className="mb-2">
+                                <Col md={2}>
+                                    <legend className="form-label col-form-label">{c.label} Credits:</legend>
+                                </Col>
                                 <Col xs="auto">
+                                    <Form.Label htmlFor={`${idName}-${c.id}Credits`} srOnly>{c.label}:</Form.Label>
                                     <Controller
                                         name={`${name}.${c.id}.credits`}
                                         defaultValue={defaultValues[`${name}.${c.id}.credits`]}
                                         control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" min={0} max={maxCredits} onBlur={e=>handleCreditsChange(e,field)} onChange={e=>handleCreditsChange(e,field)} disabled={!canEdit}/>}
+                                        render={({field}) => <Form.Control {...field} id={`${idName}-${c.id}Credits`} type="number" min={0} max={maxCredits} onBlur={e=>handleCreditsChange(e,field)} onChange={e=>handleCreditsChange(e,field)} disabled={!canEdit}/>}
                                     />
                                 </Col>
                                 <Col sm={8} md={6} className="pt-2">
-                                    <Form.Control type="range" name={`${c.id}CreditsRange`} id={`${c.id}CreditsRange`} min={0} max={maxCredits} value={watchCredits[i]} onChange={e=>handleRangeChange(e,`${name}.${c.id}.credits`)} disabled={!canEdit} list={`markers-${c.id}`}/>
+                                    <Form.Label htmlFor={`${idName}-${c.id}CreditsRange`} srOnly>{c.label}:</Form.Label>
+                                    <Form.Control type="range" name={`${c.id}CreditsRange`} id={`${idName}-${c.id}CreditsRange`} min={0} max={maxCredits} value={watchCredits[i]} onChange={e=>handleRangeChange(e,`${name}.${c.id}.credits`)} disabled={!canEdit} list={`markers-${c.id}`}/>
                                     <datalist id={`markers-${c.id}`} className="marker" style={{padding:"0 0.2rem"}}>
                                         <option value="0">0</option>
                                         <option value="5" style={{marginLeft:'7px'}}>5</option>
@@ -449,11 +469,13 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                                         <option value={maxCredits}>{maxCredits}</option>
                                     </datalist>
                                 </Col>
-                            </Form.Group>
+                            </Row>
                         </div>
                     ))}
-                    <Form.Group as={Row}>
-                        <Form.Label column md={2}>Receiving Fellowship:</Form.Label>
+                    <Row as="fieldset" className="mb-2">
+                        <Col md={2}>
+                            <legend className="form-label col-form-label">Receiving Fellowship:</legend>
+                        </Col>
                         <Col xs="auto" className="pt-2">
                             <Controller
                                 name={`${name}.fellowship`}
@@ -461,15 +483,15 @@ function StudentDetails({watchPayroll,handleSelectChange}) {
                                 control={control}
                                 render={({field}) => (
                                     <>
-                                        <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'} disabled={!canEdit}/>
-                                        <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!='Y'} disabled={!canEdit}/>
+                                        <Form.Check {...field} inline type="radio" id={`${idName}-fellowship-yes`} label="Yes" value="Y" checked={field.value=='Y'} disabled={!canEdit}/>
+                                        <Form.Check {...field} inline type="radio" id={`${idName}-fellowship-no`} label="No" value="N" checked={field.value!='Y'} disabled={!canEdit}/>
                                     </>
                                 )}
                             />
                         </Col>
-                    </Form.Group>
+                    </Row>
                     {(watchFellowship=='Y'||showInTest) && 
-                        <Form.Group as={Row} className={testHighlight(watchFellowship=='Y')}>
+                        <Form.Group as={Row} className={testHighlight(watchFellowship=='Y')} controlId={`${idName}-fellowshipSource`}>
                             <Form.Label column md={2}>Source of Fellowship:</Form.Label>
                             <Col xs="auto">
                                 {fellowshipsources.isLoading && <Loading>Loading Data</Loading>}

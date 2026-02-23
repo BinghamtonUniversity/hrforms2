@@ -1,5 +1,5 @@
 import React, { useState, useEffect, lazy, useCallback, useMemo } from "react";
-import { ErrorFallback, UserContext, useUserContext, useSettingsContext, lazyRetry } from "../app";
+import { ErrorFallback, UserContext, useUserContext, useSettingsContext, lazyRetry, useAuthContext } from "../app";
 import { useQueryClient } from "react-query";
 import { useParams, useHistory, Prompt, Redirect } from "react-router-dom";
 import { Container, Row, Col, Form, Tabs, Tab, Alert, Modal, Nav } from "react-bootstrap";
@@ -73,8 +73,10 @@ export default function HRForm() {
 function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete,reset,historyFrom}) {
     const [formData,setFormData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
+    const [showHidden,setShowHidden] = useState(true);
 
     const {general} = useSettingsContext();
+    const {isAdmin,INSTANCE} = useAuthContext();
 
     const {getForm} = useFormQueries(formId);
     const form = getForm({enabled:false});
@@ -132,8 +134,16 @@ function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete,reset,
                 setInfoComplete={setInfoComplete}
                 reset={reset}
                 historyFrom={historyFrom}
+                showHidden={showHidden}
             />}
             {formData && <BlockNav formId={formId} when={isBlocking} isDraft={isNew}/>}
+            {(isAdmin&&INSTANCE!="PROD")&&
+                <footer>
+                    <Col className="d-flex justify-content-end">
+                        <Form.Check type="switch" id="showHiddenToggle" className="custom-switch-lg" label="Hide/Show Fields In Test Mode" checked={showHidden} onChange={()=>setShowHidden(!showHidden)}/>
+                    </Col>
+                </footer>
+            }
         </section>
     );
 }
@@ -197,13 +207,13 @@ function BlockNav({formId,when,isDraft}) {
     );
 }
 
-function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInfoComplete,reset,historyFrom}) {
+function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInfoComplete,reset,historyFrom,showHidden}) {
     const [tabList,setTabList] = useState(allTabs.filter(t=>t.value=='basic-info'));
     const [tabsVisited,setTabsVisited] = useState(['basic-info']);
 
     const [activeTab,setActiveTab] = useState('basic-info');
     const [activeNav,setActiveNav] = useState('');
-    const [showHidden,setShowHidden] = useState(true);
+    //const [showHidden,setShowHidden] = useState(true);
     const [lockTabs,setLockTabs] = useState(true);
     const [isSaving,setIsSaving] = useState(false);
     const [hasErrors,setHasErrors] = useState(false);
@@ -782,13 +792,6 @@ function HRFormForm({formId,data,setIsBlocking,isDraft,isNew,infoComplete,setInf
                                             </Col>
                                         </Row>
                                         <SubmitterInfoBox/>
-                                        <Row>
-                                            {methods.getValues('formActions.formCode.FORM_CODE')=='TEST' &&
-                                                <Col className="d-flex justify-content-end d-print-none">
-                                                    <Form.Check type="switch" id="showHiddenToggle" className="custom-switch-lg" label="Hide/Show Fields In Test Mode" checked={showHidden} onChange={()=>setShowHidden(!showHidden)}/>
-                                                </Col>
-                                            }
-                                        </Row>
                                     </Container>
                                 </Tab>
                             ))}

@@ -57,7 +57,7 @@ export default function ReviewEmploymentPositionAppointment() {
             {(appointment.TERM_DURATION!="") &&
                 <>
                     <Col as="dt" sm={3} md={2} className="mb-0">Term Duration:</Col>
-                    <Col as="dd" sm={9} md={4} className="mb-0">{appointment.TERM_DURATION}</Col>
+                    <Col as="dd" sm={9} md={4} className="mb-0">{appointment.TERM_DURATION} year{appointment.TERM_DURATION>1&&'s'}</Col>
                 </>
             }
             {(appointment.noticeDate!="") &&

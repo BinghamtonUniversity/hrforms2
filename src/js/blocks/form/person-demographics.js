@@ -10,6 +10,7 @@ import { get } from "lodash";
 import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'person.demographics';
+const idName = 'personDemographics';
 
 export default function PersonDemographics() {
     const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
@@ -39,7 +40,7 @@ export default function PersonDemographics() {
                     <Row as="header">
                         <Col as="h3">Demographics</Col>
                     </Row>
-                    <Form.Group as={Row}>
+                    <Form.Group as={Row} controlId={`${idName}BirthDate`}>
                         <Form.Label column md={2}>Date of Birth*:</Form.Label>
                         <Col xs="auto">
                             <InputGroup>
@@ -67,7 +68,7 @@ export default function PersonDemographics() {
                             <FormFieldErrorMessage fieldName={`${name}.birthDate`}/>
                         </Col>
                     </Form.Group>
-                    <Form.Group as={Row}>
+                    <Form.Group as={Row} controlId={`${idName}LegalSex`}>
                         <Form.Label column md={2}>Legal Sex*:</Form.Label>
                         <Col xs="auto">
                             {legalsex.isLoading && <Loading>Loading Data</Loading>}
@@ -88,7 +89,7 @@ export default function PersonDemographics() {
                             <FormFieldErrorMessage fieldName={`${name}.GENDER.id`}/>
                         </Col>
                     </Form.Group>
-                    <Form.Group as={Row}>
+                    <Form.Group as={Row} controlId={`${idName}GenderIdentity`}>
                         <Form.Label column md={2}>Gender Identity:</Form.Label>
                         <Col xs="auto">
                             {gender.isLoading && <Loading>Loading Data</Loading>}
@@ -108,7 +109,7 @@ export default function PersonDemographics() {
                             }
                         </Col>
                     </Form.Group>
-                    <Form.Group as={Row}>
+                    <Form.Group as={Row} controlId={`${idName}Education`}>
                         <Form.Label column md={2}>Highest Education Level:</Form.Label>
                         <Col xs="auto">
                             {education.isLoading && <Loading>Loading Data</Loading>}
@@ -128,8 +129,10 @@ export default function PersonDemographics() {
                             }
                         </Col>
                     </Form.Group>
-                    <Form.Group as={Row}>
-                        <Form.Label column md={2}>US Citizen*:</Form.Label>
+                    <Row as="fieldset" className="mb-2">
+                        <Col md={2}>
+                            <legend className="form-label col-form-label">US Citizen*:</legend>
+                        </Col>
                         <Col xs="auto" className="pt-2">
                             <Controller
                                 name={`${name}.US_CITIZEN_INDICATOR`}
@@ -137,20 +140,22 @@ export default function PersonDemographics() {
                                 control={control}
                                 render={({field}) => (
                                     <>
-                                        <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={!canEdit}/>
-                                        <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'} disabled={!canEdit}/>
+                                        <Form.Check {...field} inline id={`${idName}USCitizen-yes`} type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={!canEdit}/>
+                                        <Form.Check {...field} inline id={`${idName}USCitizen-no`} type="radio" label="No" value='N' checked={field.value!='Y'} disabled={!canEdit}/>
                                     </>
                                 )}
                             />
                         </Col>
-                    </Form.Group>
+                    </Row>
 
                     {(watchCitizen!='Y'||showInTest) && <PersonDemographicsNonUSCitizen handleSelectChange={handleSelectChange} watchCitizen={watchCitizen}/>}
                     
                     <PersonDemographicsMilitaryStatus/>
 
-                    <Form.Group as={Row}>
-                        <Form.Label column md={2}>Veteran:</Form.Label>
+                    <Row as="fieldset" className="mb-2">
+                        <Col md={2}>
+                            <legend className="form-label col-form-label">Veteran:</legend>
+                        </Col>
                         <Col xs="auto" className="pt-2">
                             <Controller
                                 name={`${name}.VETERAN_INDICATOR`}
@@ -158,13 +163,13 @@ export default function PersonDemographics() {
                                 control={control}
                                 render={({field}) => (
                                     <>
-                                        <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={!canEdit}/>
-                                        <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'} disabled={!canEdit}/>
+                                        <Form.Check {...field} inline id={`${idName}Veteran-yes`} type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={!canEdit}/>
+                                        <Form.Check {...field} inline id={`${idName}Veteran-no`} type="radio" label="No" value='N' checked={field.value!='Y'} disabled={!canEdit}/>
                                     </>
                                 )}
                             />
                         </Col>
-                    </Form.Group>
+                    </Row>
 
                     {(watchVeteran=='Y'||showInTest) && <PersonDemographicsVeteranDetails watchVeteran={watchVeteran}/>}
                 </article>
@@ -194,8 +199,10 @@ function PersonDemographicsMilitaryStatus() {
     return (
         <HRFormContext.Consumer>
             {({canEdit}) => (
-                <Form.Group as={Row}>
-                    <Form.Label column md={2}>Military Status:</Form.Label>
+                <Row as="fieldset" className="mb-2">
+                    <Col md={2}>
+                        <legend className="form-label col-form-label">Military Status:</legend>
+                    </Col>
                     <Col xs="auto" className="pt-2">
                         {milstatus.isLoading && <Loading>Loading Data</Loading>}
                         {milstatus.isError && <Loading isError>Failed to Load</Loading>}
@@ -204,10 +211,10 @@ function PersonDemographicsMilitaryStatus() {
                             name={`${name}.militaryStatus`}
                             defaultValue={defaultValues[`${name}.militaryStatus`]}
                             control={control}
-                            render={({field}) => milstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.findIndex(v=>v[0]==s[0])!=-1} onChange={e=>handleChange(e,field)} disabled={!canEdit}/>)}
+                            render={({field}) => milstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} id={`${idName}MilitaryStatus-${s[0]}`} type="checkbox" label={s[1]} value={s[0]} checked={field.value.findIndex(v=>v[0]==s[0])!=-1} onChange={e=>handleChange(e,field)} disabled={!canEdit}/>)}
                         />}
                     </Col>
-                </Form.Group>
+                </Row>
             )}
         </HRFormContext.Consumer>
     );
@@ -226,7 +233,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
         <HRFormContext.Consumer>
             {({showInTest,testHighlight,canEdit}) => (
                 <>
-                    <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
+                    <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')} controlId={`${idName}CitizenType`}>
                         <Form.Label column md={2}>Non-US Citizen Type*:</Form.Label>
                         <Col xs="auto">
                             <Controller
@@ -250,8 +257,10 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                         </Col>
                     </Form.Group>
                     {(watchCitizenType?.id=='OT'||showInTest) && 
-                        <Form.Group as={Row} className={testHighlight(watchCitizen!='Y'&&watchCitizenType?.id=='OT')}>
-                            <Form.Label column md={2}>Employment Authorization Card Only*:</Form.Label>
+                        <Row as="fieldset" className={`mb-2 ${testHighlight(watchCitizen!='Y'&&watchCitizenType?.id=='OT')}`}>
+                            <Col md={2}>
+                                <legend className="form-label col-form-label">Military Status:</legend>
+                            </Col>
                             <Col xs="auto" className="pt-2">
                                 <Controller
                                     name={`${name}.EMP_AUTHORIZE_CARD_INDICATOR`}
@@ -259,15 +268,15 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                                     defaultValue={defaultValues[`${name}.EMP_AUTHORIZE_CARD_INDICATOR`]}
                                     render={({field}) => (
                                         <>
-                                            <Form.Check {...field} inline type="radio" label="Yes" value='Y' checked={field.value=='Y'} disabled={!canEdit}/>
-                                            <Form.Check {...field} inline type="radio" label="No" value='N' checked={field.value!='Y'} disabled={!canEdit}/>
+                                            <Form.Check {...field} inline type="radio" id={`${idName}EmpAuthCard-yes`} label="Yes" value='Y' checked={field.value=='Y'} disabled={!canEdit}/>
+                                            <Form.Check {...field} inline type="radio" id={`${idName}EmpAuthCard-no`} label="No" value='N' checked={field.value!='Y'} disabled={!canEdit}/>
                                         </>
                                     )}
                                 />
                             </Col>
-                        </Form.Group>
+                        </Row>
                     }
-                    <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')}>
+                    <Form.Group as={Row} className={testHighlight(watchCitizen!='Y')} controlId={`${idName}CitizenCountry`}>
                         <Form.Label column md={2}>Country of Citizenship*:</Form.Label>
                         <Col xs="auto">
                             <Controller
@@ -280,7 +289,7 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
                         </Col>
                     </Form.Group>
                     {(watchCitizenType?.id=='NC'||showInTest) && 
-                        <Form.Group as={Row} className={testHighlight(watchCitizen!='Y'&&watchCitizenType?.id=='NC')}>
+                        <Form.Group as={Row} className={testHighlight(watchCitizen!='Y'&&watchCitizenType?.id=='NC')} controlId={`${idName}VisaType`}>
                             <Form.Label column md={2}>Visa Type*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
@@ -331,8 +340,10 @@ function PersonDemographicsVeteranDetails({watchVeteran}) {
         <HRFormContext.Consumer>
             {({testHighlight,canEdit}) => (
                 <>
-                    <Form.Group as={Row} className={testHighlight(watchVeteran=='Y')}>
-                        <Form.Label column md={2}>Protected Veteran Status:</Form.Label>
+                    <Row as="fieldset" className={`mb-2 ${testHighlight(watchVeteran=='Y')}`}>
+                        <Col md={2}>
+                            <legend className="form-label col-form-label">Protected Veteran Status:</legend>
+                        </Col>
                         <Col xs="auto" className="pt-2">
                             {vetstatus.isLoading && <Loading>Loading Data</Loading>}
                             {vetstatus.isError && <Loading isError>Failed to Load</Loading>}
@@ -341,11 +352,11 @@ function PersonDemographicsVeteranDetails({watchVeteran}) {
                                 name={`${name}.protectedVetStatus`}
                                 control={control}
                                 defaultValue={defaultValues[`${name}.protectedVetStatus`]}
-                                render={({field}) => vetstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} type="checkbox" label={s[1]} value={s[0]} checked={field.value.findIndex(v=>v[0]==s[0])!=-1} onChange={e=>handleChange(e,field)} disabled={!canEdit}/>)}
+                                render={({field}) => vetstatus.data.map(s=>s[0]&&<Form.Check key={s[0]} {...field} id={`${idName}ProtectedVetStatus-${s[0]}`} type="checkbox" label={s[1]} value={s[0]} checked={field.value.findIndex(v=>v[0]==s[0])!=-1} onChange={e=>handleChange(e,field)} disabled={!canEdit}/>)}
                             />}
                         </Col>
-                    </Form.Group>
-                    <Form.Group as={Row} className={testHighlight(watchVeteran=='Y')}>
+                    </Row>
+                    <Form.Group as={Row} className={testHighlight(watchVeteran=='Y')} controlId={`${idName}MilitarySepDate`}>
                         <Form.Label column md={2}>Military Separation Date:</Form.Label>
                         <Col xs="auto">
                             <InputGroup>

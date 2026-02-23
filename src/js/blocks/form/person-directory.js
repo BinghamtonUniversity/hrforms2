@@ -38,6 +38,7 @@ export default function PersonDirectory() {
 
 function PersonDirectoryAddresses() {
     const name = 'person.directory.address';
+    const idName = 'personDirectoryAddress';
     const { control, getValues, setValue, setError, clearErrors, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
@@ -170,8 +171,10 @@ function PersonDirectoryAddresses() {
             </Row>
             {fields.map((field,index)=>(
                 <section key={field.id} className="border rounded p-2 mb-2" onKeyDown={e=>handleEscape(e,index)}>
-                    <Form.Group as={Row} className="mb-0">
-                        <Form.Label column md={2}>Type*:</Form.Label>
+                    <Row as="fieldset" className="mb-0">
+                        <Col md={2}>
+                            <legend className="form-label col-form-label">Type*:</legend>
+                        </Col>
                         <Col xs="auto" className="pt-1">
                             {addressCodes.data && 
                                 <Controller
@@ -180,15 +183,15 @@ function PersonDirectoryAddresses() {
                                     control={control}
                                     render={({field}) => addressCodes.data.map(c => {
                                         if (!c.show) return null;
-                                        return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit} onChange={e=>handleTypeChange(e,field,index)}/>;
+                                        return <Form.Check key={c.id} {...field} id={`${idName}Type${index}-${c.id}`} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit} onChange={e=>handleTypeChange(e,field,index)}/>;
                                     })}
                                 />
                             }
                             {!watchAddress[index]?.ADDRESS_CODE && <Form.Text muted>You must select an address type in order to edit address information</Form.Text>}
                         </Col>
-                    </Form.Group>
+                    </Row>
                     {testField(index,'line1') &&
-                        <Form.Group as={Row} className="mb-1">
+                        <Form.Group as={Row} className="mb-1" controlId={`${idName}${index}-address_1`}>
                             <Form.Label column md={2}>Line 1*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
@@ -202,7 +205,7 @@ function PersonDirectoryAddresses() {
                         </Form.Group>
                     }
                     {testField(index,'line2') &&
-                        <Form.Group as={Row} className="mb-1">
+                        <Form.Group as={Row} className="mb-1" controlId={`${idName}${index}-address_2`}>
                             <Form.Label column md={2}>Line 2:</Form.Label>
                             <Col xs="auto">
                                 <Controller
@@ -216,23 +219,24 @@ function PersonDirectoryAddresses() {
                     }
                     {testField(index,'department') &&
                         <Form.Group as={Row} className="mb-1">
-                            <Form.Label column md={2}>Department*:</Form.Label>
+                            <Form.Label htmlFor={`${idName}${index}-department`} column md={2}>Department*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_1`}
                                     defaultValue={defaultValues.ADDRESS_1}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'department')} isInvalid={!!get(errors,field.name,false)}/>}
+                                    render={({field}) => <Form.Control {...field} id={`${idName}${index}-department`} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'department')} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <FormFieldErrorMessage fieldName={`${name}.${index}.ADDRESS_1`}/>
                             </Col>
                             <Col xs="auto">
+                                <Form.Label htmlFor={`${idName}${index}-departmentSelect`} srOnly>Department Select</Form.Label>
                                 <Controller
                                     name={`${name}.${index}.department.id`}
                                     defaultValue={defaultValues.department}
                                     control={control}
                                     render={({field}) => (
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,`${name}.${index}.department.text`,false)}>
+                                        <Form.Control {...field} as="select" id={`${idName}${index}-departmentSelect`} onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,`${name}.${index}.department.text`,false)}>
                                             <option></option>
                                             {depts.data&&depts.data.map(d=><option key={d.DEPARTMENT_CODE} value={d.DEPARTMENT_CODE}>{d.DEPARTMENT_DESC}</option>)}
                                         </Form.Control>
@@ -243,23 +247,24 @@ function PersonDirectoryAddresses() {
                     }
                     {testField(index,'building') &&
                         <Form.Group as={Row} className="mb-1">
-                            <Form.Label column md={2}>Building*:</Form.Label>
+                            <Form.Label htmlFor={`${idName}${index}-building`} column md={2}>Building*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_2`}
                                     defaultValue={defaultValues.ADDRESS_2}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'building')} isInvalid={!!get(errors,field.name,false)}/>}
+                                    render={({field}) => <Form.Control {...field} id={`${idName}${index}-building`} type="text" disabled={editIndex!=index||!editableType(index)||disableText(index,'building')} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <FormFieldErrorMessage fieldName={`${name}.${index}.ADDRESS_2`}/>
                             </Col>
                             <Col xs="auto">
+                                <Form.Label htmlFor={`${idName}${index}-buildingSelect`} srOnly>Building Select</Form.Label>
                                 <Controller
                                     name={`${name}.${index}.building.id`}
                                     defaultValue={defaultValues.building}
                                     control={control}
                                     render={({field}) => (
-                                        <Form.Control {...field} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,`${name}.${index}.building.text`,false)}>
+                                        <Form.Control {...field} id={`${idName}${index}-buildingSelect`} as="select" onChange={e=>handleSelectChange(e,field)} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,`${name}.${index}.building.text`,false)}>
                                             <option></option>
                                             {buildings.data&&buildings.data.map(b=><option key={b[0]} value={b[0]}>{b[0]} - {b[1]}</option>)}
                                         </Form.Control>
@@ -269,7 +274,7 @@ function PersonDirectoryAddresses() {
                         </Form.Group>
                     }
                     {testField(index,'room') &&
-                        <Form.Group as={Row} className="mb-1">
+                        <Form.Group as={Row} className="mb-1" controlId={`${idName}${index}-room`}>
                             <Form.Label column md={2}>Room:</Form.Label>
                             <Col xs="auto">
                                 <Controller
@@ -282,39 +287,44 @@ function PersonDirectoryAddresses() {
                         </Form.Group>
                     }
                     {testField(index,'city') &&
-                        <Form.Group as={Row} className="mb-1">
-                            <Form.Label column md={2}>City/State/Zip*:</Form.Label>
+                        <Row as="fieldset" className="mb-1">
+                            <Col md={2}>
+                                <legend className="col-form-label form-label">City/State/Zip*:</legend>
+                            </Col>
                             <Col xs="auto">
+                                <Form.Label htmlFor={`${idName}${index}-city`} srOnly>City</Form.Label>
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_CITY`}
                                     defaultValue={defaultValues.ADDRESS_CITY}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="text" disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
+                                    render={({field}) => <Form.Control {...field} type="text" id={`${idName}${index}-city`} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <FormFieldErrorMessage  fieldName={`${name}.${index}.ADDRESS_CITY`}/>
                             </Col>
                             <Col xs="auto">
+                                <Form.Label htmlFor={`${idName}${index}-state`} srOnly>State</Form.Label>
                                 <Controller
                                     name={`${name}.${index}.STATE_CODE`}
                                     defaultValue={defaultValues.STATE_CODE}
                                     control={control}
-                                    render={({field}) => <StateSelector field={field} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
+                                    render={({field}) => <StateSelector field={field} id={`${idName}${index}-state`} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <FormFieldErrorMessage fieldName={`${name}.${index}.STATE_CODE`}/>
                             </Col>
                             <Col xs="auto">
+                                <Form.Label htmlFor={`${idName}${index}-postalCode`} srOnly>Zip Code</Form.Label>
                                 <Controller
                                     name={`${name}.${index}.ADDRESS_POSTAL_CODE`}
                                     defaultValue={defaultValues.ADDRESS_POSTAL_CODE}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
+                                    render={({field}) => <Form.Control {...field} id={`${idName}${index}-postalCode`} disabled={editIndex!=index||!editableType(index)} isInvalid={!!get(errors,field.name,false)}/>}
                                 />
                                 <FormFieldErrorMessage fieldName={`${name}.${index}.ADDRESS_POSTAL_CODE`}/>
                             </Col>
-                        </Form.Group>
+                        </Row>
                     }
                     {!!watchAddress?.[index]?.ADDRESS_CODE &&
-                        <Form.Group as={Row} className="mb-1">
+                        <Form.Group as={Row} className="mb-1" controlId={`${idName}${index}-effDate`}>
                             <Form.Label column md={2}>Effective Date*:</Form.Label>
                             <Col xs="auto">
                                 <InputGroup>
@@ -373,7 +383,8 @@ function PersonDirectoryAddresses() {
 }
 
 function PersonDirectoryPhone() {
-    const name = 'person.directory.phone'
+    const name = 'person.directory.phone';
+    const idName = 'personDirectoryPhone';
     const { control, getValues, setValue, setError, clearErrors, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
@@ -485,8 +496,10 @@ function PersonDirectoryPhone() {
             </Row>
             {fields.map((field,index)=>(
                 <section key={field.id} className="border rounded p-2 mb-2" onKeyDown={e=>handleEscape(e,index)}>
-                    <Form.Group as={Row} className="mb-0">
-                        <Form.Label column md={2}>Type:</Form.Label>
+                    <Row as="fieldset" className="mb-0">
+                        <Col md={2}>
+                            <legend className="col-form-label form-label">Type*:</legend>
+                        </Col>
                         <Col xs="auto" className="pt-1">
                             {phoneTypes.data && 
                                 <Controller
@@ -495,16 +508,16 @@ function PersonDirectoryPhone() {
                                     control={control}
                                     render={({field}) => phoneTypes.data.map(c => {
                                         if (!c.show) return null;
-                                        return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit} onChange={e=>handleTypeChange(e,field,index)}/>;
+                                        return <Form.Check key={c.id} {...field} id={`${idName}${index}-type-${c.id}`} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit} onChange={e=>handleTypeChange(e,field,index)}/>;
                                     })}
                                 />
                             }
                             {!watchPhone[index]?.PHONE_TYPE && <Form.Text muted>You must select a phone type in order to edit phone information</Form.Text>}
                         </Col>
-                    </Form.Group>
+                    </Row>
                     {watchPhone[index]?.PHONE_TYPE &&
                         <Form.Group as={Row} className="mb-0">
-                            <Form.Label column md={2}>Phone*:</Form.Label>
+                            <Form.Label htmlFor={`${idName}${index}-phoneNumber`}  column md={2}>Phone*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.PHONE_NUMBER`}
@@ -512,6 +525,7 @@ function PersonDirectoryPhone() {
                                     control={control}
                                     render={({field}) => <PhoneInput 
                                         {...field} 
+                                        inputProps={{id:`${idName}${index}-phoneNumber`}}
                                         country={'us'} 
                                         preferredCountries={['us']} 
                                         enableLongNumbers={true}
@@ -523,7 +537,7 @@ function PersonDirectoryPhone() {
                                 />
                                 <FormFieldErrorMessage fieldName={`${name}.${index}.PHONE_NUMBER`}/>
                             </Col>
-                            <Form.Label column md={2}>Effective Date*:</Form.Label>
+                            <Form.Label htmlFor={`${idName}${index}-effDate`} column md={2}>Effective Date*:</Form.Label>
                             <Col xs="auto">
                                 <InputGroup>
                                     <Controller
@@ -532,6 +546,7 @@ function PersonDirectoryPhone() {
                                         control={control}
                                         render={({field}) => <Form.Control
                                             as={DatePicker}
+                                            id={`${idName}${index}-effDate`}
                                             name={field.name}
                                             closeOnScroll={true}
                                             selected={field.value}
@@ -582,6 +597,7 @@ function PersonDirectoryPhone() {
 
 function PersonDirectoryEmail() {
     const name = 'person.directory.email';
+    const idName = 'personDirectoryEmail';
     const { control, getValues, setError, clearErrors, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
@@ -680,8 +696,10 @@ function PersonDirectoryEmail() {
             </Row>
             {fields.map((field,index)=>(
                 <section key={field.id} className="border rounded p-2 mb-2" onKeyDown={e=>handleEscape(e,index)}>
-                    <Form.Group as={Row} className="mb-0">
-                        <Form.Label column md={2}>Type:</Form.Label>
+                    <Row as="fieldset" className="mb-0">
+                        <Col md={2}>
+                            <legend className="col-form-label form-label">Type*:</legend>
+                        </Col>
                         <Col xs="auto" className="pt-1">
                             {emailTypes.data && 
                                 <Controller
@@ -690,16 +708,16 @@ function PersonDirectoryEmail() {
                                     control={control}
                                     render={({field}) => emailTypes.data.map(c => {
                                         if (!c.show) return null;
-                                        return <Form.Check key={c.id} {...field} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit} onChange={e=>handleTypeChange(e,field,index)}/>;
+                                        return <Form.Check key={c.id} {...field} id={`${idName}${index}-type-${c.id}`} inline type="radio" label={c.title} value={c.id} checked={field.value==c.id} disabled={editIndex!=index||!c.edit} onChange={e=>handleTypeChange(e,field,index)}/>;
                                     })}
                                 />
                             }
                             {!watchEmail[index]?.EMAIL_TYPE && <Form.Text muted>You must select an email type in order to edit email information</Form.Text>}
                         </Col>
-                    </Form.Group>
+                    </Row>
                     {watchEmail[index]?.EMAIL_TYPE &&
                         <Form.Group as={Row} className="mb-0">
-                            <Form.Label column md={2}>Email*:</Form.Label>
+                            <Form.Label htmlFor={`${idName}${index}-emailAddress`} column md={2}>Email*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.EMAIL_ADDRESS`}
@@ -707,6 +725,7 @@ function PersonDirectoryEmail() {
                                     control={control}
                                     render={({field}) => <Form.Control
                                         {...field} 
+                                        id={`${idName}${index}-emailAddress`}
                                         type="email"
                                         disabled={editIndex!=index||!editableType(index)}
                                         isInvalid={!!get(errors,field.name,false)}
@@ -714,7 +733,7 @@ function PersonDirectoryEmail() {
                                 />
                                 <FormFieldErrorMessage fieldName={`${name}.${index}.EMAIL_ADDRESS`}/>
                             </Col>
-                            <Form.Label column md={2}>Effective Date*:</Form.Label>
+                            <Form.Label htmlFor={`${idName}${index}-effDate`} column md={2}>Effective Date*:</Form.Label>
                             <Col xs="auto">
                                 <InputGroup>
                                     <Controller
@@ -723,6 +742,7 @@ function PersonDirectoryEmail() {
                                         control={control}
                                         render={({field}) => <Form.Control
                                             as={DatePicker}
+                                            id={`${idName}${index}-effDate`}
                                             name={field.name}
                                             closeOnScroll={true}
                                             selected={field.value}

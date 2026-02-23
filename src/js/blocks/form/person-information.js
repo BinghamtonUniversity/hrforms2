@@ -10,6 +10,7 @@ import get from "lodash/get";
 import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'person.information';
+const idName = 'personInformation';
 
 export default function PersonInfo() {
     const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
@@ -51,7 +52,7 @@ export default function PersonInfo() {
                         <Row as="header">
                             <Col as="h3">Identification</Col>
                         </Row>
-                        <Form.Group as={Row}>
+                        <Form.Group as={Row} controlId={`${idName}SUNYID`}>
                             <Form.Label column md={2}>SUNY ID:</Form.Label>
                             <Col xs="auto">
                                 <Controller
@@ -62,7 +63,7 @@ export default function PersonInfo() {
                                 />
                             </Col>
                         </Form.Group>
-                        <Form.Group as={Row}>
+                        <Form.Group as={Row} controlId={`${idName}BNumber`}>
                             <Form.Label column md={2}>B-Number:</Form.Label>
                             <Col xs="auto">
                                 <Controller
@@ -78,7 +79,7 @@ export default function PersonInfo() {
                         <Row as="header">
                             <Col as="h3">Name</Col>
                         </Row>
-                        <Form.Group as={Row}>
+                        <Form.Group as={Row} controlId="personInformationSalutation">
                             <Form.Label column md={2}>Salutation:</Form.Label>
                             <Col xs="auto">
                                 <Controller
@@ -100,7 +101,7 @@ export default function PersonInfo() {
                                 />
                             </Col>
                         </Form.Group>
-                        <Form.Group as={Row}>
+                        <Form.Group as={Row} controlId={`${idName}FirstName`}>
                             <Form.Label column md={2}>First Name*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
@@ -112,7 +113,7 @@ export default function PersonInfo() {
                                 <FormFieldErrorMessage fieldName={`${name}.LEGAL_FIRST_NAME`}/>
                             </Col>
                         </Form.Group>
-                        <Form.Group as={Row}>
+                        <Form.Group as={Row} controlId={`${idName}PreferredName`}>
                             <Form.Label column md={2}>Preferred Name (optional):</Form.Label>
                             <Col xs="auto">
                                 <Controller
@@ -123,7 +124,7 @@ export default function PersonInfo() {
                                 />
                             </Col>
                         </Form.Group>
-                        <Form.Group as={Row}>
+                        <Form.Group as={Row} controlId={`${idName}MiddleName`}>
                             <Form.Label column md={2}>Middle Name:</Form.Label>
                             <Col xs="auto">
                                 <Controller
@@ -134,7 +135,7 @@ export default function PersonInfo() {
                                 />
                             </Col>
                         </Form.Group>
-                        <Form.Group as={Row}>
+                        <Form.Group as={Row} controlId={`${idName}LastName`}>
                             <Form.Label column md={2}>Last Name*:</Form.Label>
                             <Col xs="auto">
                                 <Controller
@@ -146,7 +147,7 @@ export default function PersonInfo() {
                                 <FormFieldErrorMessage fieldName={`${name}.LEGAL_LAST_NAME`}/>
                             </Col>
                         </Form.Group>
-                        <Form.Group as={Row}>
+                        <Form.Group as={Row} controlId={`${idName}Suffix`}>
                             <Form.Label column md={2}>Suffix:</Form.Label>
                             <Col xs="auto">
                                 <Controller
@@ -162,8 +163,8 @@ export default function PersonInfo() {
                         <Row as="header">
                             <Col as="h3">Additional Information</Col>
                         </Row>
-                        <Form.Group as={Row}>
-                            <Form.Label column md={2}>Volunteer Firefighter/EMT:</Form.Label>
+                        <Row as="fieldset" className="mb-2">
+                            <legend className="form-label col-form-label col-md-2">Volunteer Firefighter/EMT:</legend>
                             <Col xs="auto" className="pt-2">
                                 <Controller
                                     name={`${name}.VOLUNTEER_FIRE_FLAG`}
@@ -171,15 +172,15 @@ export default function PersonInfo() {
                                     control={control}
                                     render={({field}) => (
                                         <>
-                                            <Form.Check {...field} inline type="radio" label="Yes" value='1' checked={field.value=='1'} disabled={fieldDisabled(field)}/>
-                                            <Form.Check {...field} inline type="radio" label="No" value='0' checked={field.value=='0'} disabled={fieldDisabled(field)}/>
+                                            <Form.Check {...field} inline id={`${idName}VolunteerFire-yes`} type="radio" label="Yes" value='1' checked={field.value=='1'} disabled={fieldDisabled(field)}/>
+                                            <Form.Check {...field} inline id={`${idName}VolunteerFire-no`} type="radio" label="No" value='0' checked={field.value=='0'} disabled={fieldDisabled(field)}/>
                                         </>
                                     )}
                                 />
                             </Col>
-                        </Form.Group>
-                        <Form.Group as={Row}>
-                            <Form.Label column md={2}>Rehire Retiree:</Form.Label>
+                        </Row>
+                        <Row as="fieldset" className="mb-2">
+                            <legend className="form-label col-form-label col-md-2">Rehire Retiree:</legend>
                             <Col xs="auto" className="pt-2">
                                 <Controller
                                     name={`${name}.REHIRE_RETIREE`}
@@ -187,16 +188,16 @@ export default function PersonInfo() {
                                     control={control}
                                     render={({field}) => (
                                         <>
-                                            <Form.Check {...field} inline type="radio" label="Yes" value='1' checked={field.value=='1'} onChange={e=>handleRehireRetireeChange(e,field)} disabled={fieldDisabled(field)}/>
-                                            <Form.Check {...field} inline type="radio" label="No" value='0' checked={field.value=='0'} onChange={e=>handleRehireRetireeChange(e,field)} disabled={fieldDisabled(field)}/>
+                                            <Form.Check {...field} inline id={`${idName}RehireRetiree-yes`} type="radio" label="Yes" value='1' checked={field.value=='1'} onChange={e=>handleRehireRetireeChange(e,field)} disabled={fieldDisabled(field)}/>
+                                            <Form.Check {...field} inline id={`${idName}RehireRetiree-no`} type="radio" label="No" value='0' checked={field.value=='0'} onChange={e=>handleRehireRetireeChange(e,field)} disabled={fieldDisabled(field)}/>
                                         </>
                                     )}
                                 />
                             </Col>
-                        </Form.Group>
+                        </Row>
                         {(watchRehireRetiree=='1'||showInTest) &&
                             <>
-                                <Form.Group as={Row} className={testHighlight(watchRehireRetiree=='1')}>
+                                <Form.Group as={Row} className={testHighlight(watchRehireRetiree=='1')} controlId={`${idName}RetiredDate`}>
                                     <Form.Label column md={2}>Retired Date:</Form.Label>
                                     <Col xs="auto">
                                         <InputGroup>
@@ -222,7 +223,7 @@ export default function PersonInfo() {
                                         </InputGroup>
                                     </Col>
                                 </Form.Group>
-                                <Form.Group as={Row} className={testHighlight(watchRehireRetiree=='1')}>
+                                <Form.Group as={Row} className={testHighlight(watchRehireRetiree=='1')} controlId={`${idName}RetiredFrom`}>
                                     <Form.Label column md={2}>Retired From*:</Form.Label>
                                     <Col xs="auto">
                                         <Controller

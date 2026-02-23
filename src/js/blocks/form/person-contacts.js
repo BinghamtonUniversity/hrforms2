@@ -11,6 +11,7 @@ import 'react-phone-input-2/lib/style.css'
 import { FormFieldErrorMessage } from "../../pages/form";
 
 const name = 'person.contact.contacts';
+const idName = 'personContact';
 
 const phoneTypes = [
     {id:'EMR_CTC_DAY_PHONE',title:'Day Phone'},
@@ -148,8 +149,10 @@ export default function PersonContacts() {
             </Row>
             {fields.map((flds,index)=>(
                 <section key={flds.id} className="border rounded p-2 mb-2" onKeyDown={e=>handleEscape(e,index)}>
-                    <Form.Group as={Row} className="mb-1">
-                        <Form.Label column md={2}>Primary:</Form.Label>
+                    <Row as="fieldset" className="mb-1">
+                        <Col md={2}>
+                            <legend className="form-label col-form-label">Primary:</legend>
+                        </Col>
                         <Col xs="auto" className="pt-2">
                             <Controller
                                 name={`${name}.${index}.isPrimary`}
@@ -157,8 +160,8 @@ export default function PersonContacts() {
                                 control={control}
                                 render={({field}) => (
                                     <>
-                                        <Form.Check {...field} inline type="radio" label="Yes" value="Y" checked={field.value=="Y"} disabled={editIndex!=index}/>
-                                        <Form.Check {...field} inline type="radio" label="No" value="N" checked={field.value!="Y"} disabled={editIndex!=index}/>
+                                        <Form.Check {...field} id={`${idName}${index}-isPrimary-yes`} inline type="radio" label="Yes" value="Y" checked={field.value=="Y"} disabled={editIndex!=index}/>
+                                        <Form.Check {...field} id={`${idName}${index}-isPrimary-no`} inline type="radio" label="No" value="N" checked={field.value!="Y"} disabled={editIndex!=index}/>
                                     </>
                                 )}
                             />
@@ -168,31 +171,33 @@ export default function PersonContacts() {
                                 </div>
                             }
                         </Col>
-                    </Form.Group>
-                    <Form.Group as={Row} className="mb-1">
-                        <Form.Label column md={2}>Name*:</Form.Label>
+                    </Row>
+                    <Row as="fieldset" className="mb-1">
+                        <Col md={2}>
+                            <legend className="form-label col-form-label">Name*:</legend>
+                        </Col>
                         <Col xs={6} md={4}>
-                            <Form.Text id="EMR_CTC_FIRST_NAME_HELP" muted className="font-italic">First Name</Form.Text>
+                            <Form.Label htmlFor={`${idName}${index}-firstName`} className="font-italic mb-0 text-muted font-size-90">First Name</Form.Label>
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_FIRST_NAME`}
                                 defaultValue={defaultValues.EMR_CTC_FIRST_NAME}
                                 control={control}
-                                render={({field}) => <Form.Control {...field} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
+                                render={({field}) => <Form.Control {...field} id={`${idName}${index}-firstName`} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
                             />
                             <FormFieldErrorMessage fieldName={`${name}.${index}.EMR_CTC_FIRST_NAME`}/>
                         </Col>
                         <Col xs={6} md={4}>
-                            <Form.Text id="EMR_CTC_LAST_NAME_HELP" muted className="font-italic">Last Name</Form.Text>
+                            <Form.Label htmlFor={`${idName}${index}-lastName`} className="font-italic mb-0 text-muted font-size-90">Last Name</Form.Label>
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_LAST_NAME`}
                                 defaultValue={defaultValues.EMR_CTC_LAST_NAME}
                                 control={control}
-                                render={({field}) => <Form.Control {...field} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
+                                render={({field}) => <Form.Control {...field} id={`${idName}${index}-lastName`} disabled={editIndex!=index} isInvalid={!!get(errors,field.name,false)}/>}
                             />
                             <FormFieldErrorMessage fieldName={`${name}.${index}.EMR_CTC_LAST_NAME`}/>
                         </Col>
-                    </Form.Group>
-                    <Form.Group as={Row} className="mb-1">
+                    </Row>
+                    <Form.Group as={Row} className="mb-1" controlId={`${idName}${index}-addressLine1`}>
                         <Form.Label column md={2}>Address Line 1:</Form.Label>
                         <Col xs={12} md={8}>
                             <Controller
@@ -203,7 +208,7 @@ export default function PersonContacts() {
                             />
                         </Col>
                     </Form.Group>
-                    <Form.Group as={Row} className="mb-1">
+                    <Form.Group as={Row} className="mb-1" controlId={`${idName}${index}-addressLine2`}>
                         <Form.Label column md={2}>Address Line 2:</Form.Label>
                         <Col xs={12} md={8}>
                             <Controller
@@ -214,34 +219,39 @@ export default function PersonContacts() {
                             />
                         </Col>
                     </Form.Group>
-                    <Form.Group as={Row} className="mb-1">
-                        <Form.Label column md={2}>City/State/Zip:</Form.Label>
+                    <Row as="fieldset" className="mb-1">
+                        <Col md={2}>
+                            <legend className="form-label col-form-label">City/State/Zip:</legend>
+                        </Col>
                         <Col xs="auto">
+                            <Form.Label htmlFor={`${idName}${index}-city`} srOnly>City:</Form.Label>
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_CITY`}
                                 defaultValue={defaultValues.EMR_CTC_CITY}
                                 control={control}
-                                render={({field}) => <Form.Control {...field} disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Control {...field} id={`${idName}${index}-city`} disabled={editIndex!=index}/>}
                             />
                         </Col>
                         <Col xs="auto">
+                            <Form.Label htmlFor={`${idName}${index}-state`} srOnly>State:</Form.Label>
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_STATE_CODE`}
                                 defaultValue={defaultValues.EMR_CTC_STATE_CODE}
                                 control={control}
-                                render={({field}) => <StateSelector field={field} disabled={editIndex!=index}/>}
+                                render={({field}) => <StateSelector field={field} id={`${idName}${index}-state`} disabled={editIndex!=index}/>}
                             />
                         </Col>
                         <Col xs="auto">
+                            <Form.Label htmlFor={`${idName}${index}-zip`} srOnly>Zip:</Form.Label>
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_ZIP`}
                                 defaultValue={defaultValues.EMR_CTC_ZIP}
                                 control={control}
-                                render={({field}) => <Form.Control {...field} disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Control {...field} id={`${idName}${index}-zip`} disabled={editIndex!=index}/>}
                             />
                         </Col>
-                    </Form.Group>
-                    <Form.Group as={Row} className="mb-1">
+                    </Row>
+                    <Form.Group as={Row} className="mb-1" controlId={`${idName}${index}-countryCode`}>
                         <Form.Label column md={2}>Country:</Form.Label>
                         <Col xs="auto">
                             <Controller
@@ -254,7 +264,7 @@ export default function PersonContacts() {
                     </Form.Group>
                     {phoneTypes.map(p => (
                         <Form.Group key={p.id} as={Row} className="mb-0">
-                            <Form.Label column md={2}>{p.title}:</Form.Label>
+                            <Form.Label column md={2} htmlFor={`${idName}${index}-${p.id}`}>{p.title}:</Form.Label>
                             <Col xs="auto">
                                 <Controller
                                     name={`${name}.${index}.${p.id}`}
@@ -262,6 +272,7 @@ export default function PersonContacts() {
                                     control={control}
                                     render={({field}) => <PhoneInput 
                                         {...field} 
+                                        inputProps={{id:`${idName}${index}-${p.id}`}}
                                         country={'us'} 
                                         onlyCountries={['us','ca']} 
                                         enableLongNumbers={true}
@@ -276,7 +287,7 @@ export default function PersonContacts() {
                         </Form.Group>
                     ))}
                     <Form.Group as={Row} className="mb-0">
-                        <Form.Label column md={2}>International Phone:</Form.Label>
+                        <Form.Label column md={2} htmlFor={`${idName}${index}-EMR_CTC_INTERNATIONAL_PHONE`}>International Phone:</Form.Label>
                         <Col xs="auto">
                             <Controller
                                 name={`${name}.${index}.EMR_CTC_INTERNATIONAL_PHONE`}
@@ -284,6 +295,7 @@ export default function PersonContacts() {
                                 control={control}
                                 render={({field}) => <PhoneInput 
                                     {...field} 
+                                    inputProps={{id:`${idName}${index}-EMR_CTC_INTERNATIONAL_PHONE`}}
                                     excludeCountries={['us','ca']} 
                                     enableLongNumbers={true}
                                     inputClass="form-control" 
@@ -294,7 +306,7 @@ export default function PersonContacts() {
                             <FormFieldErrorMessage fieldName={`${name}.${index}.EMR_CTC_PHONE`}/>
                         </Col>
                     </Form.Group>
-                    <Form.Group as={Row} className="mb-1">
+                    <Form.Group as={Row} className="mb-1" controlId={`${idName}${index}-email`}>
                         <Form.Label column md={2}>Email Address:</Form.Label>
                         <Col xs={12} md={8}>
                             <Controller
@@ -305,7 +317,7 @@ export default function PersonContacts() {
                             />
                         </Col>
                     </Form.Group>
-                    <Form.Group as={Row} className="mb-1">
+                    <Form.Group as={Row} className="mb-1" controlId={`${idName}${index}-relationship`}>
                         <Form.Label column md={2}>Relationship*:</Form.Label>
                         <Col xs="auto">
                             {relationships.isLoading && <p>Loading...</p>}

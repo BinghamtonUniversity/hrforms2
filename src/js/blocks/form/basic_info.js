@@ -151,70 +151,77 @@ function PersonLookup({results}) {
             <Row as="header">
                 <Col as="h3">Person Lookup</Col>
             </Row>
-            <Form.Group as={Row}>
-                <Col sm={2}>
-                    <Controller
-                        name="lookup.type"
-                        control={control}
-                        render={({field})=><Form.Check {...field} type="radio" id="lookupType-bNumber" value="bNumber" label="B-Number:" checked={field.value=='bNumber'} onChange={e=>handleChange(e,field)} isInvalid={errors.lookup?.type} tabIndex="-1" />}
-                    />
-                </Col>
-                <Col xs="auto">
-                    <Controller
-                        name="lookup.values.bNumber"
-                        control={control}
-                        render={({field})=><Form.Control {...field} ref={bNumberRef} type="text" onFocus={handleFocus}  onKeyDown={handleLookupKeyDown} isInvalid={errors.lookup?.values?.bNumber} autoFocus/>}
-                    />
-                    <Form.Control.Feedback type="invalid">{errors.lookup?.values?.bNumber?.message}</Form.Control.Feedback>
-                </Col>
-            </Form.Group>
-            <Form.Group as={Row}>
-                <Col sm={2}>
-                <Controller
-                        name="lookup.type"
-                        control={control}
-                        render={({field})=><Form.Check {...field} type="radio" id="lookupType-lastNameDOB" value="lastNameDOB" label="Last Name:" checked={field.value=='lastNameDOB'} onChange={e=>handleChange(e,field)} isInvalid={errors.lookup?.type} tabIndex="-1" />}
-                    />
-                    <Form.Control.Feedback type="invalid" style={{display:(errors.lookup?.type)?'block':'none'}}>{errors.lookup?.type?.message}</Form.Control.Feedback>
-                </Col>
-                <Col xs="auto">
-                    <Controller
-                        name="lookup.values.lastName"
-                        defaultValue=""
-                        control={control}
-                        render={({field})=><Form.Control {...field} type="text" onFocus={handleFocus} onKeyDown={handleLookupKeyDown} isInvalid={errors.lookup?.values?.lastName}/>}
-                    />
-                    <Form.Control.Feedback type="invalid">{errors.lookup?.values?.lastName?.message}</Form.Control.Feedback>
-                </Col>
-                <Form.Label column xs="auto">Date of Birth:</Form.Label>
-                <Col xs="auto">
-                    <InputGroup>
+            <fieldset>
+                <legend className="sr-only">Lookup By</legend>
+                <Form.Group as={Row}>
+                    
+                    <Col sm={2}>
                         <Controller
-                            name="lookup.values.dob"
+                            name="lookup.type"
+                            control={control}
+                            render={({field})=><Form.Check {...field} type="radio" id="lookupType-bNumber" value="bNumber" label="B-Number:" checked={field.value=='bNumber'} onChange={e=>handleChange(e,field)} isInvalid={errors.lookup?.type} tabIndex="-1" />}
+                        />
+                    </Col>
+                    <Col xs="auto">
+                        <Form.Label srOnly htmlFor="lookupType-bNumberValue">B-Number:</Form.Label>
+                        <Controller
+                            name="lookup.values.bNumber"
+                            control={control}
+                            render={({field})=><Form.Control {...field} ref={bNumberRef} id="lookupType-bNumberValue" type="text" onFocus={handleFocus}  onKeyDown={handleLookupKeyDown} isInvalid={errors.lookup?.values?.bNumber} autoFocus/>}
+                        />
+                        <Form.Control.Feedback type="invalid">{errors.lookup?.values?.bNumber?.message}</Form.Control.Feedback>
+                    </Col>
+                </Form.Group>
+                <Form.Group as={Row}>
+                    <Col sm={2}>
+                    <Controller
+                            name="lookup.type"
+                            control={control}
+                            render={({field})=><Form.Check {...field} type="radio" id="lookupType-lastNameDOB" value="lastNameDOB" label="Last Name:" checked={field.value=='lastNameDOB'} onChange={e=>handleChange(e,field)} isInvalid={errors.lookup?.type} tabIndex="-1" />}
+                        />
+                        <Form.Control.Feedback type="invalid" style={{display:(errors.lookup?.type)?'block':'none'}}>{errors.lookup?.type?.message}</Form.Control.Feedback>
+                    </Col>
+                    <Col xs="auto">
+                        <Form.Label srOnly htmlFor="lookupType-lastNameValue">Last Name:</Form.Label>
+                        <Controller
+                            name="lookup.values.lastName"
                             defaultValue=""
                             control={control}
-                            render={({field})=><Form.Control 
-                                as={DatePicker} 
-                                name={field.name}
-                                closeOnScroll={true} 
-                                maxDate={sub(new Date(),{years:15})} 
-                                selected={field.value} 
-                                onChange={field.onChange}
-                                onFocus={handleFocus}
-                                onKeyDown={handleLookupKeyDown}
-                                isInvalid={errors.lookup?.values?.dob}
-                                autoComplete="off"
-                            />}
+                            render={({field})=><Form.Control {...field} id="lookupType-lastNameValue" type="text" onFocus={handleFocus} onKeyDown={handleLookupKeyDown} isInvalid={errors.lookup?.values?.lastName}/>}
                         />
-                        <InputGroup.Append>
-                            <InputGroup.Text>
-                                <Icon icon="mdi:calendar-blank"/>
-                            </InputGroup.Text>
-                        </InputGroup.Append>
-                    </InputGroup>
-                    <Form.Control.Feedback type="invalid" style={{display:(errors.lookup?.values?.dob)?'block':'none'}}>{errors.lookup?.values?.dob?.message}</Form.Control.Feedback>
-                </Col>
-            </Form.Group>
+                        <Form.Control.Feedback type="invalid">{errors.lookup?.values?.lastName?.message}</Form.Control.Feedback>
+                    </Col>
+                    <Form.Label htmlFor="lookupType-dobValue" column xs="auto">Date of Birth:</Form.Label>
+                    <Col xs="auto">
+                        <InputGroup>
+                            <Controller
+                                name="lookup.values.dob"
+                                defaultValue=""
+                                control={control}
+                                render={({field})=><Form.Control 
+                                    as={DatePicker} 
+                                    id="lookupType-dobValue"
+                                    name={field.name}
+                                    closeOnScroll={true} 
+                                    maxDate={sub(new Date(),{years:15})} 
+                                    selected={field.value} 
+                                    onChange={field.onChange}
+                                    onFocus={handleFocus}
+                                    onKeyDown={handleLookupKeyDown}
+                                    isInvalid={errors.lookup?.values?.dob}
+                                    autoComplete="off"
+                                />}
+                            />
+                            <InputGroup.Append>
+                                <InputGroup.Text>
+                                    <Icon icon="mdi:calendar-blank"/>
+                                </InputGroup.Text>
+                            </InputGroup.Append>
+                        </InputGroup>
+                        <Form.Control.Feedback type="invalid" style={{display:(errors.lookup?.values?.dob)?'block':'none'}}>{errors.lookup?.values?.dob?.message}</Form.Control.Feedback>
+                    </Col>
+                </Form.Group>
+            </fieldset>
             <Row as="footer">
                 <Col className="button-group">
                     <AppButton format="search" onClick={handleLookup}>Search</AppButton>
@@ -408,7 +415,7 @@ function PayrollDate({selectedId,selectedPayroll}) {
                 <Row as="header">
                     <Col as="h3">Payroll &amp; Date</Col>
                 </Row>
-                <Form.Group as={Row}>
+                <Form.Group as={Row} controlId="formBasicInfoPayroll">
                     <Form.Label column md={2}>Payroll*:</Form.Label>
                     <Col xs="auto">
                         {payrollcodes.isError && <Loading isError>Error Loading Payrolls</Loading>}
@@ -429,13 +436,11 @@ function PayrollDate({selectedId,selectedPayroll}) {
                         }
                         <Form.Control.Feedback type="invalid">{errors.payroll?.message}</Form.Control.Feedback>
                     </Col>
-                    {payrollDescription && 
-                        <Col xs="auto">
-                            <Form.Text id="payrollDescription" muted>{payrollDescription}</Form.Text>
-                        </Col>
-                    }
+                    <Col xs="auto">
+                        <Form.Text id="payrollDescription" muted>{payrollDescription}</Form.Text>
+                    </Col>
                 </Form.Group>
-                <Form.Group as={Row}>
+                <Form.Group as={Row} controlId="formBasicInfoEffDate">
                     <Form.Label column md={2}>Effective Date*:</Form.Label>
                     <Col xs="auto">
                         <InputGroup>
@@ -688,7 +693,7 @@ function FormActionsFormCode({formCodes,description}) {
         }
     },[formCodes]);
     return (
-        <Form.Group as={Row}>
+        <Form.Group as={Row} controlId="formActionsFormCode">
             <Form.Label column md={2}>Form Code:</Form.Label>
             <Col xs="auto">
                 <Controller
@@ -726,7 +731,7 @@ function FormActionsActionCode({actionCodes,description,formCode,actionSize}) {
         setValue('formActions.PR_REQUIRED',defaultFormActions.PR_REQUIRED);
     },[actionCodes,setValue]);
     return (
-        <Form.Group as={Row}>
+        <Form.Group as={Row} controlId="formActionsActionCode">
             <Form.Label column md={2}>Action Code:</Form.Label>
             <Col xs="auto">
                 {(!formCode)?<p>Select a Form Code</p>:
@@ -762,7 +767,7 @@ function FormActionsTransactionCode({transactionCodes,description,formCode,actio
         setValue('formActions.PR_REQUIRED',defaultFormActions.PR_REQUIRED);
     },[setValue,transactionCodes]);
     return (
-        <Form.Group as={Row}>
+        <Form.Group as={Row} controlId="formActionsTransactionCode">
             <Form.Label column md={2}>Transaction Code:</Form.Label>
             <Col xs="auto">
                 {(!formCode)?<p>Select a Form Code</p>:
@@ -806,12 +811,13 @@ function FormPRRequired() {
     return (
         <Alert variant="warning">
             <div className="form-inline">
-                <Form.Label className="mr-2" htmlFor="formActions.PR_NUMBER">Position Request # is Required:</Form.Label>
+                <Form.Label className="mr-2" htmlFor="formActionsPR_NUMBER">Position Request # is Required:</Form.Label>
                 <Controller
                     name="formActions.PR_NUMBER"
                     control={control}
                     defaultValue=""
-                    render={({field}) => (<Form.Control {...field} type="text" onBlur={handleBlur} onKeyDown={handleKeyDown} disabled={journalStatus!=""}/>)}
+                    render={({field}) => (<Form.Control {...field} id="formActionsPR_NUMBER" type="text" onBlur={handleBlur} onKeyDown={handleKeyDown} disabled={journalStatus!=""}/>)}
+
                 />
             </div>
         </Alert>
