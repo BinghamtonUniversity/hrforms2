@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
-import { HRFormContext, conditionalFields, useHRFormContext } from "../../config/form";
+import { HRFormContext, useHRFormContext } from "../../config/form";
 import { Row, Col, Form, InputGroup} from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
@@ -71,48 +71,41 @@ export default function EmploymentLeave() {
                             />
                         </Col>
                     </Row>
-
-                    {/* Show Leave Pct and Leave Sal for Partial Paid Leaves */}
-                    {(conditionalFields.partialLeave.includes(formType)||showInTest) && 
-                        <>
-                            <Row as="fieldset" className={`mb-2 ${testHighlight(conditionalFields.partialLeave.includes(formType))}`}>
-                                <Col md={2}>
-                                    <legend className="form-label col-form-label">Leave Percent:</legend>
-                                </Col>
-                                <Col xs="auto">
-                                    <Form.Label htmlFor={`${idName}-leavePercent`} srOnly>Leave Percent:</Form.Label>
-                                    <Controller
-                                        name={`${name}.leavePercent`}
-                                        defaultValue={defaultValues[`${name}.leavePercent`]}
-                                        control={control}
-                                        render={({field}) => <Form.Control {...field} type="number" id={`${idName}-leavePercent`} min={0} max={100} onChange={e=>handleLeavePct(e,field)} onBlur={e=>handleLeavePct(e,field)} disabled={!canEdit}/>}
-                                    />
-                                </Col>
-                                <Col sm={8} md={6} className="pt-2">
-                                    <Form.Label htmlFor={`${idName}-leavePercentRange`} srOnly>Leave Percent Range:</Form.Label>
-                                    <Form.Control type="range" name="leavePercentRange" id={`${idName}-leavePercentRange`} min={0} max={100} value={watchLeavePercent} onChange={e=>setValue(`${name}.leavePercent`,e.target.value)} disabled={!canEdit} list="markers"/>
-                                    <datalist id="markers" className="marker">
-                                        <option value="0">0%</option>
-                                        <option value="25">25%</option>
-                                        <option value="50">50%</option>
-                                        <option value="75">75%</option>
-                                        <option value="100">100%</option>
-                                    </datalist>
-                                </Col>
-                            </Row>
-                            <Row className="mb-2">
-                                <Col md={2}>
-                                    <p className="form-label col-form-label">Leave Salary:</p>
-                                </Col>
-                                <Col xs="auto" className="pt-2">
-                                    <p className="mb-0">
-                                        <CurrencyFormat>{calcLeaveSalary()}</CurrencyFormat>
-                                    </p>
-                                </Col>
-                            </Row>
-                        </>
-                    }
-
+                    <Row as="fieldset" className="mb-2">
+                        <Col md={2}>
+                            <legend className="form-label col-form-label">Leave Percent:</legend>
+                        </Col>
+                        <Col xs="auto">
+                            <Form.Label htmlFor={`${idName}-leavePercent`} srOnly>Leave Percent:</Form.Label>
+                            <Controller
+                                name={`${name}.leavePercent`}
+                                defaultValue={defaultValues[`${name}.leavePercent`]}
+                                control={control}
+                                render={({field}) => <Form.Control {...field} type="number" id={`${idName}-leavePercent`} min={0} max={100} onChange={e=>handleLeavePct(e,field)} onBlur={e=>handleLeavePct(e,field)} disabled={!canEdit}/>}
+                            />
+                        </Col>
+                        <Col sm={8} md={6} className="pt-2">
+                            <Form.Label htmlFor={`${idName}-leavePercentRange`} srOnly>Leave Percent Range:</Form.Label>
+                            <Form.Control type="range" name="leavePercentRange" id={`${idName}-leavePercentRange`} min={0} max={100} value={watchLeavePercent} onChange={e=>setValue(`${name}.leavePercent`,e.target.value)} disabled={!canEdit} list="markers"/>
+                            <datalist id="markers" className="marker">
+                                <option value="0">0%</option>
+                                <option value="25">25%</option>
+                                <option value="50">50%</option>
+                                <option value="75">75%</option>
+                                <option value="100">100%</option>
+                            </datalist>
+                        </Col>
+                    </Row>
+                    <Row className="mb-2">
+                        <Col md={2}>
+                            <p className="form-label col-form-label">Leave Salary:</p>
+                        </Col>
+                        <Col xs="auto" className="pt-2">
+                            <p className="mb-0">
+                                <CurrencyFormat>{calcLeaveSalary()}</CurrencyFormat>
+                            </p>
+                        </Col>
+                    </Row>
                     <Form.Group as={Row} controlId={`${idName}-leaveEndDate`}>
                         <Form.Label column md={2}>Leave End Date*:</Form.Label>
                         <Col xs="auto">

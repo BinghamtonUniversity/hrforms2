@@ -12,7 +12,6 @@ export function useHRFormContext() { return useContext(HRFormContext); }
 
 /** CONDITIONAL FIELDS */
 export const conditionalFields = {
-    partialLeave:['EF-LOA-PPEL','EF-LOA-PPS'],
     splitAssignment:['EF-PAY-ASCA'],
     noRateTransactions: ['EXS','SUM','WIN']
 };
