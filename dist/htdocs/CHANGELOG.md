@@ -1,5 +1,19 @@
 # Changelog
-## Version 2.0.3(rev-202601xx)
+## Version 2.0.4(rev-20260224)
+  * Added setting option to allow submitters to approve their own Requests/Forms [DB Update Required]
+  * Fixed bug with Forms after being rejected the comment was being retained and then overwritten on resubmit.
+  * Accessibility improvements across the application.
+  * Fixed bug in data validation in hierarchy.php and improved error messaging.
+  * Improved error messaging across all server-side code.
+  * Removed salary.php; no longer used.  Code merged into employmentinfo.php
+  * Added code to force reload when the JavaScript code has changed to prevent caching issues.
+  * Formatted date in Comment History table for Requests and Forms.
+  * Made the date in Comment History sortable for Requests and Forms.
+  * Fixed DateFormat component to handle input correctly instead of just returning null.
+  * Remove conditional logic for Leave Percent field; no longer needed.
+  
+
+## Version 2.0.3(rev-20260126)
   * Fixed bug in Requests and Forms not returning to home page after "Save & Exit" and other button actions.
   * Fixed validation error on SUNY Account component when removing a split by deleting split row.
   * Fixed typo in sendEmail function that caused error when submitting Forms.
