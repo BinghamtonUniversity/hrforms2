@@ -542,13 +542,16 @@ function PayTransTabs({selectedTabs}) {
     },[]);
     const handleExpand = useCallback(expanded=>setTabsExpanded(expanded),[]);
     return (
-        <CheckboxTreeComponent
-            id="paytrans-tab-tree"
-            nodes={allTabs.filter(t=>!['basic-info','comments','review'].includes(t.value))}
-            checked={tabsSelected}
-            expanded={tabsExpanded}
-            onCheck={handleCheck}
-            onExpand={handleExpand}
-        />
+        <article>
+            <p className="my-3">Select tabs to display for this form transaction.</p>
+            <CheckboxTreeComponent
+                id="paytrans-tab-tree"
+                nodes={allTabs.filter(t=>!['basic-info','comments','review'].includes(t.value))}
+                checked={tabsSelected}
+                expanded={tabsExpanded}
+                onCheck={handleCheck}
+                onExpand={handleExpand}
+            />
+        </article>
     )
 }
