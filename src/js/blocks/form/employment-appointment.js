@@ -93,22 +93,22 @@ export default function EmploymentAppointment() {
                     }
                     {(watchFaculty=='Y'||showInTest) &&
                         <>
-                        <Row as="fieldset" className={`{mb-2 ${testHighlight(watchFaculty=='Y')}`}>
+                        <Row as="fieldset" className={`mb-2 ${testHighlight(watchFaculty=='Y')}`}>
                             <Col md={2}>
                                 <legend className="form-label col-form-label">Adjunct*:</legend>
                             </Col>
-                            <Col xs="auto">
-                            <Controller
-                                    name={`${baseName}.isAdjunct`}
-                                    defaultValue={defaultValues[`${baseName}.isAdjunct`]}
-                                    control={control}
-                                    render={({field}) => (
-                                        <>
-                                            <Form.Check {...field} id={`${idBaseName}-isAdjunct-yes`} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'} disabled={!canEdit}/>
-                                            <Form.Check {...field} id={`${idBaseName}-isAdjunct-no`} inline type="radio" label="No" value="N" checked={field.value!='Y'} disabled={!canEdit}/>
-                                        </>
-                                    )}
-                                />
+                            <Col xs="auto" className="pt-2">
+                                <Controller
+                                        name={`${baseName}.isAdjunct`}
+                                        defaultValue={defaultValues[`${baseName}.isAdjunct`]}
+                                        control={control}
+                                        render={({field}) => (
+                                            <>
+                                                <Form.Check {...field} id={`${idBaseName}-isAdjunct-yes`} inline type="radio" label="Yes" value="Y" checked={field.value=='Y'} disabled={!canEdit}/>
+                                                <Form.Check {...field} id={`${idBaseName}-isAdjunct-no`} inline type="radio" label="No" value="N" checked={field.value!='Y'} disabled={!canEdit}/>
+                                            </>
+                                        )}
+                                    />
                             </Col>
                         </Row>
 
