@@ -23,7 +23,6 @@ class Session extends HRForms2 {
     }
 
     function validate() {
-        
         if (in_array($this->method,array('PATCH','DELETE'))) {
             if (!$this->checkAuth()) $this->raiseError(E_NOT_AUTHORIZED,array("errMsg"=>"Authentication required"));
             if (!$this->sessionData['isAdmin']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"Only administrators may impersonate users."));
@@ -56,7 +55,8 @@ class Session extends HRForms2 {
     function GET() {
         $this->checkAuth();
         $lastInfo = $this->getLastInfo();
-        $this->sessionData = array_merge($this->sessionData,$lastInfo,array('BUILD_TIME'=>BUILD_TIME));
+        $stat = stat($_SERVER['DOCUMENT_ROOT']."/CHANGELOG.md");
+        $this->sessionData = array_merge($this->sessionData,$lastInfo,array('BUILD_TIME'=>$stat['mtime']));
         $this->toJSON($this->sessionData);
     }
 
