@@ -22,7 +22,8 @@ Class HRForms2 {
     protected $method;
     protected $POSTvars;
     protected $reqAuth = true;
-    protected $allowedMethods = "";	protected $hasError = false;
+    protected $allowedMethods = "";	
+    protected $hasError = false;
 
     protected $sessionData = array('VERSION'=>VERSION,'REVISION'=>REVISION,'INSTANCE'=>INSTANCE,'HOST'=>HOST,'DEBUG'=>DEBUG);
     //protected $userData = array();
@@ -205,23 +206,6 @@ Class HRForms2 {
         //header('Expires:0'); //Proxies
         echo json_encode($out);
     }
-
-    /*protected function toCSV($filename,$headers,$data) {
-        header('X-App-Version:'.VERSION);
-        header('X-App-Revision:'.REVISION);
-
-        header("Content-type: application/csv");
-        header("Content-Disposition: attachment; filename=$filename");
-        header("Pragma: no-cache");
-        header("Expires: 0");
-
-        $output = fopen("php://output",'w') or die("Can't open php://output");
-        fputcsv($output, $headers);
-        foreach($data as $row) {
-            fputcsv($output, $row);
-        }
-        fclose($output) or die("Can't close php://output");
-    }*/
 
     protected function done() {
         $this->toJSON(array("success" => true));
