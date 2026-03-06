@@ -49,7 +49,7 @@ $client_path = '/';
 $client_secure = true;
 $client_httpOnly = false;
 $client_lifetime = 0;
-$client_service_name = "https://" . HOST;
+$client_service_name = URL_ROOT;
 
 // Database config for PGT Storage
 //$db = 'pgsql:host=localhost;dbname=phpcas';

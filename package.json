@@ -7,8 +7,8 @@
   "author": "Scott Geiger",
   "license": "ISC",
   "scripts": {
-    "build": "npm-run-all -s clean-dist webpack update-buildtime list",
-    "build-dev": "npm-run-all -s clean-dist webpack-dev update-buildtime list",
+    "build": "npm-run-all -s clean-dist webpack list",
+    "build-dev": "npm-run-all -s clean-dist webpack-dev list",
     "webpack": "webpack --config ./webpack.config.js",
     "webpack-dev": "webpack --mode development --config ./webpack.config.js",
     "build-css": "sass --no-source-map src/scss/binghamton-bs4.scss | cleancss -o dist/htdocs/css/styles.min.css",
@@ -16,7 +16,6 @@
     "clean-dist": "find dist/htdocs -type f -not -path \"*/api/*\" -delete",
     "list": "find dist/htdocs -type f -not -path \"*/api/*\" -not -name \"*.LICENSE.txt\" -printf \"%Tb %Td %TH:%TM\\t%k\\t%p\\n\"",
     "update-changelog": "cp CHANGELOG.md dist/htdocs",
-    "update-buildtime": "bt=$(date +%s); sed -i \"s/\\(BUILD_TIME',\\)[0-9]\\+\\(.*\\)/\\1$bt\\2/\" dist/etc/config.php",
     "deploy-local": "scripts/deploy-local.py",
     "deploy-dev": "scripts/deploy-dev.py",
     "deploy-git-dev": "scripts/deploy-git-dev.py",

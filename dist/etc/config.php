@@ -3,82 +3,52 @@
  * Configuration for HR Forms 2
  *
 **/
-include('db.php');
-include('email.php');
+set_include_path(implode(PATH_SEPARATOR, array(get_include_path(),'../')));
+include_once 'vendor/autoload.php';
 
-define('VERSION','2.0.4');
-define('REVISION','LOCAL-20260224');
-define('BUILD_TIME',1771961938);
-define('TITLE','HR Forms 2');
-define('API_PATH','/api/api.php/'); //trailing slash required
+$dotenv = Dotenv\Dotenv::createImmutable($_SERVER['DOCUMENT_ROOT']."/..");
+$dotenv->load();
+
+$defaultEnv = ['TIMEZONE'=>'America/New_York','DATE_FMT'=>'DD-MMM-YY','NLS_LANG'=>'AL32UTF8'];
+$requiredEnv = ['CAS_HOST','SMTP_HOST','SMTP_PORT','SMTP_USERNAME','SMTP_PASSWORD'];
+$notEmptyEnv = ['INSTANCE','VERSION','REVISION','TITLE','API_PATH','DB','DBUSER','DBPASS'];
+$booleanEnv = ['DEBUG','SMTP_AUTH','SMTP_DEBUG'];
+
+# test for required env vars
+try {
+	$dotenv->required($requiredEnv);
+} catch (Exception $e) {
+	die("Environment variable validation failed. Please check your .env file and ensure all required variables are set.");
+}
+# test for require non-empty env vars
+try {
+	$dotenv->required($notEmptyEnv)->notEmpty();
+} catch (Exception $e) {
+	die("Environment variable validation failed. Please check your .env file and ensure all required variables are not empty.");
+}
+# test for required boolean env vars
+try {
+	$dotenv->required($booleanEnv)->isBoolean();
+} catch (Exception $e) {
+	die("Environment variable validation failed. Please check your .env file and ensure all boolean variables are set to true or false.");
+}
+
+$envvars = array_merge($requiredEnv,$notEmptyEnv,$booleanEnv,array_keys($defaultEnv));
+
+define('HOST',$_SERVER['HTTP_HOST']);
+define('URL_ROOT', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST']);
+
+array_walk($envvars,function($key) use ($defaultEnv) { 
+	if (!isset($_ENV[$key])) {
+		try {
+			define($key,$defaultEnv[$key]);
+		} catch (Exception $e) {
+			die("Environment variable $key is required but not set. Please check your .env file.");
+		}
+		return;
+	}
+	define($key,$_ENV[$key]); 
+});
 
 /* set Date/Timezone */
-date_default_timezone_set('America/New_York');
-
-/* Configuration */
-$CONFIG = array(
-	(0)=>array(					// defaults used when hostname is not matched ** DO NOT DELETE OR MOVE **
-		"INSTANCE" => null,		// name of the application instance
-		"HOST" => null,			// hostname, used to search for defined constants
-		"CAS_HOST" => null,		// hostname of CAS server to authenticate against
-		"DATE_FMT" => null,		// database string date format converted to moment syntax (see: https://date-fns.org/docs/format)
-		"DEBUG" => false,		// when true will output additional information in the JavaScript console.
-	),
-	(1)=>array(
-		"INSTANCE" => "LOCAL",
-		"HOST" => "hrforms2.localhost",
-		"CAS_HOST" => null,
-		"DATE_FMT" => "DD-MMM-YY",
-		"DEBUG" => true,
-	),
-	(2)=>array(
-		"INSTANCE" => "DEV",
-		"HOST" => "hrformsdev.binghamton.edu",
-		"CAS_HOST" => null,
-		"DATE_FMT" => "DD-MMM-YY",
-		"DEBUG" => true,
-	),
-	(3)=>array(
-		"INSTANCE" => "TEST",
-		"HOST" => "hrformstest.binghamton.edu",
-		"CAS_HOST" => null,
-		"DATE_FMT" => "DD-MMM-YY",
-		"DEBUG" => true,
-	),
-	(4)=>array(
-		"INSTANCE" => "PROD",
-		"HOST" => "hrforms.binghamton.edu",
-		"CAS_HOST" => null,
-		"DATE_FMT" => "DD-MMM-YY",
-		"DEBUG" => false,
-	)
-);
-
-/* ========= DO NOT EDIT BELOW THIS LINE ========= */
-$INSTANCES = array(
-	array_merge($CONFIG[0],$DBS[0],$EMAIL[0]),
-	array_merge($CONFIG[1],$DBS[1],$EMAIL[1]),
-	array_merge($CONFIG[2],$DBS[2],$EMAIL[2]),
-	array_merge($CONFIG[3],$DBS[3],$EMAIL[3]),
-	array_merge($CONFIG[4],$DBS[4],$EMAIL[4])
-);
-$i = array_search($_SERVER['HTTP_HOST'],array_column($INSTANCES, 'HOST'));
-array_walk($INSTANCES[$i],function($v,$k) { define($k,$v); });
-
-function cacheLoader() {
-	$qs = "?v=" . VERSION;
-	if (!TPL_CACHE) $qs .= "&_=" . time();
-	return $qs;
-}
-
-function appSettingsJS() {
-	echo json_encode(array(
-		"title" => TITLE,
-		"version" => VERSION,
-		"revision" => REVISION,
-		"instance" => INSTANCE,
-		"apiPath" => API_PATH,
-		"debug" => DEBUG,
-		)
-	);
-}
+date_default_timezone_set($_ENV['TIMEZONE']);
