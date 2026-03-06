@@ -536,7 +536,7 @@ class Requests extends HRForms2 {
 
                 // Email Notification
                 try {
-                    $return_data['email_response'] = $this->sendEmail($return_data['journal']);
+                    $return_data['email_response'] = $this->sendEmail($return_data['journal'],true);
                 } catch (Exception $e) {
                     $this->raiseError(500,array('errMsg'=>$e->getMessage()));
                 }

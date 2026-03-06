@@ -434,7 +434,7 @@ Class HRForms2 {
      * } $journal - Journal record from Request or Form
      * @return mixed - Returns output from debug if enabled; could be null/undefined.
      */
-    function sendEmail($journal) {
+    function sendEmail($journal,$isArchived=false) {
         $origMethod = $_SERVER['REQUEST_METHOD'];
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $settings = (new settings(array(),false))->returnData;
@@ -453,8 +453,10 @@ Class HRForms2 {
             $id = $journal['request_id'];
             $type = 'requests';
             $template_type = 'R';
-            $vars['URL'] = 'https://'.HOST.'/#/request/'.$id;
-            $requestData = (new requests(array($id),false))->returnData;
+            $vars['URL'] = 'https://'.HOST.'/#/request/'.($isArchived?'archive/':'').$id;
+            $reqs = array($id);
+            if ($isArchived) array_unshift($reqs,'archive');
+            $requestData = (new requests($reqs,false))->returnData;
             $flat = array();
             $this->traverse($requestData,$flat,"REQ");
             $vars = array_merge($vars,$flat);
@@ -463,8 +465,10 @@ Class HRForms2 {
             $id = $journal['form_id'];
             $type = 'forms';
             $template_type = 'F';
-            $vars['URL'] = 'https://'.HOST.'/#/form/'.$id;
-            $formData = (new forms(array($id),false))->returnData;
+            $vars['URL'] = 'https://'.HOST.'/#/form/'.($isArchived?'archive/':'').$id;
+            $reqs = array($id);
+            if ($isArchived) array_unshift($reqs,'archive');
+            $formData = (new forms($reqs,false))->returnData;
             $flat = array();
             $this->traverse($formData,$flat,"FORM");
             $vars = array_merge($vars,$flat);
