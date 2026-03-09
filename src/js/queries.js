@@ -53,7 +53,6 @@ export default function q(u,m,b) {
         };
         if (['POST','PUT','PATCH'].includes(m)) opts.body = bd && JSON.stringify(bd);
         return new Promise((res,rej) => {
-            //TODO: check window.sessionStorage; combine with cookie to handle expiration.
             Promise.race([
                 fetch(`/api/api.php/${u}`,opts).then(r=>{
                     checkVersion(r.headers);
@@ -61,8 +60,6 @@ export default function q(u,m,b) {
                 }),
                 new Promise((resolve,reject)=>setTimeout(reject,requestTimeout,{status:408,name:'408',message:'Request Timeout'}))
             ]).then(j=>{
-                //TODO: if storable; sessionStorage.setItem('key','value') <-- value needs to be stringified json.
-                //see: https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage
                 res(j);
             }).catch(e=>rej(e));
         });

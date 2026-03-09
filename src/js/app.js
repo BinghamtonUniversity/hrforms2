@@ -15,10 +15,8 @@ import AppHotKeys from "./blocks/apphotkeys";
 import { AppButton } from "./blocks/components";
 import useSettingsQueries from "./queries/settings";
 import useSessionQueries from "./queries/session";
-//import useStringsQueries from "./queries/strings";
 import { Helmet } from "react-helmet";
 import { icons } from "../js/config/app";
-//import { flattenObject } from "./utility";
 
 /* PAGES */
 const Home = lazy(()=>lazyRetry(()=>import("./pages/home")));
