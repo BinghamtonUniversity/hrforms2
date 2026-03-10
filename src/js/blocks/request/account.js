@@ -27,20 +27,22 @@ export default function Account() {
             {(posType?.id=='F') && 
                 <Row as="fieldset" className="mb-2">
                     <Col md={2}>
-                        <legend className="form-label col-form-label">Expenditure Type:</legend>
+                        <legend className="form-label col-form-label">Expenditure Type*:</legend>
                     </Col>
                     <Col xs="auto" className="pt-2">
                         <Controller
                             name="expType"
                             defaultValue=""
                             control={control}
+                            rules={{required:{value:true,message:'Expenditure Type is required'}}}
                             render={({field}) => (
                                 <>
-                                    <Form.Check {...field} inline type="radio" id="expType-PSR" label="PSR" value='PSR' checked={field.value=='PSR'} disabled={!canEdit}/>
-                                    <Form.Check {...field} inline type="radio" id="expType-PST" label="PST" value='PST' checked={field.value=='PST'} disabled={!canEdit}/>
+                                    <Form.Check {...field} inline type="radio" id="expType-PSR" label="PSR" value='PSR' checked={field.value=='PSR'} isInvalid={errors.expType} disabled={!canEdit}/>
+                                    <Form.Check {...field} inline type="radio" id="expType-PST" label="PST" value='PST' checked={field.value=='PST'} isInvalid={errors.expType} disabled={!canEdit}/>
                                 </>
                             )}
                         />
+                        <RequestFieldErrorMessage fieldName="expType"/>
                     </Col>
                 </Row>
             }
