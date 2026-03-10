@@ -95,6 +95,9 @@ class ArchiveList extends HRForms2 {
                     case "created_by":
                         $sort = "order by r.created_by.LEGAL_LAST_NAME || ',' || r.created_by.ALIAS_FIRST_NAME || ',' || r.created_by.LEGAL_FIRST_NAME " . $_GET['sortDir'] . ", effdate desc";
                         break;
+                    case "max_journal_date":
+                        $sort = "order by to_char(js.max_journal_date,'YYYYMMDDHH24MISSFF4')" . $_GET['sortDir'] . ", effdate desc";
+                        break;
                     case "last_updated_by":
                         $sort = "order by trim(u.last_update_last_name || ',' || u.last_update_first_name)" . $_GET['sortDir'] . ", effdate desc";
                         break;                    
@@ -252,6 +255,9 @@ class ArchiveList extends HRForms2 {
                         break;
                     case "last_updated_by":
                         $sort = "order by trim(u.last_update_last_name || ',' || u.last_update_first_name)" . $_GET['sortDir'] . ", effdate desc";
+                        break;
+                    case "max_journal_date":
+                        $sort = "order by to_char(js.max_journal_date,'YYYYMMDDHH24MISSFF4')" . $_GET['sortDir'] . ", effdate desc";
                         break;
                     default:
                         $sort = "order by " . $_GET['sortField'] . " " . $_GET['sortDir'];
