@@ -156,7 +156,7 @@ export default function ListArchiveTable() {
         {id:'multi_lines',name:'Multi-Line?',selector:row=>row.MULTILINES,format:row=>row.MULTILINES=='Y'?'Yes':'No',sortable:true,reorder:true,omit:!showCols.includes('multi_lines')},
         {id:'title',name:'Title',selector:row=>row.REQBUDGETTITLE,sortable:true,wrap:true,reorder:true,omit:!showCols.includes('title')},
         {id:'created_by',name:'Created By',selector:row=>row.CREATED_BY_SUNY_ID,sortable:true,format:row=>`${row.CREATED_BY_FIRST_NAME} ${row.CREATED_BY_LEGAL_LAST_NAME} (${row.CREATED_BY_SUNY_ID})`,wrap:true,reorder:true,omit:!showCols.includes('created_by')},
-        {id:'max_journal_date',name:'Last Updated',selector:row=>row.MAX_JOURNAL_DATE,format:row=>format(new Date(row.MAX_JOURNAL_DATE),'P'),sortable:true,reorder:true,omit:!showCols.includes('max_journal_date')},
+        {id:'max_journal_date',name:'Last Updated',selector:row=>row.MAX_JOURNAL_DATE,format:row=>format(new Date(row.MAX_JOURNAL_DATE),'Pp'),sortable:true,wrap:true,reorder:true,omit:!showCols.includes('max_journal_date')},
         {id:'last_updated_by',name:'Last Updated By',selector:row=>row.LAST_UPDATED_SUNY_ID,sortable:true,format:row=>(<span>{row.LAST_UPDATED_NAME} ({row.LAST_UPDATED_SUNY_ID})</span>),wrap:true,reorder:true,omit:!showCols.includes('last_updated_by')},
         {id:'changeCol',name:<ColumnSelect showCols={showCols} setShowCols={setShowCols}/>,allowOverflow:true,width:'50px'}
     ];
