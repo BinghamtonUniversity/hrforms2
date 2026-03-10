@@ -49,7 +49,7 @@ export default function Information() {
                 <Col md={2}>
                     <legend className="col-form-label">Position Type*:</legend>
                 </Col>
-                <Col xs="auto">
+                <Col xs="auto" className="pt-2">
                     <Controller
                         name="posType.id"
                         control={control}

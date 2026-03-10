@@ -25,9 +25,11 @@ export default function Account() {
     return (
         <>
             {(posType?.id=='F') && 
-                <Row as="fieldset" className="mb-3">
-                    <legend className="col-form-label col-md-2">Expenditure Type:</legend>
-                    <Col xs="auto">
+                <Row as="fieldset" className="mb-2">
+                    <Col md={2}>
+                        <legend className="form-label col-form-label">Expenditure Type:</legend>
+                    </Col>
+                    <Col xs="auto" className="pt-2">
                         <Controller
                             name="expType"
                             defaultValue=""

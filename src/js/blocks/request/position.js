@@ -86,7 +86,7 @@ export default function Position() {
                 <Col md={2}>
                     <legend className="form-label col-form-label">Multiple Duplicate Lines:</legend>
                 </Col>
-                <Col xs="auto">
+                <Col xs="auto"  className="pt-2">
                     <Controller
                         name="multiLines"
                         defaultValue="N"
