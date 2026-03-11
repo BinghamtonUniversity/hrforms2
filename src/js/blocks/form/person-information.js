@@ -13,7 +13,7 @@ const name = 'person.information';
 const idName = 'personInformation';
 
 export default function PersonInfo() {
-    const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
+    const { control, getValues, setValue, formState: { defaultValues, errors, dirtyFields } } = useFormContext();
     const { canEdit, activeNav, journalStatus } = useHRFormContext();
 
     const watchRehireRetiree = useWatch({name:`${name}.REHIRE_RETIREE`});
@@ -23,7 +23,7 @@ export default function PersonInfo() {
 
     const fieldDisabled = useCallback((field) => {
         if (!canEdit) return true;
-        if (['PA','PF'].includes(journalStatus) && field.value) return true;
+        if (['PA','PF'].includes(journalStatus) && field.value && !get(dirtyFields,field.name,false)) return true;
         return false;
     },[journalStatus, canEdit]);
 
