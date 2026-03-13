@@ -152,7 +152,7 @@ export default function ListArchiveTable() {
         {id:'req_type',name:'Request Type',selector:row=>row.REQTYPE.id,format:row=>`${row.REQTYPE.id} - ${row.REQTYPE.title}`,sortable:true,reorder:true,omit:!showCols.includes('req_type')},
         {id:'effdate',name:'Effective Date',selector:row=>row.EFFDATE,format:row=>format(new Date(row.EFFDATE),'P'),sortable:true,reorder:true,omit:!showCols.includes('effdate')},
         {id:'candidate_name',name:'Candidate Name',selector:row=>row.CANDIDATENAME,sortable:true,wrap:true,reorder:true,omit:!showCols.includes('candidate_name')},
-        {id:'line_number',name:'Line #',selector:row=>row.LINENUMBER,sortable:true,reorder:true,omit:!showCols.includes('line_number')},
+        {id:'lineNumber',name:'Line #',selector:row=>row.LINENUMBER,sortable:true,reorder:true,omit:!showCols.includes('line_number')},
         {id:'multi_lines',name:'Multi-Line?',selector:row=>row.MULTILINES,format:row=>row.MULTILINES=='Y'?'Yes':'No',sortable:true,reorder:true,omit:!showCols.includes('multi_lines')},
         {id:'title',name:'Title',selector:row=>row.REQBUDGETTITLE,sortable:true,wrap:true,reorder:true,omit:!showCols.includes('title')},
         {id:'created_by',name:'Created By',selector:row=>row.CREATED_BY_SUNY_ID,sortable:true,format:row=>`${row.CREATED_BY_FIRST_NAME} ${row.CREATED_BY_LEGAL_LAST_NAME} (${row.CREATED_BY_SUNY_ID})`,wrap:true,reorder:true,omit:!showCols.includes('created_by')},
