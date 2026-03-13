@@ -1,20 +1,37 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
-import { useParams } from "react-router-dom";
+import { Redirect, useParams } from "react-router-dom";
 import { RequestContext, defaultVals } from "../../config/request";
-import { merge } from "lodash";
+import { merge, get } from "lodash";
 import useRequestQueries from "../../queries/requests";
 import Review from "../../blocks/request/review";
+import { Loading } from "../../blocks/components";
 
 export default function RequestArchiveView({reqId}) {
     const { id } = useParams();
 
-    const { getArchiveRequest } = useRequestQueries(id||reqId);
-    const reqData = getArchiveRequest();
+    const [redirect,setRedirect] = useState('');
 
+    const { getArchiveRequest } = useRequestQueries(id||reqId);
+    const request = getArchiveRequest({
+        onSuccess:data=>{
+            console.debug('Request Data Fetched:\n',data);
+            if (get(data,'redirect',false)) {
+                console.warn(`Invalid path, redirecting to ${data.newpath}`);
+                setRedirect(data.newpath);
+            }
+        },
+        onError:e=>{
+            console.error(e);
+        }
+    });
+
+    if (redirect) return <Redirect to={redirect}/>;
+    if (request.isError) return <Loading type="alert" isError>Failed To Load Request Data - <small>{request.error?.name} - {request.error?.description||request.error?.message}</small></Loading>;
+    if (!request.data) return <Loading type="alert">Loading Request Data</Loading>;
     return (
         <section>
-            {reqData.data && <RequestViewData data={reqData.data}/>}
+            {request.data && <RequestViewData data={request.data}/>}
         </section>
     );
 }

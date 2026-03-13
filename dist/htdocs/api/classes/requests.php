@@ -62,6 +62,36 @@ class Requests extends HRForms2 {
         return false;
     }    
 
+    private function reqIdExists() {
+        $reqId = $this->req[count($this->req)-1];
+        $qry = "SELECT :reqId AS reqId,
+                CASE WHEN EXISTS (SELECT 1 FROM HRFORMS2_REQUESTS_DRAFTS t1 WHERE t1.data.reqId = :reqId)
+                    THEN 'Y' ELSE 'N' END AS in_drafts,
+                CASE WHEN EXISTS (SELECT 1 FROM HRFORMS2_REQUESTS t2 WHERE t2.request_id = :reqId)
+                    THEN 'Y' ELSE 'N' END AS in_requests,
+                CASE WHEN EXISTS (SELECT 1 FROM HRFORMS2_REQUESTS_ARCHIVE t3 WHERE t3.request_id = :reqId)
+                    THEN 'Y' ELSE 'N' END AS in_archive
+                FROM dual";
+        $stmt = oci_parse($this->db,$qry);
+        oci_bind_by_name($stmt,":reqId",$reqId);
+        $r = oci_execute($stmt);
+        if (!$r) $this->raiseError();
+        $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
+        if ($row['IN_DRAFTS'] == 'N' && $row['IN_REQUESTS'] == 'N' && $row['IN_ARCHIVE'] == 'N') {
+            $this->raiseError(E_NOT_FOUND);
+        }
+        $origpath = "/request/".implode("/",$this->req);
+        $newpath = "/request/";
+        if ($row['IN_DRAFTS'] == 'Y') {
+            $newpath .= "drafts/";
+        }
+        if ($row['IN_ARCHIVE'] == 'Y') {
+            $newpath .= "archive/";
+        }
+        $newpath .= $reqId;
+        return array("redirect"=>($origpath!=$newpath),"origpath"=>$origpath,"newpath"=>$newpath,"validation"=>$row);
+    }
+
     /**
      * validate called from init()
      */
@@ -71,6 +101,11 @@ class Requests extends HRForms2 {
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
     function GET() {
+        $check = $this->reqIdExists();
+        if ($check['redirect']) {
+            $this->toJSON($check);
+            return;
+        }
         $requestData = new stdClass(); // initialize default empty object to prevent assignment errors
         if ($this->req[0] == 'draft') {
             $qry = "select DATA from HRFORMS2_REQUESTS_DRAFTS where SUNY_ID = :suny_id and UNIX_TS = :unix_ts";

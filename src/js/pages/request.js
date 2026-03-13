@@ -22,6 +22,7 @@ const Position = lazy(()=>lazyRetry(()=>import("../blocks/request/position")));
 const Account = lazy(()=>lazyRetry(()=>import("../blocks/request/account")));
 const Comments = lazy(()=>lazyRetry(()=>import("../blocks/request/comments")));
 const Review = lazy(()=>lazyRetry(()=>import("../blocks/request/review")));
+
 export default function Request() {
     const [reqId,setReqId] = useState('');
     const [isNew,setIsNew] = useState(false);
@@ -60,6 +61,7 @@ export default function Request() {
 function RequestWrapper({reqId,isDraft,isNew,reset,historyFrom}) {
     const [reqData,setReqData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
+    const [redirect,setRedirect] = useState('');
 
     const {general} = useSettingsContext();
 
@@ -79,7 +81,12 @@ function RequestWrapper({reqId,isDraft,isNew,reset,historyFrom}) {
         if (!isNew) {
             request.refetch({throwOnError:true,cancelRefetch:true}).then(r=>{
                 console.debug('Request Data Fetched:\n',r.data);
-                setReqData(r.data);
+                if (get(r.data,'redirect',false)) {
+                    console.warn(`Invalid path, redirecting to ${r.data.newpath}`);
+                    setRedirect(r.data.newpath);
+                } else {
+                    setReqData(r.data);
+                }
             }).catch(e => {
                 console.error(e);
             });
@@ -87,6 +94,7 @@ function RequestWrapper({reqId,isDraft,isNew,reset,historyFrom}) {
             setReqData({});
         }
     },[reqId]);
+    if (redirect) return <Redirect to={redirect}/>;
     if (request.isError) return <Loading type="alert" isError>Failed To Load Request Data - <small>{request.error?.name} - {request.error?.description||request.error?.message}</small></Loading>;
     if (!reqData) return <Loading type="alert">Loading Request Data</Loading>;
     return(
