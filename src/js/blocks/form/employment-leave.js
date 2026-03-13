@@ -14,7 +14,7 @@ const idName = 'employmentLeave';
 
 export default function EmploymentLeave() {
     const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
-    const { canEdit, activeNav, formType } = useHRFormContext();
+    const { canEdit, activeNav } = useHRFormContext();
 
     const watchLeavePercent = useWatch({name:`${name}.leavePercent`,control:control})||0;
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
