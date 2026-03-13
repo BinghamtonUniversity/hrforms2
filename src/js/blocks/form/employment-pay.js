@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller } from "react-hook-form";
@@ -16,11 +16,30 @@ const name = 'employment.pay';
 const idName = camelCase(name);
 
 export default function EmploymentPay() {
+    const { control, formState: { defaultValues } } = useFormContext();
+    const { canEdit, activeNav } = useHRFormContext();
+
+    useEffect(() => {
+        const field = document.querySelector(`#${activeNav} input:not([disabled])`);
+        (canEdit&&field)&&field.focus({focusVisible:true});
+    },[activeNav]);
+
     return (
         <article className="mt-3">
             <Row as="header">
                 <Col as="h3">Pay</Col>
             </Row>
+            <Form.Group as={Row} controlId={`${idName}ExternalId`}>
+                <Form.Label column md={2}>Handshake ID:</Form.Label>
+                <Col xs="auto">
+                    <Controller
+                        name={`${name}.externalId`}
+                        control={control}
+                        defaultValue={defaultValues[`${name}.externalId`]}
+                        render={({field})=><Form.Control {...field} type="text" disabled={!canEdit}/>}
+                    />
+                </Col>
+            </Form.Group>
             <ExistingEmploymentPayTable/>
             <NewEmploymentPay/>
         </article>
