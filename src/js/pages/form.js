@@ -74,6 +74,7 @@ function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete,reset,
     const [formData,setFormData] = useState();
     const [isBlocking,setIsBlocking] = useState(false);
     const [showHidden,setShowHidden] = useState(true);
+    const [redirect,setRedirect] = useState('');
 
     const {general} = useSettingsContext();
     const {isAdmin,INSTANCE} = useAuthContext();
@@ -84,7 +85,7 @@ function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete,reset,
     const title = useMemo(() => {
         //if (isDraft) return "Draft Form"
         if (!form.data) return null;
-        const status = form.data.lastJournal.STATUS;
+        const status = get(form.data,'lastJournal.STATUS','');
         const statusText = get(general.status,status,{list:(isDraft)?'Draft':''});
         let tl = `Form #${formId}`;
         if (statusText.list) tl += ' - ' + statusText.list;
@@ -101,8 +102,13 @@ function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete,reset,
                     if (val) set(f.data,df,new Date(val));
                 });
                 console.debug('Form Data Fetched:\n',f.data);
-                setFormData(f.data);
-                setInfoComplete(true);
+                if (get(f.data,'redirect',false)) {
+                    console.warn(`Invalid path, redirecting to ${f.data.newpath}`);
+                    setRedirect(f.data.newpath);
+                } else {                
+                    setFormData(f.data);
+                    setInfoComplete(true);
+                }
             }).catch(e => {
                 console.error(e);
             });
@@ -110,6 +116,7 @@ function HRFormWrapper({formId,isDraft,isNew,infoComplete,setInfoComplete,reset,
             setFormData({});
         }
     },[formId,isNew]);
+    if (redirect) return <Redirect to={redirect}/>;
     if (form.isError) return <Loading type="alert" isError>Failed To Load Form Data - <small>{form.error?.name} - {form.error?.description||form.error?.message}</small></Loading>;
     if (!formData) return <Loading type="alert">Loading Form Data</Loading>;
     return (

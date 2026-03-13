@@ -1,17 +1,34 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { initFormValues, allTabs, HRFormContext } from "../../config/form";
 import { useForm, FormProvider } from "react-hook-form";
-import { useParams } from "react-router-dom";
+import { useParams, Redirect } from "react-router-dom";
 import useFormQueries from "../../queries/forms";
-import { merge, cloneDeep } from "lodash";
+import { merge, cloneDeep, get } from "lodash";
 import Review from "../../blocks/form/review";
+import { Loading } from "../../blocks/components";
 
 export default function HRFormArchiveView({formId}) {
     const { id } = useParams();
 
-    const { getArchiveForm } = useFormQueries(id||formId);
-    const formData = getArchiveForm();
+    const [redirect,setRedirect] = useState('');
 
+    const { getArchiveForm } = useFormQueries(id||formId);
+    const formData = getArchiveForm({
+        onSuccess:data=>{
+            console.debug('Form Data Fetched:\n',data);
+            if (get(data,'redirect',false)) {
+                console.warn(`Invalid path, redirecting to ${data.newpath}`);
+                setRedirect(data.newpath);
+            }
+        },
+        onError:e=>{
+            console.error(e);
+        }
+    });
+
+    if (redirect) return <Redirect to={redirect}/>;
+    if (formData.isError) return <Loading type="alert" isError>Failed To Load Form Data - <small>{formData.error?.name} - {formData.error?.description||formData.error?.message}</small></Loading>;
+    if (!formData.data) return <Loading type="alert">Loading Form Data</Loading>;
     return (
         <section>
             {formData.data && <HRFormViewData data={formData.data}/>}
