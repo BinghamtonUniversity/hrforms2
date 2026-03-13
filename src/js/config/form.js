@@ -378,6 +378,7 @@ const initFormValues = {
             salaryEffDate:""
         },
         pay: {
+            externalId:"",
             existingPay:[],
             newPay:[]
         },
