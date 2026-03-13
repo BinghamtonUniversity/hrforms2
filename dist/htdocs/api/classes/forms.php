@@ -63,32 +63,41 @@ class Forms extends HRForms2 {
     }
 
     private function formIdExists() {
-        $formId = $this->req[count($this->req)-1];
-        $qry = "SELECT :formId AS formId,
-                CASE WHEN EXISTS (SELECT 1 FROM HRFORMS2_FORMS_DRAFTS t1 WHERE t1.data.formId = :formId)
-                    THEN 'Y' ELSE 'N' END AS in_drafts,
-                CASE WHEN EXISTS (SELECT 1 FROM HRFORMS2_FORMS t2 WHERE t2.form_id = :formId)
-                    THEN 'Y' ELSE 'N' END AS in_requests,
-                CASE WHEN EXISTS (SELECT 1 FROM HRFORMS2_FORMS_ARCHIVE t3 WHERE t3.form_id = :formId)
-                    THEN 'Y' ELSE 'N' END AS in_archive
-                FROM dual";
+        if (count($this->req) == 3) {
+            $formId = "draft-".$this->req[1]."-".$this->req[2];
+            $qry = "SELECT :formId AS formId,
+                    CASE WHEN EXISTS (SELECT 1 FROM HRFORMS2_FORMS_DRAFTS t1 WHERE t1.data.formId = :formId)
+                        THEN 'Y' ELSE 'N' END AS in_drafts,
+                    'N' AS in_progress,
+                    'N' AS in_archive
+                    FROM dual";
+        } else {
+            $formId = $this->req[count($this->req)-1];
+            $qry = "SELECT :formId AS formId,
+                    'N' AS in_drafts,
+                    CASE WHEN EXISTS (SELECT 1 FROM HRFORMS2_FORMS t2 WHERE t2.form_id = :formId)
+                        THEN 'Y' ELSE 'N' END AS in_progress,
+                    CASE WHEN EXISTS (SELECT 1 FROM HRFORMS2_FORMS_ARCHIVE t3 WHERE t3.form_id = :formId)
+                        THEN 'Y' ELSE 'N' END AS in_archive
+                    FROM dual";
+        }
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt,":formId",$formId);
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
         $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
-        if ($row['IN_DRAFTS'] == 'N' && $row['IN_REQUESTS'] == 'N' && $row['IN_ARCHIVE'] == 'N') {
+        if ($row['IN_DRAFTS'] == 'N' && $row['IN_PROGRESS'] == 'N' && $row['IN_ARCHIVE'] == 'N') {
             $this->raiseError(E_NOT_FOUND);
         }
         $origpath = "/form/".implode("/",$this->req);
-        $newpath = "/form/";
+        $newpath = "";
         if ($row['IN_DRAFTS'] == 'Y') {
-            $newpath .= "drafts/";
+            $newpath .= $origpath; //drafts should always be in format /form/draft/{suny_id}/{unix_ts}
+        } else if ($row['IN_ARCHIVE'] == 'Y') {
+            $newpath .= "/form/archive/" . $formId;
+        } else {
+            $newpath .= "/form/" . $formId;
         }
-        if ($row['IN_ARCHIVE'] == 'Y') {
-            $newpath .= "archive/";
-        }
-        $newpath .= $formId;
         return array("redirect"=>($origpath!=$newpath),"origpath"=>$origpath,"newpath"=>$newpath,"validation"=>$row);
     }
 
@@ -96,6 +105,11 @@ class Forms extends HRForms2 {
      * validate called from init()
      */
     function validate() {
+        if ($this->method == "GET") {
+            if (count($this->req) > 3 || count($this->req) < 1) $this->raiseError(E_BAD_REQUEST);
+            if (count($this->req) == 3 && $this->req[0] != 'draft') $this->raiseError(E_BAD_REQUEST);
+            if (count($this->req) == 2 && $this->req[0] != 'archive') $this->raiseError(E_BAD_REQUEST);
+        }
         if ($this->method == 'DELETE' && $this->req[0] == 'draft' && $this->req[1] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"Cannot delete draft for another user"));
     }
 
