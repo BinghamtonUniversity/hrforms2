@@ -24,6 +24,8 @@ class User extends HRForms2 {
     reporting_department_code,reporting_department_name,
     supervisor_suny_id,supervisor_last_name,supervisor_first_name";	
 
+    protected $SIMPLE_PERSEMP_FIELDS = "suny_id as SUNYHR_SUNY_ID,regexp_substr(b_number,'(B[0-9]{8})',1,1,'i',1) as b_number,legal_last_name,legal_first_name,legal_middle_name,alias_first_name,email_address_work";
+
     function __construct($req,$rjson=true) {
         $this->allowedMethods = "GET,POST,PUT,PATCH,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
         $this->reqAuth = true; //default: true - NB: See note above
@@ -85,24 +87,29 @@ class User extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (!isset($this->req[0]) && !$this->sessionData['isAdmin']) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"SUNY ID is required"));
-        //need to allow non-admin users to query user data
-        //if ($this->method != "GET" && !$this->sessionData['isAdmin']) $this->raiseError(403);
         if ($this->method == 'PUT' && !isset($this->req[0])) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"SUNY ID is required"));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
     function GET() {
         if (!isset($this->req[0])) { // get all users
-            $qry = "select u.suny_id, p.*,
-                u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date,
-                to_char(u.refresh_date,'dd-MON-yy hh:mi:ss AM') as refresh_date,
-                d.group_id, g.group_name, nvl(u.user_options.notifications,'N') as notifications, 
-                nvl(u.user_options.viewer,'N') as viewer
-            from hrforms2_users u
-            left join (select distinct ".$this->BASE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.sunyhr_suny_id)
-            left join (select department_code, group_id from hrforms2_group_departments) d on (p.REPORTING_DEPARTMENT_CODE = d.DEPARTMENT_CODE)
-            left join (select group_id, group_name from hrforms2_groups) g on (d.group_id = g.group_id)";
+            if (!$this->sessionData['isAdmin']) {
+                $qry = "select u.suny_id, p.*,
+                    u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date,
+                    to_char(u.refresh_date,'dd-MON-yy hh:mi:ss AM') as refresh_date
+                from hrforms2_users u
+                left join (select distinct ".$this->SIMPLE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.sunyhr_suny_id)";
+            } else {
+                $qry = "select u.suny_id, p.*,
+                    u.suny_id as user_suny_id, u.created_date, u.created_by, u.start_date, u.end_date,
+                    to_char(u.refresh_date,'dd-MON-yy hh:mi:ss AM') as refresh_date,
+                    d.group_id, g.group_name, nvl(u.user_options.notifications,'N') as notifications, 
+                    nvl(u.user_options.viewer,'N') as viewer
+                from hrforms2_users u
+                left join (select distinct ".$this->BASE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.sunyhr_suny_id)
+                left join (select department_code, group_id from hrforms2_group_departments) d on (p.REPORTING_DEPARTMENT_CODE = d.DEPARTMENT_CODE)
+                left join (select group_id, group_name from hrforms2_groups) g on (d.group_id = g.group_id)";
+            }
             $stmt = oci_parse($this->db,$qry);
             $r = oci_execute($stmt);
             if (!$r) $this->raiseError();
