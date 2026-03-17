@@ -20,7 +20,8 @@ export default function useUserQueries(SUNY_ID) {
                 u.isViewer = u.USER_OPTIONS?.viewer == 'Y';
             });
         }});
-    }    
+    }
+
     const getCounts = () => {
         const url = (isViewer) ? 'counts/viewer' : 'counts';
         //const now = Date.now();
