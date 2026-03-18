@@ -5,7 +5,7 @@ import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import sub from "date-fns/sub";
 import { assign, keyBy, orderBy, get, set } from "lodash";
-import { AppButton, Loading } from "../components";
+import { AppButton, DescriptionPopover, Loading } from "../components";
 import usePersonQueries from "../../queries/person";
 import useCodesQueries from "../../queries/codes";
 import useTransactionQueries from "../../queries/transactions";
@@ -34,6 +34,7 @@ export default function FormBasicInfo() {
                 newEmp.HR_PERSON_ID = '';
                 newEmp.EMPLOYMENT_ROLE_TYPE = 'New Employee';
                 newEmp.LEGAL_LAST_NAME = 'New Employee';
+                newEmp.COMMITMENT_DEPARTMENTS = '{}';
                 d.results.unshift(newEmp);
             }
             //Add "New Role" option for each employee in the list (based on SUNY_ID)
@@ -62,6 +63,7 @@ export default function FormBasicInfo() {
                 ].forEach(k=>newRole[k]='');
                 newRole['EMPLOYMENT_ROLE_TYPE'] = 'New Role';
                 newRole['LEGAL_LAST_NAME'] = 'New Role';
+                newRole['COMMITMENT_DEPARTMENTS'] = '{}';
                 nr.push(newRole);
             });
             const result = assign(keyBy(d.results,'id'),keyBy(nr,'id'));
@@ -296,7 +298,28 @@ function LookupResults({data}) {
             return `${row.EMPLOYMENT_ROLE_TYPE}/${row.DATA_STATUS_EMP}/${row.STATUS_TYPE}`;
         },sortable:true,wrap:true},
         {name:'Payroll',selector:row=>row.PAYROLL_AGENCY_CODE,sortable:true,wrap:true},
-        {name:'Department',selector:row=>row.DPT_CMP_DSC,sortable:true,wrap:true},
+        {name:'Department',selector:row=>{
+            if (row.DPT_CMP_DSC && (get(row,'COMMITMENT_DEPARTMENTS','{}') != '{}')) {
+                const depts = Object.entries(JSON.parse(row.COMMITMENT_DEPARTMENTS)).sort((a,b)=>(a[1].localeCompare(b[1])));
+                if (depts.length < 2) return row.DPT_CMP_DSC;
+                return (
+                    <DescriptionPopover
+                        id={`commitment_depts_${row.id}`}
+                        title="Commitment Departments"
+                        content={
+                            <ul className="pl-3">{depts.map(([key, value]) => (<li key={key} className="mb-1">{value}</li>))}</ul>
+                        }
+                    >
+                        <div>
+                            <span>{row.DPT_CMP_DSC}</span>
+                            <span className="text-primary"><Icon icon="mdi:information-variant-box" width={20} height={20}/></span>
+                        </div>
+                    </DescriptionPopover>
+                );
+            } else {
+                return row.DPT_CMP_DSC;
+            }
+        },sortable:true,wrap:true},
         {name:'Title',selector:row=>row.TITLE_DESCRIPTION,sortable:true,wrap:true},
         {name:'Effective Date',selector:row=>row.effectiveDateFmt,sortable:true,wrap:true},
         {name:'End Date',selector:row=>row.endDateFmt,sortable:true,wrap:true}
@@ -336,6 +359,18 @@ function LookupResults({data}) {
                             selectableRowSelected={rowSelectCritera}
                             onSelectedRowsChange={handleSelectedRowChange}
                         />                    
+                    </Col>
+                </Row>
+                <Row>
+                    <Col>
+                        <p className="mb-0 ml-1 font-italic">
+                            <small>
+                                <span className="text-primary">
+                                    <Icon icon="mdi:information-variant-box" className="iconify-inline" width={20} height={20}/>
+                                </span>
+                                in the Department column indicates multiple commitment departments - hover to view the list of commitment departments.
+                            </small>
+                        </p>
                     </Col>
                 </Row>
             </article>

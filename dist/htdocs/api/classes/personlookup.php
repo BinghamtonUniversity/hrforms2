@@ -55,13 +55,23 @@ class PersonLookup extends HRForms2 {
             nvl(pers.alias_first_name,pers.legal_first_name) as first_name,
             pers.legal_middle_name, pers.legal_last_name, pers.suffix_code, 
             pers.local_campus_id, pemp.payroll_agency_code, pemp.title_description, pemp.dpt_cmp_dsc,
-            pemp.negotiating_unit, pemp.appointment_type, pemp.appointment_percent, pemp.pay_basis
+            pemp.negotiating_unit, pemp.appointment_type, pemp.appointment_percent, pemp.pay_basis,
+            cmt.commitment_departments
             FROM buhr.buhr_person_mv@banner.cc.binghamton.edu pers
             LEFT JOIN (SELECT hr_person_id, payroll_agency_code, line_item_number, pay_basis,
                 employment_role_type, data_status_emp, status_type, negotiating_unit,
                 appointment_type, appointment_effective_date, appointment_end_date, appointment_percent,
                 title_description, dpt_cmp_dsc
                 FROM buhr.buhr_person_empl_mv@banner.cc.binghamton.edu) pemp on (pers.hr_person_id = pemp.hr_person_id)
+            LEFT JOIN (select suny_id, json_objectagg(key contract_group value department_desc ABSENT ON NULL) as commitment_departments
+                from (
+                    select distinct c.suny_id, c.contract_group, d.department_desc
+                    from buhr.buhr_commitment_mv@banner.cc.binghamton.edu c
+                    left join (select campus_identifier, department_desc from sunyhr.campus_departments@banner.cc.binghamton.edu) d on (d.campus_identifier = c.contract_group)
+                    where c.data_status = 'C'
+                    and nvl(c.commitment_end_date,sysdate) >= sysdate
+                    order by c.suny_id, d.department_desc)
+                group by suny_id) cmt on (cmt.suny_id = pers.suny_id)
             WHERE pers.role_type <> 'STSCH' ";
             //$qry = $base_qry;
         switch($this->req[0]) {
