@@ -83,8 +83,6 @@ class Groups extends HRForms2 {
         if ($this->retJSON) $this->toJSON($this->returnData);
     }
     function POST() {
-        //include 'groupusers.php';
-        //include 'groupdepts.php';
         $qry = "insert into hrforms2_groups values(HRFORMS2_GROUP_ID_SEQ.nextval, :group_name, sysdate, :start_date, :end_date, :description) returning GROUP_ID into :group_id";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt,":group_name", $this->POSTvars['GROUP_NAME']);
@@ -95,8 +93,8 @@ class Groups extends HRForms2 {
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
         oci_free_statement($stmt);
-        new groupusers(array($GROUP_ID));
-        new groupdepts(array($GROUP_ID));
+        $groupusers = (new groupusers(array($GROUP_ID),false))->returnData;
+        $groupdepts = (new groupdepts(array($GROUP_ID),false))->returnData;
         $this->done();
     }
     function PUT() {
