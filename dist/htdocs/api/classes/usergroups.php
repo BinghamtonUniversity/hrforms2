@@ -24,18 +24,19 @@ class UserGroups extends HRForms2 {
      * validate called from init()
      */
     function validate() {
-        if (!isset($this->req[0])) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"SUNY ID is required"));
         if ($this->method=='PUT' && !$this->sessionData['isAdmin']) $this->raiseError(E_FORBIDDEN,array("errMsg"=>"You do not have permission to access this resource."));
     }
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
     function GET() {
+        // Default to effective SUNY ID if not given
+        $suny_id = (!isset($this->req[0])) ? $this->sessionData['EFFECTIVE_SUNY_ID'] : $this->req[0];
         $qry = "select g.* 
             from hrforms2_user_groups ug, hrforms2_groups g
             where ug.group_id = g.group_id
             and ug.suny_id = :suny_id";
         $stmt = oci_parse($this->db,$qry);
-        oci_bind_by_name($stmt,":suny_id", $this->req[0]);
+        oci_bind_by_name($stmt,":suny_id", $suny_id);
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
         while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
