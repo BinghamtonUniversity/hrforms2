@@ -31,7 +31,7 @@ export default function AppNav() {
                                 </NavDropdown>
                             );
                         })}
-                        {(isAdmin && !OVR_SUNY_ID) &&
+                        {(isAdmin=='1' && !OVR_SUNY_ID) &&
                         <NavDropdown title="Admin" id="admin-nav-dropdown" alignRight>
                             <NavDropdown.Item as={Link} to="/admin/news">News</NavDropdown.Item>
                             <NavDropdown.Divider/>
