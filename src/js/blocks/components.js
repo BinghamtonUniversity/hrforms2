@@ -64,6 +64,7 @@ export const formats = {
     'next':{icon:'mdi:arrow-right-thick',variant:'primary'},
     'previous':{icon:'mdi:arrow-left-thick',variant:'secondary'},
     'print':{icon:'mdi:printer',variant:'primary'},
+    'refresh':{icon:'mdi:refresh',variant:'success'},
     'remove':{icon:'mdi:minus',variant:'danger'},
     'reject':{icon:'mdi:close-circle',variant:'danger'},
     'run':{icon:'mdi:run',variant:'danger'},
