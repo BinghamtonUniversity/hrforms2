@@ -281,7 +281,7 @@ Class HRForms2 {
      * @return array
      */
     protected function getGroupIds($deptcode) {
-        if (!isset($deptcode)) $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Department Code is required"));
+        if (!isset($deptcode)) return null; 
         $qry = "select group_id from hrforms2_group_departments where department_code = :dept_code";
         $stmt = oci_parse($this->db,$qry);
         oci_bind_by_name($stmt, ":dept_code", $deptcode);
@@ -590,7 +590,7 @@ Class HRForms2 {
         // add helper functions
         $vars = array_merge($vars,array(
             'formatCurrency' => function($text, Mustache_LambdaHelper $helper) {
-                $value = $helper->render($text);
+                $value = (float)$helper->render($text);
                 return '$'.number_format($value,2);
             },
             'formatDate' => function($text, Mustache_LambdaHelper $helper) {
