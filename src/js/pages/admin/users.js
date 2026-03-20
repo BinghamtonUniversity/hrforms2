@@ -94,7 +94,8 @@ function UsersTable({users,newUser,setNewUser}) {
         setImpersonateUser(filteredRows[0]);
     },{enableOnTags:['INPUT']},[filteredRows]);
 
-    const handleRowClick = useCallback(row=>setSelectedRow(row));
+    //const handleRowClick = useCallback(row=>setSelectedRow(row));
+    const handleRowClick = useCallback(row=>setImpersonateUser(row));
     
     const handleSort = useCallback((...args) => {
         if (!args[0].sortable) return false;
@@ -172,7 +173,7 @@ function UsersTable({users,newUser,setNewUser}) {
         {name:'Actions',id:'actions',cell:row=>{
             return (
                 <div className="button-group">
-                    {row.SUNY_ID && <AppButton format="impersonate" size="sm" title="Impersonate User" onClick={()=>setImpersonateUser(row)} disabled={!row.active||row.SUNY_ID==SUNY_ID}/>}
+                    {row.SUNY_ID && <AppButton format="edit-user" size="sm" title="Edit User" onClick={()=>setSelectedRow(row)} disabled={!row.active||row.SUNY_ID==SUNY_ID}/>}
                     {row.active && <AppButton format="deactivate-user" size="sm" title="Deactivate User" onClick={()=>setToggleUser(row)} disabled={row.SUNY_ID==SUNY_ID}/>}
                     {!row.active && <AppButton format="activate-user" size="sm" title="Restore User" onClick={()=>setToggleUser(row)} disabled={row.SUNY_ID==SUNY_ID}/>}
                     <AppButton format="delete" size="sm" title="Delete User" onClick={()=>setDeleteUser(row)} disabled={row.SUNY_ID==SUNY_ID}/>
