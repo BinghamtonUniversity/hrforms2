@@ -391,7 +391,8 @@ function AddEditUserForm(props) {
     const allTabs = [
         {id:'info',title:'Info'},
         {id:'groups',title:'Groups'},
-        {id:'depts',title:'Departments'}
+        {id:'depts',title:'Departments'},
+        {id:'raw',title:'Raw Data'}
     ];
     const [tabs,setTabs] = useState(allTabs);
     const defaultStatus = {state:'',message:'',icon:'',spin:false,cancel:true,save:false};
@@ -581,7 +582,7 @@ function AddEditUserForm(props) {
                             {tabs.map(t=>(
                                 <Tab key={t.id} eventKey={t.id} title={t.title}>
                                     <Container className="mt-3" fluid>
-                                        <TabRouter tab={activeTab} newUser={props.newUser} setStatus={setStatus} closeModal={closeModal}/>
+                                        <TabRouter tab={activeTab} newUser={props.newUser} setStatus={setStatus} closeModal={closeModal} userData={props}/>
                                     </Container>
                                 </Tab>
                             ))}
@@ -598,11 +599,12 @@ function AddEditUserForm(props) {
     );
 }
 
-const TabRouter = React.memo(({tab,newUser,setStatus,closeModal}) => {
+const TabRouter = React.memo(({tab,newUser,setStatus,closeModal,userData}) => {
     switch(tab) {
         case "info": return <UserInfo newUser={newUser} setStatus={setStatus} closeModal={closeModal}/>;
         case "groups": return <UserGroups/>;
         case "depts": return <UserDepts/>;
+        case "raw": return <UserData userData={userData}/>;
         default: return <NotFound/>;
     }
 });
@@ -630,8 +632,9 @@ function UserInfo({newUser,setStatus,closeModal}) {
     },lookupStateDefault);
 
     const queryclient = useQueryClient();
-    const {lookupUser} = useUserQueries(watchSUNYID);
+    const { lookupUser, refreshUser } = useUserQueries(watchSUNYID);
     const lookupuser = lookupUser({enabled:false});
+    const refreshuser = refreshUser({enabled:false});
     const ref = useRef();
     
     const handleLookup = () => {
@@ -718,6 +721,11 @@ function UserInfo({newUser,setStatus,closeModal}) {
                 return true;
             }
         }
+    }
+    const handleRefresh = () => {
+        refreshuser.refetch().then(d => {
+            queryclient.refetchQueries('users').then(()=>closeModal());
+        })
     }
 
     useEffect(() => { newUser && ref.current.focus();},[]);
@@ -877,7 +885,7 @@ function UserInfo({newUser,setStatus,closeModal}) {
             </Form.Row>
             <Row>
                 <Col>
-                    <p className="font-size-90 font-italic m-0 mt-3 mb-1">Last Refresh: {getValues('refreshDate')}</p>
+                    <p className="font-size-90 font-italic m-0 mt-3 mb-1">Last Refresh: {getValues('refreshDate')} <AppButton size="sm" format="refresh" variant="warning" style={{fontSize:'0.75rem'}} onClick={handleRefresh}>Refresh</AppButton></p>
                 </Col>
             </Row>
         </>
@@ -1122,5 +1130,11 @@ function UserDeptsList({filteredDepts,filterText}) {
                 )}
             </Droppable>
         </DragDropContext>
+    );
+}
+
+function UserData({userData}) {
+    return (
+        <div><pre>{JSON.stringify(userData,null,2)}</pre></div>
     );
 }

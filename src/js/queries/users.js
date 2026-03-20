@@ -21,6 +21,10 @@ export default function useUserQueries(SUNY_ID) {
             });
         }});
     }
+    const refreshUser = (...args) => {
+        const options = args[0]?.options||args[0]||{};
+        return useQuery(['user',SUNY_ID],q(`user/${SUNY_ID}/refresh`),options);
+    }
 
     const getCounts = () => {
         const url = (isViewer) ? 'counts/viewer' : 'counts';
@@ -130,5 +134,5 @@ export default function useUserQueries(SUNY_ID) {
         return useQuery(['userdepts',SUNY_ID],q(`userdepts/${SUNY_ID}`),options);
     }
 
-    return {getUser,getCounts,lookupUser,getUsers,postUser,putUser,patchUser,deleteUser,getUserGroups,getUserDepts};
+    return {getUser,refreshUser,getCounts,lookupUser,getUsers,postUser,putUser,patchUser,deleteUser,getUserGroups,getUserDepts};
 }

@@ -196,8 +196,9 @@ class User extends HRForms2 {
                         $userInfo = json_decode($user['USER_INFO'],true);
                         if ($user['USER_INFO'] == "" || !array_key_exists('SUNY_ID',$userInfo)) $refresh_diff = $settings['general']['userRefresh']+1;
                     }
-                    
-                    if ($refresh_diff > $settings['general']['userRefresh']) { // user_info is "stale" or missing
+
+                    $force_refresh = (isset($this->req[1]) && $this->req[1] == 'refresh');
+                    if ($refresh_diff > $settings['general']['userRefresh'] || $force_refresh) { // user_info is "stale" or missing
                         $this->_arr = $this->getSUNYHRUser();
                         if (!$this->_arr) { // No SUNY HR data; use existing cached data
                             // if refresh diff is greater than $userRefresh setting + 14 days; set end date on user and send error
