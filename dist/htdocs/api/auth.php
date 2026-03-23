@@ -4,6 +4,9 @@
     include_once 'etc/CASconfig.php';
     include_once 'vendor/autoload.php';
 
+    #if (isset($_GET['demo'])) {
+    #    return;
+    #}
     if (!CAS_HOST && INSTANCE == 'LOCAL') {
         //TOOD: need to do more?  This is all hard-coded and required DB direct updates
         $sid = 'DA30317F601904A3E0539406E280F00F';
@@ -11,11 +14,15 @@
         return;
     }
     if (!phpCAS::isInitialized()) {
+        # Logging for debugging purposes.
+        #phpCAS::setLogger();
+        #phpCAS::setVerbose(false);
+
         session_set_cookie_params($client_lifetime,$client_path,$client_domain,$client_secure,$client_httpOnly);
         #phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context);
         phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $client_service_name);
         #phpCAS::setCasServerCACert($cas_server_ca_cert_path);
-        phpCAS::setNoCasServerValidation();//TODO: should this be off?
+        phpCAS::setNoCasServerValidation();//N.B. If this is off then setCasServerCACert must be set.
         phpCAS::handleLogoutRequests(true, $cas_real_hosts);
         phpCAS::forceAuthentication();
     }
