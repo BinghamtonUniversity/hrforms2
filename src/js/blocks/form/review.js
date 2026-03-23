@@ -219,7 +219,7 @@ function UnArchiveForm({setShouldBlock}) {
                 icon="mdi:alert"
                 buttons={unarchiveButtons}
             >
-                Are you sure you want to un-archive this form? It will be moved back to the in-progress list and the submitter will be notified.
+                Are you sure you want to un-archive this Form? It will be moved back to the in-progress list.
             </ModalConfirm>
         </Row>
     );
