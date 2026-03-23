@@ -15,7 +15,7 @@ export default function SettingsForms() {
         <>
             <DashBoardCardTitle/>
             <SettingsFormsMenu/>
-            <SettingsFormsApproverPermission/>
+            <SettingsFormsPermissions/>
             <SettingsFormsAgeWarning/>
             <SettingsFormsDefaultRouting/>
             <SettingsFormsEmail/>
@@ -140,12 +140,15 @@ function SettingsFormsMenu() {
     );
 }
 
-function SettingsFormsApproverPermission() {
+function SettingsFormsPermissions() {
+    const { getGroups } = useGroupQueries();
+    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME']),initialData:[]});
     const { control } = useFormContext();
+    const enabled = useWatch({name:'forms.permissions.unarchive',control:control});
     return (
         <section>
             <Row as="header" className="mt-3">
-                <Col as="h4">Approver Permissions</Col>
+                <Col as="h4">Permissions</Col>
             </Row>
             <Form.Group as={Row} controlId="formsApproveOwn">
                 <Form.Label column md={2}>Submitter Approve Own:</Form.Label>
@@ -158,6 +161,29 @@ function SettingsFormsApproverPermission() {
                     <Form.Text id="formsApproveOwnHelp" muted>Allow the submitter to approve their own Forms.</Form.Text>
                 </Col>
             </Form.Group> 
+            <Form.Group as={Row} controlId="formsUnarchive">
+                <Form.Label column md={2}>Allow Unarchive:</Form.Label>
+                <Col xs="auto" className="pt-2">
+                    <Controller
+                        name='forms.permissions.unarchive'
+                        control={control}
+                        render={({field}) => <Form.Check {...field} type="checkbox" checked={!!field.value}/>}
+                    />
+                </Col>
+                <Col xs="auto">
+                    <Controller
+                        name='forms.permissions.unarchive-group'
+                        control={control}
+                        render={({field}) => (
+                            <Form.Control as="select" {...field} aria-describedby="formsUnarchiveHelp" disabled={!enabled} >
+                                <option></option>
+                                {groups.data && groups.data.map(g=><option value={g.GROUP_ID} key={g.GROUP_ID}>{g.GROUP_NAME}</option>)}
+                            </Form.Control>
+                        )}
+                    />
+                    <Form.Text id="formsUnarchiveHelp" muted>Allow Forms to be "Unarchived" and placed back into Pending Final Approval status.</Form.Text>
+                </Col>
+            </Form.Group>
         </section>
     );
 }

@@ -1,14 +1,17 @@
-import React, { useState, useEffect, lazy } from "react";
+import React, { useState, useEffect, lazy, useCallback } from "react";
 import { Row, Col } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { Icon } from "@iconify/react";
-import { AppButton, DateFormat } from "../components";
+import { AppButton, DateFormat, errorToast, ModalConfirm } from "../components";
 import { EmploymentPositionInfoBox, FormTypeDisplay } from "../../pages/form";
 import { useHRFormContext } from "../../config/form";
 import { find, get, startCase } from "lodash";
-import { useHistory } from "react-router-dom";
+import { useHistory, Redirect } from "react-router-dom";
 import { ReviewUserInfo } from "../components";
-import { lazyRetry } from "../../app";
+import { lazyRetry, useSettingsContext, useUserContext } from "../../app";
+import useFormQueries from "../../queries/forms";
+import { toast } from "react-toastify";
+import useUserQueries from "../../queries/users";
 
 //lazy load sections
 const ReviewPersonInformation = lazy(()=>lazyRetry(()=>import("./review/review-person-information")));
@@ -26,14 +29,29 @@ const ReviewEmploymentVolunteer = lazy(()=>lazyRetry(()=>import("./review/review
 const ReviewComments = lazy(()=>lazyRetry(()=>import("./review/review-comments")));
 const ReviewSubmitterInfo = lazy(()=>lazyRetry(()=>import("./review/review-submitter")));
 
-export default function Review() {
+export default function Review({setShouldBlock}) {
     const [showReturn,setShowReturn] = useState(false);
 
+    const { forms:settings } = useSettingsContext();
+    const user = useUserContext();
+    const { getUserGroups } = useUserQueries(user.SUNY_ID);
+    const usergroups = getUserGroups();
     const { getValues, formState: { isValid, errors } } = useFormContext();
     const { journalStatus } = useHRFormContext();
     const history = useHistory();
 
+    const canUnarchive = useCallback(() => {
+        if (journalStatus != 'Z') return false;
+        if (!get(settings,'permissions.unarchive',false)) return false; // unarchive is not enabled in settings
+        if (!usergroups.isSuccess) return false;
+        const unarchiveGroup = get(settings,'permissions.unarchive-group',undefined);
+        const userGroups = usergroups.data.map(g=>g.GROUP_ID);
+        if (!userGroups.includes(unarchiveGroup)) return false; // user is not in the unarchive group or group not set.
+        return true;
+    },[settings,usergroups,journalStatus]);
+
     const handleReturnToList = () => history.push(get(history.location,'state.from',''));
+
     useEffect(()=>{
         (journalStatus!='Z')?setShowReturn(false):setShowReturn(!!(get(history.location,'state.from','')));
     },[history,journalStatus]);
@@ -62,6 +80,7 @@ export default function Review() {
                 <ReviewSubmitterInfo/>
                 <ReviewUserInfo/>
             </Row>
+            {canUnarchive() && <UnArchiveForm setShouldBlock={setShouldBlock}/>}
         </article>
     );
 }
@@ -155,3 +174,53 @@ function ReviewSectionRouter({tab}) {
     }
 }
 
+function UnArchiveForm({setShouldBlock}) {
+    //TODO: add in checks for settings and group permissions
+    const [showUnarchiveModal,setShowUnarchiveModal] = useState(false);
+    const [redirect,setRedirect] = useState('');
+
+    const { getValues } = useFormContext();
+
+    const { deleteArchiveForm } = useFormQueries(getValues('formId'));
+    const unarchive = deleteArchiveForm();
+
+    const handleUnarchive = () => {
+        setShowUnarchiveModal(false);
+        toast.promise(new Promise((resolve,reject) => {
+            unarchive.mutateAsync().then(() => {
+                console.log(typeof setShouldBlock);
+                if (typeof setShouldBlock == 'function') setShouldBlock(false); // disable the blocking on redirect
+                setRedirect('/');
+                resolve();
+            }).catch(err=>reject(err));
+        }),{
+            pending:'Unarchiving...',
+            success:'Form Unarchived Successfully',
+            error:errorToast('Failed to Unarchive Form')
+        });
+    }
+
+    const unarchiveButtons = {
+        close: {title: 'Close', callback: () => setShowUnarchiveModal(false)},
+        confirm: {title: 'Unarchive', callback: () => handleUnarchive()}
+    }
+
+    if (redirect) return <Redirect to={redirect}/>;
+    return (
+        <Row as="footer" className="mt-3">
+            <Col className="button-group justify-content-end d-print-none">
+                <AppButton format="unarchive" onClick={()=>setShowUnarchiveModal(true)}>
+                    Un-Archive
+                </AppButton>
+            </Col>
+            <ModalConfirm 
+                show={showUnarchiveModal} 
+                title="Confirm Un-Archive" 
+                icon="mdi:alert"
+                buttons={unarchiveButtons}
+            >
+                Are you sure you want to un-archive this form? It will be moved back to the in-progress list and the submitter will be notified.
+            </ModalConfirm>
+        </Row>
+    );
+}

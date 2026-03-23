@@ -7,7 +7,7 @@ import { merge, cloneDeep, get } from "lodash";
 import Review from "../../blocks/form/review";
 import { Loading } from "../../blocks/components";
 
-export default function HRFormArchiveView({formId}) {
+export default function HRFormArchiveView({formId,setShouldBlock}) {
     const { id } = useParams();
 
     const [redirect,setRedirect] = useState('');
@@ -31,12 +31,12 @@ export default function HRFormArchiveView({formId}) {
     if (!formData.data) return <Loading type="alert">Loading Form Data</Loading>;
     return (
         <section>
-            {formData.data && <HRFormViewData data={formData.data}/>}
+            {formData.data && <HRFormViewData data={formData.data} setShouldBlock={setShouldBlock}/>}
         </section>
     );
 }
 
-function HRFormViewData({data}) {
+function HRFormViewData({data,setShouldBlock}) {
     const methods = useForm({defaultValues: merge({},initFormValues,data)});
     const formType = useMemo(()=>{
         const formActions = methods.getValues('formActions');
@@ -71,7 +71,7 @@ function HRFormViewData({data}) {
                 showInTest:false,
                 createdBy:data.createdBy
             }}>
-                <Review/>
+                <Review setShouldBlock={setShouldBlock}/>
             </HRFormContext.Provider>
         </FormProvider>
     );

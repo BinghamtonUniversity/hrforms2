@@ -46,6 +46,8 @@ export default function useFormQueries(FORM_ID) {
         }
         return useQuery(['forms','archive',FORM_ID],q(`forms/archive/${formIdAsPath}`),options);
     }
+    const deleteArchiveForm = () => useMutation(d=>q(`archive/form/${formIdAsPath}`,'DELETE',d)());
+
     const postForm = () => useMutation(d=>q(`forms/${d.action}/${formIdAsPath}`,'POST',d)());
     const putForm = () => useMutation(d=>q(`forms/${d.action}/${formIdAsPath}`,'PUT',d)());
     const patchForm = () => useMutation(d=>q(`forms/${d.action}/${formIdAsPath}`,'PATCH',d)());
@@ -130,5 +132,5 @@ export default function useFormQueries(FORM_ID) {
     const duplicateCheck = () => useMutation(d=>q(`check/form`,'POST',d)());
 
     return {getEducationInstitutions,getPosition,getArchiveFormList,getJournal,getForm,
-        getArchiveForm,postForm,putForm,patchForm,deleteForm,getFormList,duplicateCheck};
+        getArchiveForm,deleteArchiveForm,postForm,putForm,patchForm,deleteForm,getFormList,duplicateCheck};
 }

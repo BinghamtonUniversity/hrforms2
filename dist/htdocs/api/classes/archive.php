@@ -13,7 +13,7 @@ class Archive extends HRForms2 {
     private $_arr = array();
 
     function __construct($req,$rjson=true) {
-        $this->allowedMethods = "POST"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
+        $this->allowedMethods = "POST, DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
         $this->reqAuth = true; //default: true - NB: See note above
         $this->retJSON = $rjson;
         $this->req = $req;
@@ -75,9 +75,10 @@ class Archive extends HRForms2 {
                 if ($this->retJSON) $this->done();
                 break;
             default:
-                $this->raiseError(E_BADREQUEST,array("msg"=>"Invalid archive type"));
+                $this->raiseError(E_BAD_REQUEST);
         }
     }
+    
     function DELETE() {
         switch($this->req[0]) {
             case "request":
@@ -104,7 +105,8 @@ class Archive extends HRForms2 {
                 $this->done();
                 break;
             case "form":
-                $qry = "insert into HRFORMS2_FORMS select * from HRFORMS2_FORMS_ARCHIVE where form_id = :form_id";
+                //insert into HRFORMS2_REQUESTS select request_id, created_by, created_date, request_data from HRFORMS2_REQUESTS_ARCHIVE where request_id = :request_id;
+                $qry = "insert into HRFORMS2_FORMS select form_id, created_by, created_date, form_data from HRFORMS2_FORMS_ARCHIVE where form_id = :form_id";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":form_id",$this->req[1]);
                 $r = oci_execute($stmt);
@@ -119,7 +121,7 @@ class Archive extends HRForms2 {
                 oci_bind_by_name($stmt,":form_id",$this->req[1]);
                 $r = oci_execute($stmt);
                 if (!$r) $this->raiseError();
-                $qry = "update from HRFORMS2_FORMS_JOURNAL set status = 'PF' where status = 'Z' and form_id = :form_id";
+                $qry = "update HRFORMS2_FORMS_JOURNAL set status = 'PF' where status = 'Z' and form_id = :form_id";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":form_id",$this->req[1]);
                 $r = oci_execute($stmt);
@@ -127,7 +129,7 @@ class Archive extends HRForms2 {
                 $this->done();
                 break;
             default:
-                $this->raiseError(E_BADREQUEST,array("msg"=>"Invalid archive type"));
+                $this->raiseError(E_BAD_REQUEST);
         }
     }
 }
