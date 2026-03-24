@@ -82,7 +82,7 @@ class Archive extends HRForms2 {
     function DELETE() {
         switch($this->req[0]) {
             case "request":
-                $qry = "insert into HRFORMS2_REQUESTS select request_id, created_by, created_date, request_data from HRFORMS2_REQUESTS_ARCHIVE where request_id = :request_id;";
+                $qry = "insert into HRFORMS2_REQUESTS select request_id, created_by, created_date, request_data from HRFORMS2_REQUESTS_ARCHIVE where request_id = :request_id";
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":request_id",$this->req[1]);
                 $r = oci_execute($stmt);
