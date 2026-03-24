@@ -7,7 +7,7 @@ import useRequestQueries from "../../queries/requests";
 import Review from "../../blocks/request/review";
 import { Loading } from "../../blocks/components";
 
-export default function RequestArchiveView({reqId}) {
+export default function RequestArchiveView({reqId,setShouldBlock}) {
     const { id } = useParams();
 
     const [redirect,setRedirect] = useState('');
@@ -31,12 +31,12 @@ export default function RequestArchiveView({reqId}) {
     if (!request.data) return <Loading type="alert">Loading Request Data</Loading>;
     return (
         <section>
-            {request.data && <RequestViewData data={request.data}/>}
+            {request.data && <RequestViewData data={request.data} setShouldBlock={setShouldBlock}/>}
         </section>
     );
 }
 
-function RequestViewData({data}) {
+function RequestViewData({data,setShouldBlock}) {
     const methods = useForm({defaultValues: merge({},defaultVals,data)});
     return (
         <FormProvider {...methods}>
@@ -47,7 +47,7 @@ function RequestViewData({data}) {
                 createdBy:data.createdBy,
                 journalStatus:'Z'
             }}>
-                <Review/>
+                <Review setShouldBlock={setShouldBlock}/>
             </RequestContext.Provider>
         </FormProvider>
     );

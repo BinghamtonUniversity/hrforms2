@@ -42,6 +42,7 @@ export default function ListArchiveTable() {
     const {general} = useSettingsContext();
 
     const accordionViewRef = useRef();
+    const [shouldBlock,setShouldBlock] = useState(true);
 
     const [data,setData] = useState([]);
     const [userData,setUserData] = useState([]);
@@ -207,7 +208,7 @@ export default function ListArchiveTable() {
     if (listdata.isError) return <Loading type="alert" isError>Error Loading List Data</Loading>;
     return (
         <Accordion defaultActiveKey="0" onSelect={handleAccordionClick}>
-            <BlockNav accordionViewRef={accordionViewRef} ActiveAccordionKey={activeAccordionKey}/>
+            {shouldBlock && <BlockNav accordionViewRef={accordionViewRef} ActiveAccordionKey={activeAccordionKey}/>}
             <Card style={{overflow:'visible'}}>
                 <Accordion.Toggle as={Card.Header} className="d-print-none clickable" eventKey="0">
                     <h3 className="m-0">Request Archive Search</h3>
@@ -250,7 +251,7 @@ export default function ListArchiveTable() {
                 </Accordion.Toggle>
                 <Accordion.Collapse eventKey="1">
                     <Card.Body>
-                        {!selectedRowId?<p className="mb-0 text-center">Perform a search and select a row</p>:<ArchiveView reqId={selectedRowId}/>}
+                        {!selectedRowId?<p className="mb-0 text-center">Perform a search and select a row</p>:<ArchiveView reqId={selectedRowId} setShouldBlock={setShouldBlock}/>}
                     </Card.Body>
                 </Accordion.Collapse>
             </Card>

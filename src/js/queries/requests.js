@@ -37,6 +37,8 @@ export default function useRequestQueries(REQUEST_ID) {
         }
         return useQuery(['requests','archive',REQUEST_ID],q(`requests/archive/${reqIdAsPath}`),options);
     }
+    const deleteArchiveRequest = () => useMutation(d=>q(`archive/request/${reqIdAsPath}`,'DELETE',d)());
+
     const postRequest = () => useMutation(d=>q(`requests/${d.action}/${reqIdAsPath}`,'POST',d)());
     const putRequest = () => useMutation(d=>q(`requests/${d.action}/${reqIdAsPath}`,'PUT',d)());
     const deleteRequest = () => useMutation(d=>q(`requests/${reqIdAsPath}`,'DELETE',d)());
@@ -116,5 +118,5 @@ export default function useRequestQueries(REQUEST_ID) {
         return useQuery(['journal',REQUEST_ID],q(`journal/request/${REQUEST_ID}`),options);
     }
 
-    return {getRequest,getArchiveRequest,postRequest,putRequest,deleteRequest,getRequestList,getArchiveRequestList,getJournal};
+    return {getRequest,getArchiveRequest,deleteArchiveRequest,postRequest,putRequest,deleteRequest,getRequestList,getArchiveRequestList,getJournal};
 }

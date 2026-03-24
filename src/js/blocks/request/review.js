@@ -1,14 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Row, Col } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { Icon } from '@iconify/react';
-import { AppButton, CurrencyFormat, DateFormat } from "../components";
+import { AppButton, CurrencyFormat, DateFormat, errorToast, ModalConfirm } from "../components";
 import { CommentsTable } from "./comments";
 import { useRequestContext } from "../../config/request"
 import useListsQueries from "../../queries/lists";
-import { useHistory } from "react-router-dom";
+import { useHistory, Redirect } from "react-router-dom";
 import get from "lodash/get";
 import { ReviewUserInfo } from "../components";
+import { useSettingsContext, useUserContext } from "../../app";
+import { toast } from "react-toastify";
+import useUserQueries from "../../queries/users";
+import useRequestQueries from "../../queries/requests";
+import { useQueryClient } from "react-query";
 
 function NewLine({gap}) { 
     let c = 'w-100';
@@ -16,9 +21,13 @@ function NewLine({gap}) {
     return (<div className={c}></div>); 
 }
 
-export default function Review() {
+export default function Review({setShouldBlock}) {
     const [showReturn,setShowReturn] = useState(false);
 
+    const { requests:settings } = useSettingsContext();
+    const user = useUserContext();
+    const { getUserGroups } = useUserQueries(user.SUNY_ID);
+    const usergroups = getUserGroups();
     const { getValues } = useFormContext();
     const formValues = getValues();
     const { isDraft, isNew, journalStatus } = useRequestContext();
@@ -27,7 +36,18 @@ export default function Review() {
     const apptperiods = getListData('appointmentPeriods');
     const history = useHistory();
 
+    const canUnarchive = useCallback(() => {
+        if (journalStatus != 'Z') return false;
+        if (!get(settings,'permissions.unarchive',false)) return false; // unarchive is not enabled in settings
+        if (!usergroups.isSuccess) return false;
+        const unarchiveGroup = get(settings,'permissions.unarchive-group',undefined);
+        const userGroups = usergroups.data.map(g=>g.GROUP_ID);
+        if (!userGroups.includes(unarchiveGroup)) return false; // user is not in the unarchive group or group not set.
+        return true;
+    },[settings,usergroups,journalStatus]);
+
     const handleReturnToList = () => history.push(get(history.location,'state.from',''));
+
     useEffect(()=>{
         (journalStatus!='Z')?setShowReturn(false):setShowReturn(!!(get(history.location,'state.from','')));
     },[history]);
@@ -177,6 +197,7 @@ export default function Review() {
                 <ReviewSubmitterInfo/>
                 <ReviewUserInfo/>
             </Row>
+            {canUnarchive() && <UnArchiveRequest setShouldBlock={setShouldBlock}/>}
         </article>
     );
 }
@@ -204,5 +225,59 @@ function ReviewSubmitterInfo() {
                 </Row>
             }
         </section>
+    );
+}
+
+function UnArchiveRequest({setShouldBlock}) {
+    //TODO: add in checks for settings and group permissions
+    const [showUnarchiveModal,setShowUnarchiveModal] = useState(false);
+    const [redirect,setRedirect] = useState('');
+
+    const { getValues } = useFormContext();
+    const { SUNY_ID } = useUserContext();
+    const queryclient = useQueryClient();
+
+    const { deleteArchiveRequest } = useRequestQueries(getValues('reqId'));
+    const unarchive = deleteArchiveRequest();
+
+    const handleUnarchive = () => {
+        setShowUnarchiveModal(false);
+        toast.promise(new Promise((resolve,reject) => {
+            unarchive.mutateAsync().then(() => {
+                queryclient.refetchQueries([SUNY_ID,'counts']);
+                queryclient.refetchQueries([SUNY_ID,'requestlist','final']);
+                if (typeof setShouldBlock == 'function') setShouldBlock(false); // disable the blocking on redirect
+                setRedirect('/');
+                resolve();
+            }).catch(err=>reject(err));
+        }),{
+            pending:'Unarchiving...',
+            success:'Request Unarchived Successfully',
+            error:errorToast('Failed to Unarchive Request')
+        });
+    }
+
+    const unarchiveButtons = {
+        close: {title: 'Close', callback: () => setShowUnarchiveModal(false)},
+        confirm: {title: 'Unarchive', callback: () => handleUnarchive()}
+    }
+
+    if (redirect) return <Redirect to={redirect}/>;
+    return (
+        <Row as="footer" className="mt-3">
+            <Col className="button-group justify-content-end d-print-none">
+                <AppButton format="unarchive" onClick={()=>setShowUnarchiveModal(true)}>
+                    Un-Archive
+                </AppButton>
+            </Col>
+            <ModalConfirm 
+                show={showUnarchiveModal} 
+                title="Confirm Un-Archive" 
+                icon="mdi:alert"
+                buttons={unarchiveButtons}
+            >
+                Are you sure you want to un-archive this Request? It will be moved back to the in-progress list.
+            </ModalConfirm>
+        </Row>
     );
 }

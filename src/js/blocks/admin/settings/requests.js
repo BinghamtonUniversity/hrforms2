@@ -15,7 +15,7 @@ export default function SettingsRequests() {
         <>
             <DashBoardCardTitle/>
             <SettingsRequestsMenu/>
-            <SettingsRequestsApproverPermission/>
+            <SettingsRequestsPermissions/>
             <SettingsRequestsAgeWarning/>
             <SettingsRequestsDefaultRouting/>
             <SettingsRequestsEmail/>
@@ -137,8 +137,11 @@ function SettingsRequestsMenu() {
     );
 }
 
-function SettingsRequestsApproverPermission() {
+function SettingsRequestsPermissions() {
+    const { getGroups } = useGroupQueries();
+    const groups = getGroups({select:d=>sortBy(d,['GROUP_NAME']),initialData:[]});
     const { control } = useFormContext();
+    const enabled = useWatch({name:'requests.permissions.unarchive',control:control});
     return (
         <section>
             <Row as="header" className="mt-3">
@@ -154,7 +157,30 @@ function SettingsRequestsApproverPermission() {
                     />
                     <Form.Text id="requestsApproveOwnHelp" muted>Allow the submitter to approve their own Requests.</Form.Text>
                 </Col>
-            </Form.Group> 
+            </Form.Group>
+            <Form.Group as={Row} controlId="requestsUnarchive">
+                <Form.Label column md={2}>Allow Unarchive:</Form.Label>
+                <Col xs="auto" className="pt-2">
+                    <Controller
+                        name='requests.permissions.unarchive'
+                        control={control}
+                        render={({field}) => <Form.Check {...field} type="checkbox" checked={!!field.value}/>}
+                    />
+                </Col>
+                <Col xs="auto">
+                    <Controller
+                        name='requests.permissions.unarchive-group'
+                        control={control}
+                        render={({field}) => (
+                            <Form.Control as="select" {...field} aria-describedby="requestsUnarchiveHelp" disabled={!enabled} >
+                                <option></option>
+                                {groups.data && groups.data.map(g=><option value={g.GROUP_ID} key={g.GROUP_ID}>{g.GROUP_NAME}</option>)}
+                            </Form.Control>
+                        )}
+                    />
+                    <Form.Text id="requestsUnarchiveHelp" muted>Allow Rorms to be "Unarchived" and placed back into Pending Final Approval status.</Form.Text>
+                </Col>
+            </Form.Group>
         </section>
     );
 }
