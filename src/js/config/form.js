@@ -16,6 +16,15 @@ export const conditionalFields = {
     noRateTransactions: ['EXS','SUM','WIN']
 };
 
+/** Fields Approvers Can Edit */
+export const approverEditableFields = [
+    'person.information.SALUTATION_CODE.id',
+    'person.information.LEGAL_FIRST_NAME',
+    'person.information.ALIAS_FIRST_NAME',
+    'person.information.LEGAL_MIDDLE_NAME',
+    'person.information.LEGAL_LAST_NAME'
+];
+
 export const rateAmountLabel = payBasis => {
     switch(payBasis) {
         case "BIW":

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
-import { HRFormContext, useHRFormContext } from "../../config/form";
+import { HRFormContext, useHRFormContext, approverEditableFields } from "../../config/form";
 import { Row, Col, Form, InputGroup } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
@@ -17,15 +17,16 @@ export default function PersonInfo() {
     const { canEdit, activeNav, journalStatus } = useHRFormContext();
 
     const watchRehireRetiree = useWatch({name:`${name}.REHIRE_RETIREE`});
+    const [watchFormCode,watchActionCode] = useWatch({name:['formActions.formCode.FORM_CODE','formActions.actionCode.ACTION_CODE']});
 
     const { getListData } = useListsQueries();
     const salutations = getListData('salutations');
 
     const fieldDisabled = useCallback((field) => {
-        if (!canEdit) return true;
+        if (['PA','PF'].includes(journalStatus) && watchFormCode == 'EF' && ['CCH','HIR'].includes(watchActionCode) && approverEditableFields.includes(field.name)) return false;
         if (['PA','PF'].includes(journalStatus) && field.value && !get(dirtyFields,field.name,false)) return true;
         return false;
-    },[journalStatus, canEdit]);
+    },[journalStatus, canEdit,watchFormCode,watchActionCode]);
 
     const handleSelectChange = useCallback((e,field) => {
         field.onChange(e);
