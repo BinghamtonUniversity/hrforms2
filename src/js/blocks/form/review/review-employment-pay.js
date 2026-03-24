@@ -4,11 +4,17 @@ import { Row, Col, Table } from "react-bootstrap";
 import { CurrencyFormat, DateFormat } from "../../components";
 
 export default function ReviewEmploymentPay() {
+    const { getValues } = useFormContext();
+    const [externalId] = getValues(['employment.pay.externalId']);
     return (
         <article className="border border-dark rounded p-1 mb-2">
             <Row as="header">
                 <Col as="h5">Pay</Col>
             </Row>
+            <Row as="dl" className="mb-0">
+                <Col as="dt" sm={3} md={2} className="mb-0">Handshake ID:</Col>
+                <Col as="dd" sm={9} md={4} className="mb-0">{externalId}</Col>
+            </Row>            
             <ReviewEmploymentPayExisting/>
             <ReviewEmploymentPayNew/>
         </article>
@@ -19,7 +25,7 @@ function ReviewEmploymentPayExisting() {
     const { getValues } = useFormContext();
     const [info] = getValues(['employment.pay.existingPay']);
     return (
-        <section>
+        <section className="mt-2">
             <Row>
                 <Col><h6 className="mb-0">Existing Pay:</h6></Col>
             </Row>
