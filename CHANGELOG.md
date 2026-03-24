@@ -1,4 +1,33 @@
 # Changelog
+## Version 2.1.0(rev-20260324)
+  * Changed application configuration to use .env file
+  * Added Unarchive functionality to Forms and Requests.
+  * Added popover in Form Person Lookup to list multiple commitment departments when exists.
+  * Added redirection handling for Requests when accessing wrong path for Requests based on Draft, In Progress, or Archive condition.
+  * Added redirection handling for Forms when accessing wrong path for Forms based on Draft, In Progress, or Archive condition.
+  * Added time to the "Last Updated" field in the Archive results table for Requests and Forms.
+  * Added "Raw Data" tab in Users to show full JSON data for troubleshooting purposes.
+  * Added "Refresh" button in the Admin:Users Add/Edit modal to allow for a forced refresh of user data.
+  * Added validation of Request ID checking Drafts, In Progress, and Archive tables.
+  * Added validation of Form ID checking Drafts, In Progress, and Archive tables.
+  * Added External ID to the Forms|Pay tab; field is labeled as "Handshake ID".
+  * Changed the default row click event in the Admin:Users page to be "impersonate" instead of "edit".
+  * Changed the first row button in the Admin:Users page to be "edit" instead of "impersonate".
+  * Changed Expenditure Type on Requests|Account to be a required field.
+  * Changed to allow approvers to edit name fields on Forms|Information for EF-CCH and EF-HIR.
+  * Fixed Requests to handle no user groups when determining permissions.
+  * Fixed formatting in footer that was causing a small horizontal scroll.
+  * Fixed formatting and class name typo in Forms Appointment tab.
+  * Fixed error in sendEmail function for Archived Forms and Requests.
+  * Fixed sorting of "Last Updated" field in the Archive results table to properly sort.
+  * Fixed bug in Forms|Person|Information when in Pending state empty fields becoming disabled on single character entry.
+  * Fixed bug in sorting Line Number field in Requests Archive.
+  * Fixed Archive List "Created By" and "Updated By" search fields not displaying values.
+  * Fixed bug in new Group creation that generated an error due to invalid return data.
+  * Fixed display of custom values in Form|Education which generated an error on the Review tab.
+  * Fixed order of groups in Workflow Expander component.
+
+
 ## Version 2.0.4(rev-20260224)
   * Added setting option to allow submitters to approve their own Requests/Forms [DB Update Required]
   * Fixed bug with Forms after being rejected the comment was being retained and then overwritten on resubmit.
@@ -94,7 +123,7 @@
   * Updates and fixes to news.php:
     * Fixed error when no data found.
     * Fixed update to create when no record exists.
-    * Added modfied_by value to update and create functions.
+    * Added modified_by value to update and create functions.
   * Added Update Date to the News alert block on the home page.
   * Added controls in Settings to toggle showing News Update Date and format.
   * Added Appointment Periods List to populate the field in Requests Position and Review tabs.
@@ -280,7 +309,7 @@
   * Set counts and list queries to refetch on window focus when data is stale.
   * Fixes to data fetching and refetching.
   * Fix to positioning of popover on the Users and Groups tables in admin.
-  * Removed Unused/Unecessary Groups: Testing, Training, and SUBMITTER.  The SUBMITTER group does not control permissions.
+  * Removed Unused/Unnecessary Groups: Testing, Training, and SUBMITTER.  The SUBMITTER group does not control permissions.
   * Initial build out for "Viewer" functionality.  User management provides ability to set "Viewer", but departments cannot be assigned.
 
 
@@ -304,7 +333,7 @@
   * Added Adjunct radio option on Employment->Appointment tab.  Only Adjunct = 'Yes' displays Faculty Details section.
   * Sort Form Action and Transaction values alphabetically.
   * Updated React Datepicker from 3.8.0 to 7.5.0
-  * Updated Icons to be preloaded dynmically from the formats configuration in components.  Added option to prevent pre-loading; {preload:false}
+  * Updated Icons to be preloaded dynamically from the formats configuration in components.  Added option to prevent pre-loading; {preload:false}
   * Improvements to displaying of Archived menu/home item
   * Added settings and display warnings for "old" Forms and Requests
   * Added background refetching for counts every 30 seconds; disabled after ~10 minutes of inactivity.
@@ -374,15 +403,15 @@
   * Carry Birthdate from lookup into Demographics tab.
   * Make Group Name column in Groups table wider - added grow option.
   * Multiple fixes to the Directory tab in Forms.
-  * Added "paged" query support for Forms Hiearchy table in Admin.
+  * Added "paged" query support for Forms Hierarchy table in Admin.
 
 
 ## Version 2.0.0(DEV-20240401)
-  * Fixed bug with conditions on hiearchies not deleting when the delete button is clicked.
+  * Fixed bug with conditions on hierarchies not deleting when the delete button is clicked.
   * Fixed bug in user.php that was preventing cached user information from updating and returning empty data.
   * Fixed bug with Line Number search on Employment->Position tab in Forms that caused form to submit when enter key presses.
   * Changed key press handling for Line Number search on Employment->Position to clear existing search results.  Previously an error alert would show on every key press indicating the partial line number was not found.
-  * Added "Group" to Forms Hiearchy workflow selector when "Route To Group" is selected.
+  * Added "Group" to Forms Hierarchy workflow selector when "Route To Group" is selected.
   * Hide the news alert if there is no news text.
   * Switched to using OCI_RETURN_LOBS for data fetch instead of using load function for most API calls.
   * Added _HISTORY tables to save Groups, Hierarchies, and Workflows when changed; used for Archived Requests/Forms.
@@ -402,7 +431,7 @@
   * Added "Route By" option to Payroll Transactions.
   * Added code to use "Route By" option on form submit and route form accordingly.
   * Updated search on Payroll Transactions to "tokenize" search terms.  Allows for searching of individual components.
-  * Changed color of Copy/Duplicate buttton to secondary color.
+  * Changed color of Copy/Duplicate button to secondary color.
   * Fixed "undefined" on class of AppButton component.
   * Added configuration to hide or disable Delete button on Payroll Transactions tabs.
   
@@ -423,7 +452,7 @@
 
 
 ## Version 2.0.0 (DEV-20230922)
-  * Added popover for group descriptions on Request hiearchy and workflows.
+  * Added popover for group descriptions on Request hierarchy and workflows.
   * Removed text input for Errors Emails in settings; using group selection instead
   * FIXED errors in user.php when calling sendError; needed a third argument
   * Added general email configuration for system-wide errors.
@@ -434,9 +463,9 @@
   * FIXED bug where users who were in HR Forms2, but had no record in SUNY HR were not shown in the Users list and in the available/assigned users in the Groups user list modal.
   * "Missing" users who do not have a SUNY HR record are shown in the assigned users list of the Group modal, but are hidden in the available users list.  This allows for those users to be removed, but not added.
   * Removed the "Save & Exit" button from the review page of Requests when the user cannot edit.  The button was disabled, but still shown and should not have been displayed.
-  * FIXED DateFormat error on Form Review tab on the Person Information section.  The DateFomat function was not part of the import list.
-  * FIXED reference error to Account field on Employement Salary section on the Form Review page when no account had been selected.
-  * Form Hierachy, "Send To User's Department Group?" is now checked by default for new hierarchies.
+  * FIXED DateFormat error on Form Review tab on the Person Information section.  The DateFormat function was not part of the import list.
+  * FIXED reference error to Account field on Employment Salary section on the Form Review page when no account had been selected.
+  * Form Hierarchy, "Send To User's Department Group?" is now checked by default for new hierarchies.
   * Major Fixes to User data and queries.
     * FIXED User caching logic which was not updating correctly.
     * FIXED user queries (javascript) to use preferred name as part of the fullName and sortName derived fields.
@@ -463,9 +492,9 @@
   * Appointment Percent (on Forms > Position) can now only go as high as what comes from SUNY HR. 
 
 ## Version 2.0.0 (DEV-20230811)
-  * Added Admin Departments page. Individual departments allow the promary group to be set/changed.
+  * Added Admin Departments page. Individual departments allow the primary group to be set/changed.
   * Better indication of inactive users and groups in lists.  Inactive items are marked with a strikethrough and the label "(inactive)"
-  * SUNY Account information is now populating forms; this was an outstanding item from the original work.  Testing and vaidation are still needed.
+  * SUNY Account information is now populating forms; this was an outstanding item from the original work.  Testing and validation are still needed.
   * Major updates to users on the backside.  User information is now stored in the HR Forms tables.  This information is populated from SUNY HR initially.  Other APIs that need user information will use this stored data rather than calling SUNY HR if it exists.  If it doesn't exist then SUNY HR will be queried and the data will be stored.  If the data is "old" (a setting that can be changed in the Admin Settings area) it will attempt to refresh the data.  If there is no SUNY HR data an error email will be sent to me.  The error email is still a work in progress; more to come on that.
   * Changes in progress for archival of Requests and Forms to store the group and hierarchy information rather than pulling the "live" data.  Just like the person information this data should be a snapshot after it is archived as the workflow and groups could change.
   * Addition of CSV exports on several tables (users, groups and departments).  The export will export whatever data is currently available; so if you filter/search the export will match.  This CSV export capability will be expanded to other locations in the future (e.g. the Request and Form lists).
