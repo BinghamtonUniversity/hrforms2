@@ -2,6 +2,13 @@ import React from "react";
 import { Row, Col } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { DateFormat } from "../../components";
+import { get } from "lodash";
+
+function displayCustomValue(value,showId=false,delim=' - ') {
+    if (typeof value == 'string') return value;
+    if (!showId || get(value,'customOption',false)) return get(value,'label',null);
+    return get(value,'id',null) + delim + get(value,'label',null)
+}
 
 export default function ReviewPersonEducation() {
     const { getValues } = useFormContext();
@@ -21,9 +28,9 @@ export default function ReviewPersonEducation() {
                                 {e.PENDING_DEGREE_FLAG=='Y'&&<span className="font-italic">(pending)</span>}
                             </Col>
                             <Col as="dt" sm={3} className="mb-0">Degree Type:</Col>
-                            <Col as="dd" sm={9} className="mb-0">{Object.values(e.DEGREE_TYPE[0]).join(' - ')}</Col>
+                            <Col as="dd" sm={9} className="mb-0">{displayCustomValue(e.DEGREE_TYPE[0],true)}</Col>
                             <Col as="dt" sm={3} className="mb-0">Degree Program/Major:</Col>
-                            <Col as="dd" sm={9} className="mb-0">{e?.DEGREE_PROGRAM?.at(0)?.label}</Col>
+                            <Col as="dd" sm={9} className="mb-0">{displayCustomValue(e.DEGREE_PROGRAM[0])}</Col>
                             <Col as="dt" sm={3} className="mb-0">Degree Specialization:</Col>
                             <Col as="dd" sm={9} className="mb-0">{e?.specialization}</Col>
                             <Col as="dt" sm={3} className="mb-0">Institution Country:</Col>
@@ -31,11 +38,11 @@ export default function ReviewPersonEducation() {
                             {(e.COUNTRY_CODE.id=='USA') && 
                                 <>
                                     <Col as="dt" sm={3} className="mb-0">Institution City/State:</Col>
-                                    <Col as="dd" sm={9} className="mb-0">{e.INSTITUTION_CITY}, {e.INSTITUTION_STATE}</Col>
+                                    <Col as="dd" sm={9} className="mb-0">{displayCustomValue(e.INSTITUTION_CITY)}, {e.INSTITUTION_STATE}</Col>
                                 </>
                             }
                             <Col as="dt" sm={3} className="mb-0">Institution:</Col>
-                            <Col as="dd" sm={9} className="mb-0">{e.INSTITUTION}</Col>
+                            <Col as="dd" sm={9} className="mb-0">{displayCustomValue(e.INSTITUTION)}</Col>
                             <Col as="dt" sm={3} className="mb-0">Highest Degree:</Col>
                             <Col as="dd" sm={9} className="mb-0">{(e.HIGHEST_DEGREE_FLAG=="Y")?"Yes":"No"}</Col>
                             <Col as="dt" sm={3} className="mb-0">Terminal Degree:</Col>
