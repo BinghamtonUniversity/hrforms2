@@ -12,6 +12,7 @@ import { lazyRetry, useSettingsContext, useUserContext } from "../../app";
 import useFormQueries from "../../queries/forms";
 import { toast } from "react-toastify";
 import useUserQueries from "../../queries/users";
+import { useQueryClient } from "react-query";
 
 //lazy load sections
 const ReviewPersonInformation = lazy(()=>lazyRetry(()=>import("./review/review-person-information")));
@@ -180,6 +181,8 @@ function UnArchiveForm({setShouldBlock}) {
     const [redirect,setRedirect] = useState('');
 
     const { getValues } = useFormContext();
+    const { SUNY_ID } = useUserContext();
+    const queryclient = useQueryClient();
 
     const { deleteArchiveForm } = useFormQueries(getValues('formId'));
     const unarchive = deleteArchiveForm();
@@ -188,7 +191,8 @@ function UnArchiveForm({setShouldBlock}) {
         setShowUnarchiveModal(false);
         toast.promise(new Promise((resolve,reject) => {
             unarchive.mutateAsync().then(() => {
-                console.log(typeof setShouldBlock);
+                queryclient.refetchQueries([SUNY_ID,'counts']);
+                queryclient.refetchQueries([SUNY_ID,'formlist','final']);
                 if (typeof setShouldBlock == 'function') setShouldBlock(false); // disable the blocking on redirect
                 setRedirect('/');
                 resolve();
