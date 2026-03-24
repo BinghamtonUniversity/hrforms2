@@ -112,7 +112,7 @@ class ArchiveList extends HRForms2 {
                         from hrforms2_requests_journal_archive jr1
                     ) jr2
                     where jr2.sequence >= 0 and jr2.rnk = 1) j
-                    left join (select request_id, max(journal_date) as max_journal_date, listagg(group_to,',') as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
+                    left join (select request_id, max(journal_date) as max_journal_date, listagg(group_to,',') as journal_groups within group (order by sequence), listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
                     where r.request_id = j.request_id
                     and exists (select 1
                         from hrforms2_requests_journal_archive
@@ -164,7 +164,7 @@ class ArchiveList extends HRForms2 {
                         from hrforms2_requests_journal_archive jr1
                     ) jr2
                     where jr2.sequence >= 0 and jr2.rnk = 1) j
-                    left join (select request_id, max(journal_date) as max_journal_date, listagg(group_to,',') as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
+                    left join (select request_id, max(journal_date) as max_journal_date, listagg(group_to,',') within group (order by sequence) as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
                     left join (select u1.suny_id, nvl(u1.user_info.ALIAS_FIRST_NAME,u1.user_info.LEGAL_FIRST_NAME) as last_update_first_name, u1.user_info.LEGAL_LAST_NAME as last_update_last_name from hrforms2_users u1) u on (u.suny_id = j.suny_id) 
                     where r.request_id = j.request_id
                     and exists (select 1
@@ -270,7 +270,7 @@ class ArchiveList extends HRForms2 {
                         from hrforms2_forms_journal_archive jf1
                     ) jf2
                     where jf2.sequence >= 0 and jf2.rnk = 1) j
-                    left join (select form_id, max(journal_date) as max_journal_date, listagg(group_to,',') as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal_archive where sequence >= 0 group by form_id) js on (js.form_id = j.form_id)
+                    left join (select form_id, max(journal_date) as max_journal_date, listagg(group_to,',') within group (order by sequence) as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal_archive where sequence >= 0 group by form_id) js on (js.form_id = j.form_id)
                     where f.form_id = j.form_id
                     and exists (select 1
                         from hrforms2_forms_journal_archive
@@ -335,7 +335,7 @@ class ArchiveList extends HRForms2 {
                         from hrforms2_forms_journal_archive jf1
                     ) jf2
                     where jf2.sequence >= 0 and jf2.rnk = 1) j
-                    left join (select form_id, max(journal_date) as max_journal_date, listagg(group_to,',') as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal_archive where sequence >= 0 group by form_id) js on (js.form_id = j.form_id)
+                    left join (select form_id, max(journal_date) as max_journal_date, listagg(group_to,',') within group (order by sequence) as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal_archive where sequence >= 0 group by form_id) js on (js.form_id = j.form_id)
                     left join (select u1.suny_id, nvl(u1.user_info.ALIAS_FIRST_NAME,u1.user_info.LEGAL_FIRST_NAME) as last_update_first_name, u1.user_info.LEGAL_LAST_NAME as last_update_last_name from hrforms2_users u1) u on (u.suny_id = j.suny_id) 
                     where f.form_id = j.form_id
                     and exists (select 1
