@@ -112,7 +112,7 @@ class ArchiveList extends HRForms2 {
                         from hrforms2_requests_journal_archive jr1
                     ) jr2
                     where jr2.sequence >= 0 and jr2.rnk = 1) j
-                    left join (select request_id, max(journal_date) as max_journal_date, listagg(group_to,',') as journal_groups within group (order by sequence), listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
+                    left join (select request_id, max(journal_date) as max_journal_date, listagg(group_to,',') within group (order by sequence) as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
                     where r.request_id = j.request_id
                     and exists (select 1
                         from hrforms2_requests_journal_archive
