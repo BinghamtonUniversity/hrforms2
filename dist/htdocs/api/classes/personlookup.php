@@ -56,7 +56,7 @@ class PersonLookup extends HRForms2 {
             pers.legal_middle_name, pers.legal_last_name, pers.suffix_code, 
             pers.local_campus_id, pemp.payroll_agency_code, pemp.title_description, pemp.dpt_cmp_dsc,
             pemp.negotiating_unit, pemp.appointment_type, pemp.appointment_percent, pemp.pay_basis,
-            cmt.commitment_departments
+            nvl(cmt.commitment_departments,'{}') as commitment_departments
             FROM buhr.buhr_person_mv@banner.cc.binghamton.edu pers
             LEFT JOIN (SELECT hr_person_id, payroll_agency_code, line_item_number, pay_basis,
                 employment_role_type, data_status_emp, status_type, negotiating_unit,
@@ -70,6 +70,7 @@ class PersonLookup extends HRForms2 {
                     left join (select campus_identifier, department_desc from sunyhr.campus_departments@banner.cc.binghamton.edu) d on (d.campus_identifier = c.contract_group)
                     where c.data_status = 'C'
                     and nvl(c.commitment_end_date,sysdate) >= sysdate
+                    and c.contract_group is not null
                     order by c.suny_id, d.department_desc)
                 group by suny_id) cmt on (cmt.suny_id = pers.suny_id)
             WHERE pers.role_type <> 'STSCH' ";
