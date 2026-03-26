@@ -129,8 +129,9 @@ class EmploymentInfo extends HRForms2 {
                     $r = oci_execute($stmt);
                     if (!$r) $this->raiseError();
                     $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+                    if (!is_array($row)) $row = array();
                     oci_free_statement($stmt);
-    
+
                     $this->_arr = array_merge($stuData,$row);
                     $this->_arr = $this->null2Empty($this->_arr);
                     
