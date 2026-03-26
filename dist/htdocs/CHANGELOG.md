@@ -26,6 +26,7 @@
   * Fixed bug in new Group creation that generated an error due to invalid return data.
   * Fixed display of custom values in Form|Education which generated an error on the Review tab.
   * Fixed order of groups in Workflow Expander component.
+  * Fixed sorting in Requests and Forms lists.
 
 
 ## Version 2.0.4(rev-20260224)
