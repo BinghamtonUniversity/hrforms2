@@ -53,8 +53,12 @@ export default function useRequestQueries(REQUEST_ID) {
         options.select = data => {
             if (!data) return;
             data.map(d => {
+                d.effDate = (d?.EFFDATE)?new Date(d.EFFDATE):new Date(0);
+                d.effDateFmt = format(d.effDate,'P');
                 d.createdDate = (d?.UNIX_TS)?new Date(d.UNIX_TS*1000):new Date(d.CREATED_DATE);
                 d.createdDateFmt = format(d.createdDate,'Pp');
+                d.maxJournalDate = (d?.MAX_JOURNAL_DATE)?new Date(d.MAX_JOURNAL_DATE):new Date(0);
+                d.maxJournalDateFmt = format(d.maxJournalDate,'Pp');
                 const fName = (d?.ALIAS_FIRST_NAME)?d.ALIAS_FIRST_NAME:(d?.LEGAL_FIRST_NAME)?d.LEGAL_FIRST_NAME:'';
                 d.fullName = (fName)?`${fName} ${d.LEGAL_LAST_NAME}`:'';
                 d.sortName = (fName)?`${d.LEGAL_LAST_NAME}, ${fName}`:'';

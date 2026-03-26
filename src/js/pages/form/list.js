@@ -15,6 +15,7 @@ import { displayFormCode } from "../form";
 import { Helmet } from "react-helmet";
 import useUserQueries from "../../queries/users";
 import { Icon } from "@iconify/react/dist/iconify.js";
+import { compareAsc } from "date-fns";
 
 export default function FormList() {
     const {part} = useParams();
@@ -226,6 +227,20 @@ function ListTable({data,list}) {
 
     const filteredRows = useMemo(()=>rows.filter(row=>Object.values(row).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase())),[rows,filterText]);
 
+    const sortEffDate = (a,b) => compareAsc(a.effDate,b.effDate);
+    const sortFormCode = (a,b) => {
+        const formA = [a.FORM_CODE,a.ACTION_CODE,a.TRANSACTION_CODE].join('-');
+        const formB = [b.FORM_CODE,b.ACTION_CODE,b.TRANSACTION_CODE].join('-');
+        return (formA>formB)?1:(formA<formB)?-1:0;
+    }
+    const sortPayroll = (a,b) => (a.PAYROLL_TITLE>b.PAYROLL_TITLE)?1:(a.PAYROLL_TITLE<b.PAYROLL_TITLE)?-1:0;
+    const sortPosition = (a,b) => {
+        const posA = [a.TITLE,a.LINE_NUMBER].join('-');
+        const posB = [b.TITLE,b.LINE_NUMBER].join('-');
+        return (posA>posB)?1:(posA<posB)?-1:0;
+    }
+    const sortCreatedDate = (a,b) => compareAsc(a.createdDate,b.createdDate);
+
     const columns = useMemo(() => [
         {name:'Actions',id:'action',cell:row=>{
             return (
@@ -243,7 +258,7 @@ function ListTable({data,list}) {
             );
         },ignoreRowClick:true,maxWidth:'100px'},
         {name:'Form ID',selector:row=>row.FORM_ID,sortable:true,sortField:'FORM_ID'},
-        {name:'Effective Date',selector:row=>row.effDateFmt,sortable:true},
+        {name:'Effective Date',selector:row=>row.effDateFmt,sortable:true,sortFunction:sortEffDate},
         {name:'Name',selector:row=>row.sortName,sortable:true},
         {name:'Form',selector:row=>(
                 <DescriptionPopover
@@ -252,7 +267,7 @@ function ListTable({data,list}) {
                 >
                     <p className="mb-0">{displayFormCode({codes:[row.FORM_CODE,row.ACTION_CODE,row.TRANSACTION_CODE]})}</p>
                 </DescriptionPopover>
-        ),sortable:true},
+        ),sortable:true,sortFunction:sortFormCode},
         {name:'Payroll',selector:row=>(
                 <DescriptionPopover 
                     id={`${row.PAYROLL_CODE}_description`}
@@ -260,11 +275,11 @@ function ListTable({data,list}) {
                 >
                     <p className="mb-0">{row.PAYROLL_TITLE}</p>
                 </DescriptionPopover>
-        ),sortable:true},
+        ),sortable:true,sortFunction:sortPayroll},
         {name:'Position',selector:row=>(
             <p className="mb-0">{row.TITLE} ({row.LINE_NUMBER})</p>
-        ),sortable:true,wrap:true},
-        {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortField:'UNIX_TS'},
+        ),sortable:true,sortFunction:sortPosition,wrap:true},
+        {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortFunction:sortCreatedDate},
         {name:'Submitted By',selector:row=>row.SUNY_ID,sortable:true,omit:(list=='drafts'||list=='pending'),format:row=>`${row.createdByName} (${row.CREATED_BY_SUNY_ID})`},
     ],[data,list]);
     useEffect(()=>{

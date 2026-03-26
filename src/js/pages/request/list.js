@@ -7,7 +7,7 @@ import { useForm, Controller } from "react-hook-form";
 import { capitalize, find, pick, get } from "lodash";
 import { Redirect } from "react-router-dom";
 import { Row, Col, Modal, Form, Alert } from "react-bootstrap";
-import { format } from "date-fns";
+import { compareAsc } from "date-fns";
 import DataTable from 'react-data-table-component';
 import { AppButton, Loading, ModalConfirm, WorkflowExpandedComponent } from "../../blocks/components";
 import { useUserContext, SettingsContext, NotFound, useSettingsContext, useAuthContext } from "../../app";
@@ -231,7 +231,11 @@ function ListTable({data,list}) {
     },[filterText,expandAll,expandRow,list]);
 
     const filteredRows = useMemo(()=>rows.filter(row=>Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase())),[rows,filterText]);
-    
+
+    const sortEffDate = (a,b) => compareAsc(a.effDate,b.effDate);
+    const sortMaxJournalDate = (a,b) => compareAsc(a.maxJournalDate,b.maxJournalDate);
+    const sortCreatedDate = (a,b) => compareAsc(a.createdDate,b.createdDate);
+
     const columns = useMemo(() => {
         const cols = [
             {name:'Actions',id:'actions',cell:row=>{
@@ -253,13 +257,13 @@ function ListTable({data,list}) {
             //{name:'Status',selector:row=>row.STATUS,format:row=>(row.STATUS == 'draft')?"Draft":get(general.status,`${row.STATUS}.list`,row.STATUS),sortable:true,sortField:'STATUS'},
             {name:'Position Type',selector:row=>row.POSTYPE.id,format:row=>`${row.POSTYPE.id} - ${row.POSTYPE.title}`,sortable:true},
             {name:'Request Type',selector:row=>row.REQTYPE.id,format:row=>`${row.REQTYPE.id} - ${row.REQTYPE.title}`,sortable:true},
-            {name:'Effective Date',selector:row=>row.EFFDATE,format:row=>format(new Date(row.EFFDATE),'P'),sortable:true},
+            {name:'Effective Date',selector:row=>row.EFFDATE,format:row=>row.effDateFmt,sortable:true,sortFunction:sortEffDate},
             {name:'Candidate Name',selector:row=>row.CANDIDATENAME,sortable:true,wrap:true},
             {name:'Line #',selector:row=>row.LINENUMBER,sortable:true},
             {name:'Title',selector:row=>row.REQBUDGETTITLE,sortable:true,wrap:true},
-            {name:(list=='archived')?'Archive Date':'Last Updated',selector:row=>row.MAX_JOURNAL_DATE,format:row=>format(new Date(row.MAX_JOURNAL_DATE),'Pp'),sortable:true,grow:2,omit:(list=='drafts')},
+            {name:(list=='archived')?'Archive Date':'Last Updated',selector:row=>row.maxJournalDateFmt,sortable:true,sortFunction:sortMaxJournalDate,grow:2,omit:(list=='drafts')},
             {name:'Submitted By',selector:row=>row.SUNY_ID,sortable:true,omit:(list=='drafts'||list=='pending'),format:row=>`${row.fullName} (${row.CREATED_BY_SUNY_ID})`,wrap:true},
-            {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortField:'UNIX_TS',grow:2},
+            {name:'Created',selector:row=>row.createdDateFmt,sortable:true,sortFunction:sortCreatedDate,grow:2},
         ];
         return cols;
     },[data,list]);
