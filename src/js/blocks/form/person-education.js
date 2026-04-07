@@ -417,7 +417,7 @@ function UniversityCityComponent({editIndex,index}) {
     const city = getEducationInstitutions({country:'USA',state:watchState,options:{
         enabled:(!!watchState),
         select: d => {
-            return [...new Set(d.map(i=>i.INSTITUTION_CITY).sort())];
+            return [...new Set(d.filter(i=>i.INSTITUTION_CITY).map(i=>i.INSTITUTION_CITY).sort())];
         }
     }});
 
