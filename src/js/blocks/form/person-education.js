@@ -305,8 +305,12 @@ export default function PersonEducation() {
                                     <FormFieldErrorMessage fieldName={`${name}.${index}.INSTITUTION_STATE`}/>
                                 </Col>
                             </Form.Group>
-                            {watchEducation[index]?.INSTITUTION_STATE && <UniversityCityComponent index={index} editIndex={editIndex}/>}
-                            {watchEducation[index]?.institutionCity.length!=0 && <UniversityNameComponent index={index} editIndex={editIndex}/>}
+                            {watchEducation[index]?.INSTITUTION_STATE && 
+                                <>
+                                    <UniversityCityComponent index={index} editIndex={editIndex}/>
+                                    <UniversityNameComponent index={index} editIndex={editIndex}/>
+                                </>
+                            }
                         </>
                     }
                     {(watchEducation[index]?.COUNTRY_CODE.id&&watchEducation[index]?.COUNTRY_CODE.id!='USA') && <UniversityNameComponent index={index} editIndex={editIndex}/>}
@@ -417,7 +421,7 @@ function UniversityCityComponent({editIndex,index}) {
     const city = getEducationInstitutions({country:'USA',state:watchState,options:{
         enabled:(!!watchState),
         select: d => {
-            return [...new Set(d.filter(i=>i.INSTITUTION_CITY).map(i=>i.INSTITUTION_CITY).sort())];
+            return [...new Set(d.map(i=>i.INSTITUTION_CITY).sort())];
         }
     }});
 
