@@ -64,7 +64,7 @@ class Education extends HRForms2 {
         }
         oci_execute($stmt);
         oci_fetch_all($stmt,$this->_arr,null,null,OCI_FETCHSTATEMENT_BY_ROW);
-        $this->returnData = $this->_arr;
+        $this->returnData = $this->null2Empty($this->_arr);
         if ($this->retJSON) $this->toJSON($this->returnData);
     }
 }
