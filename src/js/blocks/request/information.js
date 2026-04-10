@@ -25,6 +25,9 @@ export default function Information() {
         field.onChange(e);
         clearErrors();
         setValue('posType.title',posTypes[e.target.value].title);
+        setValue('reqType',{id:'',title:''});
+        setValue('newFunding',{id:'',title:''});
+        setValue('commitmentId','');
     },[control]);
     const handleReqTypeChange = useCallback((field,e) => {
         field.onChange(e);
