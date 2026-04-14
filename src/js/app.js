@@ -181,7 +181,7 @@ function AppContent({OVR_SUNY_ID}) {
         setUserData(data);
         console.debug("User Data: ",data);
     },[user.data]);
-    useEffect(()=>user.refetch(),[OVR_SUNY_ID]);
+    useEffect(()=>{user.refetch();},[OVR_SUNY_ID]);
     if (user.isLoading) return <LoadingApp/>;
     if (user.isError) return <LoadingAppError>Failed to retreive user information</LoadingAppError>;
     if (!!userData && !userData?.SUNY_ID) {
