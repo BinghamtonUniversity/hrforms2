@@ -56,22 +56,32 @@ class PersonLookup extends HRForms2 {
             pers.legal_middle_name, pers.legal_last_name, pers.suffix_code, 
             pers.local_campus_id, pemp.payroll_agency_code, pemp.title_description, pemp.dpt_cmp_dsc,
             pemp.negotiating_unit, pemp.appointment_type, pemp.appointment_percent, pemp.pay_basis,
-            nvl(cmt.commitment_departments,'{}') as commitment_departments
+            cmt.commitments
             FROM buhr.buhr_person_mv@banner.cc.binghamton.edu pers
             LEFT JOIN (SELECT hr_person_id, payroll_agency_code, line_item_number, pay_basis,
                 employment_role_type, data_status_emp, status_type, negotiating_unit,
                 appointment_type, appointment_effective_date, appointment_end_date, appointment_percent,
                 title_description, dpt_cmp_dsc
                 FROM buhr.buhr_person_empl_mv@banner.cc.binghamton.edu) pemp on (pers.hr_person_id = pemp.hr_person_id)
-            LEFT JOIN (select suny_id, json_objectagg(key contract_group value department_desc ABSENT ON NULL) as commitment_departments
+            LEFT JOIN (select suny_id, json_arrayagg(commitments) as commitments
                 from (
-                    select distinct c.suny_id, c.contract_group, d.department_desc
+                    select suny_id, json_object(
+                        'HR_COMMITMENT_ID' VALUE c.hr_commitment_id, 
+                        'SUNY_ID' VALUE c.suny_id, 
+                        'PAYROLL_AGENCY_CODE' VALUE c.payroll_agency_code,
+                        'EMPLOYMENT_ROLE_TYPE' VALUE c.employment_role_type, 
+                        'DATA_STATUS' VALUE c.data_status,
+                        'COMMITMENT_EFFECTIVE_DATE' VALUE to_char(c.commitment_effective_date,'DD-MON-YYYY'), 
+                        'COMMITMENT_END_DATE' VALUE to_char(c.commitment_end_date,'DD-MON-YYYY'), 
+                        'CONTRACT_GROUP' VALUE c.contract_group, 
+                        'DEPARTMENT_DESC' VALUE d.department_desc) as commitments
                     from buhr.buhr_commitment_mv@banner.cc.binghamton.edu c
                     left join (select campus_identifier, department_desc from sunyhr.campus_departments@banner.cc.binghamton.edu) d on (d.campus_identifier = c.contract_group)
                     where c.data_status = 'C'
                     and nvl(c.commitment_end_date,sysdate) >= sysdate
                     and c.contract_group is not null
-                    order by c.suny_id, d.department_desc)
+                    order by c.suny_id, c.commitment_effective_date, c.commitment_end_date, d.department_desc
+                )
                 group by suny_id) cmt on (cmt.suny_id = pers.suny_id)
             WHERE pers.role_type <> 'STSCH' ";
             //$qry = $base_qry;
@@ -96,6 +106,7 @@ class PersonLookup extends HRForms2 {
                 //should not get here, just in case.
                 $this->raiseError(E_BAD_REQUEST,array("errMsg"=>"Invalid lookup type"));
         }
+        $qry .= " ORDER BY pers.hr_person_id, pemp.appointment_effective_date, pemp.appointment_end_date";
         // Generate list of field names; used by JS to generate New Employee option
         oci_execute($stmt,OCI_DESCRIBE_ONLY);
         $ncols = oci_num_fields($stmt);

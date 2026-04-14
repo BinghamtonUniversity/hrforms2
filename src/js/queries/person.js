@@ -34,8 +34,16 @@ export default function usePersonQueries() {
                 d.birthDateFmt = d.BIRTH_DATE && format(d.birthDate,'P');
                 d.effectiveDate = d.APPOINTMENT_EFFECTIVE_DATE && parse(d.APPOINTMENT_EFFECTIVE_DATE,'dd-MMM-yy',new Date())
                 d.effectiveDateFmt = d.APPOINTMENT_EFFECTIVE_DATE && format(d.effectiveDate,'P');
+                d.effectiveDateUnix = d.APPOINTMENT_EFFECTIVE_DATE && format(d.effectiveDate,'t');
                 d.endDate = d.APPOINTMENT_END_DATE && parse(d.APPOINTMENT_END_DATE,'dd-MMM-yy',new Date())
                 d.endDateFmt = d.APPOINTMENT_END_DATE && format(d.endDate,'P');
+                d.commitments = d.COMMITMENTS?JSON.parse(d.COMMITMENTS):[];
+                d.commitments.forEach(c=> {
+                    c.commitmentEffectiveDate = c.COMMITMENT_EFFECTIVE_DATE && parse(c.COMMITMENT_EFFECTIVE_DATE,'dd-MMM-yyyy',new Date());
+                    c.commitmentEffectiveDateFmt = c.COMMITMENT_EFFECTIVE_DATE && format(c.commitmentEffectiveDate,'P');
+                    c.commitmentEndDate = c.COMMITMENT_END_DATE && parse(c.COMMITMENT_END_DATE,'dd-MMM-yyyy',new Date());
+                    c.commitmentEndDateFmt = c.COMMITMENT_END_DATE && format(c.commitmentEndDate,'P');
+                });
             });
             return (options.select2)?options.select2(data):data;
         };

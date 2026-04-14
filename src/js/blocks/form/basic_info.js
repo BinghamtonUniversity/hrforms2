@@ -4,7 +4,7 @@ import { useIsFetching } from 'react-query';
 import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import sub from "date-fns/sub";
-import { assign, keyBy, orderBy, get, set } from "lodash";
+import { assign, keyBy, orderBy, get, groupBy, uniq } from "lodash";
 import { AppButton, DescriptionPopover, Loading } from "../components";
 import usePersonQueries from "../../queries/person";
 import useCodesQueries from "../../queries/codes";
@@ -64,9 +64,15 @@ export default function FormBasicInfo() {
                 newRole['EMPLOYMENT_ROLE_TYPE'] = 'New Role';
                 newRole['LEGAL_LAST_NAME'] = 'New Role';
                 newRole['COMMITMENT_DEPARTMENTS'] = '{}';
+                newRole['additional'] = [];
                 nr.push(newRole);
             });
-            const result = assign(keyBy(d.results,'id'),keyBy(nr,'id'));
+            const grouped = groupBy(d.results,'id');
+            const x = Object.keys(grouped).map(k => {
+                grouped[k][0].additional = grouped[k].slice(1);
+                return grouped[k][0];
+            });
+            const result = assign(keyBy(x,'id'),keyBy(nr,'id'));
             return orderBy(Object.values(result),['id']);
         }
     });
@@ -299,15 +305,16 @@ function LookupResults({data}) {
         },sortable:true,wrap:true},
         {name:'Payroll',selector:row=>row.PAYROLL_AGENCY_CODE,sortable:true,wrap:true},
         {name:'Department',selector:row=>{
-            if (row.DPT_CMP_DSC && (get(row,'COMMITMENT_DEPARTMENTS','{}') != '{}')) {
-                const depts = Object.entries(JSON.parse(row.COMMITMENT_DEPARTMENTS)).sort((a,b)=>(a[1].localeCompare(b[1])));
-                if (depts.length < 2) return row.DPT_CMP_DSC;
+            if (row.DPT_CMP_DSC && row.commitments?.length>0) {
+                const depts = new Map();
+                row.commitments.forEach(c=>depts.set(c.CONTRACT_GROUP,c.DEPARTMENT_DESC));
+                if (depts.size < 2) return row.DPT_CMP_DSC;
                 return (
                     <DescriptionPopover
                         id={`commitment_depts_${row.id}`}
                         title="Commitment Departments"
                         content={
-                            <ul className="pl-3">{depts.map(([key, value]) => (<li key={key} className="mb-1">{value}</li>))}</ul>
+                            <ul className="pl-3">{[...depts].sort(((a,b)=>(a[1].localeCompare(b[1])))).map(([key, value]) => (<li key={key}>{value}</li>))}</ul>
                         }
                     >
                         <div>
@@ -334,6 +341,52 @@ function LookupResults({data}) {
         el.focus();
     },[data]);*/
 
+    const expandComponent = ({data}) => {
+        if (data.additional?.length < 2 && data.commitments?.length < 2) return null;
+        return (
+            <div style={{backgroundColor:'#d9d9d9'}} className="d-flex justify-content-end">
+                <table style={{marginLeft:'5em'}}className="table table-sm mb-0 font-size-85">
+                    <thead className="bg-primary-light">
+                        <tr>
+                            <th>Role</th>
+                            <th>Payroll</th>
+                            <th>Department</th>
+                            <th>Title</th>
+                            <th>Effective Date</th>
+                            <th>End Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data.additional.length > 1 && data.additional.map((r,i) => {
+                            return (<tr key={`${r.id}-${i}`}>
+                                <td>{r.EMPLOYMENT_ROLE_TYPE}/{r.DATA_STATUS_EMP}/{r.STATUS_TYPE}</td>
+                                <td>{r.PAYROLL_AGENCY_CODE}</td>
+                                <td>{r.DPT_CMP_DSC}</td>
+                                <td>{r.TITLE_DESCRIPTION}</td>
+                                <td>{r.effectiveDateFmt}</td>
+                                <td>{r.endDateFmt}</td>
+                            </tr>);
+                        })}
+                        {data.commitments.length > 1 && data.commitments.map(c => {
+                            return (<tr key={`${c.HR_COMMITMENT_ID}`}>
+                                <td>{c.EMPLOYMENT_ROLE_TYPE}/{c.DATA_STATUS}</td>
+                                <td>{c.PAYROLL_AGENCY_CODE}</td>
+                                <td>{c.DEPARTMENT_DESC}</td>
+                                <td>{data.TITLE_DESCRIPTION}</td>
+                                <td>{c.commitmentEffectiveDateFmt}</td>
+                                <td>{c.commitmentEndDateFmt}</td>
+                            </tr>);
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        );
+    };
+
+    const handleDisableExpand = useCallback(row => {
+        return ['New Employee','New Role','VOLUN'].includes(row.EMPLOYMENT_ROLE_TYPE) || (row.commitments?.length < 2 && row.additional?.length < 2);
+    },[]);
+
     return (
         <>
             <article id="lookupResults" className="mt-3">
@@ -358,6 +411,10 @@ function LookupResults({data}) {
                             selectableRowsComponent={LookupCheckbox}
                             selectableRowSelected={rowSelectCritera}
                             onSelectedRowsChange={handleSelectedRowChange}
+                            expandableRows
+                            expandableRowDisabled={handleDisableExpand}
+                            expandableRowsComponent={expandComponent}
+                            
                         />                    
                     </Col>
                 </Row>
