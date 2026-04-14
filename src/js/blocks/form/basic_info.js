@@ -4,7 +4,7 @@ import { useIsFetching } from 'react-query';
 import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import sub from "date-fns/sub";
-import { assign, keyBy, orderBy, get, groupBy, uniq } from "lodash";
+import { assign, keyBy, orderBy, get, groupBy } from "lodash";
 import { AppButton, DescriptionPopover, Loading } from "../components";
 import usePersonQueries from "../../queries/person";
 import useCodesQueries from "../../queries/codes";
