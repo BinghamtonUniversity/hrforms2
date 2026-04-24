@@ -51,7 +51,7 @@ export default function EmploymentAppointment() {
             setValue(`${name}.totalSalary`,(+watchAmounts[0]*+watchAmounts[1]).toFixed(2));
             setValue(`${name}.PAY_BASIS`,watchPayBasis);
         } else {
-            setValue(`${name}.totalSalary`,((+watchAmounts[0]*+watchAmounts[1]) * (+watchAmounts[2]/100)).toFixed(2));
+            setValue(`${name}.totalSalary`,(+watchAmounts[0] * (+watchAmounts[2]/100)).toFixed(2));
         }
     },[watchAmounts,watchPayBasis]);
 
