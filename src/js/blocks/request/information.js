@@ -86,7 +86,7 @@ export default function Information() {
                             defaultValue=""
                             control={control}
                             rules={{required:{value:true,message:'Effective Date is required'}}}
-                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.effDate} disabled={!isDraft} autoComplete="off"/>}
+                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.effDate} disabled={!canEdit} autoComplete="off"/>}
                         />
                         <InputGroup.Append>
                             <InputGroup.Text>
