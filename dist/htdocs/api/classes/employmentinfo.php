@@ -284,6 +284,7 @@ class EmploymentInfo extends HRForms2 {
                 if (!$r) $this->raiseError();
                 while($addSalary = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
                     $key = array_search($addSalary['ADDL_SALARY_EARNING_CODE'],array_column($additionalSalaryTypes,0));
+                    if (!$key) continue;
                     $addSalary['ADDL_SALARY_EARNING_CODE'] = array("id"=>$addSalary['ADDL_SALARY_EARNING_CODE'],"label"=>($key!==false)?$additionalSalaryTypes[$key][1]:"");
                     $row['EXISTING_ADDITIONAL_SALARY'][] = $addSalary;
                 }
