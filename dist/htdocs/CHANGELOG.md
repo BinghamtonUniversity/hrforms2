@@ -1,4 +1,17 @@
 # Changelog
+## Version 2.1.1(rev-20260508)
+  * Fixed bug in Forms:Person|Education on city lookup which caused an error when there is a null value.
+  * Display both city and institution name in Forms:Person|Education tab once state is selected.
+  * Fixed Request Type, New Position Funding, and Strata Commitment ID fields should clear when Position Type is changed.
+  * Added row expander in Forms:Basic Info to display multiple appointments/commitmements.
+  * Updated code to refetch user info when the Override SUNY ID changes; fixes some delayed component updates.
+  * Fixed Forms:Employment|Salary Total Salary calculation for Pay Basis not BIW, FEE, or HRY.
+  * Fixed Forms:Employment|Salary to only display Existing Additional Salary when the code is entered in the Additional Salary Types list.
+  * Allow the Effective Date on Requests to be editable by approvers.
+  * Change the Request Review to separate the "New Candidate Information" with a header to reflect the layout on the Information tab.
+  * Changed Form initial data population to consider Effective Date for Position Details data.
+
+
 ## Version 2.1.0(rev-20260324)
   * Changed application configuration to use .env file
   * Added Unarchive functionality to Forms and Requests.

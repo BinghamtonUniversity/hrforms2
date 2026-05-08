@@ -1,7 +1,7 @@
 {
   "name": "hrforms2",
-  "version": "2.1.0",
-  "revision": "LOCAL-20260324",
+  "version": "2.1.2",
+  "revision": "LOCAL-20260508",
   "description": "HR Forms 2.0",
   "main": "index.php",
   "author": "Scott Geiger",
@@ -69,7 +69,6 @@
     "react-phone-input-2": "^2.15.1",
     "react-query": "^3.34.14",
     "react-router-dom": "^5.3.4",
-    "react-slidedown": "^2.4.7",
     "react-toastify": "^9.0.0",
     "remark-gfm": "^3.0.1"
   }
