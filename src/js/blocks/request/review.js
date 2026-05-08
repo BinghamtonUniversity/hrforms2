@@ -97,13 +97,24 @@ export default function Review({setShouldBlock}) {
                         </>
                     }
                     <NewLine/>
-                    <Col as="dt" sm={3} md={2} className="mb-0">Candidate Name:</Col>
-                    <Col as="dd" sm={9} md={4} className="mb-0">{formValues.candidateName}</Col>
-                    <Col as="dt" sm={3} md={2} className="mb-0">B-Number:</Col>
-                    <Col as="dd" sm={9} md={4} className="mb-0">{formValues.bNumber}</Col>
-                    <Col as="dt" sm={3} md={2} className="mb-0">Job Description:</Col>
-                    <Col as="dd" sm={9} md={10} className="mb-0"><pre>{formValues.jobDesc}</pre></Col>
                 </Row>
+                <section>
+                    <header>
+                        <Row>
+                            <Col>
+                                <h5 className="mb-0 mt-2">New Candidate Information</h5>
+                            </Col>
+                        </Row>
+                    </header>
+                    <Row as="dl" className="mb-0">
+                        <Col as="dt" sm={3} md={2} className="mb-0">Candidate Name:</Col>
+                        <Col as="dd" sm={9} md={4} className="mb-0">{formValues.candidateName}</Col>
+                        <Col as="dt" sm={3} md={2} className="mb-0">B-Number:</Col>
+                        <Col as="dd" sm={9} md={4} className="mb-0">{formValues.bNumber}</Col>
+                        <Col as="dt" sm={3} md={2} className="mb-0">Job Description:</Col>
+                        <Col as="dd" sm={9} md={10} className="mb-0"><pre>{formValues.jobDesc}</pre></Col>
+                    </Row>
+                </section>
             </section>
             <section className="mb-4">
                 <header>
