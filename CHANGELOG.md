@@ -3,7 +3,7 @@
   * Fixed bug in Forms:Person|Education on city lookup which caused an error when there is a null value.
   * Display both city and institution name in Forms:Person|Education tab once state is selected.
   * Fixed Request Type, New Position Funding, and Strata Commitment ID fields should clear when Position Type is changed.
-  * Added row expander in Forms:Basic Info to display multiple appointments/commitmements.
+  * Added row expander in Forms:Basic Info to display multiple appointments/commitments.
   * Updated code to refetch user info when the Override SUNY ID changes; fixes some delayed component updates.
   * Fixed Forms:Employment|Salary Total Salary calculation for Pay Basis not BIW, FEE, or HRY.
   * Fixed Forms:Employment|Salary to only display Existing Additional Salary when the code is entered in the Additional Salary Types list.
