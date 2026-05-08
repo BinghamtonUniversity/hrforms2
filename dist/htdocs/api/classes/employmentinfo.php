@@ -136,7 +136,7 @@ class EmploymentInfo extends HRForms2 {
                     $this->_arr = $this->null2Empty($this->_arr);
                     
                 break;
-            case "position":
+            case "position": // position details needs effective date
                 $appointmentTypes = (new listdata(array('appointmentTypes'),false))->returnData;
                 $benefitCodes = (new listdata(array('benefitCodes'),false))->returnData;
                 $checkSortCodes = (new listdata(array('checkSortCodes'),false))->returnData;
@@ -189,7 +189,12 @@ class EmploymentInfo extends HRForms2 {
                 $row['PAYROLL_MAIL_DROP_ID'] = array("id"=>$row['PAYROLL_MAIL_DROP_ID'],"label"=>($key!==false)?$checkSortCodes[$key][1]:"");
 
                 // Line Item Details:
-                $row['positionDetails'] = (new position(array($row['PAYROLL_AGENCY_CODE'],$row['LINE_ITEM_NUMBER']),false))->returnData;
+                try {
+                    $effDate = DateTimeImmutable::createFromFormat('Ymd',$this->req[2])->format('d-M-Y');
+                } catch(Exception $e) {
+                    $effDate = null;
+                }
+                $row['positionDetails'] = (new position(array($row['PAYROLL_AGENCY_CODE'],$row['LINE_ITEM_NUMBER'],$effDate),false))->returnData;
 
                 $this->_arr = $this->null2Empty($row);
                 oci_free_statement($stmt);

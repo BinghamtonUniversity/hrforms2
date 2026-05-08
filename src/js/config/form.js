@@ -490,7 +490,7 @@ export function fetchFormData({watchIds,effectiveDate,payrollCode}) {
         refetchOnMount:false,
         enabled:false,
     });
-    const employmentposition = getEmploymentInfo([watchIds[0],'position'],{
+    const employmentposition = getEmploymentInfo([watchIds[0],'position',effectiveDate],{
         refetchOnMount:false,
         enabled:false,
         onSuccess:d=>{
