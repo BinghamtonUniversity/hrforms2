@@ -227,9 +227,21 @@ class PersonInfo extends HRForms2 {
                 left join (select to_char(i.unt_id) as institution_id, 'USA' as country_code, i.institution_state, i.institution_city, i.institution
                     from sunyhr.degree_institutions@banner.cc.binghamton.edu i
                     union
-                    select 'F' || f.fgn_dgr_instn_id, f.country_code, null, null, f.institution
+                    select 'F' || f.id, f.country_code, null, null, f.institution
                     from sunyhr.foreign_degree_institutions@banner.cc.binghamton.edu f) i on (i.institution_id = nvl(e.unit_id,'F'||e.foreign_degree_instn_id))
                 join (select hr_person_id, suny_id from buhr_person_mv@banner.cc.binghamton.edu where hr_person_id = :hr_person_id) p on (p.suny_id = e.suny_id)";
+
+                /*$qry = "select e.degree_year, e.degree_month, e.pending_degree_flag, e.degree_type,
+                e.degree_program_code, e.degree_program_description,
+                i.country_code, i.institution_state, i.institution_city, i.institution_id, i.institution, 
+                e.highest_degree_flag, e.terminal_degree_flag, e.degree_verified, e.create_date
+                from BUHR.BUHR_POST_SECONDARY_MV@banner.cc.binghamton.edu e
+                left join (select to_char(i.unt_id) as institution_id, 'USA' as country_code, i.institution_state, i.institution_city, i.institution
+                    from sunyhr.degree_institutions@banner.cc.binghamton.edu i
+                    union
+                    select 'F' || f.fgn_dgr_instn_id, f.country_code, null, null, f.institution
+                    from sunyhr.foreign_degree_institutions@banner.cc.binghamton.edu f) i on (i.institution_id = nvl(e.unit_id,'F'||e.foreign_degree_instn_id))
+                join (select hr_person_id, suny_id from buhr_person_mv@banner.cc.binghamton.edu where hr_person_id = :hr_person_id) p on (p.suny_id = e.suny_id)";*/
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":hr_person_id", $this->req[0]);
                 $r = oci_execute($stmt);

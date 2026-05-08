@@ -42,11 +42,17 @@ class Education extends HRForms2 {
             case 1:
                 if ($this->req[0] == 'USA') $this->raiseError(E_BAD_REQUEST,array("msg"=>"State code required for USA."));
                 $qry = "select
-                'F'||fgn_dgr_instn_id as id, institution, null as institution_address, 
+                'F'||id as id, institution, null as institution_address, 
                 null as institution_city, null as institution_state, null as institution_zip, country_code as institution_country_code
                 from SUNYHR.FOREIGN_DEGREE_INSTITUTIONS@banner.cc.binghamton.edu
                 where data_status = 'C' and country_code = :country_code
                 order by institution";
+                /*$qry = "select
+                'F'||fgn_dgr_instn_id as id, institution, null as institution_address, 
+                null as institution_city, null as institution_state, null as institution_zip, country_code as institution_country_code
+                from SUNYHR.FOREIGN_DEGREE_INSTITUTIONS@banner.cc.binghamton.edu
+                where data_status = 'C' and country_code = :country_code
+                order by institution";*/
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":country_code",$this->req[0]);
                 break;
