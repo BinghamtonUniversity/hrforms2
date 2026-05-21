@@ -74,7 +74,7 @@ class PersonLookup extends HRForms2 {
                         'COMMITMENT_EFFECTIVE_DATE' VALUE to_char(c.commitment_effective_date,'DD-MON-YYYY'), 
                         'COMMITMENT_END_DATE' VALUE to_char(c.commitment_end_date,'DD-MON-YYYY'), 
                         'CONTRACT_GROUP' VALUE c.contract_group, 
-                        'DEPARTMENT_DESC' VALUE d.department_desc) as commitments
+                        'DEPARTMENT_DESC' VALUE nvl(d.department_desc,c.contract_group)) as commitments
                     from buhr.buhr_commitment_mv@banner.cc.binghamton.edu c
                     left join (select campus_identifier, department_desc from sunyhr.campus_departments@banner.cc.binghamton.edu) d on (d.campus_identifier = c.contract_group)
                     where c.data_status = 'C'
