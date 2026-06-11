@@ -31,7 +31,6 @@ const HRFormArchiveList = lazy(()=>lazyRetry(()=>import("./pages/form/archive"))
 const HRFormList = lazy(()=>lazyRetry(()=>import("./pages/form/list")));
 const HRFormJournal = lazy(()=>lazyRetry(()=>import("./pages/form/journal")));
 const AdminPages = lazy(()=>lazyRetry(()=>import("./pages/admin")));
-const TestPages = lazy(()=>lazyRetry(()=>import("./pages/testing")));
 const VersionInfo = lazy(()=>lazyRetry(()=>import("./pages/version")));
 const LoginHistory = lazy(()=>lazyRetry(()=>import("./pages/login-history")));
 /* CONTEXTS */
@@ -224,8 +223,6 @@ function AppContent({OVR_SUNY_ID}) {
                             <Route path="/admin/:page/:subpage/:pagetab" component={AdminPages}/>
                             <Route path="/admin/:page/:subpage" component={AdminPages}/>
                             <Route path="/admin/:page" component={AdminPages}/>
-
-                            <Route path="/test/:page" component={TestPages}/>
 
                             <Route path="/version-info" component={VersionInfo}/>
                             <Route path="/login-history" component={LoginHistory}/>
