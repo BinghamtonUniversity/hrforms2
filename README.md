@@ -6,7 +6,7 @@ A modern, React-based Human Resources forms management interface for streamlined
 
 ## Overview
 
-HR Forms 2.0 provides a comprehensive web application for managing HR forms, employee requests, and administrative workflows. The interface features dynamic form handling, real-time data management, and comprehensive admin capabilities for managing departments, groups, users, and form templates.
+HR Forms 2.0 provides a comprehensive web application for managing HR forms, position requests, and administrative workflows. The interface features dynamic form handling, real-time data management, and comprehensive admin capabilities for managing departments, groups, users, and form templates.
 
 ## Features
 
@@ -214,4 +214,4 @@ ISC
 
 ## Contributing
 
-For contribution guidelines and development setup, please refer to the project documentation.
+For contribution guidelines and development setup, please contact the author.
