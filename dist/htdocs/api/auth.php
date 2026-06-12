@@ -9,7 +9,7 @@
     #}
     if (!CAS_HOST && INSTANCE == 'LOCAL') {
         //TOOD: need to do more?  This is all hard-coded and required DB direct updates
-        $sid = 'DA30317F601904A3E0539406E280F00F';
+        $sid = '000FFF';
         setcookie('session-id',$sid,$client_lifetime,$client_path,$client_domain,$client_secure,$client_httpOnly);
         return;
     }
