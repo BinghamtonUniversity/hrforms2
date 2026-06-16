@@ -389,13 +389,11 @@ function SettingsFormsEmailStatus() {
         ["submitter","Submitter"],
         ["group_to","Group To"],
         ["group_from","Group From"],
-        ["default","Default"],
         ["error","Error"]
     ];
     const replyToOptions = [
         ["none","None"],
         ["submitter","Submitter"],
-        ["default","Default"],
         ["error","Error"]
     ];
 

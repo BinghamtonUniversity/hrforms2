@@ -482,10 +482,6 @@ Class HRForms2 {
         $status = $journal['status'];
         $email_settings = (array)$settings[$type]['email'];
         $options = $email_settings['status'][$status];
-        /*
-        $defaultEmail = $settings[$type]['email']['default']; //not valid; group now
-        */
-        $defaultEmail = "geigers+hrforms2-".strtolower(INSTANCE)."-default@binghamton.edu";
         $errorEmail = $this->getGroupEmails($email_settings['errorsGroup']);
 
         // Check for no "To" options and return
@@ -534,9 +530,9 @@ Class HRForms2 {
                             }
                         }
                         break;
-                    case "default":
-                        array_push($email_list[$key],$defaultEmail);
-                        break;
+                    case "group_all":
+
+                         break;
                     case "error":
                         array_push($email_list[$key],$errorEmail);
                 }
@@ -553,9 +549,6 @@ Class HRForms2 {
         switch($options['replyto']) {
             case "submitter":
                 $replyto = $this->getUserEmail($journal['submitted_by'])[0];
-                break;
-            case "default":
-                $replyto = $defaultEmail; 
                 break;
             case "error":
                 $replyto = $errorEmail;
