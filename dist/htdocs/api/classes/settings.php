@@ -41,6 +41,11 @@ class Settings extends HRForms2 {
     }
 
     function PUT() {
+        $qry = "insert into hrforms2_settings_history select :suny_id, sysdate, settings from hrforms2_settings";
+        $stmt = oci_parse($this->db,$qry);
+        oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
+        $r = oci_execute($stmt);
+        if (!$r) $this->raiseError();
         $qry = "update hrforms2_settings set settings = ".((INSTANCE=="LOCAL")?"'{}'":"EMPTY_CLOB()")." returning settings into :json";
         $stmt = oci_parse($this->db,$qry);
         $clob = oci_new_descriptor($this->db, OCI_D_LOB);
