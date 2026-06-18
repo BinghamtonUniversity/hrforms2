@@ -252,7 +252,7 @@ function ListTable({data,list}) {
                         */}
                     </div>
                 );
-            },ignoreRowClick:true,maxWidth:'100px'},
+            },ignoreRowClick:true,maxwidth:'100px'},
             {name:'ID',selector:row=>row.REQUEST_ID,sortable:true},
             //{name:'Status',selector:row=>row.STATUS,format:row=>(row.STATUS == 'draft')?"Draft":get(general.status,`${row.STATUS}.list`,row.STATUS),sortable:true,sortField:'STATUS'},
             {name:'Position Type',selector:row=>row.POSTYPE.id,format:row=>`${row.POSTYPE.id} - ${row.POSTYPE.title}`,sortable:true},

@@ -256,7 +256,7 @@ function ListTable({data,list}) {
                     */}
                 </div>
             );
-        },ignoreRowClick:true,maxWidth:'100px'},
+        },ignoreRowClick:true,maxwidth:'100px'},
         {name:'Form ID',selector:row=>row.FORM_ID,sortable:true,sortField:'FORM_ID'},
         {name:'Effective Date',selector:row=>row.effDateFmt,sortable:true,sortFunction:sortEffDate},
         {name:'Name',selector:row=>row.sortName,sortable:true},

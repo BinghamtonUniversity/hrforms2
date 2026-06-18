@@ -331,7 +331,7 @@ const DescriptionPopover = ({title,content,showempty,children,...props}) => {
     const emptydisplay = (typeof(showempty)=='boolean')?"no description":showempty;
     const s = {};
     if (props.width) {
-        s.maxWidth = 'none';
+        s.maxwidth = 'none';
         s.width = `${props.width}em`;
     }
     return (
