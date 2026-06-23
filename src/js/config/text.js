@@ -72,7 +72,7 @@ const text = {
             }
         },
         'settings': {
-            'title': 'Admin: Settings',
+            'title': 'Admin: Application Settings',
         },
         'templates': {
             'title': 'Admin: Templates',
