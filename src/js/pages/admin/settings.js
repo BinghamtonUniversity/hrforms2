@@ -81,31 +81,38 @@ function AdminSettingsTabs({settingsData}) {
                     </Row>
                 }
             </header>
-            <FormProvider {...methods}>
-                <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
-                    <Row>
-                        <Col>
-                            <Tabs activeKey={activeTab} onSelect={navigate} id="settings-tabs">
-                                {tabs.map(t=>(
-                                    <Tab key={t.id} eventKey={t.id} title={t.title}>
-                                        <Container as="article" className="mt-3" fluid>
-                                            <Row as="header">
-                                                <Col as="h3">{t.title}</Col>
-                                            </Row>
-                                            <SettingsRouter tab={t.id}/>
-                                        </Container>
-                                    </Tab>
-                                ))}
-                            </Tabs>
-                        </Col>
-                    </Row>
-                    <Row as="footer">
-                        <Col className="button-group justify-content-end">
-                            <AppButton format="save" type="submit">Save Settings</AppButton>
-                        </Col>
-                    </Row>
-                </Form>
-            </FormProvider>
+            <section>
+                <Alert variant="info">
+                    <p className="mb-0">These settings apply globally to the application and affect all users.</p>
+                </Alert>
+            </section>
+            <section>
+                <FormProvider {...methods}>
+                    <Form onSubmit={methods.handleSubmit(handleSubmit,handleError)}>
+                        <Row>
+                            <Col>
+                                <Tabs activeKey={activeTab} onSelect={navigate} id="settings-tabs">
+                                    {tabs.map(t=>(
+                                        <Tab key={t.id} eventKey={t.id} title={t.title}>
+                                            <Container as="article" className="mt-3" fluid>
+                                                <Row as="header">
+                                                    <Col as="h3">{t.title}</Col>
+                                                </Row>
+                                                <SettingsRouter tab={t.id}/>
+                                            </Container>
+                                        </Tab>
+                                    ))}
+                                </Tabs>
+                            </Col>
+                        </Row>
+                        <Row as="footer">
+                            <Col className="button-group justify-content-end">
+                                <AppButton format="save" type="submit">Save Settings</AppButton>
+                            </Col>
+                        </Row>
+                    </Form>
+                </FormProvider>
+            </section>
         </>
     );
 }
