@@ -56,7 +56,7 @@ class Session extends HRForms2 {
         $this->checkAuth();
         $lastInfo = $this->getLastInfo();
         $stat = stat($_SERVER['DOCUMENT_ROOT']."/CHANGELOG.md");
-        $this->sessionData = array_merge($this->sessionData,$lastInfo,array('BUILD_TIME'=>$stat['mtime']));
+        $this->sessionData = array_merge($this->sessionData,$lastInfo);
         $this->toJSON($this->sessionData);
     }
 
