@@ -119,8 +119,8 @@ function HierarchyTable() {
     },[filterText,history,location]);
 
     const filteredRows = useMemo(() => {
-        const id = filterText.startsWith('id:')?filterText.split(':')[1]:null;
-        if (id) {
+        const id = filterText.startsWith('id:')?filterText.split(':')[1]:'';
+        if (id!='') {
             return rows.filter(row => row.HIERARCHY_ID==id);
         } else {
             return rows.filter(row => Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
@@ -157,7 +157,7 @@ function HierarchyTable() {
             }>
                 <p className="mb-0">{row.WORKFLOW_ID} <Link to={`/admin/hierarchy/request/workflow/?search=id:${row.WORKFLOW_ID}`} className="btn btn-sm btn-info py-0"><Icon icon="mdi:jump"/></Link></p>
             </OverlayTrigger>
-        ),sortable:true,sortField:'WORKFLOW_ID',center:true},
+        ),sortable:true,sortField:'WORKFLOW_ID',center:'true'},
         {name:'Workflow Routing',selector:row=><HierarchyChain list={row.WORKFLOW_GROUPS_ARRAY} conditions={row.CONDITIONS}/>,grow:5,style:{flexWrap:'wrap'}},
     ],[hierarchy]);
 
