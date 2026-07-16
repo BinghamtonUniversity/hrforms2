@@ -4,7 +4,7 @@ import { useHierarchyQueries } from "../../../../queries/hierarchy";
 import useCodesQueries from "../../../../queries/codes";
 import useTransactionQueries from "../../../../queries/transactions";
 import { find, truncate, orderBy, difference, pick, pickBy, get, intersection } from 'lodash';
-import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Badge, Button, ListGroup } from "react-bootstrap";
+import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Badge, Button, ListGroup, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Loading, errorToast, DescriptionPopover, AppButton } from "../../../../blocks/components";
 import { Icon } from "@iconify/react";
 import DataTable from 'react-data-table-component';
@@ -19,6 +19,7 @@ import { t } from "../../../../config/text";
 import { NotFound } from "../../../../app";
 import { datatablesConfig } from "../../../../config/app";
 import { useLocation, useHistory } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const HierarchyContext = React.createContext();
 HierarchyContext.displayName = 'HierarchyContext';
@@ -187,18 +188,24 @@ function HierarchyTable({isPaged}) {
     },[filterText,history,location]);
 
     const filteredRows = useMemo(() => {
-        return rows.filter(row => {
-            if(!filterText) return true;
-            const fields = pickBy(row,(v,k)=>k.endsWith('_CODE')||k.endsWith('_TITLE')); // Only filter on code and title fields
-            ['HIERARCHY_GROUPS_ARRAY','WORKFLOW_GROUPS_ARRAY'].forEach(f => {
-                fields[f] = get(row,f,[]).map(g=>pick(g,'GROUP_NAME'));
+        const id = filterText.startsWith('id:')?filterText.split(':')[1]:'';
+        if (id!='') {
+            return rows.filter(row => row.HIERARCHY_ID==id);
+        } else {
+            //return rows.filter(row => Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
+            return rows.filter(row => {
+                if(!filterText) return true;
+                const fields = pickBy(row,(v,k)=>k.endsWith('_CODE')||k.endsWith('_TITLE')); // Only filter on code and title fields
+                ['HIERARCHY_GROUPS_ARRAY','WORKFLOW_GROUPS_ARRAY'].forEach(f => {
+                    fields[f] = get(row,f,[]).map(g=>pick(g,'GROUP_NAME'));
+                });
+                const searchString = Object.values(flattenObject(fields));
+                searchString.push(displayFormCode({separator:'-',codes:[row.FORM_CODE,row.ACTION_CODE,row.TRANSACTION_CODE]}));
+                const r = searchString.filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ');
+                const tokens = filterText.toLocaleLowerCase().split(' ');
+                return tokens.reduce((a,b)=>a&&r.includes(b),true);
             });
-            const searchString = Object.values(flattenObject(fields));
-            searchString.push(displayFormCode({separator:'-',codes:[row.FORM_CODE,row.ACTION_CODE,row.TRANSACTION_CODE]}));
-            const r = searchString.filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ');
-            const tokens = filterText.toLocaleLowerCase().split(' ');
-            return tokens.reduce((a,b)=>a&&r.includes(b),true);
-        });
+        }
     },[rows,filterText]);
 
     const columns = useMemo(() => [
@@ -236,7 +243,15 @@ function HierarchyTable({isPaged}) {
                 </DescriptionPopover>
             </p>
         ),sortable:true,sortField:'GROUP_NAME',wrap:true},
-        {name:'Workflow ID',selector:row=>row.WORKFLOW_ID,sortable:true,sortField:'WORKFLOW_ID',center:true},
+        {name:'Workflow ID',selector:row=>(
+            <OverlayTrigger overlay={
+                <Tooltip>
+                    View Workflow
+                </Tooltip>
+            }>
+                <p className="mb-0">{row.WORKFLOW_ID} <Link to={`/admin/hierarchy/form/workflow/?search=id:${row.WORKFLOW_ID}`} className="btn btn-sm btn-info py-0"><Icon icon="mdi:jump"/></Link></p>
+            </OverlayTrigger>
+        ),sortable:true,sortField:'WORKFLOW_ID',center:'true'},
         {name:'Workflow Routing',selector:row=><HierarchyChain list={row.WORKFLOW_GROUPS_ARRAY} conditions={row.CONDITIONS} sendToGroup={row.SENDTOGROUP}/>,grow:5,style:{flexWrap:'wrap'}},
     ],[hierarchy]);
 
