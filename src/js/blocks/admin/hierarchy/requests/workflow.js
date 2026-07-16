@@ -77,7 +77,14 @@ export default function WorkflowTab() {
         );
     },[filterText,history,location]);
 
-    const filteredRows = useMemo(()=>rows.filter(row=>Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase())),[rows,filterText]);
+    const filteredRows = useMemo(() => {
+        const id = filterText.startsWith('id:')?filterText.split(':')[1]:null;
+        if (id) {
+            return rows.filter(row => row.WORKFLOW_ID==id);
+        } else {
+            return rows.filter(row=>Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
+        }
+    },[rows,filterText]);
 
     const columns = useMemo(() => [
         {name:'Actions',id:'actions',selector:row=>row.WORKFLOW_ID,cell:row=>{

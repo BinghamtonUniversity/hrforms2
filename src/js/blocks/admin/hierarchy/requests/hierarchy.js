@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, u
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/request";
 import { useHierarchyQueries } from "../../../../queries/hierarchy";
 import { find, truncate, orderBy, difference, intersection, set } from 'lodash';
-import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Badge, Button, ListGroup } from "react-bootstrap";
+import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Badge, Button, ListGroup, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { AppButton, DescriptionPopover, Loading, errorToast } from "../../../../blocks/components";
 import DataTable from 'react-data-table-component';
@@ -16,6 +16,7 @@ import useListsQueries from "../../../../queries/lists";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { datatablesConfig } from "../../../../config/app";
 import { useLocation, useHistory } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const HierarchyContext = React.createContext();
 HierarchyContext.displayName = 'HierarchyContext';
@@ -118,7 +119,12 @@ function HierarchyTable() {
     },[filterText,history,location]);
 
     const filteredRows = useMemo(() => {
-        return rows.filter(row => Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
+        const id = filterText.startsWith('id:')?filterText.split(':')[1]:null;
+        if (id) {
+            return rows.filter(row => row.HIERARCHY_ID==id);
+        } else {
+            return rows.filter(row => Object.values(flattenObject(row)).filter(r=>!!r).map(r=>r.toString().toLowerCase()).join(' ').includes(filterText.toLowerCase()));
+        }
     },[rows,filterText]);
 
     const columns = useMemo(() => [
@@ -143,7 +149,15 @@ function HierarchyTable() {
                 </DescriptionPopover>
             </p>
         ),sortable:true,sortField:'GROUP_NAME',wrap:true},
-        {name:'Workflow ID',selector:row=>row.WORKFLOW_ID,sortable:true,sortField:'WORKFLOW_ID',center:true},
+        {name:'Workflow ID',selector:row=>(
+            <OverlayTrigger overlay={
+                <Tooltip>
+                    View Workflow
+                </Tooltip>
+            }>
+                <p className="mb-0">{row.WORKFLOW_ID} <Link to={`/admin/hierarchy/request/workflow/?search=id:${row.WORKFLOW_ID}`} className="btn btn-sm btn-info py-0"><Icon icon="mdi:jump"/></Link></p>
+            </OverlayTrigger>
+        ),sortable:true,sortField:'WORKFLOW_ID',center:true},
         {name:'Workflow Routing',selector:row=><HierarchyChain list={row.WORKFLOW_GROUPS_ARRAY} conditions={row.CONDITIONS}/>,grow:5,style:{flexWrap:'wrap'}},
     ],[hierarchy]);
 

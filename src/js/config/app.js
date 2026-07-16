@@ -17,6 +17,7 @@ const additionalIcons = [
     'mdi:clipboard-account',
     'mdi:information',
     'mdi:information-variant',
+    'mdi:jump',
     'mdi:newspaper',
     'mdi:playlist-plus',
     'mdi:printer',

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useParams, useHistory, Link, Redirect } from "react-router-dom";
 import useRequestQueries from "../../queries/requests";
-import { Row, Col, Form, Button, Popover, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Row, Col, Form, Button, Popover, OverlayTrigger, Tooltip, Alert } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
 import { get, set, sortBy } from "lodash";
 import useGroupQueries from "../../queries/groups";
@@ -9,6 +9,7 @@ import { useAuthContext, useSettingsContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
 import { AppButton, Loading } from "../../blocks/components";
 import { t } from "../../config/text";
+import { Icon } from "@iconify/react/dist/iconify.js";
 
 export default function RequestJournal() {
     const {id} = useParams();
@@ -74,12 +75,17 @@ function JournalSearchResults({reqId,expandAll,setExpandAll,setRedirect}) {
     const [lastStatus,setLastSatutus] = useState('');
     const [showRejectedWF,setShowRejectedWF] = useState(false);
     const [hasRejected,setHasRejected] = useState(false);
+    const [hierarchyId,setHierarchyId] = useState('');
+    const [workflowId,setWorkflowId] = useState('');
     const [rows,setRows] = useState([]);
     const { general } = useSettingsContext();
+    const { isAdmin } = useAuthContext();
     const { getJournal } = useRequestQueries(reqId);
     const journal = getJournal({onSuccess:data=>{
         setLastSatutus(data[data.length-1].STATUS);
         setHasRejected(data.some(r=>r.STATUS == 'R'));
+        setHierarchyId(get(data,'0.HIERARCHY_ID',''));
+        setWorkflowId(get(data,'0.WORKFLOW_ID',''));
         setRows(data);
     }});
 
@@ -89,18 +95,39 @@ function JournalSearchResults({reqId,expandAll,setExpandAll,setRedirect}) {
         const r = (lastStatus == 'Z') ? `/request/archive/${reqId}` : `/request/${reqId}`;
         return(
             <>
-                <Col className="pl-0">
-                    <Form.Check inline type="switch" id="toggle-expand" label={expandText} onChange={()=>setExpandAll(!expandAll)} checked={expandAll}/>
-                    {hasRejected && <Form.Check inline type="switch" id="toggle-show-prior" label={showRejectedWFText} onChange={()=>setShowRejectedWF(!showRejectedWF)} checked={showRejectedWF}/>}
-                </Col>
-                {r && 
-                    <Col className="d-flex justify-content-end pr-0">
-                        <AppButton format="view" onClick={()=>setRedirect(r)}>View Request</AppButton>
-                    </Col>
+                {isAdmin &&
+                    <Row>
+                        <Col className="px-0">
+                            <Alert variant="info" className="mb-2 pb-0">
+                                <Alert.Heading>Administrative Information</Alert.Heading>
+                                <Row as="dl" className="mb-0">
+                                    <Col xs="auto" className="d-flex gap-2">
+                                        <dt>Hierarchy ID:</dt>
+                                        <dd>{hierarchyId} <Link to={`/admin/hierarchy/request/hierarchy/?search=id:${hierarchyId}`} className="btn btn-sm btn-info py-0"><Icon icon="mdi:jump"/> View</Link></dd>
+                                    </Col>
+                                    <Col xs="auto" className="d-flex gap-2">
+                                        <dt>Workflow ID:</dt>
+                                        <dd>{workflowId} <Link to={`/admin/hierarchy/request/workflow/?search=id:${workflowId}`} className="btn btn-sm btn-info py-0"><Icon icon="mdi:jump"/> View</Link></dd>
+                                    </Col>
+                                </Row>
+                            </Alert>
+                        </Col>
+                    </Row>
                 }
+                <Row>
+                    <Col className="pl-0">
+                        <Form.Check inline type="switch" id="toggle-expand" label={expandText} onChange={()=>setExpandAll(!expandAll)} checked={expandAll}/>
+                        {hasRejected && <Form.Check inline type="switch" id="toggle-show-prior" label={showRejectedWFText} onChange={()=>setShowRejectedWF(!showRejectedWF)} checked={showRejectedWF}/>}
+                    </Col>
+                    {r && 
+                        <Col className="d-flex justify-content-end pr-0">
+                            <AppButton format="view" onClick={()=>setRedirect(r)}>View Request</AppButton>
+                        </Col>
+                    }
+                </Row>
             </>
         );
-    },[expandAll,showRejectedWF,lastStatus,reqId]);
+    },[expandAll,showRejectedWF,lastStatus,reqId,hierarchyId,workflowId,isAdmin]);
 
     const columns = useMemo(() => [
         {name:'Sequence',selector:row=>row.SEQUENCE,sortable:true,width:'120px'},
@@ -115,6 +142,13 @@ function JournalSearchResults({reqId,expandAll,setExpandAll,setRedirect}) {
 
     const filteredRows = useMemo(()=>rows.filter(r=>showRejectedWF?true:r.SEQUENCE>=-1),[rows,showRejectedWF]);
 
+    const customStyles = {
+        subHeader: {
+            style: {
+                display:'block'
+            }
+        }
+    };
     const conditionalRowStyles = [
         {
             when: row => showRejectedWF && row.SEQUENCE < -1,
@@ -132,6 +166,7 @@ function JournalSearchResults({reqId,expandAll,setExpandAll,setRedirect}) {
             keyField="SEQUENCE"
             title={`Journal Report for Request ID: ${reqId}`}
             subHeader
+            subHeaderAlign=""
             subHeaderComponent={expandToggleComponent}
             columns={columns} 
             data={filteredRows}
@@ -146,6 +181,7 @@ function JournalSearchResults({reqId,expandAll,setExpandAll,setRedirect}) {
             expandableRowsComponentProps={{lastStatus:lastStatus}}
             expandableRowExpanded={()=>expandAll}
             conditionalRowStyles={conditionalRowStyles}
+            customStyles={customStyles}
             noDataComponent={<p className="m-3">No Request Journal Found Matching Your Criteria</p>}
         />
     );
