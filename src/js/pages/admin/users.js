@@ -214,7 +214,7 @@ function UsersTable({users,newUser,setNewUser}) {
                     <Icon className="iconify-inline" icon="mdi:clipboard-account" width={24} height={24}/>
                 </span>
             </DescriptionPopover> {row.sortName}</div>
-        ),sortable:true,sortField:'sortName',minWidth:'15rem'},
+        ),sortable:true,sortField:'sortName',style:{minWidth:'15rem'}},
         {name:'Email',selector:row=>row.email,sortable:true,sortField:'email'},
         {name:'Dept Group',selector:row=>row.GROUP_NAME,sortable:true},
         {name:'Start Date',selector:row=>row.startDateUnix,format:row=>row.startDateFmt,sortable:true,sortField:'startDateUnix'},
