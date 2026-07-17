@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, useReducer } from "react";
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/request";
 import { useWorkflowQueries } from "../../../../queries/hierarchy";
-import { find } from 'lodash';
+import { find, get } from 'lodash';
 import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Table } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
 import { toast } from "react-toastify";
@@ -20,7 +20,7 @@ export default function WorkflowTab() {
     const location = useLocation();
     const history = useHistory();
 
-    const {workflows,workflowFilterText,setWorkflowFilterText } = useContext(WorkflowContext);
+    const { workflows } = useContext(WorkflowContext);
     const [filterText,setFilterText] = useState('');
     const [rows,setRows] = useState([]);
     const [resetPaginationToggle,setResetPaginationToggle] = useState(false);
@@ -54,12 +54,10 @@ export default function WorkflowTab() {
             if (e.target.value) {
                 setResetPaginationToggle(false);
                 setFilterText(e.target.value);
-                setWorkflowFilterText(e.target.value);
                 sessionStorage.setItem('requestWorkflowFilter',e.target.value);
             } else {
                 setResetPaginationToggle(true);
                 setFilterText('');
-                setWorkflowFilterText('');
                 sessionStorage.removeItem('requestWorkflowFilter');
             }
             history.replace({
@@ -106,13 +104,20 @@ export default function WorkflowTab() {
     },[workflows,activeTab]);
 
     useEffect(() => {
+        if (get(location,'pathname','').replace(/\/$/,'') != '/admin/hierarchy/request/workflow') return;
         const qs = new URLSearchParams(location.search);
-        const f = sessionStorage.getItem('requestWorkflowFilter') || '';
-        setFilterText(qs.get('search')||workflowFilterText||f||'');
-                if (!qs.get('search') && !!workflowFilterText && location.pathname == '/admin/hierarchy/request/workflow') {
+        let ft = qs.get('search');
+        if (ft) {
+            sessionStorage.setItem('requestWorkflowFilter',qs.get('search'))
+        } else {
+            ft = sessionStorage.getItem('requestWorkflowFilter') || '';
+        }
+        if (!ft) sessionStorage.removeItem('requestWorkflowFilter');
+        setFilterText(ft);
+        if (!qs.get('search') && !!ft) {
             history.replace({
                 pathname: location.pathname,
-                search: (workflowFilterText && `?search=${workflowFilterText}`)
+                search: `?search=${ft}`
             });
         }
         searchRef.current.focus();

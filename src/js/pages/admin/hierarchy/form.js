@@ -1,8 +1,8 @@
 import React, { useState, lazy, useEffect } from "react";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory, useLocation } from "react-router-dom";
 import { useWorkflowQueries } from "../../../queries/hierarchy";
 import useGroupQueries from "../../../queries/groups";
-import { find, sortBy } from 'lodash';
+import { find, sortBy, get } from 'lodash';
 import { Container, Row, Col, Tabs, Tab, Badge } from "react-bootstrap";
 import { Loading, AppButton, DescriptionPopover } from "../../../blocks/components";
 import { Icon } from "@iconify/react";
@@ -23,6 +23,7 @@ export default function AdminFormHierarchy() {
         {id:'workflow',title:t('admin.hierarchy.form.tabs.workflow')}
     ];
     const {pagetab} = useParams();
+    const location = useLocation();
     const history = useHistory();
     const [activeTab,setActiveTab] = useState('hierarchy');
     const [isNew,setIsNew] = useState('');
@@ -57,6 +58,14 @@ export default function AdminFormHierarchy() {
     }
 
     useEffect(()=>{setActiveTab(tabs.map(t=>t.id).includes(pagetab)?pagetab:'hierarchy');},[pagetab]);
+    useEffect(() => {
+        if (!tabs.map(t=>`/admin/hierarchy/form/${t.id}`).includes(get(location,'pathname','').replace(/\/$/,''))){
+            history.replace({
+                pathname:'/admin/hierarchy/form/hierarchy',
+                search: get(location,'search','')
+            });
+        }
+    },[location]);
     if (groups.isError||workflows.isError) return <Loading isError>Error Loading Data</Loading>;
     if (groups.isLoading||workflows.isIdle||workflows.isLoading) return <Loading type="alert">Loading Data</Loading>;
     return (

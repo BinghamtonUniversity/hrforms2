@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, useReducer } from "react";
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/request";
 import { useHierarchyQueries } from "../../../../queries/hierarchy";
-import { find, truncate, orderBy, difference, intersection, set } from 'lodash';
+import { find, truncate, orderBy, difference, intersection, set, get } from 'lodash';
 import { Row, Col, Modal, Form, Alert, Tabs, Tab, Container, Badge, Button, ListGroup, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { AppButton, DescriptionPopover, Loading, errorToast } from "../../../../blocks/components";
@@ -63,7 +63,7 @@ function HierarchyTable() {
     const [selectedRow,setSelectedRow] = useState({});
     const [deleteHierarchy,setDeleteHierarchy] = useState({});
 
-    const {isNew,activeTab,hierarchyFilterText,setHierarchyFilterText} = useContext(WorkflowContext);
+    const {isNew,activeTab} = useContext(WorkflowContext);
     const {hierarchy,position} = useContext(HierarchyContext);
     const searchRef = useRef();
 
@@ -95,12 +95,10 @@ function HierarchyTable() {
             if (e.target.value) {
                 setResetPaginationToggle(false);
                 setFilterText(e.target.value);
-                setHierarchyFilterText(e.target.value);
                 sessionStorage.setItem('requestHierarchyFilter',e.target.value);
             } else {
                 setResetPaginationToggle(true);
                 setFilterText('');
-                setHierarchyFilterText('');
                 sessionStorage.removeItem('requestHierarchyFilter');
             }
             history.replace({
@@ -169,13 +167,20 @@ function HierarchyTable() {
     },[hierarchy,activeTab]);
 
     useEffect(() => {
+        if (get(location,'pathname','').replace(/\/$/,'') != '/admin/hierarchy/request/hierarchy') return;
         const qs = new URLSearchParams(location.search);
-        const f = sessionStorage.getItem('requestHierarchyFilter') || '';
-        setFilterText(qs.get('search')||hierarchyFilterText||f||'');
-        if (!qs.get('search') && !!hierarchyFilterText && location.pathname == '/admin/hierarchy/request/hierarchy') {
+        let ft = qs.get('search');
+        if (ft) {
+            sessionStorage.setItem('requestHierarchyFilter',qs.get('search'))
+        } else {
+            ft = sessionStorage.getItem('requestHierarchyFilter') || '';
+        }
+        if (!ft) sessionStorage.removeItem('requestHierarchyFilter');
+        setFilterText(ft);
+        if (!qs.get('search') && !!ft) {
             history.replace({
                 pathname: location.pathname,
-                search: (hierarchyFilterText && `?search=${hierarchyFilterText}`)
+                search: `?search=${ft}`
             });
         }
         searchRef.current.focus();

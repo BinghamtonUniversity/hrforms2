@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback, useContext, useReducer } from "react";
 import { WorkflowContext, HierarchyChain } from "../../../../pages/admin/hierarchy/form";
 import { useHierarchyQueries, useWorkflowQueries } from "../../../../queries/hierarchy";
-import { find } from 'lodash';
+import { find, get } from 'lodash';
 import { Row, Col, Modal, Form, FormGroup, Alert, Tabs, Tab, Container, Table } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
 import { toast } from "react-toastify";
@@ -55,9 +55,11 @@ export default function WorkflowTab() {
             if (e.target.value) {
                 setResetPaginationToggle(false);
                 setFilterText(e.target.value);
+                sessionStorage.setItem('formWorkflowFilter',e.target.value);
             } else {
                 setResetPaginationToggle(true);
                 setFilterText('');
+                sessionStorage.removeItem('formWorkflowFilter');
             }
             history.replace({
                 pathname: location.pathname,
@@ -103,8 +105,22 @@ export default function WorkflowTab() {
     },[workflows,activeTab]);
 
     useEffect(() => {
+        if (get(location,'pathname','').replace(/\/$/,'') != '/admin/hierarchy/form/workflow') return;
         const qs = new URLSearchParams(location.search);
-        setFilterText(qs.get('search')||'');
+        let ft = qs.get('search');
+        if (ft) {
+            sessionStorage.setItem('formWorkflowFilter',qs.get('search'))
+        } else {
+            ft = sessionStorage.getItem('formWorkflowFilter') || '';
+        }
+        if (!ft) sessionStorage.removeItem('formWorkflowFilter');
+        setFilterText(ft);
+        if (!qs.get('search') && !!ft) {
+            history.replace({
+                pathname: location.pathname,
+                search: `?search=${ft}`
+            });
+        }
         searchRef.current.focus();
     },[location]);
 

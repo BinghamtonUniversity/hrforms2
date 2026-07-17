@@ -95,7 +95,7 @@ function JournalSearchResults({formId,expandAll,setExpandAll,setRedirect}) {
         const r = (lastStatus == 'Z') ? `/form/archive/${formId}` : `/form/${formId}`;
         return(
             <>
-                {isAdmin &&
+                {(isAdmin&&hierarchyId!=''&&workflowId!='') &&
                     <Row>
                         <Col className="px-0">
                             <Alert variant="info" className="mb-2 pb-0">

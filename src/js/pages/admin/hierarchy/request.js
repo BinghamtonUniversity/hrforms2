@@ -1,8 +1,8 @@
 import React, { useState, lazy, useEffect } from "react";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory, useLocation } from "react-router-dom";
 import { useWorkflowQueries } from "../../../queries/hierarchy";
 import useGroupQueries from "../../../queries/groups";
-import { find, sortBy } from 'lodash';
+import { find, get, sortBy } from 'lodash';
 import { Container, Row, Col, Tabs, Tab, Badge } from "react-bootstrap";
 import { Loading, AppButton, DescriptionPopover } from "../../../blocks/components";
 import { Icon } from "@iconify/react";
@@ -23,11 +23,10 @@ export default function AdminRequestHierarchy() {
         {id:'workflow',title:t('admin.hierarchy.request.tabs.workflow')}
     ];
     const {pagetab} = useParams();
+    const location = useLocation();
     const history = useHistory();
     const [activeTab,setActiveTab] = useState('hierarchy');
     const [isNew,setIsNew] = useState('');
-    const [hierarchyFilterText,setHierarchyFilterText] = useState('');
-    const [workflowFilterText,setWorkflowFilterText] = useState('');
 
     useHotkeys('ctrl+alt+n',()=>{
         setIsNew(activeTab);
@@ -59,6 +58,15 @@ export default function AdminRequestHierarchy() {
     }
 
     useEffect(()=>{setActiveTab(tabs.map(t=>t.id).includes(pagetab)?pagetab:'hierarchy');},[pagetab]);
+    useEffect(() => {
+        console.log(location);
+        if (!tabs.map(t=>`/admin/hierarchy/request/${t.id}`).includes(get(location,'pathname','').replace(/\/$/,''))){
+            history.replace({
+                pathname:'/admin/hierarchy/request/hierarchy',
+                search: get(location,'search','')
+            });
+        }
+    },[location]);
     if (groups.isError||workflows.isError) return <Loading isError>Error Loading Data</Loading>;
     if (groups.isLoading||workflows.isIdle||workflows.isLoading) return <Loading type="alert">Loading Data</Loading>;
     return (
@@ -68,10 +76,6 @@ export default function AdminRequestHierarchy() {
             isNew:isNew,
             setIsNew:setIsNew,
             activeTab:activeTab,
-            hierarchyFilterText:hierarchyFilterText,
-            setHierarchyFilterText:setHierarchyFilterText,
-            workflowFilterText:workflowFilterText,
-            setWorkflowFilterText:setWorkflowFilterText
         }}>
             <section>
                 <header>
