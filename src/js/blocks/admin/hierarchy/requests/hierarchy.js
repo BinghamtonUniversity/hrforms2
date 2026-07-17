@@ -96,10 +96,12 @@ function HierarchyTable() {
                 setResetPaginationToggle(false);
                 setFilterText(e.target.value);
                 setHierarchyFilterText(e.target.value);
+                sessionStorage.setItem('requestHierarchyFilter',e.target.value);
             } else {
                 setResetPaginationToggle(true);
                 setFilterText('');
                 setHierarchyFilterText('');
+                sessionStorage.removeItem('requestHierarchyFilter');
             }
             history.replace({
                 pathname: location.pathname,
@@ -168,7 +170,8 @@ function HierarchyTable() {
 
     useEffect(() => {
         const qs = new URLSearchParams(location.search);
-        setFilterText(qs.get('search')||hierarchyFilterText||'');
+        const f = sessionStorage.getItem('requestHierarchyFilter') || '';
+        setFilterText(qs.get('search')||hierarchyFilterText||f||'');
         if (!qs.get('search') && !!hierarchyFilterText && location.pathname == '/admin/hierarchy/request/hierarchy') {
             history.replace({
                 pathname: location.pathname,

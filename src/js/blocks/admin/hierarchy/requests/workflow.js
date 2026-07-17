@@ -55,10 +55,12 @@ export default function WorkflowTab() {
                 setResetPaginationToggle(false);
                 setFilterText(e.target.value);
                 setWorkflowFilterText(e.target.value);
+                sessionStorage.setItem('requestWorkflowFilter',e.target.value);
             } else {
                 setResetPaginationToggle(true);
                 setFilterText('');
                 setWorkflowFilterText('');
+                sessionStorage.removeItem('requestWorkflowFilter');
             }
             history.replace({
                 pathname: location.pathname,
@@ -105,7 +107,8 @@ export default function WorkflowTab() {
 
     useEffect(() => {
         const qs = new URLSearchParams(location.search);
-        setFilterText(qs.get('search')||workflowFilterText||'');
+        const f = sessionStorage.getItem('requestWorkflowFilter') || '';
+        setFilterText(qs.get('search')||workflowFilterText||f||'');
                 if (!qs.get('search') && !!workflowFilterText && location.pathname == '/admin/hierarchy/request/workflow') {
             history.replace({
                 pathname: location.pathname,
