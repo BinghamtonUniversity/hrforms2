@@ -22,7 +22,7 @@ const ArchiveView = lazy(()=>lazyRetry(()=>import("./view")));
 const defaultValues = {
     days:60,
     pastFuture:'past',
-    startDate:subDays(endOfToday(),31),
+    startDate:subDays(endOfToday(),61),
     endDate:endOfToday(),
     formId:'',
     personName:'',
@@ -111,7 +111,7 @@ export default function ListArchiveTable() {
     });
 
     const handleSearch = () => {
-        sessionStorage.setItem('formArchiveFilter',JSON.stringify(omit(filter,["startDate","endDate"])));
+        sessionStorage.setItem('formArchiveFilter',JSON.stringify(filter));
         setSubmitted(true);
     }
 
@@ -217,7 +217,10 @@ export default function ListArchiveTable() {
         console.debug('Restoring Archive List settings from browser storage');
         const cols = JSON.parse(localStorage.getItem('formArchiveCols')) || [];
         if (cols.length > 0) setShowCols(cols);
-        const f = JSON.parse(sessionStorage.getItem('formArchiveFilter')) || {};
+        const f = JSON.parse(sessionStorage.getItem('formArchiveFilter'),(k,v) => {
+            if (['startDate','endDate'].includes(k)) return new Date(v);
+            return v;
+        }) || defaultValues;
         setSavedFilter(f);
     },[]);
 
@@ -439,6 +442,8 @@ function ArchiveTableSubHeader({filter,setFilter,savedFilter,handleSearch,handle
 
     useEffect(() => {
         const daysObj = calculateDates({days:savedFilter.days});
+        daysObj.startDate = savedFilter.startDate;
+        daysObj.endDate = savedFilter.endDate;
         setDays(daysButtons.find(d=>d.value==savedFilter.days)?.id || defaultDays);
         setDateRange([daysObj.startDate,daysObj.endDate]);
         userData.find(u=>u.id==savedFilter.createdBy) ? setCreatedBySearch([userData.find(u=>u.id==savedFilter.createdBy)]) : setCreatedBySearch([{id:'',label:''}]);
