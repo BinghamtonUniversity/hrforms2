@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Row, Col } from "react-bootstrap";
+import { Row, Col, Alert } from "react-bootstrap";
 import { useFormContext } from "react-hook-form";
 import { Icon } from '@iconify/react';
 import { AppButton, CurrencyFormat, DateFormat, errorToast, ModalConfirm } from "../components";
@@ -37,7 +37,7 @@ export default function Review({setShouldBlock}) {
     const history = useHistory();
 
     const canUnarchive = useCallback(() => {
-        if (journalStatus != 'Z') return false;
+        if (!['Z','D'].includes(journalStatus)) return false;
         if (!get(settings,'permissions.unarchive',false)) return false; // unarchive is not enabled in settings
         if (!usergroups.isSuccess) return false;
         const unarchiveGroup = get(settings,'permissions.unarchive-group',undefined);
@@ -54,12 +54,21 @@ export default function Review({setShouldBlock}) {
 
     return (
         <article id="request-review">
-            <Row>
-                <Col className={`button-group d-print-none ${showReturn?'justify-content-between':'justify-content-end'}`}>
-                    {showReturn && <AppButton size="sm" format="previous" onClick={handleReturnToList}>Return</AppButton>}
-                    <AppButton format="print" title="Print Page" onClick={()=>window.print()}></AppButton>
-                </Col>
-            </Row>
+            <header>
+                <Row>
+                    <Col className={`button-group d-print-none ${showReturn?'justify-content-between':'justify-content-end'}`}>
+                        {showReturn && <AppButton size="sm" format="previous" onClick={handleReturnToList}>Return</AppButton>}
+                        <AppButton format="print" title="Print Page" onClick={()=>window.print()}></AppButton>
+                    </Col>
+                </Row>
+                {journalStatus == 'D' && 
+                    <Row className="mt-2">
+                        <Col>
+                            <Alert variant="danger" className="text-center h5"><Icon className="iconify-inline" icon="mdi:alert"/> This request has been deleted by the submitter</Alert>
+                        </Col>
+                    </Row>
+                }
+            </header>
 
             <section className="mb-4">
                 <header>
@@ -208,7 +217,7 @@ export default function Review({setShouldBlock}) {
                 <ReviewSubmitterInfo/>
                 <ReviewUserInfo/>
             </Row>
-            {canUnarchive() && <UnArchiveRequest setShouldBlock={setShouldBlock}/>}
+            {canUnarchive() && <UnArchiveRequest setShouldBlock={setShouldBlock} journalStatus={journalStatus}/>}
         </article>
     );
 }
@@ -239,8 +248,19 @@ function ReviewSubmitterInfo() {
     );
 }
 
-function UnArchiveRequest({setShouldBlock}) {
+function UnArchiveRequest({setShouldBlock, journalStatus}) {
     //TODO: add in checks for settings and group permissions
+    const [terms,setTerms] = useState(() => (journalStatus == 'D') ? {
+            base:'Un-Delete',
+            present:'Un-Deleting',
+            past:'Un-Deleted'
+        } : {
+            base:'Un-Archive',
+            present:'Un-Archiving',
+            past:'Un-Archived'
+        }
+    );
+
     const [showUnarchiveModal,setShowUnarchiveModal] = useState(false);
     const [redirect,setRedirect] = useState('');
 
@@ -257,20 +277,21 @@ function UnArchiveRequest({setShouldBlock}) {
             unarchive.mutateAsync().then(() => {
                 queryclient.refetchQueries([SUNY_ID,'counts']);
                 queryclient.refetchQueries([SUNY_ID,'requestlist','final']);
+                queryclient.refetchQueries([SUNY_ID,'requestlist','rejections']);
                 if (typeof setShouldBlock == 'function') setShouldBlock(false); // disable the blocking on redirect
                 setRedirect('/');
                 resolve();
             }).catch(err=>reject(err));
         }),{
-            pending:'Unarchiving...',
-            success:'Request Unarchived Successfully',
-            error:errorToast('Failed to Unarchive Request')
+            pending:`${terms.present}...`,
+            success:`Request ${terms.past} Successfully`,
+            error:errorToast(`Failed to ${terms.base} Request`)
         });
     }
 
     const unarchiveButtons = {
         close: {title: 'Close', callback: () => setShowUnarchiveModal(false)},
-        confirm: {title: 'Unarchive', callback: () => handleUnarchive()}
+        confirm: {title: terms.base, callback: () => handleUnarchive()}
     }
 
     if (redirect) return <Redirect to={redirect}/>;
@@ -278,16 +299,16 @@ function UnArchiveRequest({setShouldBlock}) {
         <Row as="footer" className="mt-3">
             <Col className="button-group justify-content-end d-print-none">
                 <AppButton format="unarchive" onClick={()=>setShowUnarchiveModal(true)}>
-                    Un-Archive
+                    {terms.base}
                 </AppButton>
             </Col>
             <ModalConfirm 
                 show={showUnarchiveModal} 
-                title="Confirm Un-Archive" 
+                title={`Confirm ${terms.base}`}
                 icon="mdi:alert"
                 buttons={unarchiveButtons}
             >
-                Are you sure you want to un-archive this Request? It will be moved back to the in-progress list.
+                Are you sure you want to {terms.base} this Request? It will be moved back to the in-progress list.
             </ModalConfirm>
         </Row>
     );

@@ -159,6 +159,11 @@ class Forms extends HRForms2 {
             if (!$r) $this->raiseError();
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS+OCI_RETURN_LOBS);
             $formData->formActions->TABS = json_decode($row['TABS']);
+            $journal = (new journal(array('form',$this->req[1]),false))->returnData;
+            $submitter = array_shift($journal);
+            $last_journal = (count($journal) == 0)?$submitter:array_pop($journal);
+            $formData->submittedBy = $submitter['SUNY_ID'];
+            $formData->lastJournal = $last_journal;
         } else {
             $journal = (new journal(array('form',$this->req[0]),false))->returnData;
             $submitter = array_shift($journal);
@@ -736,14 +741,20 @@ class Forms extends HRForms2 {
             $first_journal = array_shift($journal);
             if ($first_journal['SUNY_ID'] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN,array('errMsg'=>'Only the submitter may delete a rejected form.'));
 
-            $qry = "delete from HRFORMS2_FORMS f where f.FORM_ID = :form_id and f.CREATED_BY.SUNY_ID = :suny_id";
-            $stmt = oci_parse($this->db,$qry);
-            oci_bind_by_name($stmt, ":form_id", $this->req[0]);
-            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
-            $r = oci_execute($stmt);
-            if (!$r) $this->raiseError();
-            oci_commit($this->db);
-            
+            // Change status to 'D' for deleted Form and move to Archive
+            $_SERVER['REQUEST_METHOD'] = 'PATCH';
+            $jrnl_update = (new journal(array(
+                'form',
+                $this->req[0],
+                $last_journal['SEQUENCE'],
+                $last_journal['STATUS'],
+                'D',
+                'Deleted by submitter'
+            ),false))->returnData;
+
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $archive = (new archive(array('form',$this->req[0]),false))->returnData;
+
             if ($this->retJSON) $this->done();
         }
     }

@@ -47,6 +47,10 @@ export const defaultVals = {
             "Z": {
                 "badge": "Archived",
                 "list": "Archived"
+            },
+            "D": {
+                "badge": "Deleted",
+                "list": "Deleted"
             }
         },
         "userRefresh": "7",

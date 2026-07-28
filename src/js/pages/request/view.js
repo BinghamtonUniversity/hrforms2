@@ -45,7 +45,7 @@ function RequestViewData({data,setShouldBlock}) {
                 isDraft:false,
                 canEdit:false,
                 createdBy:data.createdBy,
-                journalStatus:'Z'
+                journalStatus:data.lastJournal?.STATUS||'Z',
             }}>
                 <Review setShouldBlock={setShouldBlock}/>
             </RequestContext.Provider>

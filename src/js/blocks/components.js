@@ -415,7 +415,11 @@ const WorkflowExpandedComponent = ({data}) => {
                         case "Z":
                             classname += '-dark';
                             variant = 'accent2';
-                            break;    
+                            break;
+                        case "D":
+                            classname += '-dark';
+                            variant = 'danger';
+                            break;
                         default:
                             classname += '-success';
                             variant = 'success-light';

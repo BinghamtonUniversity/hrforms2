@@ -144,6 +144,11 @@ class Requests extends HRForms2 {
             $requestData->createdDate = $row['CREATED_DATE'];
             oci_free_statement($stmt);
             $this->returnData = $requestData;
+            $journal = (new journal(array('request',$this->req[1]),false))->returnData;
+            $submitter = array_shift($journal);
+            $last_journal = (count($journal) == 0)?$submitter:array_pop($journal);
+            $this->returnData->submittedBy = $submitter['SUNY_ID'];
+            $this->returnData->lastJournal = $last_journal;
         } else {
             $journal = (new journal(array('request',$this->req[0]),false))->returnData;
             $submitter = array_shift($journal);
@@ -668,13 +673,20 @@ class Requests extends HRForms2 {
             $first_journal = array_shift($journal);
             if ($first_journal['SUNY_ID'] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN,array('errMsg'=>'Only the submitter may delete a Rejected Request.'));
 
-            $qry = "delete from HRFORMS2_REQUESTS r where r.REQUEST_ID = :request_id and r.CREATED_BY.SUNY_ID = :suny_id";
-            $stmt = oci_parse($this->db,$qry);
-            oci_bind_by_name($stmt, ":request_id", $this->req[0]);
-            oci_bind_by_name($stmt, ":suny_id", $this->sessionData['EFFECTIVE_SUNY_ID']);
-            $r = oci_execute($stmt);
-            if (!$r) $this->raiseError();
-            oci_commit($this->db);
+            // Change status to 'D' for deleted Request and move to Archive
+            $_SERVER['REQUEST_METHOD'] = 'PATCH';
+            $jrnl_update = (new journal(array(
+                'request',
+                $this->req[0],
+                $last_journal['SEQUENCE'],
+                $last_journal['STATUS'],
+                'D',
+                'Deleted by submitter'
+            ),false))->returnData;
+
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $archive = (new archive(array('request',$this->req[0]),false))->returnData;
+
             if ($this->retJSON) $this->done();
         }
     }

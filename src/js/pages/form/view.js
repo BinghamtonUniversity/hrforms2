@@ -62,7 +62,7 @@ function HRFormViewData({data,setShouldBlock}) {
                 isDraft:false,
                 isNew:false,
                 infoComplete:true,
-                journalStatus:'Z',
+                journalStatus:data.lastJournal?.STATUS||'Z',
                 canEdit:false,
                 formType:formType,
                 sunyId:methods.getValues('person.information.SUNY_ID'),
