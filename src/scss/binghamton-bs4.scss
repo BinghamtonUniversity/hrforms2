@@ -435,6 +435,25 @@ button.btn-sm.no-label svg.iconify {
                         "dl1  dl2";
 }
 
+/* Journal List */
+.journal-list {
+  background-color: #ddd;
+}
+.journal-list dl {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  margin: 0;
+  padding: 0.5em 1em 0;
+}
+.journal-list-comment {
+  grid-column: 1/3;
+}
+.journal-list-comment+dd {
+  grid-column: 1/3;
+  margin: 0 0 0 0.5em;
+}
+
+
 /* Admin List Drag and Drop Styles */
 #admin-list .dragging {
   background-color: map-get($theme-colors,'primary-light') !important;

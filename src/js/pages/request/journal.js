@@ -178,7 +178,6 @@ function JournalSearchResults({reqId,expandAll,setExpandAll,setRedirect}) {
             expandableRows 
             expandOnRowClicked
             expandableRowsComponent={ExpandedComponent}
-            expandableRowsComponentProps={{lastStatus:lastStatus}}
             expandableRowExpanded={()=>expandAll}
             conditionalRowStyles={conditionalRowStyles}
             customStyles={customStyles}
@@ -187,14 +186,14 @@ function JournalSearchResults({reqId,expandAll,setExpandAll,setRedirect}) {
     );
 }
 
-function ExpandedComponent({data,lastStatus}) {
+function ExpandedComponent({data}) {
     //TODO: Consolidate with list flow?
-    const { isAdmin } = useAuthContext();
+    const { isAdmin, OVR_SUNY_ID } = useAuthContext();
     const { general } = useSettingsContext();
-    const clickHander = e => !isAdmin && e.preventDefault();
+    const clickHander = e => !(isAdmin=='1'&&!OVR_SUNY_ID) && e.preventDefault();
     return (
-        <div className="p-3" style={{backgroundColor:'#ddd'}}>
-            <dl className="journal-list" style={{'display':'grid','gridTemplateColumns':'120px auto'}}>
+        <div className="journal-list">
+            <dl>
                 <dt>Request ID:</dt>
                 <dd>{data.REQUEST_ID}</dd>
                 <dt>Sequence:</dt>
@@ -207,10 +206,10 @@ function ExpandedComponent({data,lastStatus}) {
                     <>
                         <dt>Group From:</dt>
                         <dd>
-                            {(data.GROUP_FROM == '-99' || lastStatus == 'Z')?
+                            {(data.GROUP_FROM == '-99')?
                                 <>{data.GROUP_FROM_NAME} ({data.GROUP_FROM})</>:
                                 <OverlayTrigger placement="right" delay={{show:500,hide:500}} overlay={<GroupPopover sequence={data.SEQUENCE} groupId={data.GROUP_FROM} groupName={data.GROUP_FROM_NAME}/>}>
-                                    <Link onClick={clickHander} to={`/admin/groups/${data.GROUP_FROM}`}>
+                                    <Link onClick={clickHander} to={(isAdmin=='1' && !OVR_SUNY_ID)?`/admin/groups/${data.GROUP_FROM}`:''}>
                                         {data.GROUP_FROM_NAME} ({data.GROUP_FROM})
                                     </Link>
                                 </OverlayTrigger>
@@ -222,19 +221,21 @@ function ExpandedComponent({data,lastStatus}) {
                     <>
                         <dt>Group To:</dt>
                         <dd>
-                            {(lastStatus == 'Z')?
-                                <>{data.GROUP_TO_NAME} ({data.GROUP_TO})</>:
-                                <OverlayTrigger placement="right" delay={{show:500,hide:500}} overlay={<GroupPopover sequence={data.SEQUENCE} groupId={data.GROUP_TO} groupName={data.GROUP_TO_NAME}/>}>
-                                    <Link onClick={clickHander} to={`/admin/groups/${data.GROUP_TO}`}>{data.GROUP_TO_NAME} ({data.GROUP_TO})</Link>
-                                </OverlayTrigger>
-                            }
+                            <OverlayTrigger placement="right" delay={{show:500,hide:500}} overlay={<GroupPopover sequence={data.SEQUENCE} groupId={data.GROUP_TO} groupName={data.GROUP_TO_NAME}/>}>
+                                <Link onClick={clickHander} to={(isAdmin=='1' && !OVR_SUNY_ID)?`/admin/groups/${data.GROUP_TO}`:''}>
+                                    {data.GROUP_TO_NAME} ({data.GROUP_TO})
+                                </Link>
+                            </OverlayTrigger>
                         </dd>
                     </>
                 }
                 <dt>{(data.STATUS=='S')?'Submitted':'Updated'} By:</dt>
-                <dd>{data.fullName}</dd>
-                <dt>Comment:</dt>
-                <dd><pre>{data.COMMENTS}</pre></dd>
+                <dd>{(isAdmin=='1' && !OVR_SUNY_ID)?
+                    <Link to={`/admin/users?search=${encodeURI(data.SUNY_ID)}`}>{data.fullName}<Icon icon="mdi:jump" inline/></Link>:
+                    <>{data.fullName}</>}
+                </dd>
+                <dt className="journal-list-comment">Comment:</dt>
+                <dd><pre>{data.COMMENTS.trim()}</pre></dd>
             </dl>
         </div>
     );
