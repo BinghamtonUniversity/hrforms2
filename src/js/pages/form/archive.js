@@ -172,7 +172,7 @@ export default function ListArchiveTable() {
         ),sortable:true,reorder:true,omit:!showCols.includes('form_code')},
         {id:'line_number',name:'Line #',selector:row=>row.LINE_NUMBER,sortable:true,reorder:true,omit:!showCols.includes('line_number')},
         {id:'benefit_flag',name:'Benefits',selector:row=>row.BENEFIT_FLAG.id,format:row=>`${row.BENEFIT_FLAG.id} - ${row.BENEFIT_FLAG.label}`,sortable:true,reorder:true,omit:!showCols.includes('benefit_flag')},
-        {id:'created_by',name:'Created By',selector:row=>row.CREATED_BY_SUNY_ID,sortable:true,format:row=>`${row.createdByFullName} (${row.CREATED_BY_SUNY_ID})`,wrap:true,reorder:true,omit:!showCols.includes('created_by')},
+        {id:'created_by',name:'Submitted By',selector:row=>row.CREATED_BY_SUNY_ID,sortable:true,format:row=>`${row.createdByFullName} (${row.CREATED_BY_SUNY_ID})`,wrap:true,reorder:true,omit:!showCols.includes('created_by')},
         {id:'max_journal_date',name:'Last Updated',selector:row=>row.MAX_JOURNAL_DATE,format:row=>format(new Date(row.MAX_JOURNAL_DATE),'Pp'),sortable:true,wrap:true,reorder:true,omit:!showCols.includes('max_journal_date')},
         {id:'last_updated_by',name:'Last Updated By',selector:row=>row.LAST_UPDATED_SUNY_ID,sortable:true,format:row=>(<span>{row.LAST_UPDATED_NAME} ({row.LAST_UPDATED_SUNY_ID})</span>),wrap:true,reorder:true,omit:!showCols.includes('last_updated_by')},
         {id:'changeCol',name:<ColumnSelect showCols={showCols} setShowCols={setShowCols}/>,width:'50px'}
@@ -308,7 +308,7 @@ function ColumnSelect({showCols,setShowCols}) {
                 <Form.Check type="checkbox" id="form_code" onChange={handleColChange} label="Form Code" checked={columns.includes('form_code')} />
                 <Form.Check type="checkbox" id="line_number" onChange={handleColChange} label="Line #" checked={columns.includes('line_number')} />
                 <Form.Check type="checkbox" id="benefit_flag" onChange={handleColChange} label="Benefits" checked={columns.includes('benefit_flag')} />
-                <Form.Check type="checkbox" id="created_by_suny_id" onChange={handleColChange} label="Created By" checked={columns.includes('created_by')} />
+                <Form.Check type="checkbox" id="created_by" onChange={handleColChange} label="Submitted By" checked={columns.includes('created_by')} />
                 <Form.Check type="checkbox" id="max_journal_date" onChange={handleColChange} label="Last Updated" checked={columns.includes('max_journal_date')} />
                 <Form.Check type="checkbox" id="last_updated_suny_id" onChange={handleColChange} label="Updated By" checked={columns.includes('last_updated_by')} />
             </Popover.Content>
@@ -347,7 +347,7 @@ function ArchiveTableSubHeader({filter,setFilter,savedFilter,handleSearch,handle
     const [pastFuture,setPastFuture] = useState(filter.pastFuture || 'past');
     const [showFormCodeModal,setShowFormCodeModal] = useState(false);
     const [filteredUsers,setFilteredUsers] = useState(userData);
-    const [createdBySearch,setCreatedBySearch] = useState([{id:'',label:''}]);
+    const [SubmittedBySearch,setSubmittedBySearch] = useState([{id:'',label:''}]);
     const [updatedBySearch,setUpdatedBySearch] = useState([{id:'',label:''}]);
     const [dateRange,setDateRange] = useState([filter.startDate,filter.endDate]);
     const [startDate,endDate] = dateRange;
@@ -398,7 +398,7 @@ function ArchiveTableSubHeader({filter,setFilter,savedFilter,handleSearch,handle
     const handleFilterChange = e => {
         const obj = {};
         obj[e.target.id] = e.target.value;
-        if (e.target.id == 'formId') setCreatedBySearch([{id:'',label:''}]);
+        if (e.target.id == 'formId') setSubmittedBySearch([{id:'',label:''}]);
         setFilter(obj);
         handleReset(false);
     }
@@ -410,8 +410,8 @@ function ArchiveTableSubHeader({filter,setFilter,savedFilter,handleSearch,handle
     const handlePersonSearch = search => {
         setFilteredUsers(userData.filter(u=>u.label.toLowerCase().includes(search.toLowerCase())));
     }
-    const handleCreatedBySearchChange = value => {
-        setCreatedBySearch(value);
+    const handleSubmittedBySearchChange = value => {
+        setSubmittedBySearch(value);
         setFilter({createdBy:value[0]?.id});
         handleReset(false);
     }
@@ -431,7 +431,7 @@ function ArchiveTableSubHeader({filter,setFilter,savedFilter,handleSearch,handle
         const dv = daysButtons.find(v=>v.id === defaultDays)?.value||0;
         const daysObj = calculateDates({days:dv});
         setDateRange([daysObj.startDate,daysObj.endDate]);
-        setCreatedBySearch([{id:'',label:''}]);
+        setSubmittedBySearch([{id:'',label:''}]);
         setUpdatedBySearch([{id:'',label:''}]);
         handleReset();
     }
@@ -446,7 +446,7 @@ function ArchiveTableSubHeader({filter,setFilter,savedFilter,handleSearch,handle
         daysObj.endDate = savedFilter.endDate;
         setDays(daysButtons.find(d=>d.value==savedFilter.days)?.id || defaultDays);
         setDateRange([daysObj.startDate,daysObj.endDate]);
-        userData.find(u=>u.id==savedFilter.createdBy) ? setCreatedBySearch([userData.find(u=>u.id==savedFilter.createdBy)]) : setCreatedBySearch([{id:'',label:''}]);
+        userData.find(u=>u.id==savedFilter.createdBy) ? setSubmittedBySearch([userData.find(u=>u.id==savedFilter.createdBy)]) : setSubmittedBySearch([{id:'',label:''}]);
         userData.find(u=>u.id==savedFilter.updatedBy) ? setUpdatedBySearch([userData.find(u=>u.id==savedFilter.updatedBy)]) : setUpdatedBySearch([{id:'',label:''}]);
         setFilter(savedFilter);
         handleReset(false);
@@ -524,16 +524,16 @@ function ArchiveTableSubHeader({filter,setFilter,savedFilter,handleSearch,handle
                     </Form.Control>
                 </Form.Group>
                 <Form.Group as={Col} sm={5} md={4} lg={3} xl={2} controlId="createdBy">
-                    <Form.Label>Created By</Form.Label>
+                    <Form.Label>Submitted By</Form.Label>
                     <AsyncTypeahead
                         size="sm"
                         id="createdBy-search"
                         clearButton
                         filterBy={()=>true}
                         onSearch={handlePersonSearch}
-                        onChange={handleCreatedBySearchChange}
-                        onKeyDown={e=>(e.key==='Escape')&&setCreatedBySearch([{id:'',label:''}])}
-                        selected={createdBySearch}
+                        onChange={handleSubmittedBySearchChange}
+                        onKeyDown={e=>(e.key==='Escape')&&setSubmittedBySearch([{id:'',label:''}])}
+                        selected={SubmittedBySearch}
                         minLength={2}
                         flip={true}
                         allowNew={false}
