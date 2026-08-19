@@ -502,9 +502,11 @@ function RequestForm({reqId,data,setIsBlocking,isDraft,isNew,reset,historyFrom})
                                 <Container as="article" className="mt-3" fluid>
                                     {/*{hasErrors && <RequestFormErrors/>}*/}
                                     <PendingReviewAlert/>
-                                    <Row as="header">
-                                        <Col as="h3">{t.title}</Col>
-                                    </Row>
+                                    {t.id!='review' && (
+                                        <Row as="header">
+                                            <Col as="h3">{t.title}</Col>
+                                        </Row>
+                                    )}
                                     {(t.id!='information'&&t.id!='review')&& <RequestInfoBox/>}
                                     <RequestTabRouter tab={t.id}/>
                                     <Row as="footer">

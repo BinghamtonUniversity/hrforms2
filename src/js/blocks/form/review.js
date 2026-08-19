@@ -64,24 +64,27 @@ export default function Review({setShouldBlock}) {
     return (
         <article id="form-review" className="mt-3">
             <header>
-                {journalStatus!='Z' && 
-                    <Row as="header">
-                        <Col as="h3">Review</Col>
+                {journalStatus == 'Z' && 
+                    <Row className="mt-2 d-none d-print-block">
+                        <Col>
+                            <Alert variant="warning" className="text-center h5"><Icon className="iconify-inline" icon="mdi:alert"/> Form Archived</Alert>
+                        </Col>
+                    </Row>
+                }
+                {journalStatus == 'D' && 
+                    <Row className="mt-2">
+                        <Col>
+                            <Alert variant="danger" className="text-center h5"><Icon className="iconify-inline" icon="mdi:alert"/> Form Deleted by Submitter</Alert>
+                        </Col>
                     </Row>
                 }
                 <Row>
+                    <Col as="h3">Review</Col>
                     <Col className={`button-group d-print-none ${showReturn?'justify-content-between':'justify-content-end'}`}>
                         {showReturn && <AppButton size="sm" format="previous" onClick={handleReturnToList}>Return</AppButton>}
                         <AppButton format="print" title="Print Page" onClick={()=>window.print()}></AppButton>
                     </Col>
                 </Row>
-                {journalStatus == 'D' && 
-                    <Row className="mt-2">
-                        <Col>
-                            <Alert variant="danger" className="text-center h5"><Icon className="iconify-inline" icon="mdi:alert"/> This request has been deleted by the submitter</Alert>
-                        </Col>
-                    </Row>
-                }
             </header>
             <ReviewFormData/>
             <ReviewSections/>
