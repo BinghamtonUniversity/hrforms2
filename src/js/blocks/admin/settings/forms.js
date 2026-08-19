@@ -254,7 +254,7 @@ function SettingsFormsDefaultRouting() {
         field.onChange(e.target.value);
     };
 
-    const filteredWorkflows = useMemo(() => workflows.data.filter(w => w.GROUPS_ARRAY.map(g=>g.GROUP_NAME.toLowerCase()).join(' ').includes(searchText.toLocaleLowerCase())),[searchText,workflows]);
+    const filteredWorkflows = useMemo(() => workflows.data.filter(w => w.GROUPS_ARRAY.map(g=>g.GROUP_NAME&&g.GROUP_NAME.toLowerCase()).join(' ').includes(searchText.toLocaleLowerCase())),[searchText,workflows]);
     const selectedWorkflow = useCallback((workflowId) => workflows.data.filter(w=>w.WORKFLOW_ID==workflowId)[0],[workflows]);
     const clearDefault = ()=>setValue('forms.defaultWorkflow','');
     return (
@@ -389,12 +389,12 @@ function SettingsFormsEmailStatus() {
         ["submitter","Submitter"],
         ["group_to","Group To"],
         ["group_from","Group From"],
+        ["group_all","All Approval Groups"],
         ["error","Error"]
     ];
     const replyToOptions = [
         ["none","None"],
-        ["submitter","Submitter"],
-        ["error","Error"]
+        ["submitter","Submitter"]
     ];
 
     const handleMailChange = (e,field) => {
