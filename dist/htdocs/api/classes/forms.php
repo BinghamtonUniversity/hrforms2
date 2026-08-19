@@ -741,18 +741,19 @@ class Forms extends HRForms2 {
             $first_journal = array_shift($journal);
             if ($first_journal['SUNY_ID'] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN,array('errMsg'=>'Only the submitter may delete a rejected form.'));
 
-            // Change status to 'D' for deleted Form and move to Archive
-            $_SERVER['REQUEST_METHOD'] = 'PATCH';
-            $jrnl_update = (new journal(array(
-                'form',
-                $this->req[0],
-                $last_journal['SEQUENCE'],
-                $last_journal['STATUS'],
-                'D',
-                'Deleted by submitter'
-            ),false))->returnData;
-
+            // Add status 'D' for deleted Form and move to Archive
             $_SERVER['REQUEST_METHOD'] = 'POST';
+            $data = array(
+                'form_id'=>$this->req[0],
+                'hierarchy_id'=>$last_journal['HIERARCHY_ID'],
+                'workflow_id'=>$last_journal['WORKFLOW_ID'],
+                'seq'=>intval($last_journal['SEQUENCE'])+1,
+                'group_from'=>'-99',
+                'group_to'=>'-99',
+                'status'=>'D',
+                'comment'=>'Deleted by submitter'
+            );
+            $jrnl_post = (new journal(array('form',$this->req[0],'D',$data),false))->returnData;
             $archive = (new archive(array('form',$this->req[0]),false))->returnData;
 
             if ($this->retJSON) $this->done();

@@ -556,35 +556,28 @@ class Requests extends HRForms2 {
                 //extract comments from JSON
                 $comment = $this->POSTvars['comment'];
                 unset($this->POSTvars['comment']);
-                                
-                // Update current to 'Z'
-                $_SERVER['REQUEST_METHOD'] = 'PATCH';
-                $jrnl_update = (new journal(array(
-                    'request',
-                    $request_id,
-                    $seq,
-                    $last_journal['STATUS'],
-                    'Z',
-                    $comment
-                ),false))->returnData;
-                
+               
+                $data = array(
+                    'request_id'=>$request_id,
+                    'hierarchy_id'=>$last_journal['HIERARCHY_ID'],
+                    'workflow_id'=>$last_journal['WORKFLOW_ID'],
+                    'seq'=>$seq+1,
+                    'groups'=>$this->POSTvars['GROUPS'],
+                    'group_from'=>$last_journal['GROUP_TO'],
+                    'group_to'=>$last_journal['GROUP_TO'],
+                    'status'=>"Z",
+                    'submitted_by'=>$last_journal['CREATED_BY_SUNY_ID'],
+                    'comment'=>$comment
+                );
+
                 // Move Request and Request_Journal to archive
                 $_SERVER['REQUEST_METHOD'] = 'POST';
-                $archive = (new archive(array('request',$this->POSTvars['reqId']),false))->returnData;
+                $this->POSTvars['journal_data'] = $data;
+                $journal = (new journal(array('request',$request_id,"Z",$data),false))->returnData;
+                $archive = (new archive(array('request',$request_id),false))->returnData;
                 
                 $return_data = array(
-                    "journal"=>array(
-                        'status'=>'Z',
-                        'request_id'=>$request_id,
-                        'hierarchy_id'=>$last_journal['HIERARCHY_ID'],
-                        'workflow_id'=>$last_journal['WORKFLOW_ID'],
-                        'seq'=>$seq,
-                        'groups'=>$this->POSTvars['GROUPS'],
-                        'group_from'=>$groups_array[$seq-1],
-                        'group_to'=>$groups_array[$seq],
-                        'submitted_by'=>$last_journal['CREATED_BY_SUNY_ID'],
-                        'comment'=>$comment
-                    ),
+                    "journal"=>$data,
                     "email_response"=>[]
                 );
 
@@ -673,20 +666,21 @@ class Requests extends HRForms2 {
             $first_journal = array_shift($journal);
             if ($first_journal['SUNY_ID'] != $this->sessionData['EFFECTIVE_SUNY_ID']) $this->raiseError(E_FORBIDDEN,array('errMsg'=>'Only the submitter may delete a Rejected Request.'));
 
-            // Change status to 'D' for deleted Request and move to Archive
-            $_SERVER['REQUEST_METHOD'] = 'PATCH';
-            $jrnl_update = (new journal(array(
-                'request',
-                $this->req[0],
-                $last_journal['SEQUENCE'],
-                $last_journal['STATUS'],
-                'D',
-                'Deleted by submitter'
-            ),false))->returnData;
-
+            // Add status to 'D' for deleted Request and move to Archive
             $_SERVER['REQUEST_METHOD'] = 'POST';
+            $data = array(
+                'request_id'=>$this->req[0],
+                'hierarchy_id'=>$last_journal['HIERARCHY_ID'],
+                'workflow_id'=>$last_journal['WORKFLOW_ID'],
+                'seq'=>intval($last_journal['SEQUENCE'])+1,
+                'group_from'=>"-99",
+                'group_to'=>"-99",
+                'status'=>"D",
+                'comment'=>"Delete by submitter"
+            );
+            $jrnl_post = (new journal(array('request',$this->req[0],"D",$data),false))->returnData;
             $archive = (new archive(array('request',$this->req[0]),false))->returnData;
-
+            
             if ($this->retJSON) $this->done();
         }
     }
