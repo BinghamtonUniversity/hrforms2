@@ -12,11 +12,12 @@ NB: HTTP Request Methods: https://tools.ietf.org/html/rfc7231#section-4.3
 class Groups extends HRForms2 {
     private $_arr = array();
 
-    function __construct($req,$rjson=true) {
+    function __construct($req,$rjson=true,$includeSubmitter=false) {
         $this->allowedMethods = "GET,POST,PUT,PATCH,DELETE"; //default: "" - NB: Add methods here: GET, POST, PUT, PATCH, DELETE
         $this->reqAuth = true; //default: true - NB: See note above
         $this->retJSON = $rjson;
         $this->req = $req;
+        $this->includeSubmitter = $includeSubmitter;
         $this->init();
     }
 
@@ -71,7 +72,8 @@ class Groups extends HRForms2 {
 
     /* create functions GET,POST,PUT,PATCH,DELETE as needed - defaults provided from init reflection method */
     function GET() {
-        $qry = "select * from hrforms2_groups where group_id not in ('-99')";
+        $qry = "select * from hrforms2_groups ";
+        if (!$this->includeSubmitter) $qry .= "where group_id not in ('-99')";
         $stmt = oci_parse($this->db,$qry);
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
