@@ -25,7 +25,7 @@ Class HRForms2 {
     protected $allowedMethods = "";	
     protected $hasError = false;
 
-    protected $sessionData = array('VERSION'=>VERSION,'REVISION'=>REVISION,'INSTANCE'=>INSTANCE,'HOST'=>HOST,'DEBUG'=>DEBUG);
+    protected $sessionData = array('VERSION'=>'','REVISION'=>'','BUILD_TIME'=>'','INSTANCE'=>'','HOST'=>'','DEBUG'=>False);
     //protected $userData = array();
     public $returnData;
 
@@ -46,6 +46,13 @@ Class HRForms2 {
     }
 
     function init(array $args = array()) {
+        // Initialize sessionData
+        foreach (array_keys($this->sessionData) as $key) {
+            if (defined($key)) {
+                $this->sessionData[$key] = constant($key);
+            }
+        }
+
         $this->AppPath = $_SERVER['DOCUMENT_ROOT'];
         // Set Allow response header indicating what methods are allowed.
         header('Allow:'.$this->allowedMethods);
@@ -137,12 +144,34 @@ Class HRForms2 {
         die();
     }
 
+    protected function dbError($stmt) {
+        $error = oci_error($stmt);
+        [$line1] = explode("\n",$error['message']);
+        $message = htmlspecialchars($line1);
+        $this->raiseError(500,array("errMsg"=>$message));
+    }
+
     protected function connect() {
         $this->db = @oci_connect(DBUSER,DBPASS,DB,NLS_LANG);
         $dbConn = (!$this->db) ? 'False' : 'True';
         header('X-DB-Connection:'.$dbConn);
         if (!$this->db) $this->raiseError();
-        //make sure database link works:
+        // Get Database Instance Name:
+        $qry = "SELECT sys_context('userenv','instance_name') FROM dual";
+        $stmt = oci_parse($this->db,$qry);
+        $r = @oci_execute($stmt);
+        if (!$r) $this->dbError($stmt);
+        $row = oci_fetch_array($stmt,OCI_NUM+OCI_RETURN_NULLS);
+        $this->sessionData['DBNAME'] = $row[0];
+        header('X-DB-Name:'.$row[0]);
+        //TODO: make sure database link works:
+        $qry = "SELECT global_name FROM global_name@banner.cc.binghamton.edu";
+        $stmt = oci_parse($this->db,$qry);
+        $r = @oci_execute($stmt);
+        if (!$r) $this->dbError($stmt);
+        $row = oci_fetch_array($stmt,OCI_NUM+OCI_RETURN_NULLS);
+        $this->sessionData['LINKED_DBNAME'] = $row[0];
+        header('X-DB-Linkedname:'.$row[0]);
     }
 
     protected function checkAuth() {
@@ -510,14 +539,14 @@ Class HRForms2 {
                 if (!$b) continue;
                 switch($b) {
                     case "submitter":
-                        $email_list[$key] = array_merge($email_list[$key],$this->getUserEmail($journal['submitted_by']));
+                        $email_list[$key] = array_unique(array_merge($email_list[$key],$this->getUserEmail($journal['submitted_by'])));
                         break;
                     case "group_to":
                         if ($journal['group_to'] != "") {
                             $group_to_users = (new groupusers(array($journal['group_to']),false))->returnData;
                             foreach ($group_to_users as $user) {
                                 if ($user['EMAIL_ADDRESS_WORK'] != "" && $user['EMAIL_ADDRESS_WORK'] != null && $user['NOTIFICATIONS'] == 'Y') 
-                                    $email_list[$key] = array_merge($email_list[$key],array($user['EMAIL_ADDRESS_WORK']));
+                                    $email_list[$key] = array_unique(array_merge($email_list[$key],array($user['EMAIL_ADDRESS_WORK'])));
                             }
                         }
                         break;
@@ -526,18 +555,35 @@ Class HRForms2 {
                             $group_from_users = (new groupusers(array($journal['group_from']),false))->returnData;
                             foreach ($group_from_users as $user) {
                                 if ($user['EMAIL_ADDRESS_WORK'] != "" && $user['EMAIL_ADDRESS_WORK'] != null && $user['NOTIFICATIONS'] == 'Y')
-                                    $email_list[$key] = array_merge($email_list[$key],array($user['EMAIL_ADDRESS_WORK']));
+                                    $email_list[$key] = array_unique(array_merge($email_list[$key],array($user['EMAIL_ADDRESS_WORK'])));
                             }
                         }
                         break;
                     case "group_all":
-
-                         break;
+                        $full_jrnl = (new journal(array($type,$id),false))->returnData;
+                        $approverStatuses = ['A', 'PA', 'PF'];
+                        $filtered_jrnl = array_filter($full_jrnl, function ($row) use ($approverStatuses) {
+                            return isset($row['STATUS']) && in_array($row['STATUS'], $approverStatuses, true);
+                        });
+                        $groupToValues = array_column($filtered_jrnl, 'GROUP_TO');
+                        foreach ($groupToValues as $group) {
+                            if ($group != "") {
+                                $group_all_users = (new groupusers(array($group),false))->returnData;
+                                foreach ($group_all_users as $user) {
+                                    if ($user['EMAIL_ADDRESS_WORK'] != "" && $user['EMAIL_ADDRESS_WORK'] != null && $user['NOTIFICATIONS'] == 'Y') 
+                                        $email_list[$key] = array_unique(array_merge($email_list[$key],array($user['EMAIL_ADDRESS_WORK'])));
+                                }
+                            }
+                        }
+                        break;
                     case "error":
                         array_push($email_list[$key],$errorEmail);
                 }
             }
         }
+        // Remove emails from "mailcc" that are also in "mailto"
+        $email_list['mailcc'] = array_diff($email_list['mailcc'], $email_list['mailto']);
+
         // Set Mail-To to "error" email if empty
         if (sizeof($email_list['mailto']) == 0) {
             $vars['ERROR'] = '<span style="color:#900"><strong>ERROR:</strong> No MAILTO email address specified.  There may not be any users in the group or all users have notifications disabled.</span><br>';
