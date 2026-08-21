@@ -371,6 +371,12 @@ button.btn-sm.no-label svg.iconify {
   font-size:1.5em;
   margin-right: 0;
 }
+.input-group-prepend button svg.iconify,
+.input-group-append button svg.iconify
+{
+  margin-right: 0;    
+}
+
 /* droplist styling */
 .droplist {
   height: 50vh;
