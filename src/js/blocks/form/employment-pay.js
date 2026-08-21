@@ -92,7 +92,7 @@ function ExistingEmploymentPayTable() {
         {name:'Department',selector:row=>row.REPORTING_DEPARTMENT_NAME},
         {name:'Supervisor',selector:row=>row.supervisorSortName},
         {name:'Hourly Rate',selector:row=><CurrencyFormat>{row.COMMITMENT_RATE}</CurrencyFormat>},
-        {name:'Award Amount',selector:row=><CurrencyFormat>{row.STUDENT_AWARD_AMOUNT}</CurrencyFormat>,hide:!getValues('payroll.ADDITIONAL_INFO.showStudentAwardAmount')}
+        {name:'Award Amount',selector:row=><CurrencyFormat>{row.STUDENT_AWARD_AMOUNT}</CurrencyFormat>,omit:!getValues('payroll.ADDITIONAL_INFO.showStudentAwardAmount')}
     ],[data,errors]);
     return (
         <section>
@@ -150,7 +150,7 @@ function NewEmploymentPay() {
     };
 
     const handleNew = useCallback(() => {
-        if (fields.length > 2) return;
+        //if (fields.length > 2) return;
         append(defaultValues,{
             focusName:`${blockName}.${fields.length}.startDate`
         });
@@ -181,17 +181,21 @@ function NewEmploymentPay() {
         console.debug('New Pay Data:',arrayData);
 
         /* Required fields */
-        if (!arrayData.startDate) setError(`${blockName}.${index}.startDate`,{type:'manual',message:'Start Date is required'});
-        if (!arrayData.endDate) setError(`${blockName}.${index}.endDate`,{type:'manual',message:'End Date is required'});
-        if (!get(arrayData,'account.0.label','')) setError(`${blockName}.${index}.account`,{type:'manual',message:'Account is required'});
-        if (parseInt(arrayData.hourlyRate,10)<=0) setError(`${blockName}.${index}.hourlyRate`,{type:'manual',message:'Hourly Rate must be greater than zero'});
-        if (!arrayData.hourlyRate) setError(`${blockName}.${index}.hourlyRate`,{type:'manual',message:'Hourly Rate is required'});
-        if (!get(arrayData,'department.id','')) setError(`${blockName}.${index}.department.id`,{type:'manual',message:'Department is required'});
-        if (!get(arrayData,'supervisor.0.label','')) setError(`${blockName}.${index}.supervisor`,{type:'manual',message:'Supervisor is required'});
-        if (!arrayData.duties) setError(`${blockName}.${index}.duties`,{type:'manual',message:'Duties are required'});
+        const errMap = new Map();
+        if (!arrayData.startDate) errMap.set(`${blockName}.${index}.startDate`,{type:'manual',message:'Start Date is required'});
+        if (!arrayData.endDate) errMap.set(`${blockName}.${index}.endDate`,{type:'manual',message:'End Date is required'});
+        if (!get(arrayData,'account.0.label','')) errMap.set(`${blockName}.${index}.account`,{type:'manual',message:'Account is required'});
+        if (parseInt(arrayData.hourlyRate,10)<=0) errMap.set(`${blockName}.${index}.hourlyRate`,{type:'manual',message:'Hourly Rate must be greater than zero'});
+        if (!arrayData.hourlyRate) errMap.set(`${blockName}.${index}.hourlyRate`,{type:'manual',message:'Hourly Rate is required'});
+        if (!get(arrayData,'department.id','')) errMap.set(`${blockName}.${index}.department.id`,{type:'manual',message:'Department is required'});
+        if (!get(arrayData,'supervisor.0.label','')) errMap.set(`${blockName}.${index}.supervisor`,{type:'manual',message:'Supervisor is required'});
+        if (!arrayData.duties) errMap.set(`${blockName}.${index}.duties`,{type:'manual',message:'Duties are required'});
         
-        if (Object.keys(get(errors,`${blockName}.${index}`,{})).length > 0) {
-            console.error(errors);
+        if (errMap.size > 0) {
+            for (const [key, value] of errMap.entries()) {
+                setError(key, value);
+            }
+            console.error('New Pay Validation Errors:',errMap);
             return false;
         } else {
             setMinDate(undefined);
@@ -222,6 +226,11 @@ function NewEmploymentPay() {
         field.onChange(e);
         const nameBase = field.name.split('.').slice(0,-1).join('.');
         setValue(`${nameBase}.label`,e.target.selectedOptions?.item(0)?.label);
+    },[setValue]);
+
+    const makeCurrency = useCallback((field,e) => {
+        field.onBlur(e);
+        setValue(field.name,parseFloat(e.target.value).toFixed(2));
     },[setValue]);
 
     return (
@@ -299,7 +308,7 @@ function NewEmploymentPay() {
                                 name={`${blockName}.${index}.hourlyRate`}
                                 defaultValue={defaultValues.hourlyRate}
                                 control={control}
-                                render={({field}) => <Form.Control {...field} type="number" id={`${blockIdName}${index}-hourlyRate`} min={0} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Control {...field} type="number" id={`${blockIdName}${index}-hourlyRate`} min={0} onBlur={e=>makeCurrency(field,e)} isInvalid={!!get(errors,field.name,false)} disabled={editIndex!=index}/>}
                             />
                             <FormFieldErrorMessage fieldName={`${blockName}.${index}.hourlyRate`}/>
                         </Col>
@@ -309,7 +318,7 @@ function NewEmploymentPay() {
                                 name={`${blockName}.${index}.awardAmount`}
                                 defaultValue={defaultValues.awardAmount}
                                 control={control}
-                                render={({field}) => <Form.Control {...field} type="number" id={`${blockIdName}${index}-awardAmount`} min={0} disabled={editIndex!=index}/>}
+                                render={({field}) => <Form.Control {...field} type="number" id={`${blockIdName}${index}-awardAmount`} min={0} onBlur={e=>makeCurrency(field,e)} disabled={editIndex!=index}/>}
                             />
                         </Col>
                     </Form.Row>
