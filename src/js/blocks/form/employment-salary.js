@@ -46,6 +46,11 @@ export default function EmploymentAppointment() {
         }
     },[setValue]);
 
+    const makeCurrency = useCallback((field,e) => {
+        field.onBlur(e);
+        setValue(field.name,parseFloat(e.target.value).toFixed(2));
+    },[setValue]);
+
     useEffect(() => {
         if (['BIW', 'FEE', 'HRY'].includes(watchPayBasis)) {
             setValue(`${name}.totalSalary`,(+watchAmounts[0]*+watchAmounts[1]).toFixed(2));
@@ -130,7 +135,7 @@ export default function EmploymentAppointment() {
                                     name={`${name}.RATE_AMOUNT`}
                                     defaultValue={defaultValues[`${name}.RATE_AMOUNT`]}
                                     control={control}
-                                    render={({field}) => <Form.Control {...field} type="number" isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
+                                    render={({field}) => <Form.Control {...field} type="number" onBlur={e=>makeCurrency(field,e)} isInvalid={!!get(errors,field.name,false)} disabled={!canEdit}/>}
                                 />
                                 <FormFieldErrorMessage fieldName={`${name}.RATE_AMOUNT`}/>
                             </Col>
