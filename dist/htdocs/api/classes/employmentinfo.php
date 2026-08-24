@@ -243,6 +243,7 @@ class EmploymentInfo extends HRForms2 {
                 $r = oci_execute($stmt);
                 if (!$r) $this->raiseError();
                 $pay = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+                $pay['RATE_AMOUNT'] = number_format((float)$pay['RATE_AMOUNT'],2,'.','');
                 if (!$pay) $pay = array();
                 $row = array_merge($row,$pay);
 
