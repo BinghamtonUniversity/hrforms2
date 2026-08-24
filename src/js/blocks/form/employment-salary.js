@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { Row, Col, Form, InputGroup, Table, Alert } from "react-bootstrap";
+import React, { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { Row, Col, Form, InputGroup, Table, Alert, Button } from "react-bootstrap";
 import { useFormContext, Controller, useWatch, useFieldArray } from "react-hook-form";
 import { HRFormContext, conditionalFields, rateAmountLabel, useHRFormContext } from "../../config/form";
 import DatePicker from "react-datepicker";
@@ -15,6 +15,8 @@ const name = 'employment.salary';
 const idName = 'employmentSalary';
 
 export default function EmploymentAppointment() {
+    const effectiveDateRef = useRef();
+
     const [editing,setEditing] = useState(undefined);
 
     const { control, setValue, formState: { defaultValues, errors } } = useFormContext();
@@ -80,6 +82,7 @@ export default function EmploymentAppointment() {
                                 control={control}
                                 render={({field}) => <Form.Control
                                     as={DatePicker}
+                                    ref={effectiveDateRef}
                                     name={field.name}
                                     selected={field.value}
                                     closeOnScroll={true}
@@ -90,9 +93,9 @@ export default function EmploymentAppointment() {
                                 />}
                             />
                             <InputGroup.Append>
-                                <InputGroup.Text>
+                                <Button variant="secondary" onClick={()=>effectiveDateRef.current.setFocus()} disabled={!canEdit}>
                                     <Icon icon="mdi:calendar-blank"/>
-                                </InputGroup.Text>
+                                </Button>
                             </InputGroup.Append>
                         </InputGroup>
                         <FormFieldErrorMessage fieldName={`${name}.effDate`}/>
@@ -168,6 +171,9 @@ export default function EmploymentAppointment() {
 }
 
 function AdditionalSalary({editing,setEditing}) {
+    const startDateRef = useRef();
+    const endDateRef = useRef();
+
     const blockName = `${name}.ADDITIONAL_SALARY`;
     const blockIdName = `${idName}AdditionalSalary`;
 
@@ -230,17 +236,21 @@ function AdditionalSalary({editing,setEditing}) {
         console.debug('Additional Salary Data:',arrayData);
         
         /* Required fields */
-        if (!arrayData.type.id) setError(`${blockName}.${index}.type.id`,{type:'manual',message:'Type is required'});
-        if (!arrayData.startDate) setError(`${blockName}.${index}.startDate`,{type:'manual',message:'Start Date is required'});
-        if (!arrayData.endDate) setError(`${blockName}.${index}.endDate`,{type:'manual',message:'End Date is required'});
-        if (!isAfter(arrayData.endDate,arrayData.startDate)) setError(`${blockName}.${index}.endDate`,{type:'manual',message:'End Date must be greater than Start Date'});
-        if (!get(arrayData,'account.0.label','')) setError(`${blockName}.${index}.account`,{type:'manual',message:'Account is required'});
-        if (!arrayData.payments) setError(`${blockName}.${index}.payments`,{type:'manual',message:'Pmts is required'});
-        if (parseInt(arrayData.payments,10)<1) setError(`${blockName}.${index}.payments`,{type:'manual',message:'Pmts must be greater than zero'});
-        if (parseInt(arrayData.amount,10)<1) setError(`${blockName}.${index}.amount`,{type:'manual',message:'Amount must be greater than zero'});
+        const errMap = new Map();
+        if (!arrayData.type.id) errMap.set(`${blockName}.${index}.type.id`,{type:'manual',message:'Type is required'});
+        if (!arrayData.startDate) errMap.set(`${blockName}.${index}.startDate`,{type:'manual',message:'Start Date is required'});
+        if (!arrayData.endDate) errMap.set(`${blockName}.${index}.endDate`,{type:'manual',message:'End Date is required'});
+        if (!isAfter(arrayData.endDate,arrayData.startDate)) errMap.set(`${blockName}.${index}.endDate`,{type:'manual',message:'End Date must be greater than Start Date'});
+        if (!get(arrayData,'account.0.label','')) errMap.set(`${blockName}.${index}.account`,{type:'manual',message:'Account is required'});
+        if (!arrayData.payments) errMap.set(`${blockName}.${index}.payments`,{type:'manual',message:'Pmts is required'});
+        if (parseInt(arrayData.payments,10)<1) errMap.set(`${blockName}.${index}.payments`,{type:'manual',message:'Pmts must be greater than zero'});
+        if (parseInt(arrayData.amount,10)<1) errMap.set(`${blockName}.${index}.amount`,{type:'manual',message:'Amount must be greater than zero'});
         
-        if (Object.keys(get(errors,`${blockName}.${index}`,{})).length > 0) {
-            console.error(errors);
+        if (errMap.size > 0) {
+            for (const [key, value] of errMap.entries()) {
+                setError(key, value);
+            }
+            console.error('Additional Salary Validation Errors:',errMap);
             return false;
         } else {
             setEditIndex(undefined);
@@ -279,13 +289,14 @@ function AdditionalSalary({editing,setEditing}) {
     },[setValue]);
 
     const handleAmount = useCallback((e,field) => {
+        const value = parseFloat(e.target.value).toFixed(2)||0;
         switch (e.type) {
             case 'change':
-                if (parseInt(e.target.value,10) < 0) return false;
+                if (value < 0) return false;
                 field.onChange(e);
                 break;
             case 'blur':
-                if (!e.target.value) setValue(field.name,0);
+                setValue(field.name,value);
                 break;
         }        
     },[setValue]);
@@ -296,6 +307,13 @@ function AdditionalSalary({editing,setEditing}) {
         const amount = get(watchFieldArray,`${index}.amount`,0);
         return (parseFloat(payments)*parseFloat(amount)).toFixed(2);
     },[watchFieldArray]);
+
+    const getRefMap = useCallback((ref) => {
+        if (!ref.current) {
+            ref.current = new Map();
+        }
+        return ref.current;
+    },[]);
 
     useEffect(() => {
         if (editIndex == undefined) return;
@@ -337,6 +355,11 @@ function AdditionalSalary({editing,setEditing}) {
                                             control={control}
                                             render={({field}) => <Form.Control 
                                                 as={DatePicker} 
+                                                ref={(node) => {
+                                                    const map = getRefMap(startDateRef);
+                                                    map.set(index,node);
+                                                    return () => map.delete(index)
+                                                }}
                                                 id={`${blockIdName}${index}-startDate`}
                                                 name={field.name}
                                                 selected={field.value} 
@@ -349,9 +372,13 @@ function AdditionalSalary({editing,setEditing}) {
                                             />}
                                         />
                                         <InputGroup.Append>
-                                            <InputGroup.Text>
+                                            <Button variant="secondary" onClick={()=>{
+                                                const map = getRefMap(startDateRef);
+                                                const node = map.get(index);
+                                                if (node) node.setFocus();
+                                            }} disabled={editIndex!=index}>
                                                 <Icon icon="mdi:calendar-blank"/>
-                                            </InputGroup.Text>
+                                            </Button>
                                         </InputGroup.Append>
                                     </InputGroup>
                                     <FormFieldErrorMessage fieldName={`${blockName}.${index}.startDate`}/>
@@ -365,6 +392,11 @@ function AdditionalSalary({editing,setEditing}) {
                                             control={control}
                                             render={({field}) => <Form.Control 
                                                 as={DatePicker} 
+                                                ref={(node) => {
+                                                    const map = getRefMap(endDateRef);
+                                                    map.set(index,node);
+                                                    return () => map.delete(index)
+                                                }}
                                                 id={`${blockIdName}${index}-endDate`}
                                                 name={field.name}
                                                 selected={field.value} 
@@ -376,9 +408,13 @@ function AdditionalSalary({editing,setEditing}) {
                                             />}
                                         />
                                         <InputGroup.Append>
-                                            <InputGroup.Text>
+                                            <Button variant="secondary" onClick={()=>{
+                                                const map = getRefMap(endDateRef);
+                                                const node = map.get(index);
+                                                if (node) node.setFocus();
+                                            }} disabled={editIndex!=index}>
                                                 <Icon icon="mdi:calendar-blank"/>
-                                            </InputGroup.Text>
+                                            </Button>
                                         </InputGroup.Append>
                                     </InputGroup>
                                     <FormFieldErrorMessage fieldName={`${blockName}.${index}.endDate`}/>
@@ -478,6 +514,9 @@ function ExistingAdditionalSalary() {
 }
 
 function SplitAssignments({className,editing,setEditing}) {
+    const startDateRef = useRef();
+    const endDateRef = useRef();
+
     const blockName = `${name}.SPLIT_ASSIGNMENTS`;
     const blockIdName = `${idName}SplitAssignments`;
 
@@ -544,11 +583,15 @@ function SplitAssignments({className,editing,setEditing}) {
         console.debug('Split Assignment Data:',arrayData);
 
         /* Required Fields */
-        if (!arrayData.commitmentEffDate) setError(`${blockName}.${index}.commitmentEffDate`,{type:'manual',message:'Start Date is required'});
-        if (!arrayData.WORK_ALLOCATION.id) setError(`${blockName}.${index}.WORK_ALLOCATION.id`,{type:'manual',message:'Allocation is required'});
+        const errMap = new Map();
+        if (!arrayData.commitmentEffDate) errMap.set(`${blockName}.${index}.commitmentEffDate`,{type:'manual',message:'Start Date is required'});
+        if (!arrayData.WORK_ALLOCATION.id) errMap.set(`${blockName}.${index}.WORK_ALLOCATION.id`,{type:'manual',message:'Allocation is required'});
 
-        if (Object.keys(get(errors,`${blockName}.${index}`,{})).length > 0) {
-            console.error(errors);
+        if (errMap.size > 0) {
+            for (const [key, value] of errMap.entries()) {
+                setError(key, value);
+            }
+            console.error('Split Assignment Validation Errors:',errMap);
             return false;
         } else {
             if (changePrimary) {
@@ -613,6 +656,13 @@ function SplitAssignments({className,editing,setEditing}) {
         }
     },[setValue]);
 
+    const getRefMap = useCallback((ref) => {
+        if (!ref.current) {
+            ref.current = new Map();
+        }
+        return ref.current;
+    },[]);
+
     useEffect(()=>{
         if (watchFieldArray.length==0) return;
         const pct = watchFieldArray.map(s=>s.WORK_PERCENT).reduce((a,b)=>parseFloat(a)+parseFloat(b));
@@ -670,6 +720,11 @@ function SplitAssignments({className,editing,setEditing}) {
                                             control={control}
                                             render={({field}) => <Form.Control 
                                                 as={DatePicker} 
+                                                ref={(node) => {
+                                                    const map = getRefMap(startDateRef);
+                                                    map.set(index,node);
+                                                    return () => map.delete(index)
+                                                }}
                                                 id={`${blockIdName}${index}-commitmentEffDate`}
                                                 name={field.name}
                                                 selected={field.value} 
@@ -682,9 +737,13 @@ function SplitAssignments({className,editing,setEditing}) {
                                             />}
                                         />
                                         <InputGroup.Append>
-                                            <InputGroup.Text>
+                                            <Button variant="secondary" onClick={()=>{
+                                                const map = getRefMap(startDateRef);
+                                                const node = map.get(index);
+                                                if (node) node.setFocus();
+                                            }} disabled={editIndex!=index||fld.HR_COMMITMENT_ID!=""}>
                                                 <Icon icon="mdi:calendar-blank"/>
-                                            </InputGroup.Text>
+                                            </Button>
                                         </InputGroup.Append>
                                     </InputGroup>
                                     <FormFieldErrorMessage fieldName={`${blockName}.${index}.commitmentEffDate`}/>
@@ -698,6 +757,11 @@ function SplitAssignments({className,editing,setEditing}) {
                                             control={control}
                                             render={({field}) => <Form.Control 
                                                 as={DatePicker} 
+                                                ref={(node) => {
+                                                    const map = getRefMap(endDateRef);
+                                                    map.set(index,node);
+                                                    return () => map.delete(index)
+                                                }}
                                                 id={`${blockIdName}${index}-commitmentEndDate`}
                                                 name={field.name}
                                                 selected={field.value} 
@@ -708,9 +772,13 @@ function SplitAssignments({className,editing,setEditing}) {
                                             />}
                                         />
                                         <InputGroup.Append>
-                                            <InputGroup.Text>
+                                            <Button variant="secondary" onClick={()=>{
+                                                const map = getRefMap(endDateRef);
+                                                const node = map.get(index);
+                                                if (node) node.setFocus();
+                                            }} disabled={editIndex!=index}>
                                                 <Icon icon="mdi:calendar-blank"/>
-                                            </InputGroup.Text>
+                                            </Button>
                                         </InputGroup.Append>
                                     </InputGroup>
                                 </Col>

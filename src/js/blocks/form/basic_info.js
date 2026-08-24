@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback, use } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { useIsFetching } from 'react-query';
-import { Row, Col, Form, InputGroup, Alert } from "react-bootstrap";
+import { Row, Col, Form, InputGroup, Alert, Button } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import sub from "date-fns/sub";
 import { assign, keyBy, orderBy, get, groupBy } from "lodash";
@@ -91,6 +91,7 @@ export default function FormBasicInfo() {
 
 function PersonLookup({results}) {
     const bNumberRef = useRef();
+    const lookupDobRef = useRef();
 
     const { control, getValues, setValue, setFocus, setError, clearErrors, reset, formState:{ errors }} = useFormContext();
 
@@ -207,6 +208,7 @@ function PersonLookup({results}) {
                                 defaultValue=""
                                 control={control}
                                 render={({field})=><Form.Control 
+                                    ref={lookupDobRef}
                                     as={DatePicker} 
                                     id="lookupType-dobValue"
                                     name={field.name}
@@ -221,9 +223,7 @@ function PersonLookup({results}) {
                                 />}
                             />
                             <InputGroup.Append>
-                                <InputGroup.Text>
-                                    <Icon icon="mdi:calendar-blank"/>
-                                </InputGroup.Text>
+                                <Button variant="secondary" onClick={()=>lookupDobRef.current.setFocus()}><Icon icon="mdi:calendar-blank"/></Button>
                             </InputGroup.Append>
                         </InputGroup>
                         <Form.Control.Feedback type="invalid" style={{display:(errors.lookup?.values?.dob)?'block':'none'}}>{errors.lookup?.values?.dob?.message}</Form.Control.Feedback>
@@ -552,9 +552,9 @@ function PayrollDate({selectedId,selectedPayroll}) {
                                 />}
                             />
                             <InputGroup.Append>
-                                <InputGroup.Text>
+                                <Button variant="secondary" onClick={()=>effDateRef.current.setFocus()} disabled={journalStatus!=""}>
                                     <Icon icon="mdi:calendar-blank"/>
-                                </InputGroup.Text>
+                                </Button>
                             </InputGroup.Append>
                         </InputGroup>
                         <Form.Control.Feedback type="invalid">{errors.effDate?.message}</Form.Control.Feedback>

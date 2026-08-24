@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { Row, Col, Form, InputGroup } from "react-bootstrap";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { Row, Col, Form, InputGroup, Button } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { get, cloneDeep, endsWith } from "lodash";
 import { AppButton, DateFormat, StateSelector } from "../components";
@@ -39,7 +39,10 @@ export default function PersonDirectory() {
 function PersonDirectoryAddresses() {
     const name = 'person.directory.address';
     const idName = 'personDirectoryAddress';
-    const { control, getValues, setValue, setError, clearErrors, formState: { errors } } = useFormContext();
+
+    const effDateRef = useRef();
+
+    const { control, getValues, setValue, setFocus, setError, clearErrors, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
         name:name
@@ -158,6 +161,13 @@ function PersonDirectoryAddresses() {
         if (e.key == 'Escape' && editIndex != undefined) handleCancel(index);
         if (e.key == 'Escape' && isNew) handleRemove(index);
     },[editIndex,isNew,handleCancel,handleRemove]);
+
+    const getRefMap = useCallback(() => {
+        if (!effDateRef.current) {
+            effDateRef.current = new Map();
+        }
+        return effDateRef.current;
+    },[]);
 
     useEffect(()=>{
         const field = document.querySelector(`#${activeNav} input:not([disabled])`);
@@ -334,6 +344,11 @@ function PersonDirectoryAddresses() {
                                         control={control}
                                         render={({field}) => <Form.Control
                                             as={DatePicker}
+                                            ref={(node) => {
+                                                const map = getRefMap();
+                                                map.set(index,node);
+                                                return () => map.delete(index)
+                                            }}
                                             name={field.name}
                                             closeOnScroll={true}
                                             selected={field.value}
@@ -344,9 +359,13 @@ function PersonDirectoryAddresses() {
                                         />}
                                     />
                                     <InputGroup.Append>
-                                        <InputGroup.Text>
+                                        <Button variant="secondary" onClick={()=>{
+                                            const map = getRefMap();
+                                            const node = map.get(index);
+                                            if (node) node.setFocus();
+                                        }} disabled={editIndex!=index||!editableType(index)}>
                                             <Icon icon="mdi:calendar-blank"/>
-                                        </InputGroup.Text>
+                                        </Button>
                                     </InputGroup.Append>
                                 </InputGroup>
                                 <FormFieldErrorMessage fieldName={`${name}.${index}.effDate`}/>
@@ -385,6 +404,9 @@ function PersonDirectoryAddresses() {
 function PersonDirectoryPhone() {
     const name = 'person.directory.phone';
     const idName = 'personDirectoryPhone';
+
+    const effDateRef = useRef();
+
     const { control, getValues, setValue, setError, clearErrors, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
@@ -484,6 +506,13 @@ function PersonDirectoryPhone() {
         if (e.key == 'Escape' && isNew) handleRemove(index);
     },[editIndex,isNew,handleCancel,handleRemove]);
 
+    const getRefMap = useCallback(() => {
+        if (!effDateRef.current) {
+            effDateRef.current = new Map();
+        }
+        return effDateRef.current;
+    },[]);
+
     useEffect(()=>{
         const field = document.querySelector(`#${activeNav} input:not([disabled])`);
         ((isNew||editIndex!=undefined)&&field) && field.focus({focusVisible:true});
@@ -546,6 +575,11 @@ function PersonDirectoryPhone() {
                                         control={control}
                                         render={({field}) => <Form.Control
                                             as={DatePicker}
+                                            ref={(node) => {
+                                                const map = getRefMap();
+                                                map.set(index,node);
+                                                return () => map.delete(index)
+                                            }}
                                             id={`${idName}${index}-effDate`}
                                             name={field.name}
                                             closeOnScroll={true}
@@ -557,9 +591,13 @@ function PersonDirectoryPhone() {
                                         />}
                                     />
                                     <InputGroup.Append>
-                                        <InputGroup.Text>
+                                        <Button variant="secondary" onClick={()=>{
+                                            const map = getRefMap();
+                                            const node = map.get(index);
+                                            if (node) node.setFocus();
+                                        }} disabled={editIndex!=index||!editableType(index)}>
                                             <Icon icon="mdi:calendar-blank"/>
-                                        </InputGroup.Text>
+                                        </Button>
                                     </InputGroup.Append>
                                 </InputGroup>
                                 <FormFieldErrorMessage fieldName={`${name}.${index}.effDate`}/>
@@ -598,6 +636,9 @@ function PersonDirectoryPhone() {
 function PersonDirectoryEmail() {
     const name = 'person.directory.email';
     const idName = 'personDirectoryEmail';
+
+    const effDateRef = useRef();
+
     const { control, getValues, setError, clearErrors, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
@@ -684,6 +725,13 @@ function PersonDirectoryEmail() {
         if (e.key == 'Escape' && isNew) handleRemove(index);
     },[editIndex,isNew,handleCancel,handleRemove]);
 
+    const getRefMap = useCallback(() => {
+        if (!effDateRef.current) {
+            effDateRef.current = new Map();
+        }
+        return effDateRef.current;
+    },[]);
+
     useEffect(()=>{
         const field = document.querySelector(`#${activeNav} input:not([disabled])`);
         ((isNew||editIndex!=undefined)&&field) && field.focus({focusVisible:true});
@@ -742,6 +790,11 @@ function PersonDirectoryEmail() {
                                         control={control}
                                         render={({field}) => <Form.Control
                                             as={DatePicker}
+                                            ref={(node) => {
+                                                const map = getRefMap();
+                                                map.set(index,node);
+                                                return () => map.delete(index)
+                                            }}
                                             id={`${idName}${index}-effDate`}
                                             name={field.name}
                                             closeOnScroll={true}
@@ -753,9 +806,13 @@ function PersonDirectoryEmail() {
                                         />}
                                     />
                                     <InputGroup.Append>
-                                        <InputGroup.Text>
+                                        <Button variant="secondary" onClick={()=>{
+                                            const map = getRefMap();
+                                            const node = map.get(index);
+                                            if (node) node.setFocus();
+                                        }} disabled={editIndex!=index||!editableType(index)}>
                                             <Icon icon="mdi:calendar-blank"/>
-                                        </InputGroup.Text>
+                                        </Button>
                                     </InputGroup.Append>
                                 </InputGroup>
                                 <FormFieldErrorMessage fieldName={`${name}.${index}.effDate`}/>

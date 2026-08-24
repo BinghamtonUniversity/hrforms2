@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo } from "react";
-import { Row, Col, Form, InputGroup } from "react-bootstrap";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import { Row, Col, Form, InputGroup, Button } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { HRFormContext, useHRFormContext } from "../../config/form";
 import { Loading, DepartmentSelector, PersonPickerComponent } from "../components";
@@ -13,6 +13,9 @@ const baseName = 'employment.appointment';
 const idBaseName = 'employmentAppointment';
 
 export default function EmploymentAppointment() {
+    const noticeDateRef = useRef();
+    const contPermDateRef = useRef();
+
     const { canEdit, activeNav } = useHRFormContext();
 
     const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
@@ -177,6 +180,7 @@ export default function EmploymentAppointment() {
                                             control={control}
                                             render={({field}) => <Form.Control
                                                 as={DatePicker}
+                                                ref={noticeDateRef}
                                                 name={field.name}
                                                 selected={field.value}
                                                 closeOnScroll={true}
@@ -186,9 +190,9 @@ export default function EmploymentAppointment() {
                                             />}
                                         />
                                         <InputGroup.Append>
-                                            <InputGroup.Text>
+                                            <Button variant="secondary" onClick={()=>noticeDateRef.current.setFocus()} disabled={!canEdit}>
                                                 <Icon icon="mdi:calendar-blank"/>
-                                            </InputGroup.Text>
+                                            </Button>
                                         </InputGroup.Append>
                                         </InputGroup>
                                     </Col>
@@ -205,6 +209,7 @@ export default function EmploymentAppointment() {
                                             control={control}
                                             render={({field}) => <Form.Control
                                                 as={DatePicker}
+                                                ref={contPermDateRef}
                                                 name={field.name}
                                                 selected={field.value}
                                                 closeOnScroll={true}
@@ -214,9 +219,9 @@ export default function EmploymentAppointment() {
                                             />}
                                         />
                                         <InputGroup.Append>
-                                            <InputGroup.Text>
+                                            <Button variant="secondary" onClick={()=>contPermDateRef.current.setFocus()} disabled={!canEdit}>
                                                 <Icon icon="mdi:calendar-blank"/>
-                                            </InputGroup.Text>
+                                            </Button>
                                         </InputGroup.Append>
                                         </InputGroup>
                                     </Col>

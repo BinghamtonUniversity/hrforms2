@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { Row, Col, Form, InputGroup } from "react-bootstrap";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { Row, Col, Form, InputGroup, Button } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller, useWatch } from "react-hook-form";
 import useFormQueries from "../../queries/forms";
 import { get, cloneDeep } from "lodash";
@@ -44,6 +44,8 @@ const defaultValues = {
 }
 
 export default function PersonEducation() {
+    const awardDateRef = useRef();
+
     const { control, getValues, setValue, setError, clearErrors, formState: { errors } } = useFormContext();
     const { fields, append, remove, update } = useFieldArray({
         control:control,
@@ -186,6 +188,13 @@ export default function PersonEducation() {
         if (e.key == 'Escape' && isNew) handleRemove(index);
     }
 
+    const getRefMap = useCallback(() => {
+        if (!awardDateRef.current) {
+            awardDateRef.current = new Map();
+        }
+        return awardDateRef.current;
+    },[]);
+    
     useEffect(()=>{
         editIndex!=undefined && document.querySelector(`#${activeNav} [name="${name}.${editIndex}.awardDate"]`).focus();
     },[editIndex,isNew,activeNav]);
@@ -207,6 +216,11 @@ export default function PersonEducation() {
                                     control={control}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
+                                        ref={(node) => {
+                                            const map = getRefMap();
+                                            map.set(index,node);
+                                            return () => map.delete(index)
+                                        }}
                                         id={`${idName}${index}-awardDate`}
                                         name={field.name}
                                         dateFormat="MMM yyyy"
@@ -221,9 +235,13 @@ export default function PersonEducation() {
                                     />}
                                 />
                                 <InputGroup.Append>
-                                    <InputGroup.Text>
-                                        <Icon icon="mdi:calendar-blank"/>
-                                    </InputGroup.Text>
+                                        <Button variant="secondary" onClick={()=>{
+                                            const map = getRefMap();
+                                            const node = map.get(index);
+                                            if (node) node.setFocus();
+                                        }} disabled={editIndex!=index}>
+                                            <Icon icon="mdi:calendar-blank"/>
+                                        </Button>
                                 </InputGroup.Append>
                             </InputGroup>
                             <FormFieldErrorMessage fieldName={`${name}.${index}.awardDate`}/>

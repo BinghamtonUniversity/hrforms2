@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { HRFormContext, useHRFormContext } from "../../config/form";
-import { Row, Col, Form, InputGroup } from "react-bootstrap";
+import { Row, Col, Form, InputGroup, Button } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import { Loading, CountrySelector } from "../components";
@@ -13,6 +13,8 @@ const name = 'person.demographics';
 const idName = 'personDemographics';
 
 export default function PersonDemographics() {
+    const birthDateRef = useRef();
+
     const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
     const { canEdit, activeNav } = useHRFormContext();
 
@@ -50,6 +52,7 @@ export default function PersonDemographics() {
                                     defaultValue={defaultValues[`${name}.birthDate`]}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
+                                        ref={birthDateRef}
                                         name={field.name}
                                         selected={field.value||getValues('lookup.values.dob')}
                                         closeOnScroll={true}
@@ -60,9 +63,9 @@ export default function PersonDemographics() {
                                     />}
                                 />
                                 <InputGroup.Append>
-                                    <InputGroup.Text>
+                                    <Button variant="secondary" onClick={()=>birthDateRef.current.focus()} disabled={!canEdit}>
                                         <Icon icon="mdi:calendar-blank"/>
-                                    </InputGroup.Text>
+                                    </Button>
                                 </InputGroup.Append>
                             </InputGroup>
                             <FormFieldErrorMessage fieldName={`${name}.birthDate`}/>
@@ -319,6 +322,8 @@ function PersonDemographicsNonUSCitizen({handleSelectChange,watchCitizen}) {
 }
 
 function PersonDemographicsVeteranDetails({watchVeteran}) {
+    const militarySepDateRef = useRef();
+
     const { control, formState: { defaultValues } } = useFormContext();
 
     const {getListData} = useListsQueries();
@@ -366,6 +371,7 @@ function PersonDemographicsVeteranDetails({watchVeteran}) {
                                     defaultValue={defaultValues[`${name}.militarySepDate`]}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
+                                        ref={militarySepDateRef}
                                         name={field.name}
                                         selected={field.value}
                                         closeOnScroll={true}
@@ -375,9 +381,9 @@ function PersonDemographicsVeteranDetails({watchVeteran}) {
                                     />}
                                 />
                                 <InputGroup.Append>
-                                    <InputGroup.Text>
+                                    <Button variant="secondary" onClick={()=>militarySepDateRef.current.setFocus()} disabled={!canEdit}>
                                         <Icon icon="mdi:calendar-blank"/>
-                                    </InputGroup.Text>
+                                    </Button>
                                 </InputGroup.Append>
                             </InputGroup>
                         </Col>

@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { HRFormContext, useHRFormContext, approverEditableFields } from "../../config/form";
-import { Row, Col, Form, InputGroup } from "react-bootstrap";
+import { Row, Col, Form, InputGroup, Button } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import { Loading } from "../components";
@@ -13,6 +13,8 @@ const name = 'person.information';
 const idName = 'personInformation';
 
 export default function PersonInfo() {
+    const retiredDateRef = useRef();
+
     const { control, getValues, setValue, formState: { defaultValues, errors, dirtyFields } } = useFormContext();
     const { canEdit, activeNav, journalStatus } = useHRFormContext();
 
@@ -208,6 +210,7 @@ export default function PersonInfo() {
                                                 control={control}
                                                 render={({field}) => <Form.Control
                                                     as={DatePicker}
+                                                    ref={retiredDateRef}
                                                     name={field.name}
                                                     closeOnScroll={true}
                                                     selected={field.value}
@@ -217,9 +220,9 @@ export default function PersonInfo() {
                                                 />}
                                             />
                                             <InputGroup.Append>
-                                                <InputGroup.Text>
+                                                <Button variant="secondary" onClick={()=>retiredDateRef.current.setFocus()} disabled={fieldDisabled({name:`${name}.retiredDate`,value:getValues(`${name}.retiredDate`)})}>
                                                     <Icon icon="mdi:calendar-blank"/>
-                                                </InputGroup.Text>
+                                                </Button>
                                             </InputGroup.Append>
                                         </InputGroup>
                                     </Col>

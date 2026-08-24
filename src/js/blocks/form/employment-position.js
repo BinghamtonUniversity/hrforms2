@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Row, Col, Form, Alert, InputGroup, OverlayTrigger, Popover, Table } from "react-bootstrap";
+import { Row, Col, Form, Alert, InputGroup, OverlayTrigger, Popover, Table, Button } from "react-bootstrap";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { AppButton, Loading } from "../components";
 import useFormQueries from "../../queries/forms";
@@ -194,6 +194,8 @@ function EmploymentPositionWrapper({payroll,lineNumber,effDate}) {
 }
 
 function EmploymentAppointmentInformation() {
+    const appointmentEndDateRef = useRef();
+
     const { control, setValue, getValues, formState: { defaultValues } } = useFormContext();
     const { canEdit, showInTest, testHighlight } = useHRFormContext();
     const watchPayroll = useWatch({name:'payroll.PAYROLL_CODE',control:control});
@@ -271,6 +273,7 @@ function EmploymentAppointmentInformation() {
                             control={control}
                             render={({field}) => <Form.Control
                                 as={DatePicker}
+                                ref={appointmentEndDateRef}
                                 name={field.name}
                                 selected={field.value}
                                 closeOnScroll={true}
@@ -281,9 +284,9 @@ function EmploymentAppointmentInformation() {
                             />}
                         />
                         <InputGroup.Append>
-                            <InputGroup.Text>
+                            <Button variant="secondary" onClick={()=>appointmentEndDateRef.current.setFocus()} disabled={!canEdit}>
                                 <Icon icon="mdi:calendar-blank"/>
-                            </InputGroup.Text>
+                            </Button>
                         </InputGroup.Append>
                     </InputGroup>
                 </Col>

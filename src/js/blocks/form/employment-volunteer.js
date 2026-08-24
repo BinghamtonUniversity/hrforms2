@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
-import { Row, Col, Form, InputGroup } from "react-bootstrap";
+import { Row, Col, Form, InputGroup, Button } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { camelCase, get } from "lodash";
 import { Loading, DepartmentSelector, PersonPickerComponent } from "../components";
@@ -14,6 +14,8 @@ const idName = camelCase(name);
 
 export default function EmploymentSeparation() {
     const ref = useRef();
+    const startDateRef = useRef();
+    const endDateRef = useRef();
 
     const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
     const { canEdit, activeNav, showInTest, testHighlight } = useHRFormContext();
@@ -75,6 +77,7 @@ export default function EmploymentSeparation() {
                             defaultValue={getValues('effDate')}
                             render={({field}) => <Form.Control
                                 as={DatePicker}
+                                ref={startDateRef}
                                 name={field.name}
                                 selected={field.value}
                                 closeOnScroll={true}
@@ -85,9 +88,9 @@ export default function EmploymentSeparation() {
                             />}
                         />
                         <InputGroup.Append>
-                            <InputGroup.Text>
+                            <Button variant="secondary" onClick={()=>startDateRef.current.setFocus()} disabled={!canEdit}>
                                 <Icon icon="mdi:calendar-blank"/>
-                            </InputGroup.Text>
+                            </Button>
                         </InputGroup.Append>
                     </InputGroup>
                     <FormFieldErrorMessage fieldName={`${name}.startDate`}/>
@@ -103,6 +106,7 @@ export default function EmploymentSeparation() {
                             control={control}
                             render={({field}) => <Form.Control
                                 as={DatePicker}
+                                ref={endDateRef}
                                 name={field.name}
                                 selected={field.value}
                                 closeOnScroll={true}
@@ -113,9 +117,9 @@ export default function EmploymentSeparation() {
                             />}
                         />
                         <InputGroup.Append>
-                            <InputGroup.Text>
+                            <Button variant="secondary" onClick={()=>endDateRef.current.setFocus()} disabled={!canEdit}>
                                 <Icon icon="mdi:calendar-blank"/>
-                            </InputGroup.Text>
+                            </Button>
                         </InputGroup.Append>
                     </InputGroup>
                     <FormFieldErrorMessage fieldName={`${name}.endDate`}/>

@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
 import { HRFormContext, useHRFormContext } from "../../config/form";
-import { Row, Col, Form, InputGroup} from "react-bootstrap";
+import { Row, Col, Form, InputGroup, Button } from "react-bootstrap";
 import DatePicker from "react-datepicker";
 import { Icon } from "@iconify/react";
 import { Loading, CurrencyFormat } from "../components";
@@ -13,6 +13,8 @@ const name = 'employment.leave';
 const idName = 'employmentLeave';
 
 export default function EmploymentLeave() {
+    const leaveEndDateRef = useRef();
+
     const { control, getValues, setValue, formState: { defaultValues, errors } } = useFormContext();
     const { canEdit, activeNav } = useHRFormContext();
 
@@ -116,6 +118,7 @@ export default function EmploymentLeave() {
                                     control={control}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
+                                        ref={leaveEndDateRef}
                                         name={field.name}
                                         selected={field.value}
                                         closeOnScroll={true}
@@ -126,9 +129,9 @@ export default function EmploymentLeave() {
                                     />}
                                 />
                                 <InputGroup.Append>
-                                    <InputGroup.Text>
+                                    <Button variant="secondary" onClick={()=>leaveEndDateRef.current.setFocus()} disabled={!canEdit}>
                                         <Icon icon="mdi:calendar-blank"/>
-                                    </InputGroup.Text>
+                                    </Button>
                                 </InputGroup.Append>
                             </InputGroup>
                             <FormFieldErrorMessage fieldName={`${name}.leaveEndDate`}/>

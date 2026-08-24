@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useFormContext, Controller, useWatch } from "react-hook-form";
-import { Row, Col, Form, InputGroup} from "react-bootstrap";
+import { Row, Col, Form, InputGroup, Button } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { DateFormat } from "../components";
 import DatePicker from "react-datepicker";
@@ -57,9 +57,9 @@ export default function EmploymentSeparation() {
                             />}
                         />
                         <InputGroup.Append>
-                            <InputGroup.Text>
+                            <Button variant="secondary" onClick={()=>ref.current.setFocus()} disabled={!canEdit}>
                                 <Icon icon="mdi:calendar-blank"/>
-                            </InputGroup.Text>
+                            </Button>
                         </InputGroup.Append>
                     </InputGroup>
                     <FormFieldErrorMessage fieldName={`${name}.lastDateWorked`}/>

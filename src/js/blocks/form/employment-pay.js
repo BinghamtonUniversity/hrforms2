@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Row, Col, Form, InputGroup } from "react-bootstrap";
+import { Row, Col, Form, InputGroup, Button } from "react-bootstrap";
 import { useFormContext, useFieldArray, Controller } from "react-hook-form";
 import { get, cloneDeep, camelCase } from "lodash";
 import DatePicker from "react-datepicker";
@@ -123,6 +123,9 @@ function NewEmploymentPay() {
     const blockName = `${name}.newPay`;
     const blockIdName = camelCase(blockName);
 
+    const startDateRef = useRef();
+    const endDateRef = useRef();
+
     const { canEdit, setLockTabs } = useHRFormContext();
 
     const { control, getValues, setValue, clearErrors, setError, formState: { errors } } = useFormContext();
@@ -233,6 +236,13 @@ function NewEmploymentPay() {
         setValue(field.name,parseFloat(e.target.value).toFixed(2));
     },[setValue]);
 
+    const getRefMap = useCallback((ref) => {
+        if (!ref.current) {
+            ref.current = new Map();
+        }
+        return ref.current;
+    },[]);
+    
     return (
         <section className="mt-3">
             <Row as="header">
@@ -250,6 +260,11 @@ function NewEmploymentPay() {
                                     control={control}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
+                                        ref={(node) => {
+                                            const map = getRefMap(startDateRef);
+                                            map.set(index,node);
+                                            return () => map.delete(index)
+                                        }}
                                         id={`${blockIdName}${index}-startDate`}
                                         name={field.name}
                                         closeOnScroll={true}
@@ -263,9 +278,13 @@ function NewEmploymentPay() {
                                     />}
                                 />
                                 <InputGroup.Append>
-                                    <InputGroup.Text>
+                                    <Button variant="secondary" onClick={()=>{
+                                        const map = getRefMap(startDateRef);
+                                        const node = map.get(index);
+                                        if (node) node.setFocus();
+                                    }} disabled={editIndex!=index}>
                                         <Icon icon="mdi:calendar-blank"/>
-                                    </InputGroup.Text>
+                                    </Button>
                                 </InputGroup.Append>
                             </InputGroup>
                             <FormFieldErrorMessage fieldName={`${blockName}.${index}.startDate`}/>
@@ -279,6 +298,11 @@ function NewEmploymentPay() {
                                     control={control}
                                     render={({field}) => <Form.Control
                                         as={DatePicker}
+                                        ref={(node) => {
+                                            const map = getRefMap(endDateRef);
+                                            map.set(index,node);
+                                            return () => map.delete(index)
+                                        }}
                                         id={`${blockIdName}${index}-endDate`}
                                         name={field.name}
                                         closeOnScroll={true}
@@ -291,9 +315,13 @@ function NewEmploymentPay() {
                                     />}
                                 />
                                 <InputGroup.Append>
-                                    <InputGroup.Text>
+                                    <Button variant="secondary" onClick={()=>{
+                                        const map = getRefMap(endDateRef);
+                                        const node = map.get(index);
+                                        if (node) node.setFocus();
+                                    }} disabled={editIndex!=index}>
                                         <Icon icon="mdi:calendar-blank"/>
-                                    </InputGroup.Text>
+                                    </Button>
                                 </InputGroup.Append>
                             </InputGroup>
                             <FormFieldErrorMessage fieldName={`${blockName}.${index}.endDate`}/>
