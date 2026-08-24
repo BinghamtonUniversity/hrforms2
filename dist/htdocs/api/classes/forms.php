@@ -277,8 +277,8 @@ class Forms extends HRForms2 {
                     $group = $this->getGroupIds($dept_code);
                     if (!$group) $this->raiseError(E_BAD_REQUEST,array('errMsg'=>"Position Department (".$dept_code.") has no Primary Group assigned"));
                 } elseif ($route == 'S') { // Route by Submitter (user) Dept
-                    $group = $this->getGroupIds($user['REPORTING_DEPARTMENT_CODE']);
-                    if (!$group) $this->raiseError(E_BAD_REQUEST,array('errMsg'=>"Submitter's Department (".$user['REPORTING_DEPARTMENT_CODE'].") has no Primary Group assigned"));
+                    $group = $this->getGroupIds($user['POSITION_DEPARTMENT_CODE']);
+                    if (!$group) $this->raiseError(E_BAD_REQUEST,array('errMsg'=>"Submitter's Department (".$user['POSITION_DEPARTMENT_CODE'].") has no Primary Group assigned"));
                 } else {
                     $message = "Invalid or missing payroll transaction route by setting.  Information about the form is below.<br>" . $message;
                     $this->sendError($message,'HRForms2 Error: Invalid/Missing Route By','forms');

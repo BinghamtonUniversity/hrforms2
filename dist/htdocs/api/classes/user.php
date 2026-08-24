@@ -22,6 +22,7 @@ class User extends HRForms2 {
     email_address_work,title_description,campus_title,derived_fac_type,card_affil,negotiating_unit,salary_grade,
     appointment_type,appointment_effective_date,appointment_end_date,appointment_percent,continuing_permanency_date,
     reporting_department_code,reporting_department_name,
+    dpt_cd as position_department_code, dpt_cmp_dsc as position_department_name,
     supervisor_suny_id,supervisor_last_name,supervisor_first_name";	
 
     protected $SIMPLE_PERSEMP_FIELDS = "suny_id as SUNYHR_SUNY_ID,regexp_substr(b_number,'(B[0-9]{8})',1,1,'i',1) as b_number,legal_last_name,legal_first_name,legal_middle_name,alias_first_name,email_address_work";
@@ -107,7 +108,7 @@ class User extends HRForms2 {
                     nvl(u.user_options.viewer,'N') as viewer
                 from hrforms2_users u
                 left join (select distinct ".$this->BASE_PERSEMP_FIELDS." from buhr.buhr_persemp_mv@banner.cc.binghamton.edu) p on (u.suny_id = p.sunyhr_suny_id)
-                left join (select department_code, group_id from hrforms2_group_departments) d on (p.REPORTING_DEPARTMENT_CODE = d.DEPARTMENT_CODE)
+                left join (select department_code, group_id from hrforms2_group_departments) d on (p.POSITION_DEPARTMENT_CODE = d.DEPARTMENT_CODE)
                 left join (select group_id, group_name from hrforms2_groups) g on (d.group_id = g.group_id)";
             }
             $stmt = oci_parse($this->db,$qry);
