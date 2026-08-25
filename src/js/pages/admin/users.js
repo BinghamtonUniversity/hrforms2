@@ -610,6 +610,9 @@ const TabRouter = React.memo(({tab,newUser,setStatus,closeModal,userData}) => {
 });
 
 function UserInfo({newUser,setStatus,closeModal}) {
+    const startDateRef = useRef();
+    const endDateRef = useRef();
+
     const { SUNY_ID } = useAuthContext();
 
     const lookupStateDefault = {
@@ -856,12 +859,18 @@ function UserInfo({newUser,setStatus,closeModal}) {
                             defaultValue=""
                             control={control}
                             rules={{required:{value:true,message:'Start Date is required'}}}
-                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.startDate} disabled={watchSUNYID==SUNY_ID}/>}
+                            render={({field}) => <Form.Control {...field} 
+                                as={DatePicker} 
+                                ref={startDateRef}
+                                selected={field.value} 
+                                isInvalid={errors.startDate} 
+                                disabled={watchSUNYID==SUNY_ID}
+                            />}
                         />
                         <InputGroup.Append>
-                            <InputGroup.Text>
+                            <Button variant="secondary" onClick={()=>startDateRef.current.setFocus()} disabled={watchSUNYID==SUNY_ID}>
                                 <Icon icon="mdi:calendar-blank"/>
-                            </InputGroup.Text>
+                            </Button>
                         </InputGroup.Append>
                     </InputGroup>
                     <Form.Control.Feedback type="invalid">{errors.startDate?.message}</Form.Control.Feedback>                    
@@ -873,12 +882,18 @@ function UserInfo({newUser,setStatus,closeModal}) {
                             name="endDate"
                             defaultValue=""
                             control={control}
-                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} disabled={watchSUNYID==SUNY_ID} autoComplete="off"/>}
+                            render={({field}) => <Form.Control {...field} 
+                                as={DatePicker} 
+                                ref={endDateRef}
+                                selected={field.value} 
+                                disabled={watchSUNYID==SUNY_ID} 
+                                autoComplete="off"
+                            />}
                         />
                         <InputGroup.Append>
-                            <InputGroup.Text>
+                            <Button variant="secondary" onClick={()=>endDateRef.current.setFocus()} disabled={watchSUNYID==SUNY_ID}>
                                 <Icon icon="mdi:calendar-blank"/>
-                            </InputGroup.Text>
+                            </Button>
                         </InputGroup.Append>
                     </InputGroup>
                 </Form.Group>

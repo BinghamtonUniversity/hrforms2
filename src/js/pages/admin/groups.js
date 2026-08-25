@@ -522,6 +522,8 @@ const TabRouter = React.memo(({tab}) => {
 
 function GroupInfo() {
     const groupNameRef = useRef();
+    const startDateRef = useRef();
+    const endDateRef = useRef();
     const { control, getValues, formState: { errors } } = useFormContext();
     const queryclient = useQueryClient();
     const groupsData = queryclient.getQueryData('groups');
@@ -575,12 +577,17 @@ function GroupInfo() {
                             name="startDate"
                             control={control}
                             rules={{required:{value:true,message:'Start Date is required'}}}
-                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} isInvalid={errors.startDate}/>}
+                            render={({field}) => <Form.Control {...field} 
+                                as={DatePicker}
+                                ref={startDateRef} 
+                                selected={field.value} 
+                                isInvalid={errors.startDate}
+                            />}
                         />
                         <InputGroup.Append>
-                            <InputGroup.Text>
+                            <Button variant="secondary" onClick={()=>startDateRef.current.setFocus()}>
                                 <Icon icon="mdi:calendar-blank"/>
-                            </InputGroup.Text>
+                            </Button>
                         </InputGroup.Append>
                     </InputGroup>
                     <Form.Control.Feedback type="invalid">{errors.startDate?.message}</Form.Control.Feedback>
@@ -591,12 +598,17 @@ function GroupInfo() {
                         <Controller
                             name="endDate"
                             control={control}
-                            render={({field}) => <Form.Control {...field} as={DatePicker} selected={field.value} autoComplete="off"/>}
+                            render={({field}) => <Form.Control {...field} 
+                                as={DatePicker} 
+                                ref={endDateRef}
+                                selected={field.value} 
+                                autoComplete="off"
+                            />}
                         />
                         <InputGroup.Append>
-                            <InputGroup.Text>
+                            <Button variant="secondary" onClick={()=>endDateRef.current.setFocus()}>
                                 <Icon icon="mdi:calendar-blank"/>
-                            </InputGroup.Text>
+                            </Button>
                         </InputGroup.Append>
                     </InputGroup>
                 </Form.Group>
