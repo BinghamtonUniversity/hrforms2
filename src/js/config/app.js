@@ -10,11 +10,12 @@ import functionIcon from "../../images/mdi--function-variant.png";
 
 // Icons not used by the AppButton component formats
 const additionalIcons = [
+    'mdi:account-view',
     'mdi:alert',
     'mdi:arrow-all',
     'mdi:arrow-right',
     'mdi:calendar-blank',
-    'mdi:clipboard-account',
+    'mdi:card-account-details',
     'mdi:information',
     'mdi:information-variant',
     'mdi:jump',
