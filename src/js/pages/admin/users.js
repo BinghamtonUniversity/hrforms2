@@ -5,7 +5,7 @@ import useGroupQueries from "../../queries/groups";
 import useSessionQueries from "../../queries/session";
 import useListsQueries from "../../queries/lists";
 import { Loading, ModalConfirm, AppButton, errorToast, DescriptionPopover } from "../../blocks/components";
-import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, Button } from "react-bootstrap";
+import { Row, Col, Form, Modal, Tabs, Tab, Container, Alert, InputGroup, Button, Badge } from "react-bootstrap";
 import { Icon } from "@iconify/react";
 import { orderBy, sortBy, difference, capitalize, startsWith } from "lodash";
 import DataTable from 'react-data-table-component';
@@ -196,22 +196,25 @@ function UsersTable({users,newUser,setNewUser}) {
                 title="User Details"
                 width={25}
                 content={
-                    <dl>
-                        <dt className="mb-1 float-left pr-1">SUNY ID:</dt>
-                        <dd className="mb-1">{row.SUNY_ID}</dd>
-                        <dt className="mb-1 float-left pr-1">B#:</dt>
-                        <dd className="mb-1">{row.B_NUMBER}</dd>
-                        <dt className="mb-1 float-left pr-1">Name:</dt>
-                        <dd className="mb-1">{row.fullName}</dd>
-                        <dt className="mb-1 float-left pr-1">Email:</dt>
-                        <dd className="mb-1">{row.email}</dd>
-                        <dt className="mb-1 float-left pr-1">Last Refresh:</dt>
-                        <dd className="mb-1">{row.refreshDateFmt}</dd>
-                    </dl>
+                    <article>
+                        {row.VIEWER=="Y" && <Badge variant="info" className="mb-2">Viewer</Badge>}
+                        <dl>
+                            <dt className="mb-1 float-left pr-1">SUNY ID:</dt>
+                            <dd className="mb-1">{row.SUNY_ID}</dd>
+                            <dt className="mb-1 float-left pr-1">B#:</dt>
+                            <dd className="mb-1">{row.B_NUMBER}</dd>
+                            <dt className="mb-1 float-left pr-1">Name:</dt>
+                            <dd className="mb-1">{row.fullName}</dd>
+                            <dt className="mb-1 float-left pr-1">Email:</dt>
+                            <dd className="mb-1">{row.email}</dd>
+                            <dt className="mb-1 float-left pr-1">Last Refresh:</dt>
+                            <dd className="mb-1">{row.refreshDateFmt}</dd>
+                        </dl>
+                    </article>
                 }
             >
                 <span>
-                    <Icon className="iconify-inline" icon="mdi:clipboard-account" width={24} height={24}/>
+                    <Icon className="iconify-inline" icon={`${row.VIEWER=="Y"?'mdi:account-view':'mdi:card-account-details'}`} width={24} height={24}/>
                 </span>
             </DescriptionPopover> {row.sortName}</div>
         ),sortable:true,sortField:'sortName',style:{minWidth:'15rem'}},
