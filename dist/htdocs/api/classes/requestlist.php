@@ -101,6 +101,31 @@ class RequestList extends HRForms2 {
                 where r.request_id = j.request_id";
                 break;
 
+            case "viewer":
+                // Get assigned departments for user
+                $deptlist = $this->getUserDepartments($this->sessionData['EFFECTIVE_SUNY_ID']);
+
+                $qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id,
+                to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 
+                r.request_data.posType, r.request_data.reqType, r.request_data.effDate, r.request_data.candidateName,
+                r.request_data.lineNumber, r.request_data.reqBudgetTitle.title,
+                r.created_by.LEGAL_FIRST_NAME, r.created_by.LEGAL_LAST_NAME, r.created_by.ALIAS_FIRST_NAME,
+                j.status, j.sequence, r.request_data.WORKFLOW_ID, r.request_data.GROUPS, js.journal_status, 
+                to_char(js.max_journal_date,'DD-MON-YYYY HH24:MI:SS') as max_journal_date
+                from hrforms2_requests r,
+                (select jr2.* from (
+                    select jr1.*, rank() over (partition by jr1.request_id order by jr1.sequence desc) as rnk
+                    from hrforms2_requests_journal jr1
+                    where jr1.request_id in (select request_id from hrforms2_requests_journal_last 
+                        where last_status in ('PA','PF') and dept_code in (".$deptlist.")
+                    )) jr2
+                where jr2.rnk = 1) j
+                left join (select request_id, max(journal_date) as max_journal_date, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
+                where r.request_id = j.request_id";
+
+                break;
+
+
             case "final":
                 $qry = "select r.request_id, r.created_by.SUNY_ID as created_by_suny_id, 
                 to_char(r.created_date,'DD-MON-YYYY HH24:MI:SS') as created_date, 

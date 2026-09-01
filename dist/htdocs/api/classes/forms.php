@@ -162,6 +162,12 @@ class Forms extends HRForms2 {
             $journal = (new journal(array('form',$this->req[1]),false))->returnData;
             $submitter = array_shift($journal);
             $last_journal = (count($journal) == 0)?$submitter:array_pop($journal);
+            if ($last_journal['STATUS'] == 'D') {
+                //only special unarchive group can view
+                if (!$this->canUnarchive('forms')) {
+                    $this->raiseError(E_FORBIDDEN,array('errMsg'=>'You do not have permission to view this request.'));
+                }
+            }
             $formData->submittedBy = $submitter['SUNY_ID'];
             $formData->lastJournal = $last_journal;
         } else {

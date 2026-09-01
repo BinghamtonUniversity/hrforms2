@@ -2,7 +2,7 @@ import q from '../queries';
 import { useQuery, useMutation } from "react-query";
 import { parse, format } from "date-fns";
 import { truncate } from 'lodash';
-import { useAuthContext } from '../app';
+import { useAuthContext, useUserContext } from '../app';
 
 export default function useRequestQueries(REQUEST_ID) {
     const reqIdAsPath = (REQUEST_ID)?new String(REQUEST_ID).replaceAll('-','/'):'';
@@ -45,9 +45,11 @@ export default function useRequestQueries(REQUEST_ID) {
 
     const getRequestList = (...args) => {
         const authData = useAuthContext();
+        const userData = useUserContext();
         const SUNY_ID = (authData.OVR_SUNY_ID)?authData.OVR_SUNY_ID:authData.SUNY_ID;
+        const isViewer = userData?.isViewer||false;
     
-        const list = args[0]?.list||args[0];
+        const list = (isViewer)?'viewer':args[0]?.list||args[0];
         const options = args[0]?.options||args[1]||{};
         if(options.select) options.select2 = options.select;
         options.select = data => {

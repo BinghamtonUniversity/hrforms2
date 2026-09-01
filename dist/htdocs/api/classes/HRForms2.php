@@ -305,6 +305,21 @@ Class HRForms2 {
     }
 
     /**
+    * Returns true/false if the user can unarchive/undelete; checks settings in addition to group membership
+    * @param string $type - One of 'forms' or 'requests'
+    * @return boolean
+    */
+    protected function canUnarchive($type=null) {
+        if (!in_array($type,['forms','requests'])) return false;
+        $settings = (new settings(array(),false))->returnData;
+        if (!$settings[$type]['permissions']['unarchive']) return false;
+        $unarchiveGroup = $settings[$type]['permissions']['unarchive-group'];
+        $userGroups = (new usergroups(array(),false))->returnData;
+        $groups = array_column($userGroups,'GROUP_ID');
+        return in_array($unarchiveGroup,$groups);
+    }
+
+    /**
      * Returns GroupID for Department Code given
      * @param number $deptcode - Department Code to lookup 
      * @return array
@@ -352,6 +367,22 @@ Class HRForms2 {
             }
         }
         return $emails;
+    }
+
+    /**
+     * Returns an comma-separated string of department codes assigned to a user
+     * @param string|int $id - a SUNY_ID
+     * @return string
+     */
+    protected function getUserDepartments($id = null) {
+        $suny_id = $id ?? $this->sessionData['EFFECTIVE_SUNY_ID'];
+        $usergroups = (new userdepts(array($suny_id),false))->returnData;
+        $dept = array();
+        foreach ($usergroups as $ug) {
+            $dept[] = $ug['DEPARTMENT_CODE'];
+        }
+        $deptlist = "'".implode("','",$dept)."'";
+        return $deptlist;
     }
 
     function sendError($message,$subject="HRForms2 Error",$type) {

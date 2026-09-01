@@ -147,6 +147,12 @@ class Requests extends HRForms2 {
             $journal = (new journal(array('request',$this->req[1]),false))->returnData;
             $submitter = array_shift($journal);
             $last_journal = (count($journal) == 0)?$submitter:array_pop($journal);
+            if ($last_journal['STATUS'] == 'D') {
+                //only special unarchive group can view
+                if (!$this->canUnarchive('requests')) {
+                    $this->raiseError(E_FORBIDDEN,array('errMsg'=>'You do not have permission to view this request.'));
+                }
+            }
             $this->returnData->submittedBy = $submitter['SUNY_ID'];
             $this->returnData->lastJournal = $last_journal;
         } else {
@@ -154,12 +160,14 @@ class Requests extends HRForms2 {
             $submitter = array_shift($journal);
             $last_journal = (count($journal) == 0)?$submitter:array_pop($journal);
             unset($last_journal['COMMENTS']); // We don't need commments
-            // Validation: only submitter and groups in workflow can view
-            $usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
-            $workflow = (new workflow(array('request',$last_journal['WORKFLOW_ID']),false))->returnData[0];
-            if (!array_intersect(explode(",",$workflow['GROUPS']),array_column($usergroups,'GROUP_ID')) && 
-                !($submitter['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID'])) {
-                    $this->raiseError(E_FORBIDDEN,array('errMsg'=>'You do not have permission to view this request.'));
+            if (!$this->sessionData['isViewer'] && !$this->sessionData['isAdmin']) {
+                // Validation: If not isViewer and not isAdmin, only submitter and groups in workflow can view
+                $usergroups = (new usergroups(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData;
+                $workflow = (new workflow(array('request',$last_journal['WORKFLOW_ID']),false))->returnData[0];
+                if (!array_intersect(explode(",",$workflow['GROUPS']),array_column($usergroups,'GROUP_ID')) && 
+                    !($submitter['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID'])) {
+                        $this->raiseError(E_FORBIDDEN,array('errMsg'=>'You do not have permission to view this request.'));
+                }
             }
             if ($last_journal['STATUS'] != 'Z') {
                 $qry = "select CREATED_BY, to_char(CREATED_DATE,'DD-MON-YYYY HH:MI:SS AM') as created_date, REQUEST_DATA from HRFORMS2_REQUESTS where REQUEST_ID = :request_id";

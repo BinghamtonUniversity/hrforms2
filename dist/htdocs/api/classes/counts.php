@@ -31,37 +31,35 @@ class Counts extends HRForms2 {
     function GET() {
         $counts = array();
         if (count($this->req) > 0) {
-            /* Get Department Code for Effective SUNY ID */
-            $user = (new user(array($this->sessionData['EFFECTIVE_SUNY_ID']),false))->returnData[0];
+            // Get assigned departments for user
+            $deptlist = $this->getUserDepartments($this->sessionData['EFFECTIVE_SUNY_ID']);
 
             /* Requests */
             $qry = "with counts as (select 'pending' as menu, count(j.request_id) as count, 0 as age
                 from hrforms2_requests_journal_last j
                 join (select * from hrforms2_requests) r on (j.request_id = r.request_id)
                 where last_status in ('PA','PF')
-                and r.created_by.SUNY_ID = :suny_id)
+                and j.dept_code in ($deptlist))
             select json_objectagg(key menu value json_object(
                 key 'count' is counts.count,
                 key 'age' is nvl(counts.age,0))) as json
             from counts";
             $stmt = oci_parse($this->db,$qry);
-            oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
             oci_execute($stmt);
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
             $counts['requests'] = json_decode($row['JSON']);
 
             /* Forms */
-            $qry = "with counts as (select 'pending' as menu ,count(j.form_id) as count, 0 as age
+            $qry = "with counts as (select 'pending' as menu, count(j.form_id) as count, 0 as age
                 from hrforms2_forms_journal_last j
                 join (select * from hrforms2_forms) f on (j.form_id = f.form_id)
                 where last_status in ('PA','PF')
-                and decode(f.form_data.formActions.ROUTE_BY,'P',f.form_data.employment.position.positionDetails.POSITION_DEPARTMENT_CODE,f.created_by.REPORTING_DEPARTMENT_CODE) = :dept_code)
+                and j.dept_code in ($deptlist))
             select json_objectagg(key menu value json_object(
                 key 'count' is counts.count,
                 key 'age' is nvl(counts.age,0))) as json
             from counts";
             $stmt = oci_parse($this->db,$qry);
-            oci_bind_by_name($stmt,":dept_code",$user['REPORTING_DEPARTMENT_CODE']);
             oci_execute($stmt);
             $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
             $counts['forms'] = json_decode($row['JSON']);

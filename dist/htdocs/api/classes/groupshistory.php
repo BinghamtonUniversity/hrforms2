@@ -63,20 +63,29 @@ class GroupsHistory extends HRForms2 {
         //TODO: also need to allow /requests/{id} and /forms/{id}
         if ($this->sessionData['isAdmin'] && $this->sessionData['OVR_SUNY_ID'] == "") return true;
 
-        $qry = "select 1
-            from ".$this->k['journal']."
-            where ".$this->k['id']." = :id
-            and suny_id = :suny_id
-            union 
-            select 1
-            from ".$this->k['journal']." j, hrforms2_user_groups ug
-            where j.".$this->k['id']." = :id
-            and j.group_to != '-99'
-            and ug.group_id = j.group_to
-            and ug.suny_id = :suny_id";
-        $stmt = oci_parse($this->db,$qry);
+        // If isViewer, check dept_code
+        if ($this->sessionData['isViewer']) {
+            $qry = "select 1
+                from ".$this->k['master']." r
+                where ".$this->k['id']." = :id
+                and r.created_by.POSITION_DEPARTMENT_CODE in (".$this->getUserDepartments($this->sessionData['EFFECTIVE_SUNY_ID']).")";
+            $stmt = oci_parse($this->db,$qry);
+        } else {
+            $qry = "select 1
+                from ".$this->k['journal']."
+                where ".$this->k['id']." = :id
+                and suny_id = :suny_id
+                union 
+                select 1
+                from ".$this->k['journal']." j, hrforms2_user_groups ug
+                where j.".$this->k['id']." = :id
+                and j.group_to != '-99'
+                and ug.group_id = j.group_to
+                and ug.suny_id = :suny_id";
+            $stmt = oci_parse($this->db,$qry);
+            oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
+        }
         oci_bind_by_name($stmt,":id",$this->req[1]);
-        oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
         $r = oci_execute($stmt);
         if (!$r) $this->raiseError();
         $row = oci_fetch_array($stmt,OCI_NUM);

@@ -55,6 +55,10 @@ class ArchiveList extends HRForms2 {
         $results = isset($_GET['results']) ? $_GET['results'] : 10;
         $offset = ($page-1)*$results;
 
+        if ($this->sessionData['isViewer']) {
+            $deptlist = $this->getUserDepartments($this->sessionData['EFFECTIVE_SUNY_ID']);
+        }
+
         switch($this->k['id']) {
             /* REQUESTS */
             case "request_id":
@@ -105,6 +109,7 @@ class ArchiveList extends HRForms2 {
                         $sort = "order by " . $_GET['sortField'] . " " . $_GET['sortDir'];
                 }
                 // get total count of records
+                //TODO: need to exclude "D" if not canUnarchive
                 $qry = "select count(r.request_id)
                     from hrforms2_requests_archive r,
                     (select jr2.* from (select jr1.*,
@@ -113,18 +118,23 @@ class ArchiveList extends HRForms2 {
                     ) jr2
                     where jr2.sequence >= 0 and jr2.rnk = 1) j
                     left join (select request_id, max(journal_date) as max_journal_date, listagg(group_to,',') within group (order by sequence) as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
-                    where r.request_id = j.request_id
-                    and exists (select 1
+                    where r.request_id = j.request_id ";
+                if (!$this->sessionData['isViewer']) {
+                    $qry .= "and exists (select 1
                         from hrforms2_requests_journal_archive
                         where (
                             suny_id = :suny_id or
                             group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
                         )
                         and request_id = j.request_id
-                    )
-                    ". $filter;
+                    ) ";
+                } else {
+                    $qry .= "and r.created_by.POSITION_DEPARTMENT_CODE in (".$deptlist.") ";
+                }
+                if (!$this->canUnarchive('requests')) $qry .= "and j.status != 'D' ";
+                $qry .= $filter;
                 $stmt = oci_parse($this->db,$qry);
-                oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
+                if (!$this->sessionData['isViewer']) oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
                 if ($_GET['reqId'] != "") oci_bind_by_name($stmt,":request_id",$_GET['reqId']);
                 if ($_GET['reqId'] == "") {
                     if ($_GET['startDate'] != "") oci_bind_by_name($stmt,":start_date",$_GET['startDate']);
@@ -166,22 +176,27 @@ class ArchiveList extends HRForms2 {
                     where jr2.sequence >= 0 and jr2.rnk = 1) j
                     left join (select request_id, max(journal_date) as max_journal_date, listagg(group_to,',') within group (order by sequence) as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_requests_journal_archive where sequence >= 0 group by request_id) js on (js.request_id = j.request_id)
                     left join (select u1.suny_id, nvl(u1.user_info.ALIAS_FIRST_NAME,u1.user_info.LEGAL_FIRST_NAME) as last_update_first_name, u1.user_info.LEGAL_LAST_NAME as last_update_last_name from hrforms2_users u1) u on (u.suny_id = j.suny_id) 
-                    where r.request_id = j.request_id
-                    and exists (select 1
+                    where r.request_id = j.request_id ";
+                if (!$this->sessionData['isViewer']) {
+                    $qry .= "and exists (select 1
                         from hrforms2_requests_journal_archive
                         where (
                             suny_id = :suny_id or
                             group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
                         )   
                         and request_id = j.request_id
-                    )
-                    ". $filter. "
-                    " . $sort . "
-                    offset :offset rows
-                    fetch next :results rows only";
+                    ) ";
+                } else {
+                    $qry .= "and r.created_by.POSITION_DEPARTMENT_CODE in (".$deptlist.") ";
+                }
+                if (!$this->canUnarchive('requests')) $qry .= "and j.status != 'D' ";
+                $qry .= $filter. "
+                " . $sort . "
+                offset :offset rows
+                fetch next :results rows only";
 
                 $stmt = oci_parse($this->db,$qry);
-                oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
+                if (!$this->sessionData['isViewer']) oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
                 if ($_GET['reqId'] != "") oci_bind_by_name($stmt,":request_id",$_GET['reqId']);
                 if ($_GET['reqId'] == "") {
                     if ($_GET['startDate'] != "") oci_bind_by_name($stmt,":start_date",$_GET['startDate']);
@@ -271,16 +286,21 @@ class ArchiveList extends HRForms2 {
                     ) jf2
                     where jf2.sequence >= 0 and jf2.rnk = 1) j
                     left join (select form_id, max(journal_date) as max_journal_date, listagg(group_to,',') within group (order by sequence) as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal_archive where sequence >= 0 group by form_id) js on (js.form_id = j.form_id)
-                    where f.form_id = j.form_id
-                    and exists (select 1
+                    where f.form_id = j.form_id ";
+                if (!$this->sessionData['isViewer']) {
+                    $qry .= "and exists (select 1
                         from hrforms2_forms_journal_archive
                         where (
                             suny_id = :suny_id or
                             group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
                         )   
                         and form_id = f.form_id
-                    )
-                    ". $filter;
+                    ) ";
+                } else {
+                    $qry .= "and f.created_by.POSITION_DEPARTMENT_CODE in (".$deptlist.") ";
+                }
+                if (!$this->canUnarchive('requests')) $qry .= "and j.status != 'D' ";
+                $qry .= $filter;
                 $stmt = oci_parse($this->db,$qry);
                 oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
                 if ($_GET['formId'] != "") oci_bind_by_name($stmt,":form_id",$_GET['formId']);
@@ -337,43 +357,49 @@ class ArchiveList extends HRForms2 {
                     where jf2.sequence >= 0 and jf2.rnk = 1) j
                     left join (select form_id, max(journal_date) as max_journal_date, listagg(group_to,',') within group (order by sequence) as journal_groups, listagg(status,',') within group (order by sequence) as journal_status from hrforms2_forms_journal_archive where sequence >= 0 group by form_id) js on (js.form_id = j.form_id)
                     left join (select u1.suny_id, nvl(u1.user_info.ALIAS_FIRST_NAME,u1.user_info.LEGAL_FIRST_NAME) as last_update_first_name, u1.user_info.LEGAL_LAST_NAME as last_update_last_name from hrforms2_users u1) u on (u.suny_id = j.suny_id) 
-                    where f.form_id = j.form_id
-                    and exists (select 1
+                    where f.form_id = j.form_id ";
+                if (!$this->sessionData['isViewer']) {
+                    $qry .= "                    and exists (select 1
                         from hrforms2_forms_journal_archive
                         where (
                             suny_id = :suny_id or
                             group_to in (select group_id from hrforms2_user_groups where suny_id = :suny_id)
                         )   
                         and form_id = f.form_id
-                    )
-                    ". $filter. "
-                    " . $sort . "
-                    offset :offset rows
-                    fetch next :results rows only";
-                    $stmt = oci_parse($this->db,$qry);
-                    oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
-                    if ($_GET['formId'] != "") oci_bind_by_name($stmt,":form_id",$_GET['formId']);
-                    if ($_GET['formId'] == "") {
-                        if ($_GET['startDate'] != "") oci_bind_by_name($stmt,":start_date",$_GET['startDate']);
-                        if ($_GET['endDate'] != "") oci_bind_by_name($stmt,":end_date",$_GET['endDate']);
-                        if ($_GET['personName'] != "") oci_bind_by_name($stmt,":person_name",$personName);
-                        if ($_GET['payroll'] != "") oci_bind_by_name($stmt,":payroll",$_GET['payroll']);
-                        if ($_GET['formCode'] != "") oci_bind_by_name($stmt,":formCode",$_GET['formCode']);					
-                        if ($_GET['actionCode'] != "") oci_bind_by_name($stmt,":actionCode",$_GET['actionCode']);
-                        if ($_GET['transactionCode'] != "") oci_bind_by_name($stmt,":transactionCode",$_GET['transactionCode']);
-                        if ($_GET['lineNumber'] != "") oci_bind_by_name($stmt,":line_number",$_GET['lineNumber']);
-                        if ($_GET['benefitFlag'] != "") oci_bind_by_name($stmt,":benefits_flag",$_GET['benefitFlag']);
-                        if ($_GET['createdBy'] != "") oci_bind_by_name($stmt,":created_by",$_GET['createdBy']);
-                        if ($_GET['updatedBy'] != "") oci_bind_by_name($stmt,":updated_by",$_GET['updatedBy']);
-                    }
-                    oci_bind_by_name($stmt,":offset",$offset);
-                    oci_bind_by_name($stmt,":results",$results);
-                    oci_execute($stmt);
-                    while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
-                        $row['BENEFIT_FLAG'] = json_decode($row['BENEFIT_FLAG']);
-                        $row['STATUS_ARRAY'] = explode(",",$row['JOURNAL_STATUS']);
-                        $this->_arr[] = $row;
-                    }
+                    ) ";
+                } else {
+                    $qry .= "and f.created_by.POSITION_DEPARTMENT_CODE in (".$deptlist.") ";
+                }
+                if (!$this->canUnarchive('requests')) $qry .= "and j.status != 'D' ";
+                $qry .= $filter. "
+                " . $sort . "
+                offset :offset rows
+                fetch next :results rows only";
+
+                $stmt = oci_parse($this->db,$qry);
+                oci_bind_by_name($stmt,":suny_id",$this->sessionData['EFFECTIVE_SUNY_ID']);
+                if ($_GET['formId'] != "") oci_bind_by_name($stmt,":form_id",$_GET['formId']);
+                if ($_GET['formId'] == "") {
+                    if ($_GET['startDate'] != "") oci_bind_by_name($stmt,":start_date",$_GET['startDate']);
+                    if ($_GET['endDate'] != "") oci_bind_by_name($stmt,":end_date",$_GET['endDate']);
+                    if ($_GET['personName'] != "") oci_bind_by_name($stmt,":person_name",$personName);
+                    if ($_GET['payroll'] != "") oci_bind_by_name($stmt,":payroll",$_GET['payroll']);
+                    if ($_GET['formCode'] != "") oci_bind_by_name($stmt,":formCode",$_GET['formCode']);					
+                    if ($_GET['actionCode'] != "") oci_bind_by_name($stmt,":actionCode",$_GET['actionCode']);
+                    if ($_GET['transactionCode'] != "") oci_bind_by_name($stmt,":transactionCode",$_GET['transactionCode']);
+                    if ($_GET['lineNumber'] != "") oci_bind_by_name($stmt,":line_number",$_GET['lineNumber']);
+                    if ($_GET['benefitFlag'] != "") oci_bind_by_name($stmt,":benefits_flag",$_GET['benefitFlag']);
+                    if ($_GET['createdBy'] != "") oci_bind_by_name($stmt,":created_by",$_GET['createdBy']);
+                    if ($_GET['updatedBy'] != "") oci_bind_by_name($stmt,":updated_by",$_GET['updatedBy']);
+                }
+                oci_bind_by_name($stmt,":offset",$offset);
+                oci_bind_by_name($stmt,":results",$results);
+                oci_execute($stmt);
+                while ($row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS)) {
+                    $row['BENEFIT_FLAG'] = json_decode($row['BENEFIT_FLAG']);
+                    $row['STATUS_ARRAY'] = explode(",",$row['JOURNAL_STATUS']);
+                    $this->_arr[] = $row;
+                }
                 break;
 
             /* BAD REQUEST - Should not get here */

@@ -21,12 +21,8 @@ export default function AppNav() {
                             const single = c.slice(0,-1);
                             return (
                                 <NavDropdown key={`${single}-menu`} title={capitalize(c)} id="request-nav-dropdown" alignRight>
-                                    {!isViewer && 
-                                        <>
-                                            <MenuCounts menu={c} showOn="menu" showNew/>
-                                            <NavDropdown.Divider/>
-                                        </>
-                                    }
+                                    <MenuCounts menu={c} showOn="menu" showNew/>
+                                    <NavDropdown.Divider/>
                                     <NavDropdown.Item as={Link} to={`/${single}/journal`}>{capitalize(c)} Journal</NavDropdown.Item>
                                 </NavDropdown>
                             );
