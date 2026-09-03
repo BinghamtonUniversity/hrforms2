@@ -85,10 +85,25 @@ class Journal extends HRForms2 {
         
         // If isViewer, check dept_code
         if ($this->sessionData['isViewer']) {
-            $qry = "select 1
-                from ".$this->k['master']." r
-                where ".$this->k['id']." = :id
-                and r.created_by.POSITION_DEPARTMENT_CODE in (".$this->getUserDepartments($this->sessionData['EFFECTIVE_SUNY_ID']).")";
+            $in = "in (".$this->getUserDepartments($this->sessionData['EFFECTIVE_SUNY_ID']).")";
+            switch ($this->k['id']) {
+                case "request_id":
+                    $qry = "select 1
+                        from ".$this->k['master']." r
+                        where ".$this->k['id']." = :id
+                        and r.created_by.POSITION_DEPARTMENT_CODE ".$in;
+                    break;
+                
+                case "form_id":
+                    $qry = "select 1
+                        from ".$this->k['master']." f
+                        where ".$this->k['id']." = :id
+                        and decode(f.form_data.formActions.ROUTE_BY,'P',f.form_data.employment.position.positionDetails.POSITION_DEPARTMENT_CODE,f.created_by.POSITION_DEPARTMENT_CODE) ".$in;
+                    break;
+                
+                default:
+                    return false;
+            }
             $stmt = oci_parse($this->db,$qry);
         } else {
             $qry = "select 1
