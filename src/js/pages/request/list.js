@@ -9,7 +9,7 @@ import { Redirect } from "react-router-dom";
 import { Row, Col, Modal, Form, Alert } from "react-bootstrap";
 import { compareAsc } from "date-fns";
 import DataTable from 'react-data-table-component';
-import { AppButton, Loading, ModalConfirm, WorkflowExpandedComponent } from "../../blocks/components";
+import { AppButton, Loading, ModalConfirm, WorkflowExpandedComponent, WorkflowExpandedComponentStyles } from "../../blocks/components";
 import { useUserContext, SettingsContext, NotFound, useSettingsContext, useAuthContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
 import { flattenObject } from "../../utility";
@@ -290,6 +290,7 @@ function ListTable({data,list}) {
                 pointerOnHover
                 highlightOnHover
                 onRowClicked={handleRowClick}
+                customStyles={WorkflowExpandedComponentStyles}
                 expandableRows={expandRow}
                 expandableRowsComponent={WorkflowExpandedComponent}
                 expandableRowExpanded={()=>expandAll}

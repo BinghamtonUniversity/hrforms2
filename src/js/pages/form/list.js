@@ -8,7 +8,7 @@ import { capitalize, find, pick, get } from "lodash";
 import { Redirect } from "react-router-dom";
 import { Row, Col, Modal, Form, Alert } from "react-bootstrap";
 import DataTable from 'react-data-table-component';
-import { AppButton, DescriptionPopover, Loading, ModalConfirm, WorkflowExpandedComponent } from "../../blocks/components";
+import { AppButton, DescriptionPopover, Loading, ModalConfirm, WorkflowExpandedComponent, WorkflowExpandedComponentStyles } from "../../blocks/components";
 import { SettingsContext, NotFound, useSettingsContext, useAuthContext, useUserContext } from "../../app";
 import { useHotkeys } from "react-hotkeys-hook";
 import { displayFormCode } from "../form";
@@ -305,6 +305,7 @@ function ListTable({data,list}) {
                 pointerOnHover
                 highlightOnHover
                 onRowClicked={handleRowClick}
+                customStyles={WorkflowExpandedComponentStyles}
                 expandableRows={expandRow}
                 expandableRowsComponent={WorkflowExpandedComponent}
                 expandableRowExpanded={()=>expandAll}

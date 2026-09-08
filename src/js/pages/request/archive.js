@@ -4,7 +4,7 @@ import { Row, Col, Form, Button, ButtonGroup, Accordion, Card, OverlayTrigger, P
 import DatePicker from "react-datepicker";
 import { format, startOfToday, endOfToday, subDays, addDays } from "date-fns";
 import DataTable from 'react-data-table-component';
-import { AppButton, Loading, WorkflowExpandedComponent } from "../../blocks/components";
+import { AppButton, Loading, WorkflowExpandedComponent, WorkflowExpandedComponentStyles } from "../../blocks/components";
 import useListsQueries from "../../queries/lists";
 import { useQueryClient } from "react-query";
 import { useSettingsContext, useAuthContext, lazyRetry } from "../../app";
@@ -163,6 +163,7 @@ export default function ListArchiveTable() {
     ];
 
     const customStyles = {
+        ...WorkflowExpandedComponentStyles,
         subHeader: {
             style: {
                 flexDirection: 'column',

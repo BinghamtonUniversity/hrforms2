@@ -352,14 +352,35 @@ const DescriptionPopover = ({title,content,showempty,children,...props}) => {
     );
 }
 
-/* Builds the workflow chart in Request and Form list pages */
+const WorkflowExpandedComponentStyles = {
+    expanderRow: {
+        style: {
+            backgroundColor: '#ddd',
+        }
+    }
+}
+
+/***
+ *  Builds the workflow chart in Request and Form list pages
+ *  data: {
+ *      (FORM_ID or REQUEST_ID): <id>,
+ *      WORKFLOW_ID: <workflow_id>,
+ *      SEQUENCE: <current_sequence>,
+ *      GROUPS_ARRAY: [<group1>,<group2>,...],
+ *      STATUS_ARRAY: [<status1>,<status2>,...],
+ *      createdDate: <created_date>
+ *  }
+ *  general.showSkipped = 'A' (admin) or 'Y' (user) to show skipped groups
+ *  general.awaitLabel = label for awaiting status
+ *  general.status = {<status_code>:{badge:<label>}}
+*/
 const WorkflowExpandedComponent = ({data}) => {
     const [showSkipped,setShowSkipped] = useState(false);
     const { general } = useSettingsContext();
     const { isAdmin } = useAuthContext();
     const key = data.hasOwnProperty('REQUEST_ID')?'request':data.hasOwnProperty('FORM_ID')?'form':'';
     if (!key) return (
-         <div className="p-3" style={{backgroundColor:'#ddd'}}>
+         <div className="p-3">
             <Alert variant="danger" className="m-0">Workflow data not available</Alert>
          </div>
     );
@@ -370,20 +391,20 @@ const WorkflowExpandedComponent = ({data}) => {
         setShowSkipped((isAdmin && general.showSkipped == 'A' || general.showSkipped == 'Y'));
     },[general]);
     if (wf.isLoading) return (
-        <div className="p-3" style={{backgroundColor:'#ddd'}}>
+        <div className="p-3">
             <p className="m-0"><Loading>Loading Workflow...</Loading></p>
         </div>
     );
     if (wf.isError) return (
-        <div className="p-3" style={{backgroundColor:'#ddd'}}>
+        <div className="p-3">
             <Alert variant="danger" className="m-0">Error loading workflow: {wf.error?.message}</Alert>
         </div>
     );
     return (
-        <div className="p-3" style={{backgroundColor:'#ddd'}}>
+        <div className="p-3">
             {data.GROUPS_ARRAY.map((g,i)=>{
                 const sequence = parseInt(data.SEQUENCE,10);
-                const key = `${data.id}_${i}`;
+                const key = `${key}_${i}`;
                 if (data.STATUS_ARRAY[i] == 'X' && !showSkipped) return null;
                 let variant = 'white';
                 let classname = 'p-2 m-0 d-inline-flex flex-column badge-outline border';
@@ -540,4 +561,4 @@ const ReviewUserInfo = () => {
 
 export {Loading,ModalConfirm,AppButton,MenuCounts,errorToast,CheckboxTreeComponent,
     StateSelector,CountrySelector,DepartmentSelector,DescriptionPopover,WorkflowExpandedComponent,
-    PersonPickerComponent,ReviewUserInfo};
+    WorkflowExpandedComponentStyles,PersonPickerComponent,ReviewUserInfo};
