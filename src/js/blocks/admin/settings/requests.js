@@ -9,6 +9,7 @@ import { HierarchyChain } from "../../../pages/admin/hierarchy/request";
 import { Loading } from "../../components";
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { Icon } from "@iconify/react";
+import { mailOptions } from "../../../config/settings";
 
 export default function SettingsRequests() {
     return (
@@ -457,17 +458,18 @@ function SettingsRequestsEmail() {
 function SettingsRequestsEmailStatus() {
     const { control, setValue } = useFormContext();
     const { requests } = useSettingsContext();
-    const mailOptions = [
+    /*const mailOptions = [
         ["submitter","Submitter"],
         ["group_to","Group To"],
         ["group_from","Group From"],
         ["group_all","All Approval Groups"],
         ["error","Error"]
     ];
+    const ccOptions = []
     const replyToOptions = [
         ["none","None"],
         ["submitter","Submitter"]
-    ];
+    ];*/
 
     const handleMailChange = (e,field) => {
         const value = new Set(field.value);
@@ -502,7 +504,7 @@ function SettingsRequestsEmailStatus() {
                                     render={({field}) => <Form.Control {...field} type="text" placeholder="Enter Subject"/>}
                                 />
                             </td>
-                            <td>{mailOptions.map(o=>(
+                            <td>{mailOptions['to'].map(o=>(
                                 <Controller
                                     key={`mailto_${o[0]}`}
                                     name={`requests.email.status.${s}.mailto`}
@@ -510,7 +512,7 @@ function SettingsRequestsEmailStatus() {
                                     render={({field}) => <Form.Check {...field} type="checkbox" label={o[1]} checked={field.value.includes(o[0])} onChange={e=>handleMailChange(e,field)} value={o[0]}/>}
                                 />
                             ))}</td>
-                            <td>{mailOptions.map(o=>(
+                            <td>{mailOptions['cc'].map(o=>(
                                 <Controller
                                     key={`mailcc_${o[0]}`}
                                     name={`requests.email.status.${s}.mailcc`}
@@ -518,7 +520,7 @@ function SettingsRequestsEmailStatus() {
                                     render={({field}) => <Form.Check {...field} type="checkbox" label={o[1]} checked={field.value.includes(o[0])} onChange={e=>handleMailChange(e,field)} value={o[0]}/>}
                                 />
                             ))}</td>
-                            <td>{replyToOptions.map(o=>(
+                            <td>{mailOptions['replyto'].map(o=>(
                                 <Controller
                                     key={`mailcc_${o[0]}`}
                                     name={`requests.email.status.${s}.replyto`}

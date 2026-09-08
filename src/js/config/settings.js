@@ -7,7 +7,30 @@ export const tabs = [
     {id:'forms',title:'Forms'}
 ];
 
-/** Default Form Values */
+/** Mail Options */
+export const mailOptions = {
+    "to": [
+        ["submitter","Submitter"],
+        ["group_to","Group To"],
+        ["group_from","Group From"],
+        ["group_all","All Approval Groups"],
+        ["error","Error"]
+    ],
+    "cc": [
+        ["submitter","Submitter"],
+        ["viewer","Viewer"],
+        ["group_to","Group To"],
+        ["group_from","Group From"],
+        ["group_all","All Approval Groups"],
+        ["error","Error"]
+    ],
+    "replyto": [
+        ["none","None"],
+        ["submitter","Submitter"]
+    ]
+};
+
+/** Default Values */
 export const defaultVals = {
     "general": {
         "showUpdateDate": "Y",
