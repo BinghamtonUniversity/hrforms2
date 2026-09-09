@@ -1,6 +1,5 @@
 import q from '../queries';
 import { useQuery, useMutation } from "react-query";
-import { defaultVals } from '../config/settings';
 
 export default function useSettingsQueries() {
     const getSettings = (...args) => {
