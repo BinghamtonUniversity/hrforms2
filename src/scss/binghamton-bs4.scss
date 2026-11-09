@@ -236,7 +236,12 @@ a { color: a11y-color($primary,$body-bg,$a11y-level,16,false) }
 .font-size-90 { font-size: 90% }
 .font-size-85 { font-size: 85% }
 .font-size-80 { font-size: 80% }
-
+.font-size-75 { font-size: 75% }
+.font-size-70 { font-size: 70% }
+.font-size-65 { font-size: 65% }
+.font-size-60 { font-size: 60% }
+.font-size-55 { font-size: 55% }
+.font-size-50 { font-size: 50% }
 /* make pre text wrap - see: https://css-tricks.com/snippets/css/make-pre-text-wrap/*/
 pre {
   white-space: pre-wrap;       /* css-3 */
@@ -585,6 +590,12 @@ div.form-check-input-lg input[type="checkbox"].form-check-input {
 .list-group-scrollable-30 { overflow: scroll; height: 30vh; }
 .list-group-scrollable-40 { overflow: scroll; height: 40vh; }
 .list-group-scrollable-50 { overflow: scroll; height: 50vh; }
+
+/* Resizable List Group */
+.list-group-resizable-25 { height: 25vh; resize: both; overflow: auto; }
+.list-group-resizable-30 { height: 30vh; resize: both; overflow: auto; }
+.list-group-resizable-40 { height: 40vh; resize: both; overflow: auto; }
+.list-group-resizable-50 { height: 50vh; resize: both; overflow: auto; }
 
 /* Markers For Ranges */
 datalist.marker {
