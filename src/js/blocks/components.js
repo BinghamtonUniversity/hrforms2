@@ -67,6 +67,7 @@ export const formats = {
     'refresh':{icon:'mdi:refresh',variant:'success'},
     'remove':{icon:'mdi:minus',variant:'danger'},
     'reject':{icon:'mdi:close-circle',variant:'danger'},
+    'reset':{icon:'mdi:restore',variant:'secondary'},
     'run':{icon:'mdi:run',variant:'danger'},
     'save':{icon:'mdi:content-save',variant:'primary'},
     'save-move':{icon:'mdi:content-save-move',variant:'primary'},
