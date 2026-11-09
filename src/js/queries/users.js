@@ -95,7 +95,7 @@ export default function useUserQueries(SUNY_ID) {
                     d.refreshDateUnix = 0;
                 }
                 
-                d.active = !(d.END_DATE&&d.endDateUnix<Date.now());
+                d.active = !(d.END_DATE&&d.endDateUnix<(Date.now()/1000));
                 d.userOptions = d.USER_OPTIONS&&JSON.parse(d.USER_OPTIONS);
                 d.NOTIFICATIONS = (!d.EMAIL_ADDRESS_WORK)?'N':d.NOTIFICATIONS;
             });
