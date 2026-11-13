@@ -136,8 +136,8 @@ Class HRForms2 {
         }
         $errMsg = (isset($errObj['errMsg'])) ? $errObj['errMsg'] : $errMsg;
         $errCode = (isset($errObj['errCode'])) ? $errStatus . "::" . $errObj['errCode'] : $errStatus;
-        header($_SERVER["SERVER_PROTOCOL"]." $errStatus $errTitle");
-        header("X-Error-Description: " . $errMsg);
+        header($_SERVER["SERVER_PROTOCOL"]." " . str_replace(["\r","\n"], ' ', $errStatus . " " . $errTitle));
+        header("X-Error-Description: " . str_replace(["\r","\n"], ' ', $errMsg));
         //header("X-Response-Code: $errStatus");
         //header("X-Error-Message: " . (is_array($errMsg)) ? implode(',',$errMsg) : $errMsg);
         $this->toJSON(array("status"=>$errStatus,"title"=>$errTitle,"error"=>$errMsg,"errcode"=>$errCode));
@@ -385,6 +385,137 @@ Class HRForms2 {
         return $deptlist;
     }
 
+    /**
+     * Checks if a request should be skipped based on its workflow and sequence
+     * @param string $type - the type of request ('form' or 'request')
+     * @param string|int $wf_id - the workflow ID
+     * @param int $seq - the sequence number
+     * @return void
+     */
+    protected function checkWFSkip($type,$wf_id,$seq) {
+        if (!in_array($type,['form','request'])) return; // if type is not form or request return
+        if ($wf_id == null || $seq == null) return; // if parameters are missing return
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        if ($type == 'form') {
+            $account = $this->POSTvars['employment']['salary']['SUNY_ACCOUNTS'];
+        } else {
+            $account = $this->POSTvars['SUNYAccounts'];
+        }
+        $wf = (new workflow(array($type,$wf_id),false))->returnData[0];
+        if ($wf['CONDITIONS'] == null) return; // if no conditions return; no need to parse
+        $this->conditions = array_filter($wf['CONDITIONS'],function($c) use($seq){
+            return strval($c->seq+1) == strval($seq); //add 1 to seq to account for submitter group at index 0
+        });
+        if ($this->conditions) {
+            $accounts = array_map(function($account) {return $account['account'][0]['id'];},$account);
+            $this->match = array_filter($accounts,function($account) {
+                foreach ($this->conditions as $condition) {
+                    switch($condition->field_name) {
+                        case "suny_account":
+                            switch($condition->field_operator) {
+                                case "eq": return $account != $condition->field_value;
+                                case "ne": return $account == $condition->field_value;
+                                case "sw": return substr($account, 0, strlen($condition->field_value)) != $condition->field_value;
+                                case "ns": return substr($account, 0, strlen($condition->field_value)) == $condition->field_value;
+                            }
+                            break;
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Auto-approves the next group in the workflow if the current user is in that group
+     * @param array $groups - an array of group IDs in the workflow
+     * @param int $seq - the current sequence number in the workflow
+     * @return bool - returns true if the next group is auto-approved, false otherwise
+     */
+    protected function autoApproveNext($groups,$seq) {
+        // Check if Approver is in next group and auto-approve
+        if ($seq >= sizeof($groups)-1) return false; // do not auto-approve last group.
+        $groupusers = (new groupusers(array($groups[$seq]),false))->returnData;
+        foreach ($groupusers as $u) {
+            if ($u['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID']) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected function collectEmails($submitter,$group_from,$group_to,$status,$options) {
+        $email_list = array('mailto'=>[],'mailcc'=>[]);
+        foreach (array_keys($email_list) as $key) {
+            foreach ($options[$key] as $opt=>$b) {
+                if (!$b) continue;
+                switch($b) {
+                    case "submitter":
+                        $email_list[$key] = array_unique(array_merge($email_list[$key],$this->getUserEmail($submitter)));
+                        break;
+                    case "viewer":
+                        break;
+                    case "group_to":
+                        if ($group_to != "") {
+                            $group_to_users = (new groupusers(array($group_to),false))->returnData;
+                            foreach ($group_to_users as $user) {
+                                if ($user['EMAIL_ADDRESS_WORK'] != "" && $user['EMAIL_ADDRESS_WORK'] != null && $user['NOTIFICATIONS'] == 'Y') 
+                                    $email_list[$key] = array_unique(array_merge($email_list[$key],array($user['EMAIL_ADDRESS_WORK'])));
+                            }
+                        }
+                        break;
+                    case "group_from":
+                        if ($group_from != "") {
+                            $group_from_users = (new groupusers(array($group_from),false))->returnData;
+                            foreach ($group_from_users as $user) {
+                                if ($user['EMAIL_ADDRESS_WORK'] != "" && $user['EMAIL_ADDRESS_WORK'] != null && $user['NOTIFICATIONS'] == 'Y')
+                                    $email_list[$key] = array_unique(array_merge($email_list[$key],array($user['EMAIL_ADDRESS_WORK'])));
+                            }
+                        }
+                        break;
+                    case "group_all":
+                        /*$full_jrnl = (new journal(array($type,$id),false))->returnData;
+                        $approverStatuses = ['A', 'PA', 'PF'];
+                        $filtered_jrnl = array_filter($full_jrnl, function ($row) use ($approverStatuses) {
+                            return isset($row['STATUS']) && in_array($row['STATUS'], $approverStatuses, true);
+                        });
+                        $groupToValues = array_column($filtered_jrnl, 'GROUP_TO');
+                        foreach ($groupToValues as $group) {
+                            if ($group != "") {
+                                $group_all_users = (new groupusers(array($group),false))->returnData;
+                                foreach ($group_all_users as $user) {
+                                    if ($user['EMAIL_ADDRESS_WORK'] != "" && $user['EMAIL_ADDRESS_WORK'] != null && $user['NOTIFICATIONS'] == 'Y') 
+                                        $email_list[$key] = array_unique(array_merge($email_list[$key],array($user['EMAIL_ADDRESS_WORK'])));
+                                }
+                            }
+                        }*/
+                        break;
+                    case "error":
+                        array_push($email_list[$key],$errorEmail);
+                }
+            }
+        }
+        // Remove emails from "mailcc" that are also in "mailto"
+        $email_list['mailcc'] = array_values(array_diff($email_list['mailcc'], $email_list['mailto']));
+
+                // Set Reply-To Email Address
+        $replyto = "";
+        switch($options['replyto']) {
+            case "submitter":
+                $replyto = $this->getUserEmail($submitter);
+                break;
+            case "error":
+                $replyto = $errorEmail;
+                break;
+        }
+        $email_list['replyto'] = $replyto;
+
+        // set subject
+        $subject = '[HRFORMS2-'.INSTANCE.']: '.($vars['ERROR']?'**ERROR** ':'').$email_settings['subject'].' - '.$options['subject'];
+        $email_list['subject'] = $subject;
+
+        return $email_list;
+    }
+    
     function sendError($message,$subject="HRForms2 Error",$type) {
         $origMethod = $_SERVER['REQUEST_METHOD'];
         $_SERVER['REQUEST_METHOD'] = 'GET';
@@ -492,9 +623,11 @@ Class HRForms2 {
      * 		submitted_by: int,
      * 		comment: string
      * } $journal - Journal record from Request or Form
-     * @return mixed - Returns output from debug if enabled; could be null/undefined.
+     * @param bool $isArchived - Whether the journal is from an archived record
+     * @param bool $simulate - Whether to simulate sending the email (for testing)
+     * @return mixed - Returns output from debug if enabled or email array if simulate is true; could be null/undefined.
      */
-    function sendEmail($journal,$isArchived=false) {
+    function sendEmail($journal,$isArchived=false,$simulate=false) {
         $origMethod = $_SERVER['REQUEST_METHOD'];
         $_SERVER['REQUEST_METHOD'] = 'GET';
         $settings = (new settings(array(),false))->returnData;
@@ -572,6 +705,8 @@ Class HRForms2 {
                     case "submitter":
                         $email_list[$key] = array_unique(array_merge($email_list[$key],$this->getUserEmail($journal['submitted_by'])));
                         break;
+                    case "viewer":
+                        break;
                     case "group_to":
                         if ($journal['group_to'] != "") {
                             $group_to_users = (new groupusers(array($journal['group_to']),false))->returnData;
@@ -613,7 +748,7 @@ Class HRForms2 {
             }
         }
         // Remove emails from "mailcc" that are also in "mailto"
-        $email_list['mailcc'] = array_diff($email_list['mailcc'], $email_list['mailto']);
+        $email_list['mailcc'] = array_values(array_diff($email_list['mailcc'], $email_list['mailto']));
 
         // Set Mail-To to "error" email if empty
         if (sizeof($email_list['mailto']) == 0) {
@@ -676,6 +811,16 @@ Class HRForms2 {
         // append notProduction and debugInformation partials to the beginning of the $content
         $content = "{{#ERROR}}{{{ERROR}}}{{/ERROR}}{{>notProduction}}<br>" . $content . "<br><br><hr>{{>debugInformation}}";
 
+        // If simulate is true, return the email data instead of sending the email
+        if ($simulate) {
+            $_SERVER['REQUEST_METHOD'] = $origMethod;
+            return array(
+                'subject' => $subject,
+                'mailto' => $email_list['mailto'],
+                'mailcc' => $email_list['mailcc'],
+                'replyto' => $replyto,
+            );
+        }
         // start PHP mailer
         ob_start();
         if ($email_settings['enabled']) {
