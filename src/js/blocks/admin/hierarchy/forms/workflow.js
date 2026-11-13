@@ -95,7 +95,7 @@ export default function WorkflowTab() {
                 </div>
             );
         },ignoreRowClick:true},
-        {name:'Workflow ID',selector:row=>row.WORKFLOW_ID,sortable:true,sortField:'WORKFLOW_ID'},
+        {name:'ID',selector:row=>row.WORKFLOW_ID,sortable:true,sortField:'WORKFLOW_ID'},
         {name:'Workflow Routing',selector:row=>row.GROUPS,grow:5,style:{flexWrap:'wrap'},cell:row=><HierarchyChain list={row.GROUPS_ARRAY} conditions={row.CONDITIONS} sendToGroup={row.SENDTOGROUP}/>},
     ],[workflows]);
 
