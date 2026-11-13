@@ -49,19 +49,6 @@ class Requests extends HRForms2 {
         }
     }
 
-    /** check if submitter/approver is in the next group and auto-approve */
-    private function autoApproveNext($groups,$seq) {
-        // Check if Approver is in next group and auto-approve
-        if ($seq >= sizeof($groups)-1) return false; // do not auto-approve last group.
-        $groupusers = (new groupusers(array($groups[$seq]),false))->returnData;
-        foreach ($groupusers as $u) {
-            if ($u['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID']) {
-                return true;
-            }
-        }
-        return false;
-    }    
-
     private function reqIdExists() {
         if (count($this->req) == 3) {
             $reqId = "draft-".$this->req[1]."-".$this->req[2];

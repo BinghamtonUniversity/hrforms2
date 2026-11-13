@@ -49,19 +49,6 @@ class Forms extends HRForms2 {
         }
     }
 
-    /** check if submitter/approver is in the next group and auto-approve */
-    private function autoApproveNext($groups,$seq) {
-        // Check if Approver is in next group and auto-approve
-        if ($seq >= sizeof($groups)-1) return false; // do not auto-approve last group.
-        $groupusers = (new groupusers(array($groups[$seq]),false))->returnData;
-        foreach ($groupusers as $u) {
-            if ($u['SUNY_ID'] == $this->sessionData['EFFECTIVE_SUNY_ID']) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private function formIdExists() {
         if (count($this->req) == 3) {
             $formId = "draft-".$this->req[1]."-".$this->req[2];
@@ -443,7 +430,7 @@ class Forms extends HRForms2 {
                 $form_id = $this->POSTvars['formId'];
                 $journal = (new journal(array('form',$form_id),false))->returnData;
                 $last_journal = array_pop($journal);
-                $workflow = (new workflow(array('form',$last_journal['WORKFLOW_ID']),false))->returnData[0];
+                //$workflow = (new workflow(array('form',$last_journal['WORKFLOW_ID']),false))->returnData[0]; // not used in code
                 $groups_array = explode(',',$this->POSTvars['GROUPS']);
                 $next_seq = intval($last_journal['SEQUENCE'])+1;
 
