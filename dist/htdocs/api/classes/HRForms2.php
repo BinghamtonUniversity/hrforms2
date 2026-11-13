@@ -833,9 +833,11 @@ Class HRForms2 {
             }
             $mail->Host = SMTP_HOST;
             $mail->Port = SMTP_PORT;
-            $mail->SMTPAuth = SMTP_AUTH;
-            $mail->Username = SMTP_USERNAME;
-            $mail->Password = SMTP_PASSWORD;
+            if (SMTP_AUTH) {
+                $mail->SMTPAuth = SMTP_AUTH;
+                $mail->Username = SMTP_USERNAME;
+                $mail->Password = SMTP_PASSWORD;
+            }
 
             $mail->setFrom($email_settings['from'],$email_settings['name']);
             if (INSTANCE == 'PROD') {

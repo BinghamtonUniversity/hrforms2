@@ -51,7 +51,7 @@ $envvars = array_merge($requiredEnv,$notEmptyEnv,$booleanEnv,array_keys($default
 define('HOST',$_SERVER['HTTP_HOST']);
 define('URL_ROOT', (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST']);
 
-array_walk($envvars,function($key) use ($defaultEnv) { 
+array_walk($envvars,function($key) use ($defaultEnv,$booleanEnv) {
 	if (!isset($_ENV[$key])) {
 		try {
 			define($key,$defaultEnv[$key]);
@@ -60,7 +60,10 @@ array_walk($envvars,function($key) use ($defaultEnv) {
 		}
 		return;
 	}
-	define($key,$_ENV[$key]); 
+	if (in_array($key,$booleanEnv)) {
+		$_ENV[$key] = filter_var($_ENV[$key], FILTER_VALIDATE_BOOLEAN);
+	}
+	define($key,$_ENV[$key]);
 });
 
 /* set Date/Timezone */
