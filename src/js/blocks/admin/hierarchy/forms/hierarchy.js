@@ -218,6 +218,7 @@ function HierarchyTable({isPaged}) {
                 </div>
             );
         },ignoreRowClick:true},
+        {name:'ID',selector:row=>row.HIERARCHY_ID,sortable:true},
         {name:'Payroll',selector:row=>(
             <DescriptionPopover
                 id={`${row.HIERARCHY_ID}_payroll_description`}
