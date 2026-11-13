@@ -74,6 +74,9 @@ const text = {
         'settings': {
             'title': 'Admin: Application Settings',
         },
+        'simulate': {
+            'title': 'Admin: Simulate Email Flow',
+        },
         'templates': {
             'title': 'Admin: Templates',
         },

@@ -1,3 +1,9 @@
+import React, { useContext } from "react";
+
+/** CONTEXT */
+export const SettingsPageContext = React.createContext();
+SettingsPageContext.displayName = 'SettingsPageContext';
+export function useSettingsPageContext() { return useContext(SettingsPageContext); }
 
 /** TABS */
 export const tabs = [

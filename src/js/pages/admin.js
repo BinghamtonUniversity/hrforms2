@@ -12,6 +12,7 @@ const AdminRequestHierarchy = lazy(()=>lazyRetry(()=>import("./admin/hierarchy/r
 const AdminFormTransactions = lazy(()=>lazyRetry(()=>import("./admin/transactions")));
 const AdminFormHierarchy = lazy(()=>lazyRetry(()=>import("./admin/hierarchy/form")));
 const AdminTemplates = lazy(()=>lazyRetry(()=>import("./admin/templates")));
+const AdminSimulate = lazy(()=>lazyRetry(()=>import("./admin/simulate")));
 //const AdminTextStrings = lazy(()=>lazyRetry(()=>import("./admin/strings")));
 
 export default function AdminPages() {
@@ -26,6 +27,7 @@ export default function AdminPages() {
         case "lists": return <AdminLists/>;
         case "settings": return <AdminSettings/>;
         case "templates": return <AdminTemplates/>;
+        case "simulate": return <AdminSimulate/>;
         //case "strings": return <AdminTextStrings/>;
         case "hierarchy":
             switch(subpage) {

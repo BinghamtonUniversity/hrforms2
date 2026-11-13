@@ -22,6 +22,7 @@ const additionalIcons = [
     'mdi:newspaper',
     'mdi:playlist-plus',
     'mdi:printer',
+    'mdi:restore',
     'mdi:run',
     'mdi:undo'
 ];
