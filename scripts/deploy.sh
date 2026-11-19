@@ -5,8 +5,10 @@ set -e
 ENV=$1
 if [[ "$ENV" == "dev" ]]; then
   BUILD_CMD="build-dev"
+  ENV_KEY="FORGE_DEPLOY_URL_DEV"
 elif [[ "$ENV" == "prod" ]]; then
   BUILD_CMD="build"
+  ENV_KEY="FORGE_DEPLOY_URL_PROD"
 else
   echo "Usage: $0 [dev|prod]"
   exit 1
@@ -23,6 +25,12 @@ fi
 if [[ -n $(git status --porcelain) ]]; then
   echo "Commit or stash uncommitted changes on 'master' before deploying."
   exit 1
+fi
+
+# Read the Forge Deployment Trigger URL from root .env without executing the file
+FORGE_DEPLOY_URL=""
+if [[ -f .env ]]; then
+  FORGE_DEPLOY_URL=$(grep -E "^${ENV_KEY}=" .env | tail -n 1 | cut -d '=' -f2- | tr -d '"' | tr -d "'")
 fi
 
 # Use an isolated temporary index so 'master' and your working files are never touched
@@ -43,11 +51,15 @@ git checkout -- dist 2>/dev/null || true
 # Populate the temporary index from HEAD and stage dist/ + ignored build outputs
 GIT_INDEX_FILE="$TMP_INDEX" git read-tree HEAD
 GIT_INDEX_FILE="$TMP_INDEX" git add dist
+
+# Explicitly ensure testing.php is excluded from the deploy commit (leaves local file intact)
+GIT_INDEX_FILE="$TMP_INDEX" git rm -f --cached --ignore-unmatch dist/htdocs/api/classes/testing.php >/dev/null
+
+# Force-stage only the required compiled frontend outputs
 [[ -d dist/htdocs/js ]] && GIT_INDEX_FILE="$TMP_INDEX" git add -f dist/htdocs/js
 [[ -d dist/htdocs/css ]] && GIT_INDEX_FILE="$TMP_INDEX" git add -f dist/htdocs/css
 [[ -f dist/htdocs/index.php ]] && GIT_INDEX_FILE="$TMP_INDEX" git add -f dist/htdocs/index.php
 [[ -f dist/htdocs/CHANGELOG.md ]] && GIT_INDEX_FILE="$TMP_INDEX" git add -f dist/htdocs/CHANGELOG.md
-[[ -f dist/htdocs/api/classes/testing.php ]] && GIT_INDEX_FILE="$TMP_INDEX" git add -f dist/htdocs/api/classes/testing.php
 
 # Build a standalone commit whose root directory is the contents of dist/
 SHORT_SHA=$(git rev-parse --short HEAD)
