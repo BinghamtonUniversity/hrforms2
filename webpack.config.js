@@ -103,7 +103,7 @@ module.exports = (env, argv) => {
         new CssMinimizerPlugin()
       ]
     },
-    devtool: (argv.mode == 'production') ? '' : 'eval-source-map'
+    devtool: (argv.mode == 'production') ? false : 'eval-source-map'
   };
 };
 /*  const common = {
