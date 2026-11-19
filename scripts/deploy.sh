@@ -25,18 +25,12 @@ if [[ -n $(git status --porcelain) ]]; then
   exit 1
 fi
 
-# Always return cleanly to 'master' and remove the temp branch on exit or build error
-cleanup() {
-  if [[ "$(git branch --show-current)" != "master" ]]; then
-    git checkout -f master >/dev/null 2>&1 || true
-  fi
-  git branch -D _deploy_tmp >/dev/null 2>&1 || true
-}
-trap cleanup EXIT
+# Use an isolated temporary index so 'master' and your working files are never touched
+TMP_INDEX="$(git rev-parse --git-dir)/index.deploy.$$"
+rm -f "$TMP_INDEX"
+trap 'rm -f "$TMP_INDEX"' EXIT
 
-# Build on a temporary branch from current 'master'
-git checkout -B _deploy_tmp
-
+# Run 'build-dev' or 'build' directly in your working directory
 npm run "${BUILD_CMD}"
 
 # Uncomment these if your Webpack config does not run them during build:
@@ -46,26 +40,21 @@ npm run "${BUILD_CMD}"
 # Restore any tracked static files inside dist/ if 'clean-dist' deleted them
 git checkout -- dist 2>/dev/null || true
 
-# Stage any modified non-ignored files in dist/
-git add dist
+# Populate the temporary index from HEAD and stage dist/ + ignored build outputs
+GIT_INDEX_FILE="$TMP_INDEX" git read-tree HEAD
+GIT_INDEX_FILE="$TMP_INDEX" git add dist
+[[ -d dist/htdocs/js ]] && GIT_INDEX_FILE="$TMP_INDEX" git add -f dist/htdocs/js
+[[ -d dist/htdocs/css ]] && GIT_INDEX_FILE="$TMP_INDEX" git add -f dist/htdocs/css
+[[ -f dist/htdocs/index.php ]] && GIT_INDEX_FILE="$TMP_INDEX" git add -f dist/htdocs/index.php
+[[ -f dist/htdocs/CHANGELOG.md ]] && GIT_INDEX_FILE="$TMP_INDEX" git add -f dist/htdocs/CHANGELOG.md
+[[ -f dist/htdocs/api/classes/testing.php ]] && GIT_INDEX_FILE="$TMP_INDEX" git add -f dist/htdocs/api/classes/testing.php
 
-# Force-stage the ignored compiled frontend outputs
-[[ -d dist/htdocs/js ]] && git add -f dist/htdocs/js
-[[ -d dist/htdocs/css ]] && git add -f dist/htdocs/css
-[[ -f dist/htdocs/index.php ]] && git add -f dist/htdocs/index.php
-[[ -f dist/htdocs/CHANGELOG.md ]] && git add -f dist/htdocs/CHANGELOG.md
-[[ -f dist/htdocs/api/classes/testing.php ]] && git add -f dist/htdocs/api/classes/testing.php
-
-git commit -m "Temporary build commit"
-
-# Create a standalone commit whose root directory is the contents of dist/
-SHORT_SHA=$(git rev-parse --short master)
-DEPLOY_COMMIT=$(git commit-tree "HEAD:dist" -m "Deploy ${ENV} build from master (${SHORT_SHA})")
+# Build a standalone commit whose root directory is the contents of dist/
+SHORT_SHA=$(git rev-parse --short HEAD)
+DIST_TREE=$(GIT_INDEX_FILE="$TMP_INDEX" git write-tree --prefix=dist/)
+DEPLOY_COMMIT=$(git commit-tree "$DIST_TREE" -m "Deploy ${ENV} build from master (${SHORT_SHA})")
 
 # Force-push the dist-rooted commit to internal GitLab
 git push -f origin "${DEPLOY_COMMIT}:refs/heads/${TARGET_BRANCH}"
 
-# Switch back to master and clean up _deploy_tmp
-git checkout -f master
-git branch -D _deploy_tmp
 echo "Successfully pushed dist/ root to ${TARGET_BRANCH} on internal GitLab."
