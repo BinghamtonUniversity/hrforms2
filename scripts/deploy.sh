@@ -51,10 +51,21 @@ GIT_INDEX_FILE="$TMP_INDEX" git add dist
 
 # Build a standalone commit whose root directory is the contents of dist/
 SHORT_SHA=$(git rev-parse --short HEAD)
+DEPLOY_MSG="Deploy ${ENV} build from master (${SHORT_SHA})"
 DIST_TREE=$(GIT_INDEX_FILE="$TMP_INDEX" git write-tree --prefix=dist/)
-DEPLOY_COMMIT=$(git commit-tree "$DIST_TREE" -m "Deploy ${ENV} build from master (${SHORT_SHA})")
+DEPLOY_COMMIT=$(git commit-tree "$DIST_TREE" -m "$DEPLOY_MSG")
 
 # Force-push the dist-rooted commit to internal GitLab
 git push -f origin "${DEPLOY_COMMIT}:refs/heads/${TARGET_BRANCH}"
+echo "Pushed dist/ root to ${TARGET_BRANCH} on internal GitLab."
 
-echo "Successfully pushed dist/ root to ${TARGET_BRANCH} on internal GitLab."
+# Trigger Laravel Forge deployment if a trigger URL is configured
+if [[ -n "$FORGE_DEPLOY_URL" ]]; then
+  echo "Triggering Laravel Forge deployment for ${ENV}..."
+  curl -fsS -G "$FORGE_DEPLOY_URL" \
+    --data-urlencode "forge_deploy_commit=${DEPLOY_COMMIT}" \
+    --data-urlencode "forge_deploy_message=${DEPLOY_MSG}" > /dev/null
+  echo "Forge deployment triggered successfully."
+else
+  echo "${ENV_KEY} is empty or not set in .env; skipping Laravel Forge deployment."
+fi
