@@ -18,6 +18,7 @@ dist/htdocs/CHANGELOG.md
 dist/htdocs/api/classes/testing.php
 dist/**/*.test.*
 dist/**/*.spec.*
+TODO.md
 
 # Environment secrets (never tracked in any branch)
 .env
