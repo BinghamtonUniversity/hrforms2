@@ -446,10 +446,10 @@ Class HRForms2 {
     protected function collectEmails($submitter,$group_from,$group_to,$groups,$status,$options) {
         $group_array = is_array($groups) ? $groups : explode(',',$groups);
         $email_list = array('mailto'=>[],'mailcc'=>[],'mailto_x'=>[],'mailcc_x'=>[]);
-        $debug = array();
         foreach (array_keys($email_list) as $key) {
+            if (array_search($key, ['mailto_x', 'mailcc_x']) !== false) continue;
             foreach ($options[$key] as $opt=>$b) {
-                if (!$b || array_search($key, ['mailto_x', 'mailcc_x']) !== false) continue;
+                if (!$b) continue;
                 switch($b) {
                     case "submitter":
                         $email_list[$key] = array_unique(array_merge($email_list[$key],$this->getUserEmail($submitter)));
