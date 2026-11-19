@@ -1,6 +1,6 @@
 # Changelog
 ## Version 2.2.0(rev-20261119)
-  * Expanded Viewer capabilities to see "Pending" Forms and Request and search Archive for departments they are assigned to.
+  * Expanded Viewer capabilities to see "Pending" Forms and Requests and search Archive for departments they are assigned to.
   * Fixed Archive search for Forms and Requests to save date range and restore correctly.
   * Fixed error in Forms:Basic Info caused by personlookup.php having null values in the commitment description field; used contract group name as description when the value is null.
   * Deleted Forms and Requests are now moved to Archive with a new status "D".
