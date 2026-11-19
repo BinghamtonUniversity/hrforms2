@@ -1,0 +1,634 @@
+@import "../../node_modules/bootstrap/scss/functions";
+@import "../../node_modules/bootstrap/scss/variables";
+@import "../../node_modules/bootstrap/scss/mixins";
+@import "./a11y-color";
+
+$enable-responsive-font-sizes: true;
+
+$h3-font-size: $font-size-base * 1.7;
+
+$a11y-level:'AA';
+
+$main:#004333;
+$accent: #6BC04B;
+$accent2: #90669c;
+$warning2: #ff6600;
+$light:#669c8e;
+$white:#fff;
+
+$pct:20%;
+
+/*
+// Create your own map
+$custom-colors: (
+  "custom-color": #900
+);
+
+// Merge the maps
+$theme-colors: map-merge($theme-colors, $custom-colors);
+*/
+
+$custom-colors: (
+  "main":$main,
+  "nav":$main,
+  "white":$white,
+  "accent":$accent,
+  "accent2":$accent2,
+  "warning2":$warning2,
+  "light":$light,
+  "primary":scale-color($primary,$lightness:$pct*-1),
+  "danger":scale-color($danger,$lightness:$pct*-1),
+  "warning":scale-color($warning,$lightness:$pct*-1),
+  "success":scale-color($success,$lightness:$pct*-1),
+  "info":scale-color($info,$lightness:$pct*-1),
+  "primary-light":scale-color($primary,$saturation:-30%,$lightness:50%),
+  "info-light":scale-color($info,$saturation:-30%,$lightness:50%),
+  "success-light":scale-color($success,$saturation:-30%,$lightness:50%),
+  "warning-light":scale-color($warning,$saturation:-30%,$lightness:50%),
+  "warning2-light":scale-color($warning2,$saturation:-30%,$lightness:50%),
+  "danger-light":scale-color($danger,$saturation:-30%,$lightness:50%),
+  "secondary-light":scale-color($secondary,$saturation:-30%,$lightness:50%)
+);
+
+$theme-colors: map-merge($theme-colors, $custom-colors);
+
+$table-hover-bg: rgba($main, .15);
+
+$navbar-dark-color:           rgba($white, .75);
+$navbar-dark-hover-color:     rgba($white, .9);
+$navbar-dark-active-color:    $white;
+$navbar-dark-disabled-color:  rgba($white, .4);
+
+$input-placeholder-color: #aaa;
+
+$box-shadow-sm: 0 .125rem .25rem rgba($black, .175);
+$box-shadow: 0 .5rem 1rem rgba($black, .35);
+$box-shadow-lg: 0 1rem 3rem rgba($black, .40);
+
+@import "../../node_modules/bootstrap/scss/bootstrap";
+
+.not-saved-text {
+  color: a11y-color(theme-color('danger'),theme-color-level('secondary',$alert-bg-level),$a11y-level,1rem,false);
+}
+
+/* add gap classes */
+.gap-0 { gap: 0 !important; }
+.gap-1 { gap: ($spacer * .25) !important; }
+.gap-2 { gap: ($spacer * .5) !important; }
+.gap-3 { gap: $spacer !important; }
+.gap-4 { gap: ($spacer * 1.5) !important; }
+.gap-5 { gap: ($spacer * 3) !important; }
+
+.row-gap-0 { row-gap: 0 !important; }
+.row-gap-1 { row-gap: ($spacer * .25) !important; }
+.row-gap-2 { row-gap: ($spacer * .5) !important; }
+.row-gap-3 { row-gap: $spacer !important; }
+.row-gap-4 { row-gap: ($spacer * 1.5) !important; }
+.row-gap-5 { row-gap: ($spacer * 3) !important; }
+
+.col-gap-0 { column-gap: 0 !important; }
+.col-gap-1 { column-gap: ($spacer * .25) !important; }
+.col-gap-2 { column-gap: ($spacer * .5) !important; }
+.col-gap-3 { column-gap: $spacer !important; }
+.col-gap-4 { column-gap: ($spacer * 1.5) !important; }
+.col-gap-5 { column-gap: ($spacer * 3) !important; }
+
+/* add class to remove button focus and hover styling */
+.btn-hidden:focus,
+.btn-hidden:hover,
+.btn-hidden:not(:disabled):not(.disabled):active,
+.btn-hidden:not(:disabled):not(.disabled).active:focus, 
+.btn-hidden:not(:disabled):not(.disabled):active:focus {
+    background-color: inherit;
+    border-color: transparent;
+    box-shadow:none;
+}
+
+/* DataTables Formatting (n.b.: placed here to make use of SCSS variables)*/
+.rdt_Table {
+  border: 2px solid $main;
+  border-radius: 3px
+}
+.rdt_Table .rdt_TableHeadRow {
+  background-color: $main
+}
+.rdt_Table .rdt_TableHeadRow .rdt_TableCol {
+  color: $white;
+  font-size: 1rem
+}
+.rdt_Table .rdt_TableHeadRow .rdt_TableCol_Sortable,
+.rdt_Table .rdt_TableHeadRow .rdt_TableCol_Sortable:hover {
+  color: $white;
+}
+.rdt_Table .rdt_TableBody .rdt_TableRow {
+  font-size: 0.9rem;
+}
+
+/* hide sort icons for unsorted columns */
+/* doesn't work as expected - need to revisit */
+/*.rdt_TableCol_Sortable span[style*="color: rgba(255, 255, 255, 0)"] {
+    visibility: hidden
+}*/
+/* this is a hack to hide the sort icons for unsorted columns - need to revisit */
+.gnetL {
+    visibility:hidden
+}
+
+/* Compact/Smaller DataTable */
+.compact .rdt_Table .rdt_TableBody .rdt_TableRow {
+  font-size: 0.8rem;
+}
+.compact .rdt_Table .rdt_TableHead .rdt_TableCol,
+.compact .rdt_Table .rdt_TableBody .rdt_TableCell {
+  padding: 0 5px;
+}
+.compact .rdt_Table .rdt_TableHeadRow .rdt_TableCol {
+  font-size: 0.9rem
+}
+
+
+/* Override DatePicker to be block */
+.react-datepicker-wrapper {
+  display: block;
+}
+
+// Add class `.custom-switch-lg` to a `custom-switch`
+.custom-switch.custom-switch-lg {
+  padding-bottom: 1rem;
+	padding-left: 2.25rem;
+  
+  & .custom-control-label {
+    padding-left: .75rem;
+    padding-top: 0.15rem;
+
+    &::before {
+      border-radius: 1rem;
+      height: 1.5rem;
+      width: 2.5rem;
+    }
+
+    &::after {
+			border-radius: .65rem;
+      height: calc(1.5rem - 4px);
+      width: calc(1.5rem - 4px);
+    }
+  }
+	.custom-control-input:checked ~ .custom-control-label::after{
+    transform: translateX(1rem);
+  }
+}
+
+/* App Styles */
+main { margin-top: 5rem }
+
+/* center on page */
+.center-page {
+  width:100vw;
+  height:100vh;
+  display:grid;
+  justify-content: center;
+  align-content: center;
+}
+.center-page p { text-align:center }
+
+/* set font-family for heading levels */
+h1,h2,h3,h4,h5,h6 { 
+  color: #005a43;
+  font-family: Lora,Garamond,Georgia,"Times New Roman",serif!important;
+  font-weight: 700;
+  text-rendering: optimizeLegibility;
+  line-height: 1.4;
+  margin-top: 0;
+  margin-bottom: .5rem;
+}
+h1 { font-size: 1.5rem }
+h2 { font-size: 1.25rem }
+h3 { font-size: 1.1875rem }
+h4 { font-size: 1.125rem }
+h5 { font-size: 1.0625rem }
+h6 { font-size: 1rem }
+
+@media print,screen and (min-width: 40em) {
+  h1 { font-size: 2.25rem }
+  h2 { font-size: 1.5625rem }
+  h3 { font-size: 1.375rem }
+  h4 { font-size: 1.125rem }
+  h5 { font-size: 1.0625rem }
+  h6 { font-size: 1rem }
+}
+@media print,screen and (min-width: 64em) {
+  h1 { font-size: 2.25rem }
+  h2 { font-size: 1.875rem }
+  h3 { font-size: 1.5rem }
+  h4 { font-size: 1.25rem }
+  h5 { font-size: 1.125rem }
+  h6 { font-size: 1rem }
+}
+
+/* force white text links to be color #fff */
+a.text-white:hover,a.text-white:focus { color: #fff !important }
+
+/* default link color for accessibilty contrast ratio */
+a { color: a11y-color($primary,$body-bg,$a11y-level,16,false) }
+
+/* smaller font */
+.font-size-95 { font-size: 95% }
+.font-size-90 { font-size: 90% }
+.font-size-85 { font-size: 85% }
+.font-size-80 { font-size: 80% }
+.font-size-75 { font-size: 75% }
+.font-size-70 { font-size: 70% }
+.font-size-65 { font-size: 65% }
+.font-size-60 { font-size: 60% }
+.font-size-55 { font-size: 55% }
+.font-size-50 { font-size: 50% }
+/* make pre text wrap - see: https://css-tricks.com/snippets/css/make-pre-text-wrap/*/
+pre {
+  white-space: pre-wrap;       /* css-3 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;       /* Internet Explorer 5.5+ */
+ }
+ pre p {
+  margin: 0;
+ }
+
+/* nowrap */
+.nowrap {
+  overflow: hidden;
+  white-space: nowrap; /* Don't forget this one */
+  text-overflow: clip;
+}
+
+/* active sub tab */
+.tab-pane.active .nav .nav-item p.active { color: #495057 }
+
+/* spin animation class for iconify icons */
+.spin {
+  animation-name: spin;
+  animation-duration: 2000ms;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+@keyframes spin {
+  from {
+    transform:rotate(0deg);
+  }
+  to {
+    transform:rotate(360deg);
+  }
+}
+
+/* outlined badges */
+.badge-outline {
+  border-style: solid;
+  border-width: 2px;
+}
+/* striped white badge */
+.badge-white-striped {
+  background: repeating-linear-gradient(-45deg,#ccc,#ccc 5px,#fff 5px,#fff 10px);
+}
+
+/* cursor in badges */
+.badge>* {cursor: default}
+
+/* make accordion header clickable */
+.accordion>.card>.card-header.clickable {
+  cursor: pointer;
+}
+
+/* highlight hidden field; shown in test mode */
+.test-highlight {
+  background: repeating-linear-gradient(-45deg,#d4d4d4,#d4d4d4 5px,#efefef 5px,#efefef 10px);
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+/* hover effect on nav-links */
+.navbar-dark .navbar-nav .nav-link:hover, 
+.navbar-dark .navbar-nav .nav-link:focus { color: #fff }
+.nav-link {position:relative}
+.nav-link:before{
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 0.15rem;
+  bottom: 0.3rem;
+  left: 0;
+  background-color: #FFF;
+  visibility: hidden;
+  transform: scaleX(0);
+  transition: all 0.3s ease-in-out; 
+}
+.nav-link:hover:before{
+  visibility: visible;
+  transform: scaleX(1);
+}
+.nav-link.active:after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 0.15rem;
+  bottom: 0.3rem;
+  left: 0;
+  background-color: #FFF;
+  visibility:visible;
+}
+
+.toTop {
+  position:fixed;
+  bottom: 2rem;
+  right: 2rem;
+  opacity:0.9;
+  font-size: initial;
+}
+.button-group {
+  display:flex;
+  gap:0.3rem;
+}
+.button-group button { 
+  display: inline;
+  padding: 0.6rem;
+}
+button.no-label {
+  padding: 0.25rem;
+}
+button svg.iconify { 
+  display: inline; 
+  font-size: 1.5em;
+  margin-right:0.3rem;
+  vertical-align: top;
+}
+svg.iconify-inline {
+  display:inline;
+  position:relative;
+  top:-3px;
+  margin-right:3px;
+}
+button.no-label svg.iconify {
+  display: inline; 
+  font-size: 2em;
+  margin-right: 0;
+}
+button.btn-sm.no-label svg.iconify {
+  display: inline; 
+  font-size:1.5em;
+  margin-right: 0;
+}
+.input-group-prepend button svg.iconify,
+.input-group-append button svg.iconify
+{
+  margin-right: 0;    
+}
+
+/* droplist styling */
+.droplist {
+  height: 50vh;
+  max-height: 300px;
+  overflow-y:scroll;
+  padding: 0.5rem;
+  border: 1px solid #999;
+  border-radius: 5px;
+  /* see: https://dev.to/mnathani/two-lines-of-css-that-boosts-7x-rendering-performance-4mjd */
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 5000px; /*experimental property */
+  /* scrollbar mods*/
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--gray);
+}
+/* scrollbar mods */
+.droplist::-webkit-scrollbar-corner {background-color:var(--gray)}
+.droplist::-webkit-scrollbar-thumb {background-color:var(--accent)}
+.droplist::-webkit-scrollbar-track {background-color:var(--gray)}
+.droplist::-webkit-scrollbar {width: 10px;height: 10px;}
+.droplist.over {
+  background-color: #dcf5ff;
+}
+.droplist div {
+  background-color:#cecece;
+  margin: 0.3rem;
+  padding: 0.3rem;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+  overflow: clip;
+}
+.droplist div:hover {
+  background-color: #bcc2bc;
+}
+.droplist div.dragging {
+  background-color: #90ee90;
+}
+/* styling for placeholder */
+.droplist [data-rbd-placeholder-context-id] {
+  border: 1px dashed navy;
+  background-color:aquamarine;
+}
+.dlh1{
+  grid-area:dlh1;
+  padding:0.3rem;
+  font-weight:700;
+}
+.dlh2{
+  grid-area:dlh2;
+  padding:0.3rem;
+  font-weight:700;
+}
+.dl1{grid-area:dl1}
+.dl2{grid-area:dl2}
+
+.drag-col-2 {
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto;
+  gap: 0 1rem;
+  grid-template-areas:  "dlh1 dlh2"
+                        "dl1  dl2";
+}
+
+/* Journal List */
+.journal-list {
+  background-color: #ddd;
+}
+.journal-list dl {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  margin: 0;
+  padding: 0.5em 1em 0;
+}
+.journal-list-comment {
+  grid-column: 1/3;
+}
+.journal-list-comment+dd {
+  grid-column: 1/3;
+  margin: 0 0 0 0.5em;
+}
+
+
+/* Admin List Drag and Drop Styles */
+#admin-list .dragging {
+  background-color: map-get($theme-colors,'primary-light') !important;
+}
+#admin-list .dragging .list-group-item:not(.dragging-active) {
+  filter: brightness(0.8) contrast(0.8) grayscale(1);
+}
+#admin-list .dragging .list-group-item:not(.dragging-active) .form-control { color: #afafaf }
+
+#admin-list .dragging-active {
+  background-color: map-get($theme-colors,'warning-light') !important;
+}
+
+#listData-editor {
+  font-family:"Lucida Console","Courier New","Courier",monospace;
+  background-color:#393939;
+  color:#eee;
+}
+
+.slugHint {
+  font-weight: bold;
+  cursor: pointer;
+  font-family: 'Lucida Console','Courier New', Courier, monospace;
+}
+
+/* Jodit editor source view increase font size and change background color */
+/*.editor-container .jodit-source * { font-size: 18px !important }*/
+.ace_editor * { font-size: 18px !important }
+div.jodit-workplace > div.jodit-source{ background-color:inherit }
+/* Jodit toolbar dropdown button height fix - reduce gap/whitespace around buttons */
+.jodit-toolbar-editor-collection_mode_vertical .jodit-toolbar-button,
+.jodit-toolbar-editor-collection_mode_vertical .jodit-toolbar-button__button {
+  min-height: 1.5rem !important;
+}
+
+/* SUNY Account styles */
+#col-SUNYAccount div.rbt {
+  width: 400px;
+}
+#col-SUNYAccount input:disabled { color: #ccc }
+.split-account-table tbody tr td:nth-child(1) {
+  width: 80px;
+  text-align: center;
+}
+.split-account-table tbody tr td:nth-child(2) {
+  width: auto;
+}
+.split-account-table tbody tr td:nth-child(3) {
+  width: 100px;
+}
+.split-account-table tbody tr td:nth-child(3) input {
+  text-align:right;
+}
+.split-account-table tbody tr td button {
+  padding: 2px 4px 1px;
+}
+/* hide number input spinner (see: https://www.geeksforgeeks.org/how-to-disable-arrows-from-number-input/) */
+/*.split-account-table input::-webkit-outer-spin-button,
+.split-account-table input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+/*.split-account-table input[type=number]{
+  -moz-appearance: textfield;
+}*/
+
+/* reset right padding for Wokflow form controls when invalid */
+#wfConditionsTable .is-invalid { padding-right: initial !important }
+
+/* disabled styling for react-phone-input-2 */
+.form-group .react-tel-input .form-control:disabled {
+  background-color:#e9ecef;
+  cursor: inherit;
+}
+
+@media (max-width:992px) {
+  .drag-col-2 {
+    display:grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 1rem;
+    grid-template-areas:  "dlh1"
+                          "dl1"
+                          "dlh2"
+                          "dl2";
+  }    
+}
+
+@media (max-width: 639px) {
+  .button-group button {
+      display: flex;
+      align-items: center;
+      flex-direction:column;
+      justify-content: center
+  }
+}
+
+/* styles for React-Checkbox-Tree */
+.rct-checkbox,.rct-collapse,.rct-node-icon { padding: 5px 0 }
+.rct-checkbox *,.rct-collapse *,.rct-node-icon * { width: 24px }
+.react-checkbox-tree > ol > li.rct-node.rct-node-leaf { padding-left: 5px }
+.rct-icon { height: 22px }
+
+/* large checkbox input */
+div.form-check-input-lg input[type="checkbox"].form-check-input {
+  width: 20px;
+  height: 20px;
+}
+
+/* Form Review Tab: Make font smaller */
+#form-review {
+  font-size: 0.9em
+}
+
+/* Condensed List Group */
+.list-group-condensed button {
+  padding: 6px 10px;
+  font-size: 0.9rem;
+}
+
+/* Scrollable List Group */
+.list-group-scrollable-25 { overflow: scroll; height: 25vh; }
+.list-group-scrollable-30 { overflow: scroll; height: 30vh; }
+.list-group-scrollable-40 { overflow: scroll; height: 40vh; }
+.list-group-scrollable-50 { overflow: scroll; height: 50vh; }
+
+/* Resizable List Group */
+.list-group-resizable-25 { height: 25vh; resize: both; overflow: auto; }
+.list-group-resizable-30 { height: 30vh; resize: both; overflow: auto; }
+.list-group-resizable-40 { height: 40vh; resize: both; overflow: auto; }
+.list-group-resizable-50 { height: 50vh; resize: both; overflow: auto; }
+
+/* Markers For Ranges */
+datalist.marker {
+  display:flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+}
+
+.menu-items .dragging {
+  opacity: 0.35;
+}
+
+.drag-handle { 
+  cursor: move; 
+  margin-bottom: -3px;
+}
+
+/* Make BS table rows "clickable" */
+table.table.table-row-clickable tbody tr, .text-pointer {
+  cursor: pointer;
+}
+
+/* Review Person Contacts and Education - 2 column layout */
+.review-col-2 {
+  display:grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto;
+  row-gap: 0.5rem;
+  margin-left: 0.4rem;
+  margin-right: 0.4rem;
+  @include media-breakpoint-up(md) {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+}

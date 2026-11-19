@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+bruno/
+db/
+vendor/
+
+# IDE & OS files
+.vscode/
+.DS_Store
+
+# Compiled frontend assets (tracked only on deploy-dev and deploy-prod)
+dist/htdocs/js/
+dist/htdocs/css/
+dist/htdocs/index.php
+dist/htdocs/CHANGELOG.md
+
+# Internal dist config and test files (never tracked in any branch)
+dist/htdocs/api/classes/testing.php
+dist/**/*.test.*
+dist/**/*.spec.*
+
+# Environment secrets (never tracked in any branch)
+.env
+.env.*
+!.env.example
+dist/.env
+dist/.env.*
+!dist/.env.example

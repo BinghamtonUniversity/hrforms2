@@ -1,0 +1,28 @@
+@media print {
+    body { font-size: 15pt !important }
+    .rdt_Table .rdt_TableBody .rdt_TableRow { font-size: 13pt !important}
+    .ReactQueryDevtools, 
+    .button-group, 
+    .btn,
+    [data-column-id="actions"] { 
+        display: none !important
+    }
+    blockquote, pre { border: none; }
+    main { margin-top: 1em; }
+    #request-review section,
+    #form-review article {
+        break-inside: avoid;
+    }
+    footer a {
+      text-decoration: none !important;
+      color: #333 !important;
+    }
+    thead.bg-main.text-white th{
+        color: #000;
+    }
+  
+}
+@page {
+    size: 8.5in 11in;
+    margin: 0.25in;
+}

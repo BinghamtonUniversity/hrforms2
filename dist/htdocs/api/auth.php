@@ -1,0 +1,82 @@
+<?php
+    set_include_path(implode(PATH_SEPARATOR, array(get_include_path(),'../')));
+    include_once 'etc/config.php';
+    include_once 'etc/CASconfig.php';
+    include_once 'vendor/autoload.php';
+
+    #if (isset($_GET['demo'])) {
+    #    return;
+    #}
+    if (!CAS_HOST && INSTANCE == 'LOCAL') {
+        //TOOD: need to do more?  This is all hard-coded and required DB direct updates
+        $sid = '000FFF';
+        setcookie('session-id',$sid,$client_lifetime,$client_path,$client_domain,$client_secure,$client_httpOnly);
+        return;
+    }
+    if (!phpCAS::isInitialized()) {
+        # Logging for debugging purposes.
+        #phpCAS::setLogger();
+        #phpCAS::setVerbose(false);
+
+        session_set_cookie_params($client_lifetime,$client_path,$client_domain,$client_secure,$client_httpOnly);
+        #phpCAS::client(CAS_VERSION_3_0, $cas_host, $cas_port, $cas_context);
+        phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context, $client_service_name);
+        #phpCAS::setCasServerCACert($cas_server_ca_cert_path);
+        phpCAS::setNoCasServerValidation();//N.B. If this is off then setCasServerCACert must be set.
+        phpCAS::handleLogoutRequests(true, $cas_real_hosts);
+        phpCAS::forceAuthentication();
+    }
+
+    if (phpCAS::isAuthenticated()) {
+        $db = @oci_connect(DBUSER,DBPASS,DB,NLS_LANG);
+        if (!$db) die('cannot connect to DB');
+        $cookieSID = (array_key_exists('session-id',$_COOKIE)) ? $_COOKIE['session-id'] : null;
+        $sessionData = array("SESSION_ID"=>$cookieSID,"CAS_SID"=>session_id(),"UDC_IDENTIFIER"=>phpCAS::getAttribute('UDC_IDENTIFIER'),"USER_ID"=>phpCAS::getUser(),"SUNY_ID"=>"");
+        if (!$sessionData['UDC_IDENTIFIER']) die('no UDC IDENTIFIER');
+
+        // Get SUNY_ID:
+        $qry = "select suny_id from sunyhr.hr_id@banner.cc.binghamton.edu
+        where regexp_substr(campus_local_id,'(B[0-9]{8})',1,1,'i',1) = :id";
+        $stmt = oci_parse($db,$qry);
+        oci_bind_by_name($stmt, ":id", $sessionData['UDC_IDENTIFIER']);
+        oci_execute($stmt);
+        $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+        if (!isset($row['SUNY_ID'])) die('no suny id');
+        $sessionData['SUNY_ID'] = $row['SUNY_ID'];
+
+        // Check for existing session
+        if($sessionData['SESSION_ID']) {
+            $qry = "select user_id from hrforms2_sessions
+                where cas_session_id = :cas_sid and session_id = :sid
+                and user_id = :user_id and suny_id = :suny_id";
+            $stmt = oci_parse($db,$qry);
+            oci_bind_by_name($stmt, ":cas_sid",$sessionData['CAS_SID']);
+            oci_bind_by_name($stmt, ":sid",$sessionData['SESSION_ID']);
+            oci_bind_by_name($stmt, ":user_id",$sessionData['USER_ID']);
+            oci_bind_by_name($stmt, ":suny_id",$sessionData['SUNY_ID']);
+            oci_execute($stmt);
+            $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+            if ($row && array_key_exists('USER_ID',$row)) return;
+        }
+        // Create new session
+        $qry = "select suny_id from sunyhr.hr_id@banner.cc.binghamton.edu
+        where regexp_substr(campus_local_id,'(B[0-9]{8})',1,1,'i',1) = :id";
+        $stmt = oci_parse($db,$qry);
+        oci_bind_by_name($stmt, ":id", $sessionData['UDC_IDENTIFIER']);
+        oci_execute($stmt);
+        $row = oci_fetch_array($stmt,OCI_ASSOC+OCI_RETURN_NULLS);
+        if (!isset($row['SUNY_ID'])) die('no suny id');
+        $now = time();
+        $qry = "insert into hrforms2_sessions values(SYS_GUID(),:cas_session_id,:user_id,:bnumber,:suny_id,:remote_ip,:login_date,:user_agent) returning session_id into :sid";
+        $stmt = oci_parse($db,$qry);
+        oci_bind_by_name($stmt,":cas_session_id",$sessionData['CAS_SID']);
+        oci_bind_by_name($stmt,":user_id",$sessionData['USER_ID']);
+        oci_bind_by_name($stmt,":bnumber",$sessionData['UDC_IDENTIFIER']);
+        oci_bind_by_name($stmt,":suny_id",$row['SUNY_ID']);
+        oci_bind_by_name($stmt,":remote_ip",$_SERVER['REMOTE_ADDR']);
+        oci_bind_by_name($stmt,":login_date",$now);
+        oci_bind_by_name($stmt,":user_agent",$_SERVER['HTTP_USER_AGENT']);
+        oci_bind_by_name($stmt,":sid",$sid,32);
+        oci_execute($stmt);
+        setcookie('session-id',$sid,$client_lifetime,$client_path,$client_domain,$client_secure,$client_httpOnly);
+    }

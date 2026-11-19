@@ -1,0 +1,8 @@
+{
+    "require" : {
+        "apereo/phpcas": "^1.6",
+        "mustache/mustache": "^3.2",
+        "phpmailer/phpmailer": "^7.1",
+        "vlucas/phpdotenv": "^5.8"
+    }
+}

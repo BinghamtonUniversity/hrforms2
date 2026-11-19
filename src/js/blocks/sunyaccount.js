@@ -1,0 +1,239 @@
+import React, { useEffect, useState } from "react";
+import { Row, Col, Form, InputGroup, Table } from "react-bootstrap";
+import { Controller, useWatch, useFieldArray, useFormContext } from "react-hook-form";
+import { Typeahead } from "react-bootstrap-typeahead";
+import { get, camelCase } from "lodash";
+import { AppButton, Loading } from "./components";
+import useListsQueries from "../queries/lists";
+
+export default function SUNYAccount(props) {
+    const name = props.name||'SUNYAccounts';
+    const id = props.id||camelCase(name);
+    const label = props.label||'SUNY Account';
+
+    const { control, getValues, setValue, clearErrors, formState: { errors } } = useFormContext();
+    const { fields, append, remove } = useFieldArray({control,name:name});
+
+    const [showSplit,setShowSplit] = useState(false);
+
+    const { getListData } = useListsQueries();
+    const accounts = getListData('accounts',{select:d=>{
+        return d.map(a=>{return {id:a.ACCOUNT_CODE,label:`${a.ACCOUNT_CODE} - ${a.ACCOUNT_DESCRIPTION}`}});
+    }});
+    const toggleSplit = () => {
+        if (!showSplit){
+            //make sure there are at least 2 accounts and set first account pct to empty
+            const fName = (getValues(name)[0].account[0]?.id)?'pct':'account';
+            for (let i = fields.length;i<2;i++) {
+                append({account:[],pct:''},{focusName:`${name}.0.${fName}`});
+            }
+            setValue(`${name}.0.pct`,'');
+        } else {
+            //remove splits
+            for (let i=1;i<fields.length;i++) {
+                remove(i);
+                clearErrors(`${name}.${i}.pct`);
+            }
+            setValue(`${name}.0.pct`,'100');
+        }
+        setValue(`${name}Split`,!showSplit);
+        setShowSplit(!showSplit);
+    }
+    const splitAction = (action,index) => {
+        if (action=='add') append({account:[],pct:''});
+        if (action=='remove') {
+            remove(index);
+            if (fields.length <= 2) {
+                setValue(`${name}Split`,false);
+                setValue(`${name}.0.pct`,'100');
+                setShowSplit(false);
+            }
+        }
+    }
+    const handleBlur = (field,index,e) => {
+        field.onBlur(e);
+        if (e.target.value != getValues(`${name}.${index}.account[0].label`)) {
+            setValue(`${name}.${index}.account.0`,{id:`new-id-${index}`,label:e.target.value});
+        }
+    }
+    useEffect(()=>setShowSplit(getValues(`${name}Split`)),[]);
+    return(
+        <>
+            <Form.Group as={Row} controlId={id}>
+                <Form.Label column md={2}>{label}{(props.required)?'*':''}:</Form.Label>
+                <Col xl={5} lg={6} md={7}>
+                    {accounts.isLoading && <Loading>Loading SUNY Accounts</Loading>}
+                    {accounts.isError && <Loading isError>Error Loading SUNY Accounts</Loading>}
+                    {accounts.data && 
+                        <InputGroup>
+                            <Controller
+                                name={`${name}.0.account`}
+                                defaultValue=""
+                                control={control}
+                                rules={{
+                                    validate: v => {
+                                        const hasEmptyId = v.reduce((hasEmpty, currentObject) => {
+                                            return hasEmpty || currentObject.id === "";
+                                        }, false);
+                                        return (props.required && hasEmptyId)?`${label} is required`:true;
+                                    }
+                                }}
+                                render={({field})=><Typeahead 
+                                    {...field} 
+                                    id={camelCase(`${name}.0.account`)}
+                                    inputProps={{'id':id}}
+                                    options={accounts.data} 
+                                    flip={true} 
+                                    minLength={2} 
+                                    allowNew={true} 
+                                    selected={field.value} 
+                                    onBlur={e=>handleBlur(field,0,e)} 
+                                    disabled={showSplit||props.disabled}
+                                    isInvalid={!!props.isInvalid} 
+                                />}
+                            />
+                            {!props.noSplit &&
+                                <InputGroup.Append>
+                                    <AppButton format="none" variant={(showSplit)?'secondary':'primary'} onClick={()=>toggleSplit()} disabled={props.disabled}>Split</AppButton>
+                                </InputGroup.Append>
+                            }
+                            <Form.Control.Feedback type="invalid" style={{display:'block'}}>{get(errors,`${name}.0.account.message`,'')}</Form.Control.Feedback>
+                        </InputGroup>
+                    }
+                </Col>
+            </Form.Group>
+            {(!props.noSplit&&showSplit) && <SplitTable accounts={accounts.data} fields={fields} splitAction={splitAction} handleBlur={handleBlur} disabled={props.disabled} name={name}/>}
+        </>
+    );
+}
+
+export function SingleSUNYAccount(props) {
+    const name = props.name||'SUNYAccounts';
+    const id = props.id||camelCase(name);
+
+    const {control, getValues, setValue } = useFormContext();
+
+    const { getListData } = useListsQueries();
+    const accounts = getListData('accounts',{select:d=>{
+        return d.map(a=>{return {id:a.ACCOUNT_CODE,label:`${a.ACCOUNT_CODE} - ${a.ACCOUNT_DESCRIPTION}`}});
+    }});
+
+    const handleBlur = (field,e) => {
+        field.onBlur(e);
+        if (e.target.value != getValues(`${props.name}[0].label`)) {
+            setValue(`${props.name}.0`,{id:'new-id-0',label:e.target.value});
+        }
+    }
+
+    return (
+        <>
+            {accounts.data && 
+                <Controller
+                    name={props.name}
+                    defaultValue=""
+                    control={control}
+                    render={({field})=><Typeahead 
+                        {...field} 
+                        inputProps={{'id':id}}
+                        id={camelCase(name)}
+                        options={accounts.data} 
+                        flip={true} 
+                        minLength={2} 
+                        allowNew={true} 
+                        onBlur={e=>handleBlur(field,e)}
+                        selected={field.value} 
+                        disabled={props.disabled}
+                        isInvalid={!!props.isInvalid} 
+                    />}
+                />
+            }
+            <Form.Control.Feedback type="invalid">{props.isInvalid}</Form.Control.Feedback>
+        </>
+    );
+}
+
+function SplitTable({accounts,fields,splitAction,handleBlur,disabled,name}) {
+    const [splitPct,setSplitPct] = useState(0);
+    
+    const {control,formState:{errors}} = useFormContext();
+    const watchSUNYAccounts = useWatch({name:name,control:control});
+
+    useEffect(() => {
+        if (!watchSUNYAccounts) return;
+        let total = 0;
+        watchSUNYAccounts.forEach(s=>total+=parseInt(s.pct||0,10));
+        setSplitPct(total);
+    },[watchSUNYAccounts]);
+
+    return (
+        <Table className="split-account-table" striped bordered>
+            <thead>
+                <tr>
+                    <th scope="col">Action</th>
+                    <th scope="col">Account</th>
+                    <th scope="col">Percent</th>
+                </tr>
+            </thead>
+            <tfoot>
+                <tr>
+                    <td colSpan={2}>Total: {splitPct!=100&&<span className="text-muted font-italic font-size-90">(Remaining: {100-parseInt(splitPct,10)}%)</span>}</td>
+                    <td className="text-right"><span className={(splitPct==100)?'text-success':'text-danger'}>{splitPct}%</span></td>
+                </tr>
+            </tfoot>
+            <tbody>
+                {fields.map((field,index)=>{
+                    return (
+                        <tr key={field.id}>
+                            <td className="align-middle">
+                                {index >0 && 
+                                    <div className="button-group">
+                                        <AppButton format="add" size="sm" onClick={()=>splitAction('add',index)} tabIndex="-1"></AppButton>
+                                        <AppButton format="remove" size="sm" onClick={()=>splitAction('remove',index)} tabIndex="-1"></AppButton>
+                                    </div>
+                                }
+                            </td>
+                            <td>
+                                {accounts &&
+                                    <>
+                                        <Form.Label className="sr-only" htmlFor={camelCase(`${name}.${index}.account`)}>Account</Form.Label>
+                                        <Controller
+                                            name={`${name}.${index}.account`}
+                                            defaultValue=""
+                                            control={control}
+                                            render={({field})=><Typeahead 
+                                                {...field} 
+                                                inputProps={{id:camelCase(`${name}.${index}.account`)}}
+                                                id={camelCase(`${name}.${index}.account`)} 
+                                                options={accounts} 
+                                                flip={true} 
+                                                minLength={2} 
+                                                allowNew={true} 
+                                                selected={field.value} 
+                                                onBlur={e=>handleBlur(field,index,e)} 
+                                                disabled={disabled}
+                                            />}
+                                        />
+                                    </>
+                                }
+                            </td>
+                            <td className="text-right">
+                                <Form.Label className="sr-only" htmlFor={camelCase(`${name}.${index}.pct`)}>Percentage</Form.Label>
+                                <Controller
+                                    name={`${name}.${index}.pct`}
+                                    defaultValue=""
+                                    rules={{
+                                        required:{value:true,message:'Percentage is required'},
+                                        min:{value:1,message:'Percentage cannot be less than 1'},
+                                        max:{value:100,message:'Percentage cannot be more than 100'}
+                                    }}
+                                    control={control}
+                                    render={({field}) => <Form.Control {...field} id={camelCase(`${name}.${index}.pct`)} type="text" inputMode="number" title={get(errors,`${name}.${index}.pct.message`)} isInvalid={get(errors,`${name}.${index}.pct`)} disabled={disabled}/>}
+                                />
+                            </td>
+                        </tr>
+                    );
+                })}
+            </tbody>
+        </Table>
+    );
+}
