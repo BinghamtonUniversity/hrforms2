@@ -12,7 +12,7 @@
   * Moved Version and Revision info from .env into a separate file generated at build time - pulling from package.json.
   * Added Build Time and Database Name to footer and hide Last Login from printing (not needed on print).
   * Added Hierarchy and Workflow ID information to Request and Form Journal and ability to jump to configuration for Admins.
-  * Added save of search filter text into session storage for Request and Form Hiearchy and Workflow configuration pages.
+  * Added save of search filter text into session storage for Request and Form Hierarchy and Workflow configuration pages.
   * Formatting changes on Request and Form Journal; moved styles into CSS.
   * Added "jump" link for Admin to Users for Submitted/Updated By in Request and Form Journal.
   * Changed label in Archive from "Created By" to "Submitted By" to be consistent with other tables and lists.
