@@ -28,22 +28,25 @@ fi
 # Reset or create the target deploy branch from the current 'master' commit
 git checkout -B "${TARGET_BRANCH}"
 
-# Run the matching package.json build script ('build-dev' or 'build')
+# Run 'build-dev' or 'build' from package.json
 npm run "${BUILD_CMD}"
 
-# Uncomment these if your Webpack config doesn't already run them during build:
+# Uncomment these if your Webpack config does not run them during build:
 # npm run build-css
 # npm run update-changelog
 
-# Force-stage dist/ despite being listed in .gitignore
-git add -f dist
+# Restore any tracked static files inside dist/ if 'clean-dist' deleted them
+git checkout -- dist 2>/dev/null || true
 
-# Unstage internal config and test files so they are never committed
-git rm -rf --cached --ignore-unmatch \
-  dist/etc \
-  'dist/**/*.test.*' \
-  'dist/**/*.spec.*' \
-  'dist/htdocs/api/classes/testing.php' \
+# Stage any modified non-ignored files in dist/
+git add dist
+
+# Force-stage the ignored compiled frontend outputs
+[[ -d dist/htdocs/js ]] && git add -f dist/htdocs/js
+[[ -d dist/htdocs/css ]] && git add -f dist/htdocs/css
+[[ -f dist/htdocs/index.php ]] && git add -f dist/htdocs/index.php
+[[ -f dist/htdocs/CHANGELOG.md ]] && git add -f dist/htdocs/CHANGELOG.md
+[[ -f dist/htdocs/TODO.md ]] && git add -f dist/htdocs/TODO.md
 
 git commit -m "Deploy ${ENV} build from master ($(git rev-parse --short HEAD))"
 
