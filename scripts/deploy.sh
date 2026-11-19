@@ -25,10 +25,18 @@ if [[ -n $(git status --porcelain) ]]; then
   exit 1
 fi
 
-# Reset or create the target deploy branch from the current 'master' commit
-git checkout -B "${TARGET_BRANCH}"
+# Always return cleanly to 'master' and remove the temp branch on exit or build error
+cleanup() {
+  if [[ "$(git branch --show-current)" != "master" ]]; then
+    git checkout -f master >/dev/null 2>&1 || true
+  fi
+  git branch -D _deploy_tmp >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
 
-# Run 'build-dev' or 'build' from package.json
+# Build on a temporary branch from current 'master'
+git checkout -B _deploy_tmp
+
 npm run "${BUILD_CMD}"
 
 # Uncomment these if your Webpack config does not run them during build:
@@ -46,13 +54,18 @@ git add dist
 [[ -d dist/htdocs/css ]] && git add -f dist/htdocs/css
 [[ -f dist/htdocs/index.php ]] && git add -f dist/htdocs/index.php
 [[ -f dist/htdocs/CHANGELOG.md ]] && git add -f dist/htdocs/CHANGELOG.md
-[[ -f dist/htdocs/TODO.md ]] && git add -f dist/htdocs/TODO.md
+[[ -f dist/htdocs/api/classes/testing.php ]] && git add -f dist/htdocs/api/classes/testing.php
 
-git commit -m "Deploy ${ENV} build from master ($(git rev-parse --short HEAD))"
+git commit -m "Temporary build commit"
 
-# Force-push the updated deploy branch to internal GitLab
-git push -f origin "${TARGET_BRANCH}"
+# Create a standalone commit whose root directory is the contents of dist/
+SHORT_SHA=$(git rev-parse --short master)
+DEPLOY_COMMIT=$(git commit-tree "HEAD:dist" -m "Deploy ${ENV} build from master (${SHORT_SHA})")
 
-# Switch back to master
-git checkout master
-echo "Successfully pushed ${TARGET_BRANCH} to internal GitLab."
+# Force-push the dist-rooted commit to internal GitLab
+git push -f origin "${DEPLOY_COMMIT}:refs/heads/${TARGET_BRANCH}"
+
+# Switch back to master and clean up _deploy_tmp
+git checkout -f master
+git branch -D _deploy_tmp
+echo "Successfully pushed dist/ root to ${TARGET_BRANCH} on internal GitLab."
